@@ -17,7 +17,7 @@ from bcipy.signal.model.pipeline import Pipeline
 
 
 class PcaRdaKdeModel(SignalModel):
-    reshaper = InquiryReshaper()
+    reshaper: InquiryReshaper = InquiryReshaper()
 
     def __init__(self, k_folds: int = 10, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
@@ -147,7 +147,7 @@ class PcaRdaKdeModel(SignalModel):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
 
-    def predict_proba(self, data: np.array) -> np.array:
+    def predict_proba(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities.
 
         Returns:

@@ -1,12 +1,18 @@
+# mypy: disable-error-code="arg-type"
 import logging
 from typing import List, NamedTuple, Optional, Tuple
 
-from psychopy import core
+from psychopy import core, visual
 
-from bcipy.config import (SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME,
-                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
-from bcipy.display import (Display, InformationProperties,
-                           PreviewInquiryProperties, StimuliProperties)
+from bcipy.config import (
+    SESSION_DATA_FILENAME,
+    SESSION_SUMMARY_FILENAME,
+    TRIGGER_FILENAME,
+    WAIT_SCREEN_MESSAGE,
+    DEFAULT_EVIDENCE_PRECISION)
+from bcipy.display import (InformationProperties,
+                           PreviewInquiryProperties,
+                           StimuliProperties)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
@@ -14,6 +20,7 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -134,9 +141,8 @@ class RSVPCopyPhraseTask(Task):
 
         self.fake = fake
         self.language_model = language_model
-        # TODO: remove this
         self.signal_model = signal_models[0] if signal_models else None
-        self.evidence_precision = 5
+        self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
         self.feedback = VisualFeedback(
             self.window,
@@ -209,7 +215,7 @@ class RSVPCopyPhraseTask(Task):
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
 
-    def init_display(self) -> Display:
+    def init_display(self) -> CopyPhraseDisplay:
         """Initialize the display"""
         return _init_copy_phrase_display(self.parameters, self.window,
                                          self.static_clock,
@@ -297,7 +303,7 @@ class RSVPCopyPhraseTask(Task):
             self.logger.info('User wants to exit.')
         return should_continue
 
-    def wait(self, seconds: float = None):
+    def wait(self, seconds: Optional[float] = None):
         """Pause for a time.
 
         Parameters
@@ -574,8 +580,8 @@ class RSVPCopyPhraseTask(Task):
 
         # currently prestim_length is used as a buffer for filter application
         post_stim_buffer = int(self.parameters.get("task_buffer_length") / 2)
-        prestim_buffer = self.parameters['prestim_length']
-        trial_window = self.parameters['trial_window']
+        prestim_buffer: float = self.parameters['prestim_length']
+        trial_window: Tuple[float, float] = self.parameters['trial_window']
         window_length = trial_window[1] - trial_window[0]
         inquiry_timing = self.stims_for_decision(stim_times)
 
@@ -609,7 +615,7 @@ class RSVPCopyPhraseTask(Task):
 
         return evidences
 
-    def stims_for_decision(self, stim_times: List[List]) -> List[List]:
+    def stims_for_decision(self, stim_times: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
         """The stim_timings from the display may include non-letter stimuli
         such as calibration and inquiry_preview timings. This method extracts
         only the letter data used to process the data for a decision.
@@ -628,11 +634,11 @@ class RSVPCopyPhraseTask(Task):
         ]
 
     def new_data_record(self,
-                        stim_times: List[List],
+                        stim_times: List[Tuple[str, float]],
                         target_stimuli: str,
                         current_text: str,
                         decision: Decision,
-                        evidence_types: List[EvidenceType] = None) -> Inquiry:
+                        evidence_types: Optional[List[EvidenceType]] = None) -> Inquiry:
         """Construct a new inquiry data record.
 
         Parameters
@@ -797,7 +803,7 @@ class TaskSummary:
                  session: Session,
                  show_preview: bool = False,
                  preview_mode: int = 0,
-                 trigger_path: str = None):
+                 trigger_path: Optional[str] = None):
         assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
         self.show_preview = show_preview
@@ -887,7 +893,12 @@ class TaskSummary:
         ]
 
 
-def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, starting_spelled_text):
+def _init_copy_phrase_display(
+        parameters: Parameters,
+        win: visual.Window,
+        static_clock: core.StaticPeriod,
+        experiment_clock: Clock,
+        starting_spelled_text) -> CopyPhraseDisplay:
     preview_inquiry = PreviewInquiryProperties(
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
@@ -918,13 +929,14 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                  font=parameters['font'],
                                  height=parameters['task_height'])
 
-    return CopyPhraseDisplay(win,
-                             static_clock,
-                             experiment_clock,
-                             stimuli,
-                             task_bar,
-                             info,
-                             starting_spelled_text,
-                             trigger_type=parameters['trigger_type'],
-                             space_char=parameters['stim_space_char'],
-                             preview_inquiry=preview_inquiry)
+    return CopyPhraseDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        stimuli,
+        task_bar,
+        info,
+        starting_spelled_text,
+        trigger_type=parameters['trigger_type'],
+        space_char=parameters['stim_space_char'],
+        preview_inquiry=preview_inquiry)

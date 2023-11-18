@@ -1,6 +1,8 @@
+# mypy: disable-error-code="attr-defined,union-attr,arg-type"
+# needed for the ERPTransformParams
 import logging
+from typing import List, Dict, Optional, Tuple, Union
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import mne
@@ -17,6 +19,7 @@ import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
                           STATIC_IMAGES_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
 from bcipy.helpers.raw_data import RawData
@@ -82,9 +85,9 @@ def visualize_erp(
 
     # check for a baseline interval or set to None
     if trial_window[0] < 0:
-        baseline = (trial_window[0], 0)
+        baseline = (trial_window[0], 0.0)
     else:
-        baseline = (None, 0)
+        baseline = None
 
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
     epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels, baseline=baseline)
@@ -576,7 +579,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     """
     # Load in CSV
     data = load_raw_data(choose_csv_file())
-    raw_data = data.by_channel()
+    raw_data, _ = data.by_channel()
 
     # Pull out the triggers
     if not trigger_col:
@@ -661,7 +664,7 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: dict, show=True) -> Figure:
+def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -682,14 +685,15 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
     trial_window = parameters.get("trial_window")
     static_offset = parameters.get("static_trigger_offset")
 
-    raw_data = load_raw_data(Path(session_path, f'{RAW_DATA_FILENAME}.csv'))
+    raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
+    daq_type = raw_data.daq_type
 
-    transform_params = parameters.instantiate(ERPTransformParams)
+    transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
 
     devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    device_spec = devices.preconfigured_device(daq_type)
 
     # setup filtering
     default_transform = get_default_transform(
@@ -705,6 +709,7 @@ def visualize_session_data(session_path: str, parameters: dict, show=True) -> Fi
         offset=static_offset,
         trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        device_type='EEG',
     )
     assert "nontarget" in trigger_targetness, "No nontarget triggers found."
     assert "target" in trigger_targetness, "No target triggers found."

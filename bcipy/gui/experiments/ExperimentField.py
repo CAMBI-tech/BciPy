@@ -41,11 +41,11 @@ class ExperimentFieldCollection(QWidget):
     field_data: List[tuple] = []
     field_inputs: List[FormInput] = []
     type_inputs = {
-        'int': IntegerInput,
-        'float': FloatInput,
-        'bool': BoolInput,
-        'filepath': FileInput,
-        'directorypath': DirectoryInput
+        'int': (IntegerInput, 0),
+        'float': (FloatInput, 0.0),
+        'bool': (BoolInput, False),
+        'filepath': (FileInput, ''),
+        'directorypath': (DirectoryInput, ''),
     }
     require_mark = '*'
     alert_timeout = 10
@@ -96,13 +96,13 @@ class ExperimentFieldCollection(QWidget):
         attributes.
         """
 
-        form_input = self.type_inputs.get(field_type, TextInput)
+        form_input, init_value = self.type_inputs.get(field_type, TextInput)
 
         if required:
             field_name += self.require_mark
         return form_input(
             label=field_name,
-            value='',
+            value=init_value,
             help_tip=help_tip,
             help_size=self.help_size,
             help_color=self.help_color)

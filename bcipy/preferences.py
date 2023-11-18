@@ -1,7 +1,7 @@
 """Module for recording and loading application state and user preferences."""
 import json
 from pathlib import Path
-from typing import Any
+from typing import Optional, Any, Dict
 from bcipy.config import DEFAULT_ENCODING, PREFERENCES_PATH, BCIPY_ROOT
 
 
@@ -17,7 +17,7 @@ class Pref:
         default - default value assigned to the attribute.
     """
 
-    def __init__(self, default: Any = None):
+    def __init__(self, default: Optional[Any] = None):
         self.default = default
         self.name = None
 
@@ -44,12 +44,12 @@ class Preferences:
     ----------
         filename - optional file used for persisting entries.
     """
-    signal_model_directory: str = Pref()
-    last_directory: str = Pref(default=str(BCIPY_ROOT))
+    signal_model_directory = Pref()
+    last_directory = Pref(default=str(BCIPY_ROOT))
 
-    def __init__(self, filename: str = PREFERENCES_PATH):
+    def __init__(self, filename: str = PREFERENCES_PATH) -> None:
         self.filename = filename
-        self.entries = {}
+        self.entries: Dict[Any, Any] = {}
         self.load()
 
     def load(self):

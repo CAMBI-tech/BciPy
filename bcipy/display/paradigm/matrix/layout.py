@@ -1,6 +1,6 @@
 """Functions for calculating matrix layouts"""
 import logging
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 
 from bcipy.display.components.layout import (Layout, above, below, left_of,
                                              right_of, scaled_height,
@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 
 def symbol_positions(container: Layout, rows: int,
-                     columns: int, max_spacing: float = None) -> List[Tuple[float, float]]:
+                     columns: int, max_spacing: Optional[float] = None) -> List[Tuple[float, float]]:
     """Compute the positions for arranging a number of symbols in a grid
     layout.
 

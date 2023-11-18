@@ -48,12 +48,12 @@ class CalibrationType(Enum):
 
 
 class TriggerCallback:
-    timing = None
-    first_time = True
+    timing: Optional[Tuple[str, float]] = None
+    first_time: bool = True
 
     def callback(self, clock: Clock, stimuli: str) -> None:
         if self.first_time:
-            self.timing = [stimuli, clock.getTime()]
+            self.timing = (stimuli, clock.getTime())
             self.first_time = False
 
     def reset(self):
@@ -66,7 +66,7 @@ def _calibration_trigger(experiment_clock: Clock,
                          trigger_name: str = 'calibration',
                          trigger_time: float = 1,
                          display=None,
-                         on_trigger=None) -> List[tuple]:
+                         on_trigger=None) -> Tuple[str, float]:
     """Calibration Trigger.
 
     Outputs triggers for the purpose of calibrating data and stimuli.
@@ -130,6 +130,9 @@ def _calibration_trigger(experiment_clock: Clock,
         display.flip()
 
     core.wait(trigger_time)
+    if trigger_callback.timing is None:
+        log.warning(f'No trigger found for [{trigger_name}]')
+        return trigger_name, 0.0
     return trigger_callback.timing
 
 
@@ -375,10 +378,9 @@ class TriggerHandler:
         self.path = path
         self.file_name = f'{file_name}.txt' if not file_name.endswith('.txt') else file_name
         self.flush = flush
-        self.triggers = []
+        self.triggers: List[Trigger] = []
         self.file_path = f'{self.path}/{self.file_name}'
         self.flush = flush
-        self.triggers = []
 
         if os.path.exists(self.file_name):
             raise Exception(f"[{self.file_name}] already exists, any writing "
@@ -422,7 +424,7 @@ class TriggerHandler:
 
     @staticmethod
     def load(path: str,
-             offset: Optional[float] = 0.0,
+             offset: float = 0.0,
              exclusion: Optional[List[TriggerType]] = None,
              device_type: Optional[str] = None) -> List[Trigger]:
         """
@@ -480,7 +482,7 @@ class TriggerHandler:
         return self.triggers
 
 
-def convert_timing_triggers(timing: List[tuple], target_stimuli: str,
+def convert_timing_triggers(timing: List[Tuple[str, float]], target_stimuli: str,
                             trigger_type: Callable) -> List[Trigger]:
     """Convert Stimuli Times to Triggers.
 

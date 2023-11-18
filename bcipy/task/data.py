@@ -1,7 +1,7 @@
 """Module for functionality related to session-related data."""
 from collections import Counter
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 EVIDENCE_SUFFIX = "_evidence"
 
@@ -71,14 +71,14 @@ class Inquiry:
     def __init__(self,
                  stimuli: List[str],
                  timing: List[float],
-                 triggers: List[List],
+                 triggers: List[Tuple[str, float]],
                  target_info: List[str],
-                 target_letter: str = None,
-                 current_text: str = None,
-                 target_text: str = None,
-                 selection: str = None,
-                 next_display_state: str = None,
-                 likelihood: List[float] = None):
+                 target_letter: Optional[str] = None,
+                 current_text: Optional[str] = None,
+                 target_text: Optional[str] = None,
+                 selection: Optional[str] = None,
+                 next_display_state: Optional[str] = None,
+                 likelihood: Optional[List[float]] = None) -> None:
         super().__init__()
         self.stimuli = stimuli
         self.timing = timing
@@ -92,16 +92,16 @@ class Inquiry:
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
-        # Precision used for serialization of evidence values.
-        self.precision = None
+        # Precision used for serialization of evidence values. By default, no precision.
+        self.precision: int = 0
 
     @property
-    def lm_evidence(self):
+    def lm_evidence(self) -> List[float]:
         """Language model evidence"""
         return self.evidences.get(EvidenceType.LM, [])
 
     @property
-    def eeg_evidence(self):
+    def eeg_evidence(self) -> List[float]:
         """EEG evidence"""
         return self.evidences.get(EvidenceType.ERP, [])
 
@@ -113,10 +113,12 @@ class Inquiry:
     @property
     def is_correct_decision(self) -> bool:
         """Indicates whether the current selection was the target"""
-        return self.selection and (self.selection == self.target_letter)
+        if self.selection and self.target_letter:
+            return self.selection == self.target_letter
+        return False
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Inquiry':
         """Deserializes from a dict
 
         Parameters:
@@ -206,18 +208,18 @@ class Session:
 
     def __init__(self,
                  save_location: str,
+                 symbol_set: List[str],
                  task: str = 'Copy Phrase',
                  mode: str = 'RSVP',
-                 symbol_set: List[str] = None,
-                 decision_threshold: float = None):
+                 decision_threshold: Optional[float] = None) -> None:
         super().__init__()
         self.save_location = save_location
         self.task = task
         self.mode = mode
         self.series: List[List[Inquiry]] = [[]]
-        self.total_time_spent = 0
+        self.total_time_spent: float = 0.0
         self.time_spent_precision = 2
-        self.task_summary = {}
+        self.task_summary: Dict[str, Any] = {}
         self.symbol_set = symbol_set
         self.decision_threshold = decision_threshold
 
@@ -255,12 +257,12 @@ class Session:
         """Tests whether any inquiries have evidence."""
         return any(inq.evidences for inq in self.all_inquiries)
 
-    def add_series(self):
+    def add_series(self) -> None:
         """Add another series unless the last one is empty"""
         if self.last_series():
             self.series.append([])
 
-    def add_sequence(self, inquiry: Inquiry, new_series: bool = False):
+    def add_sequence(self, inquiry: Inquiry, new_series: bool = False) -> None:
         """Append sequence information
 
         Parameters:
@@ -324,7 +326,7 @@ class Session:
         return info
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Session':
         """Deserialize from a dict.
 
         Parameters:

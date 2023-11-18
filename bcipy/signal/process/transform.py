@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional, Tuple
+from typing import NamedTuple, Tuple
 
 import numpy as np
 
@@ -11,7 +11,7 @@ class Composition:
     def __init__(self, *transforms):
         self.transforms = transforms
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         for transform in self.transforms:
             data, fs = transform(data, fs)
         return data, fs
@@ -20,14 +20,11 @@ class Composition:
 class Downsample:
     """Downsampling by an integer factor"""
 
-    def __init__(self, factor: int = 2):
+    def __init__(self, factor: int = 2, *args, **kwargs):
         self.factor = factor
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
-        if fs:
-            return data[:, :: self.factor], fs // self.factor
-        else:
-            return data[:, :: self.factor], None
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
+        return data[:, :: self.factor], fs // self.factor
 
 
 class ERPTransformParams(NamedTuple):

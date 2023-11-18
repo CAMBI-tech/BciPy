@@ -397,8 +397,7 @@ class MainPanel(QWidget):
 
     def on_save_as(self):
         """Event handler for saving form data to another parameters file."""
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        options = QFileDialog.Option.DontUseNativeDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
