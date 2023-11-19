@@ -37,6 +37,8 @@ SIGNAL_MODEL_FILE_SUFFIX = '.pkl'
 DEFAULT_FIXATION_PATH = f'{STATIC_IMAGES_PATH}/main/PLUS.png'
 DEFAULT_TEXT_FIXATION = '+'
 
+MATRIX_IMAGE_FILENAME = 'matrix.png'
+
 # core data configuration
 RAW_DATA_FILENAME = 'raw_data'
 EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
@@ -44,6 +46,7 @@ TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
 LOG_FILENAME = 'bcipy_system_log.txt'
+STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
 
 # misc configuration
 WAIT_SCREEN_MESSAGE = 'Press Space to start or Esc to exit'

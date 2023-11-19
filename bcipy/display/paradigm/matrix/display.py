@@ -5,6 +5,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 from psychopy import core, visual
 
 import bcipy.display.components.layout as layout
+from bcipy.config import MATRIX_IMAGE_FILENAME
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
@@ -89,6 +90,8 @@ class MatrixDisplay(Display):
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = 0.17  # stimuli.stim_height
 
+        self.stim_positions = []
+
         display_container = layout.centered(parent=window,
                                             width_pct=width_pct,
                                             height_pct=height_pct)
@@ -127,6 +130,21 @@ class MatrixDisplay(Display):
             for sym, stim in self.stim_registry.items()
         }
 
+    def capture_grid_screenshot(self, file_path: str) -> None:
+        """Capture Grid Screenshot.
+
+        Capture a screenshot of the current display and save it to the specified filename.
+        """
+        # draw the grid and flip the window
+        self.draw_grid(opacity=self.full_grid_opacity)
+        self.task_bar.current_index = 0
+        self.draw_static()
+        self.window.flip()
+
+        # capture the screenshot and save it to the specified file path
+        capture = self.window.getMovieFrame()
+        capture.save(f'{file_path}/{MATRIX_IMAGE_FILENAME}')
+
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
 
@@ -158,13 +176,13 @@ class MatrixDisplay(Display):
 
         Useful as a callback function to register a marker at the time it is
         first displayed."""
-        self._timing.append([stimuli, self.experiment_clock.getTime()])
+        self._timing.append((stimuli, self.experiment_clock.getTime()))
 
     def reset_timing(self):
         """Reset the trigger timing."""
         self._timing = []
 
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self) -> List[Tuple[str, float]]:
         """Animates an inquiry of stimuli and returns a list of stimuli trigger timing."""
         self.reset_timing()
         symbol_durations = self.symbol_durations()
@@ -187,11 +205,12 @@ class MatrixDisplay(Display):
         grid = {}
         for sym in self.symbol_set:
             pos_index = self.sort_order(sym)
+            pos = self.positions[pos_index]
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,
-                                        pos=self.positions[pos_index],
+                                        pos=pos,
                                         height=self.grid_stimuli_height)
         return grid
 
@@ -337,8 +356,6 @@ class MatrixDisplay(Display):
         PARAMETERS:
 
         text: text for task
-        color_list: list of the colors for each stimuli
-        pos: position of task
         """
         if self.task_bar:
             self.task_bar.update(text)
