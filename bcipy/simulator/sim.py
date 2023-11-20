@@ -12,6 +12,7 @@ from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult
+from bcipy.simulator.helpers.log_utils import format_alp_likelihoods
 from bcipy.simulator.interfaces import MetricReferee, ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 
@@ -72,11 +73,11 @@ class SimulatorCopyPhrase(Simulator):
             evidence = self.model_handler.generate_evidence(curr_state,
                                                             sampled_data)  # TODO make this evidence be a dict (mapping of evidence type to evidence)
 
-            log.debug(f"Evidence for stimuli {curr_state.display_alphabet} \n {evidence}")
+            log.debug(f"Evidence for stimuli {curr_state.display_alphabet} \n {format_alp_likelihoods(evidence, self.symbol_set)}")
 
             inq_record: InquiryResult = self.state_manager.update(evidence)
             updated_state = self.state_manager.get_state()
-            log.debug(f"Fused Likelihoods {[str(round(p, 3)) for p in inq_record.fused_likelihood]}")
+            log.debug(f"Fused Likelihoods {format_alp_likelihoods(inq_record.fused_likelihood, self.symbol_set)}")
 
             if inq_record.decision:
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")

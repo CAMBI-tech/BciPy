@@ -38,13 +38,15 @@ class DummyRef(MetricReferee):
 
 if __name__ == "__main__":
     args = dict()
-    args['data_folders'] = ["/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_18hr58min16sec_-0700",
-                            # "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_19hr07min50sec_-0700",
-                            # "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Copy_Phrase_Thu_24_Aug_2023_19hr15min29sec_-0700"
+    args['data_folders'] = ["/Users/srikarananthoju/cambi/tab_test_dynamic/16sec_-0700",
+                            "/Users/srikarananthoju/cambi/tab_test_dynamic/50sec_-0700",
+                            # "/Users/srikarananthoju/cambi/tab_test_dynamic/29sec_-0700"
                             ]
     args['out_dir'] = Path(__file__).resolve().parent
     model_file = Path(
-        "/Users/srikarananthoju/cambi/tab_test_dynamic/tab_test_dynamic_RSVP_Calibration_Thu_24_Aug_2023_18hr41min37sec_-0700/model_0.9524_200_800.pkl")
+        "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/model_0.9524_200_800.pkl"
+        # "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/model_0.9595.pkl"
+    )
     sim_parameters = load_json_parameters("bcipy/simulator/sim_parameters.json", value_cast=True)
 
     data_engine = RawDataEngine(args['data_folders'])
@@ -57,14 +59,6 @@ if __name__ == "__main__":
 
     sampler: Sampler = SimpleLetterSampler(data_engine)
     sample: np.ndarray = sampler.sample(stateManager.get_state())
-
-    # model = PcaRdaKdeModel()
-    # model = model.load(model_file)
-    #
-    # eeg_evidence = model.predict(sample, stateManager.get_state().display_alphabet, alphabet())
-    #
-    # print(eeg_evidence.shape)
-    # print(eeg_evidence)
 
     model_handler = DummyModelHandler(model_file)
     sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, DummyRef())

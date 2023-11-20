@@ -9,6 +9,7 @@ from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
+from bcipy.simulator.helpers.log_utils import format_sample_rows
 from bcipy.simulator.interfaces import SimState
 
 log = logging.getLogger(__name__)
@@ -55,7 +56,7 @@ class SimpleLetterSampler(Sampler):
             row = filtered_data.sample(1)
             sample_rows.append(row)
 
-        log.debug(f"EEG Samples: \n {', '.join([r.to_string() for r in sample_rows])}")
+        log.debug(f"EEG Samples: \n {format_sample_rows(sample_rows)}")
         eeg_responses = [r['eeg'].to_numpy()[0] for r in sample_rows]
         sample = self.model_input_reshaper(eeg_responses)
 
