@@ -13,7 +13,8 @@ from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT,
                           DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
-                          TRIGGER_FILENAME)
+                          TRIGGER_FILENAME,
+                          MATRIX_IMAGE_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
@@ -221,8 +222,9 @@ def analyze_gaze(
         parameters,
         device_spec,
         data_folder,
-        save_figures=False,
+        save_figures=None,
         show_figures=False,
+        plot_points=False,
         model_type="Individual"):
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
@@ -241,6 +243,7 @@ def analyze_gaze(
         data_folder (str): Path to the folder containing the data to be analyzed.
         save_figures (bool): If true, saves ERP figures after training to the data folder.
         show_figures (bool): If true, shows ERP figures after training.
+        plot_points (bool): If true, plots the gaze points on the matrix image.
         model_type (str): Type of gaze model to be used. Options are:
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
@@ -248,9 +251,10 @@ def analyze_gaze(
     figures = []
     figure_handles = visualize_gaze(
         gaze_data,
-        save_path=data_folder if save_figures else None,
+        save_path=save_figures,
+        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
         show=show_figures,
-        raw_plot=True,
+        raw_plot=plot_points,
     )
     figures.extend(figure_handles)
 
@@ -346,9 +350,10 @@ def analyze_gaze(
             figure_handles = visualize_gaze_inquiries(
                 le, re,
                 means, covs,
-                save_path=None,
+                save_path=save_figures,
+                img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
                 show=show_figures,
-                raw_plot=True,
+                raw_plot=plot_points,
             )
             figures.extend(figure_handles)
             left_eye_all.append(le)
@@ -404,9 +409,10 @@ def analyze_gaze(
         # Visualize the results:
         figure_handles = visualize_centralized_data(
             cent_left, cent_right,
-            save_path=None,
+            save_path=save_figures,
+            img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
             show=show_figures,
-            raw_plot=True,
+            raw_plot=plot_points,
         )
         figures.extend(figure_handles)
 
@@ -424,9 +430,10 @@ def analyze_gaze(
             figure_handles = visualize_gaze_inquiries(
                 le, re,
                 means, covs,
-                save_path=None,
+                save_path=save_figures,
+                img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
                 show=show_figures,
-                raw_plot=True,
+                raw_plot=plot_points,
             )
             figures.extend(figure_handles)
             left_eye_all.append(le)
@@ -437,9 +444,10 @@ def analyze_gaze(
     fig_handles = visualize_results_all_symbols(
         left_eye_all, right_eye_all,
         means_all, covs_all,
-        save_path=None,
-        show=True,
-        raw_plot=True,
+        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
+        save_path=save_figures,
+        show=show_figures,
+        raw_plot=plot_points,
     )
     figures.extend(fig_handles)
 
