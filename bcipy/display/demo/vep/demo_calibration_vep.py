@@ -7,6 +7,7 @@ from bcipy.display import (InformationProperties, VEPStimuliProperties,
                            init_display_window)
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.paradigm.vep.codes import ssvep_to_code
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
@@ -46,36 +47,14 @@ stim_color = [
     'green', 'red', '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3',
     '#FF8232'
 ]
-codes = [[
-    1, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1,
-    0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0,
-    0, 1, 0, 0, 1, 1, 1, 0, 1, 0
-],
-    [
-    0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0,
-    0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 1, 0,
-    0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0
-],
-    [
-    0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1,
-    0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1,
-    1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0
-],
-    [
-    0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0,
-    0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1,
-    0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1
-],
-    [
-    1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 0,
-    0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0, 1,
-    0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1
-],
-    [
-    0, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1,
-    0, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0,
-    0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0
-]]
+
+# Note: these rates work for a 60hz display
+flicker_rates = [4, 5, 6, 10, 12, 15]
+codes = [
+    ssvep_to_code(refresh_rate=60, flicker_rate=hz)
+    for hz in flicker_rates
+]
+
 layout = centered(width_pct=0.95, height_pct=0.80)
 box_config = BoxConfiguration(layout, num_boxes=num_boxes, height_pct=0.30)
 
