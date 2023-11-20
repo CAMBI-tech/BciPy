@@ -27,6 +27,9 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
     Converts a SSVEP (steady state visual evoked potential; ex. 10 Hz) to a code (0,1)
     given the refresh rate of the monitor (Hz) provided and a desired flicker rate (Hz).
 
+    TODO: https://www.pivotaltracker.com/story/show/186522657
+    Consider an additional parameter for the number of seconds.
+
     Parameters:
     -----------
         refresh_rate: int, refresh rate of the monitor (Hz)

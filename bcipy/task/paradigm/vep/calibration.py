@@ -8,6 +8,7 @@ from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.paradigm.vep.codes import ssvep_to_code
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
@@ -241,12 +242,17 @@ def init_calibration_display(parameters: Parameters,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
                                   height=parameters['task_height'])
-
+    flicker_rates = parameters['vep_flicker_rates']
+    codes = [
+        ssvep_to_code(refresh_rate=60, flicker_rate=hz)
+        for hz in flicker_rates
+    ]
     return VEPDisplay(window,
                       experiment_clock,
                       stim_props,
                       task_bar,
                       info,
                       symbol_set=symbol_set,
+                      codes=codes,
                       box_config=box_config,
                       should_prompt_target=True)

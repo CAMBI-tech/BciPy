@@ -375,6 +375,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "vep_flicker_rates": {
+    "value": "4,5,6,10,12,15",
+    "section": "bci_config",
+    "readableName": "VEP Flicker Rates (hz)",
+    "helpTip": "Delimited list of flash rates, where a rate represents the hz of the box at that position. Each rate should be less than the refresh rate of the monitor.",
+    "recommended_values": "4,5,6,10,12,15",
+    "type": "str"
+  },
   "stim_jitter": {
     "value": "0.0",
     "section": "bci_config",

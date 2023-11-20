@@ -108,7 +108,6 @@ class VEPDisplay(Display):
         if not codes:
             codes = create_vep_codes(length=self.refresh_rate,
                                      count=self.vep_type)
-            self.logger.info(f"VEP Codes: {codes}")
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
                       ('orange', 'green')]
         vep_stim_size = scaled_size(0.24, self.window_size)
@@ -179,7 +178,7 @@ class VEPDisplay(Display):
             [_fixation, *stim] = self.stim_properties()
             self.set_stimuli_colors(stim)
 
-        # self.do_fixation(fixation)
+        self.log_inquiry(stim)
         self.animate_inquiry(stim)
         core.wait(self.timing_fixation)
         self.stimulate()
@@ -206,6 +205,8 @@ class VEPDisplay(Display):
             target - (symbol, duration, color) tuple
         """
         assert isinstance(target.symbol, str), "Target must be a str"
+        self.logger.info(f"Target: {target.symbol}")
+
         # Show all symbols in the matrix at reduced opacity
         for sym in self.symbol_set:
             pos_index = self.sort_order(sym)
@@ -236,6 +237,10 @@ class VEPDisplay(Display):
 
         self.window.flip()
         core.wait(target.duration / 2)
+
+    def log_inquiry(self, stimuli: List[StimProps]) -> None:
+        """Log the inquiry"""
+        self.logger.info(f"Inquiry: {[stim.symbol for stim in stimuli]}")
 
     def highlight_target_box(self, target_box_index: int) -> None:
         """Emphasize the box at the given index"""
