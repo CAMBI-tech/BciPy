@@ -90,8 +90,6 @@ class MatrixDisplay(Display):
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = 0.17  # stimuli.stim_height
 
-        self.stim_positions = []
-
         display_container = layout.centered(parent=window,
                                             width_pct=width_pct,
                                             height_pct=height_pct)
