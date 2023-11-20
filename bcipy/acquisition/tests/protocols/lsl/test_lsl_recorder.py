@@ -93,3 +93,7 @@ class TestLslRecorder(unittest.TestCase):
             recorder.start()
 
         dup_server.stop()
+
+
+if __name__ == '__main__':
+    unittest.main()

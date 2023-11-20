@@ -1,10 +1,11 @@
+# mypy: disable-error-code="misc"
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
 import time
 import uuid
 from queue import Empty, Queue
-from typing import Generator
+from typing import Optional, Generator
 
 from pylsl import StreamInfo, StreamOutlet
 
@@ -12,13 +13,11 @@ from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME
 
 log = logging.getLogger(__name__)
 
 # pylint: disable=too-many-arguments
-
-MARKER_STREAM_NAME = 'TRG_device_stream'
 
 
 class LslDataServer(StoppableThread):
@@ -50,7 +49,7 @@ class LslDataServer(StoppableThread):
 
     def __init__(self,
                  device_spec: DeviceSpec,
-                 generator: Generator = None,
+                 generator: Optional[Generator] = None,
                  include_meta: bool = True,
                  add_markers: bool = False,
                  marker_stream_name: str = MARKER_STREAM_NAME,
@@ -120,7 +119,7 @@ class LslDataServer(StoppableThread):
         sample_counter = 0
         self.started = True
 
-        data_queue = Queue()
+        data_queue: Queue = Queue()
         with Producer(data_queue, generator=self.generator,
                       freq=1 / self.device_spec.sample_rate):
             while self.running():
@@ -149,7 +148,7 @@ def _settings(filename):
         return (daq_type, sample_hz, channels)
 
 
-def await_start(dataserver: LslDataServer, max_wait: float = 2):
+def await_start(dataserver: LslDataServer, max_wait: float = 2.0):
     """Blocks until server is started. Raises if max_wait is exceeded before
     server is started.
 
@@ -161,7 +160,7 @@ def await_start(dataserver: LslDataServer, max_wait: float = 2):
     """
 
     dataserver.start()
-    wait = 0
+    wait = 0.0
     wait_interval = 0.01
     while not dataserver.started:
         time.sleep(wait_interval)

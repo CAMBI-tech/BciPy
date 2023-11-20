@@ -3,7 +3,7 @@ from itertools import zip_longest
 from typing import Any, Callable, List, Optional, Union
 
 
-def destutter(items: List, key: Callable = lambda x: x) -> List:
+def destutter(items: List[Any], key: Callable = lambda x: x) -> List:
     """Removes sequential duplicates from a list. Retains the last item in the
     sequence. Equality is determined using the provided key function.
 
@@ -12,7 +12,7 @@ def destutter(items: List, key: Callable = lambda x: x) -> List:
         items - list of items with sequential duplicates
         key - equality function
     """
-    deduped = []
+    deduped: List[Any] = []
     for item in items:
         if len(deduped) == 0 or key(item) != key(deduped[-1]):
             deduped.append(item)

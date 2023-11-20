@@ -1,12 +1,13 @@
 from typing import List, Tuple
 
-from psychopy import core
+from psychopy import core, visual
 
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, InquirySchedule,
                                    StimuliOrder, TargetPositions,
                                    generate_calibration_inquiries)
@@ -81,7 +82,7 @@ class MatrixCalibrationTask(Task):
 
         self.matrix = self.init_display()
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the display"""
         return init_calibration_display_task(self.parameters, self.window,
                                              self.experiment_clock,
@@ -240,7 +241,10 @@ class MatrixCalibrationTask(Task):
 
 
 def init_calibration_display_task(
-        parameters, window, experiment_clock, symbol_set):
+        parameters: Parameters,
+        window: visual.Window,
+        experiment_clock: Clock,
+        symbol_set: core.StaticPeriod) -> MatrixDisplay:
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'],

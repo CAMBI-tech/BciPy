@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type, misc"
 import errno
 import json
 import os
@@ -107,12 +108,12 @@ def save_device_specs(device_specs: List[DeviceSpec], location: str,
                           name)
 
 
-def _save_session_related_data(file, session_dictionary):
+def _save_session_related_data(save_path: str, session_dictionary: dict) -> Any:
     """
     Save Session Related Data.
     Parameters
     ----------
-        file[str]: string of path to save our data in
+        save_path[str]: string of path to save our data in
         session_dictionary[dict]: dictionary of session data. It will appear
             as follows:
                 {{ "series": {
@@ -144,9 +145,9 @@ def _save_session_related_data(file, session_dictionary):
     """
     # Try opening as json, if not able to use open() to create first
     try:
-        file = json.load(file, 'wt')
+        file = json.load(save_path, 'wt')
     except BaseException:
-        file = open(file, 'wt', encoding=DEFAULT_ENCODING)
+        file = open(save_path, 'wt', encoding=DEFAULT_ENCODING)
 
     # Use the file to dump data to
     json.dump(session_dictionary, file, indent=2)

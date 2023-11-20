@@ -2,7 +2,7 @@
 import logging
 import sys
 import time
-from typing import Callable, List, Tuple, Union
+from typing import Optional, Callable, List, Tuple, Union
 
 from psychopy import visual
 from psychopy.visual.circle import Circle
@@ -32,7 +32,7 @@ def draw_boundary(win,
                   layout: Layout,
                   color: str = 'blue',
                   line_px: int = 5,
-                  name: str = None):
+                  name: Optional[str] = None):
     """Display the layout's outline."""
     if name:
         print(f"Drawing boundary for {name}")
@@ -72,7 +72,7 @@ def draw_position(win: visual.Window,
                   pos: Tuple[float, float],
                   color: str = 'blue',
                   size: Union[float, Tuple[float, float]] = 0.025,
-                  name: str = None):
+                  name: Optional[str] = None):
     """Draw the provided positions"""
     if name:
         print(f"Drawing position {name} at {pos}")

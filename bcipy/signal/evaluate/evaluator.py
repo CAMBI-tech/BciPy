@@ -1,4 +1,7 @@
-from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage
+from bcipy.signal.evaluate.rules import HighVoltage, LowVoltage, Rule
+from typing import List
+
+import numpy as np
 
 
 class Evaluator:
@@ -15,8 +18,8 @@ class Evaluator:
     rules (list of rule objects, defined in rules.py)
     """
 
-    def __init__(self, parameters, high_voltage, low_voltage):
-        self.rules = []
+    def __init__(self, parameters, high_voltage, low_voltage) -> None:
+        self.rules: List[Rule] = []
 
         # if high_voltage threshold is enabled, add to rules
         if high_voltage:
@@ -26,7 +29,7 @@ class Evaluator:
         if low_voltage:
             self.rules.append(LowVoltage(parameters['low_voltage_value']))
 
-    def evaluate(self, data):
+    def evaluate(self, data: np.ndarray) -> bool:
         """Evaluate.
 
         Evaluates inquiry data using selected rules from parameters file.

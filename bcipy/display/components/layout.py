@@ -1,3 +1,4 @@
+# mypy: disable-error-code="override"
 """Defines common functionality for GUI layouts."""
 from enum import Enum
 from typing import List, Optional, Protocol, Tuple
@@ -122,7 +123,7 @@ class Layout(Container):
                  right: float = DEFAULT_RIGHT,
                  bottom: float = DEFAULT_BOTTOM,
                  units: str = "norm"):
-        self.units = units
+        self.units: str = units
         self.parent = parent
         self.top = top
         self.left = left
@@ -185,12 +186,12 @@ class Layout(Container):
         return self.top - self.bottom
 
     @property
-    def left_top(self) -> float:
+    def left_top(self) -> Tuple[float, float]:
         """Top left position"""
         return (self.left, self.top)
 
     @property
-    def right_bottom(self) -> float:
+    def right_bottom(self) -> Tuple[float, float]:
         """Bottom right position"""
         return (self.right, self.bottom)
 
@@ -221,7 +222,7 @@ class Layout(Container):
 
     def resize_width(self,
                      width_pct: float,
-                     alignment: Alignment = Alignment.CENTERED) -> float:
+                     alignment: Alignment = Alignment.CENTERED) -> None:
         """Adjust the width of the current layout.
 
         Parameters
@@ -252,7 +253,7 @@ class Layout(Container):
 
     def resize_height(self,
                       height_pct: float,
-                      alignment: Alignment = Alignment.CENTERED) -> float:
+                      alignment: Alignment = Alignment.CENTERED) -> None:
         """Adjust the height of the current layout.
 
         Parameters

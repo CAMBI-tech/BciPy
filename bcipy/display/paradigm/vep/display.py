@@ -436,10 +436,8 @@ class VEPDisplay(Display):
             self.first_stim_time = calibration_time.time
             self.first_run = False
 
-    def schedule_to(self,
-                    stimuli: List[List[Any]],
-                    timing: Optional[List[List[float]]] = None,
-                    colors: Optional[List[List[Any]]] = None) -> None:
+    def schedule_to(self, stimuli: List[List[Any]], timing: Optional[List[List[float]]]
+                    = None, colors: Optional[List[List[str]]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
         """
         self.stimuli_inquiry = stimuli  # type: ignore

@@ -16,7 +16,7 @@ class Rule(ABC):
 
     # a method required for all subclasses
     @abstractmethod
-    def is_broken(self, data):
+    def is_broken(self, data: np.ndarray) -> bool:
         ...
 
 
@@ -30,7 +30,7 @@ class HighVoltage(Rule):
     parameters.json
     """
 
-    def is_broken(self, data):
+    def is_broken(self, data: np.ndarray) -> bool:
         """Is Broken.
 
             Test data against threshold value. Return broken
@@ -49,7 +49,7 @@ class HighVoltage(Rule):
 
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'High Voltage with threshold {self.threshold}'
 
 
@@ -59,7 +59,7 @@ class LowVoltage(Rule):
     Set low threshold for permitted voltage.
     """
 
-    def is_broken(self, data):
+    def is_broken(self, data: np.ndarray) -> bool:
         """Is Broken.
 
             Test data against threshold value. Return false
@@ -78,5 +78,5 @@ class LowVoltage(Rule):
 
         return False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f'Low Voltage with threshold {self.threshold}'

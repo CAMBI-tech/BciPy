@@ -8,15 +8,17 @@ Our last release candidate before the official 2.0 release!
     - Support for multiple devices in online querying #286
     - Support for trigger handling relative to a given device #293
 - Model
-    - Offline analysis of multimodal fusion. First version of gaze model is completed #294 Gaze reshaper is updated #294 Visualization for the gaze classification is added #294
+    - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Parameters
     - Add a Range type parameter #285
-- Cleanup
-    - Change default log level to INFO to prevent too many messages in the experiment logs #288 Upgrade requirements for m1/2 chips #299/#300
+- Housekeeping
+    - Add mypy typing to the codebase #301
+    - Change default log level to INFO to prevent too many messages in the experiment logs #288 
+    - Upgrade requirements for m1/2 chips #299/#300
 
 
 # 2.0.0-rc.3

@@ -117,7 +117,7 @@ def init_device(content_type: str,
 
 
 def server_spec(content_type: str,
-                device_name: Optional[str] = None) -> LslDataServer:
+                device_name: Optional[str] = None) -> DeviceSpec:
     """Get the device_spec definition to use for a mock data server. If the
     device_name is provided, the matching preconfigured_device will be used.
     Otherwise, the first matching preconfigured device with the given
@@ -139,7 +139,7 @@ def server_spec(content_type: str,
 
 
 def parse_stream_type(stream_type: str,
-                      delimiter: str = "/") -> Tuple[str, str]:
+                      delimiter: str = "/") -> Tuple[str, Optional[str]]:
     """Parses the stream type into a tuple of (content_type, device_name).
 
     Parameters
@@ -161,7 +161,7 @@ def parse_stream_type(stream_type: str,
 def init_lsl_client(parameters: dict,
                     device_spec: DeviceSpec,
                     save_folder: str,
-                    raw_data_file_name: str = None):
+                    raw_data_file_name: Optional[str] = None):
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))

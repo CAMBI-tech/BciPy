@@ -1,3 +1,4 @@
+# mypy: disable-error-code="method-assign"
 from itertools import cycle
 from bcipy.task import Task
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask

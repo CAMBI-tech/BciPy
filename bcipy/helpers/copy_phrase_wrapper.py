@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type, assignment"
 """Defines the CopyPhraseWrapper."""
 import logging
 from typing import List, Tuple
@@ -57,7 +58,7 @@ class CopyPhraseWrapper:
                  min_num_inq: int,
                  max_num_inq: int,
                  lmodel: LanguageModel,
-                 alp: List[str] = None,
+                 alp: List[str],
                  evidence_names: List[EvidenceType] = [
                      EvidenceType.LM, EvidenceType.ERP
                  ],
@@ -109,7 +110,7 @@ class CopyPhraseWrapper:
         self.backspace_prob = backspace_prob
 
     def add_evidence(self, evidence_type: EvidenceType,
-                     evidence: List[float]) -> np.array:
+                     evidence: List[float]) -> np.ndarray:
         """Add evidence to the conjugator.
 
         Parameters

@@ -6,7 +6,7 @@ import os
 import sqlite3
 import subprocess
 from dataclasses import dataclass, fields
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import openpyxl
 from openpyxl.chart import BarChart, Reference
@@ -25,7 +25,7 @@ from bcipy.helpers.validate import validate_field_data_written
 from bcipy.task.data import Session
 
 
-def read_session(file_name=SESSION_DATA_FILENAME) -> Session:
+def read_session(file_name: str = SESSION_DATA_FILENAME) -> Session:
     """Read the session data from the given file."""
     with open(file_name, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return Session.from_dict(json.load(json_file))
@@ -45,9 +45,9 @@ def session_data(data_dir: str) -> Dict:
     return data
 
 
-def collect_experiment_field_data(experiment_name,
-                                  save_path,
-                                  file_name=EXPERIMENT_DATA_FILENAME) -> None:
+def collect_experiment_field_data(experiment_name: str,
+                                  save_path: str,
+                                  file_name: str = EXPERIMENT_DATA_FILENAME) -> None:
     experiment = load_experiments()[experiment_name]
     experiment_fields = load_experiment_fields(experiment)
 
@@ -71,7 +71,7 @@ class EvidenceRecord:
     eye: float
     btn: float
     cumulative: float
-    inq_position: int
+    inq_position: Optional[int]
     is_target: int
     presented: int
     above_threshold: int

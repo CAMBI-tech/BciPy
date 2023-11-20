@@ -1,3 +1,4 @@
+# mypy: disable-error-code="override"
 """Classes and functions for extracting evidence from raw device data."""
 import logging
 from typing import List, Optional, Type
@@ -66,7 +67,7 @@ class EEGEvaluator(EvidenceEvaluator):
         self.transform = signal_model.metadata.transform
         self.reshape = TrialReshaper()
 
-    def preprocess(self, raw_data: np.array, times: List[float],
+    def preprocess(self, raw_data: np.ndarray, times: List[float],
                    target_info: List[str], window_length: float) -> np.ndarray:
         """Preprocess the inquiry data.
 
@@ -93,9 +94,9 @@ class EEGEvaluator(EvidenceEvaluator):
         return reshaped_data
 
     # pylint: disable=arguments-differ
-    def evaluate(self, raw_data: np.array, symbols: List[str],
+    def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.array:
+                 window_length: float) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters

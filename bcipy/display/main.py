@@ -1,6 +1,7 @@
+# mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import Any, List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from psychopy import visual
 
@@ -133,11 +134,11 @@ class StimuliProperties:
             stim_font: str,
             stim_pos: Union[Tuple[float, float], List[Tuple[float, float]]],
             stim_height: float,
-            stim_inquiry: List[str] = None,
-            stim_colors: List[str] = None,
-            stim_timing: List[float] = None,
+            stim_inquiry: Optional[List[str]] = None,
+            stim_colors: Optional[List[str]] = None,
+            stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: float = None):
+            prompt_time: Optional[float] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
