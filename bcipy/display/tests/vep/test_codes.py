@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.display.paradigm.vep.codes import ssvep_to_code
+from bcipy.display.paradigm.vep.codes import round_refresh_rate, ssvep_to_code
 from bcipy.helpers.exceptions import BciPyCoreException
 
 
@@ -60,6 +60,12 @@ class SSVEPStimuli(unittest.TestCase):
         refresh_rate = 2
         with self.assertRaises(BciPyCoreException):
             ssvep_to_code(refresh_rate, flicker_rate)
+
+    def test_round_rate(self):
+        """Test rounding the refresh rate"""
+        self.assertEqual(60, round_refresh_rate(59.12))
+        self.assertEqual(60, round_refresh_rate(61.538))
+        self.assertEqual(120, round_refresh_rate(121.23))
 
 
 if __name__ == '__main__':

@@ -11,7 +11,8 @@ from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
 from bcipy.display.components.layout import scaled_size
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
-from bcipy.display.paradigm.vep.codes import create_vep_codes
+from bcipy.display.paradigm.vep.codes import (create_vep_codes,
+                                              round_refresh_rate)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
@@ -52,7 +53,7 @@ class VEPDisplay(Display):
         frame_rate = self.window.getActualFrameRate()
         assert frame_rate, 'An accurate window frame rate could not be established'
         self.window_size = self.window.size  # [w, h]
-        self.refresh_rate = round(frame_rate)
+        self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)
 
         # number of VEP text areas

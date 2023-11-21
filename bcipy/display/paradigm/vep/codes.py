@@ -63,3 +63,16 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
         t = 1 - t
 
     return codes
+
+
+def round_refresh_rate(rate: float) -> int:
+    """Round the given display rate to the nearest 10s value.
+
+    >>> round_refresh_rate(59.12)
+    60
+    >>> round_refresh_rate(61.538)
+    60
+    >>> round_refresh_rate(121.23)
+    120
+    """
+    return int(round(rate, -1))
