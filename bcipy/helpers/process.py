@@ -8,7 +8,8 @@ from bcipy.config import (
     DEFAULT_DEVICE_SPEC_FILENAME,
     TRIGGER_FILENAME)
 
-from bcipy.helpers.acquisition import analysis_channels, devices
+from bcipy.helpers.acquisition import analysis_channels
+import bcipy.acquisition.devices as devices
 import mne
 
 from bcipy.helpers.stimuli import TrialReshaper, InquiryReshaper, update_inquiry_timing, mne_epochs
@@ -145,7 +146,7 @@ def load_data_inquiries(
         'nontarget_orig': trigger_targetness.count('nontarget'),
         'target_orig': trigger_targetness.count('target')}
 
-    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log
+    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log, channels_used
 
 
 def load_data_mne(

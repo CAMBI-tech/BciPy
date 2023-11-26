@@ -3,11 +3,11 @@ import pandas as pd
 from bcipy.helpers.load import load_experimental_data
 
 DATA_PATH = 'C:/Users/tabme/work/bci/BciPy'
-FILENAME = 'WD_SAR_FIR_all_models.csv'
-PREFIX = 'WD_SAR_FIR'
+FILENAME = 'WD_NAR_IIR_BroadbandFilter_all_models.csv'
+PREFIX = 'WD_NAR_IIR_BF'
 EXPORT_NAME = f'{PREFIX}_flat_all_models.csv'
 MODELS = ['LR', 'NN', 'SVM', 'LDA', 'PRK', 'RF']
-HEADERS = [f'WD_SAR_FIR_{model}' for model in MODELS]
+HEADERS = [f'WD_NAR_IIR_{model}' for model in MODELS]
 
 def export_flattened_csv(data_path):
 
