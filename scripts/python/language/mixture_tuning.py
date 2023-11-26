@@ -6,10 +6,10 @@ from math import log10
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--step', dest='step', type=int, required=True,
-        help='The number of weight steps to be used in the sweep search')
+                        help='The number of weight steps to be used in the sweep search')
 
     parser.add_argument('--in', dest='files', type=str, required=True, nargs='+',
-        help="Two or more paths pointing to output files from the lm_eval script with --verbose 2")
+                        help="Two or more paths pointing to output files from the lm_eval script with --verbose 2")
 
     args = parser.parse_args()
 
@@ -32,39 +32,39 @@ if __name__ == "__main__":
     sentence_pslp_arr = []
     for line in zip(*lines):
         if line[0].startswith("sentence = "):
-            for l in line:
-                if not l.startswith("sentence = "):
+            for elm in line:
+                if not elm.startswith("sentence = "):
                     print("Line mismatch. Please ensure all files were run on the same phrase set.")
                     exit()
             probs = []
         elif line[0].startswith("p( "):
-            for l in line:
-                if not l.startswith("p( "):
+            for elm in line:
+                if not elm.startswith("p( "):
                     print("Line mismatch. Please ensure all files were run on the same phrase set.")
                     exit()
-                if l[-5:] == " = 0\n":
+                if elm[-5:] == " = 0\n":
                     print("Error: Component model zero prob.")
                     exit()
             component_probs = []
             mixed_probs = []
-            for l in line:
-                component_probs.append(float(l[l.index("=") + 2:l.index("[") - 1]))
-            for w in weights:
-                mixed_probs.append(np.dot(w, component_probs))
+            for elm in line:
+                component_probs.append(float(elm[elm.index("=") + 2:elm.index("[") - 1]))
+            for weight in weights:
+                mixed_probs.append(np.dot(weight, component_probs))
             probs.append(mixed_probs)
         elif line[0].startswith("sum logprob = "):
-            for l in line:
-                if not l.startswith("sum logprob = "):
+            for elm in line:
+                if not elm.startswith("sum logprob = "):
                     print("Line mismatch. Please ensure all files were run on the same phrase set.")
                     exit()
             logprobs = []
-            for p in probs:
-                l = [log10(i) for i in p]
-                logprobs.append(l)
+            for prob in probs:
+                log_list = [log10(i) for i in prob]
+                logprobs.append(log_list)
             sentence_pslp_arr.append([np.average(w) for w in zip(*logprobs)])
         elif line[0].startswith("OVERALL"):
-            for l in line:
-                if not l.startswith("OVERALL"):
+            for elm in line:
+                if not elm.startswith("OVERALL"):
                     print("Line mismatch. Please ensure all files were run on the same phrase set.")
                     exit()
 

@@ -28,7 +28,7 @@
             { "name": "T4", "label": "T4", "units": "microvolts", "type": "EEG" },
             { "name": "TRG", "label": "TRG", "units": "microvolts", "type": "EEG "}
         ],
-        "sample_rate": 300.0,
+        "sample_rate": 300,
         "description": "Wearable Sensing DSI-24",
         "excluded_from_analysis": [
             "TRG",
@@ -49,7 +49,7 @@
             { "name": "Oz", "label": "Oz", "units": "microvolts", "type": "EEG" },
             { "name": "TRG", "label": "TRG", "units": "microvolts", "type": "EEG" }
         ],
-        "sample_rate": 300.0,
+        "sample_rate": 300,
         "description": "Wearable Sensing DSI-VR300",
         "excluded_from_analysis": ["TRG", "F7"]
     },
@@ -74,7 +74,7 @@
             { "name": "Ch15", "label": "Ch15", "units": "microvolts", "type": "EEG" },
             { "name": "Ch16", "label": "Ch16", "units": "microvolts", "type": "EEG" }
         ],
-        "sample_rate": 256.0,
+        "sample_rate": 256,
         "description": "GTec g.USBamp"
     },
     {
@@ -91,6 +91,7 @@
             { "name": "right_pupil", "label": "right_pupil", "type": "pupilsize" }
         ],
         "sample_rate": 60.0,
-        "description": "Tobii Nano. For use with the Tobii Pro SDK."
+        "description": "Tobii Nano. For use with the Tobii Pro SDK.",
+        "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"]
     }
 ]

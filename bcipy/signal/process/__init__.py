@@ -1,10 +1,16 @@
 from bcipy.signal.process.transform import get_default_transform, get_fir_transform, Downsample, Composition
 from bcipy.signal.process.filter import filter_inquiries
+from bcipy.signal.process.transform import (Composition, Downsample,
+                                            ERPTransformParams,
+                                            get_default_transform)
+from bcipy.signal.process.extract_gaze import extract_eye_info
 
 __all__ = [
     "filter_inquiries",
     "get_default_transform",
     "get_fir_transform",
     "Downsample",
-    "Composition"
+    "Composition",
+    "ERPTransformParams",
+    "extract_eye_info"
 ]

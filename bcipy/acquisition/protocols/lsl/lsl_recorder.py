@@ -2,12 +2,13 @@
 import logging
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import Optional, List
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.acquisition.protocols.lsl.lsl_connector import channel_names, check_device
+from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
+                                                           check_device)
 from bcipy.acquisition.util import StoppableThread
 from bcipy.helpers.raw_data import RawDataWriter
 
@@ -24,17 +25,18 @@ class LslRecorder:
     Devices without an entry will use a naming convention.
     """
 
-    def __init__(self, path: str, filenames: dict = None):
+    streams: List['LslRecordingThread'] = None
+
+    def __init__(self, path: str, filenames: Optional[dict] = None) -> None:
         super().__init__()
         self.path = path
-        self.streams = None
         self.filenames = filenames or {}
 
-    def start(self):
+    def start(self) -> None:
         """Start recording all streams currently on the network."""
 
         if not self.streams:
-            log.debug("Recording data")
+            log.info("Recording data")
             # create a thread for each.
             self.streams = [
                 LslRecordingThread(stream, self.path,
@@ -49,7 +51,7 @@ class LslRecorder:
             for stream in self.streams:
                 stream.start()
 
-    def stop(self, wait: bool = False):
+    def stop(self, wait: bool = False) -> None:
         """Stop recording.
 
         Parameters
@@ -75,11 +77,13 @@ class LslRecordingThread(StoppableThread):
         from here.
     """
 
+    writer: RawDataWriter = None
+
     def __init__(self,
                  stream_info: StreamInfo,
                  directory: str,
-                 filename: str = None,
-                 device_spec: DeviceSpec = None):
+                 filename: Optional[str] = None,
+                 device_spec: Optional[DeviceSpec] = None) -> None:
         super().__init__()
         self.stream_info = stream_info
         self.directory = directory
@@ -91,7 +95,6 @@ class LslRecordingThread(StoppableThread):
 
         # seconds to sleep between data pulls from LSL
         self.sleep_seconds = 0.2
-        self.writer = None
 
         self.filename = filename if filename else self.default_filename()
         self.first_sample_time = None
@@ -125,8 +128,8 @@ class LslRecordingThread(StoppableThread):
             check_device(self.device_spec, stream_info)
             channels = self.device_spec.channels
 
-        path = Path(self.directory, self.filename)
-        log.debug(f"Writing data to {path}")
+        path = str(Path(self.directory, self.filename))
+        log.info(f"Writing data to {path}")
         self.writer = RawDataWriter(
             path,
             daq_type=self.stream_info.name(),
@@ -156,7 +159,7 @@ class LslRecordingThread(StoppableThread):
             chunk.append([self.sample_count] + sample + [timestamps[i]])
         self.writer.writerows(chunk)
 
-    def _pull_chunk(self, inlet: StreamInlet) -> Tuple[int, float]:
+    def _pull_chunk(self, inlet: StreamInlet) -> int:
         """Pull a chunk of data and persist. Updates first_sample_time,
         last_sample_time, and sample_count.
 
@@ -172,7 +175,7 @@ class LslRecordingThread(StoppableThread):
         # available.
         data, timestamps = inlet.pull_chunk(timeout=0.0,
                                             max_samples=self.max_chunk_size)
-        if timestamps:
+        if timestamps and data:
             if not self.first_sample_time:
                 self.first_sample_time = timestamps[0]
             self.last_sample_time = timestamps[-1]
@@ -192,11 +195,11 @@ class LslRecordingThread(StoppableThread):
         until the `stop()` method is called.
         """
         # Note that self.stream_info does not have the channel names.
-        inlet = StreamInlet(self.stream_info)
+        inlet = StreamInlet(self.stream_info, max_chunklen=1)
         full_metadata = inlet.info()
 
-        log.debug("Acquiring data from data stream:")
-        log.debug(full_metadata.as_xml())
+        log.info("Acquiring data from data stream:")
+        log.info(full_metadata.as_xml())
 
         self._reset()
         self._init_data_writer(full_metadata)
@@ -211,7 +214,7 @@ class LslRecordingThread(StoppableThread):
             time.sleep(self.sleep_seconds)
 
         # Pull any remaining samples up to the current time.
-        log.debug("Pulling remaining samples")
+        log.info("Pulling remaining samples")
         record_count = self._pull_chunk(inlet)
         while record_count == self.max_chunk_size:
             record_count = self._pull_chunk(inlet)
@@ -220,6 +223,7 @@ class LslRecordingThread(StoppableThread):
         log.info(f"Total recorded seconds: {self.recorded_seconds}")
         log.info(f"Total recorded samples: {self.sample_count}")
         inlet.close_stream()
+        inlet = None
         self._cleanup()
 
 
@@ -243,6 +247,7 @@ def main(path: str, seconds: int = 5, debug: bool = False):
 
 if __name__ == '__main__':
     import argparse
+
     # pylint: disable=invalid-name
     parser = argparse.ArgumentParser()
     parser.add_argument('--path', default='.')

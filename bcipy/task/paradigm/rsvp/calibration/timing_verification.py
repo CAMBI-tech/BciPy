@@ -1,3 +1,4 @@
+# mypy: disable-error-code="method-assign"
 from itertools import cycle
 from bcipy.task import Task
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
@@ -62,7 +63,7 @@ class RSVPTimingVerificationCalibration(Task):
         return (samples, times, colors)
 
     def execute(self):
-        self.logger.debug(f'Starting {self.name()}!')
+        self.logger.info(f'Starting {self.name()}!')
         self._task.execute()
 
     @classmethod

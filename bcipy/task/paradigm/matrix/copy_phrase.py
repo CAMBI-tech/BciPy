@@ -1,9 +1,9 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
 
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.display import Display, InformationProperties, StimuliProperties
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
@@ -23,8 +23,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_model : loaded pickle file,
-            trained signal model.
+        signal_models : list of trained signal models.
         language_model: object,
             trained language model.
         fake : boolean, optional
@@ -37,21 +36,14 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
     TASK_NAME = 'Matrix Copy Phrase Task'
     MODE = 'Matrix'
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the Matrix display"""
         return init_display(self.parameters, self.window,
                             self.experiment_clock, self.spelled_text)
 
 
-def init_display(parameters, win, experiment_clock, starting_spelled_text):
+def init_display(parameters, win, experiment_clock, starting_spelled_text) -> MatrixDisplay:
     """Constructs a new Matrix display"""
-    # preview_inquiry = PreviewInquiryProperties(
-    #     preview_only=parameters['preview_only'],
-    #     preview_inquiry_length=parameters['preview_inquiry_length'],
-    #     preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
-    #     preview_inquiry_progress_method=parameters[
-    #         'preview_inquiry_progress_method'],
-    #     preview_inquiry_isi=parameters['preview_inquiry_isi'])
 
     info = InformationProperties(
         info_color=[parameters['info_color']],
@@ -81,5 +73,8 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
         stimuli,
         task_bar,
         info,
+        rows=parameters['matrix_rows'],
+        columns=parameters['matrix_columns'],
+        width_pct=parameters['matrix_width'],
         trigger_type=parameters['trigger_type'],
         should_prompt_target=False)

@@ -1,29 +1,45 @@
 """Code for constructing and executing registered tasks"""
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import RSVPTimingVerificationCalibration
-
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from typing import List, Optional
+from psychopy import visual
 
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
+from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
+from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from bcipy.task.paradigm.matrix.timing_verification import \
+    MatrixTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
+    RSVPTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.task_registry import TaskType
 
+from bcipy.acquisition import ClientManager
+from bcipy.helpers.parameters import Parameters
+from bcipy.signal.model import SignalModel
+from bcipy.language import LanguageModel
 
-def make_task(display_window, daq, task, parameters, file_save,
-              signal_model=None, language_model=None, fake=True) -> Task:
+
+def make_task(
+        display_window: visual.Window,
+        daq: ClientManager,
+        task: TaskType,
+        parameters: Parameters,
+        file_save: str,
+        signal_models: Optional[List[SignalModel]] = None,
+        language_model: Optional[LanguageModel] = None,
+        fake: bool = True) -> Task:
     """Creates a Task based on the provided parameters.
 
     Parameters:
     -----------
         display_window: psychopy Window
-        daq: DataAcquisitionClient
+        daq: ClientManager - manages one or more acquisition clients
         task: TaskType
         parameters: dict
         file_save: str - path to file in which to save data
-        signal_model
+        signal_models - list of trained models
         language_model - language model
         fake: boolean - true if eeg stream is randomly generated
     Returns:
@@ -38,7 +54,7 @@ def make_task(display_window, daq, task, parameters, file_save,
 
     if task is TaskType.RSVP_COPY_PHRASE:
         return RSVPCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_model,
+            display_window, daq, parameters, file_save, signal_models,
             language_model, fake=fake)
 
     if task is TaskType.RSVP_TIMING_VERIFICATION_CALIBRATION:
@@ -54,15 +70,29 @@ def make_task(display_window, daq, task, parameters, file_save,
 
     if task is TaskType.MATRIX_COPY_PHRASE:
         return MatrixCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_model,
+            display_window, daq, parameters, file_save, signal_models,
             language_model, fake=fake)
     raise TaskRegistryException(
         'The provided experiment type is not registered.')
 
 
-def start_task(display_window, daq, task, parameters, file_save,
-               signal_model=None, language_model=None, fake=True):
+def start_task(
+        display_window: visual.Window,
+        daq: ClientManager,
+        task: TaskType,
+        parameters: Parameters,
+        file_save: str,
+        signal_models: Optional[List[SignalModel]] = None,
+        language_model: Optional[LanguageModel] = None,
+        fake: bool = True) -> str:
     """Creates a Task and starts execution."""
-    task = make_task(display_window, daq, task, parameters, file_save,
-                     signal_model, language_model, fake)
-    task.execute()
+    bcipy_task = make_task(
+        display_window,
+        daq,
+        task,
+        parameters,
+        file_save,
+        signal_models,
+        language_model,
+        fake)
+    return bcipy_task.execute()

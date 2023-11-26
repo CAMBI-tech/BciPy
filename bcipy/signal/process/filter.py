@@ -1,4 +1,4 @@
-from typing import Optional, Tuple
+from typing import Tuple
 
 import numpy as np
 from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt, sosfilt
@@ -13,7 +13,7 @@ class Notch:
         remove_freq_hz = remove_freq_hz / nyq
         self.b, self.a = iirnotch(remove_freq_hz, quality_factor)
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         return filtfilt(self.b, self.a, data), fs
 
 
@@ -25,7 +25,7 @@ class Bandpass:
         lo, hi = lo / nyq, hi / nyq
         self.sos = butter(order, [lo, hi], analog=False, btype="band", output="sos")
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         return sosfiltfilt(self.sos, data), fs
     
 
@@ -66,7 +66,7 @@ class FiniteImpulseResponse:
             phase=self.phase)
 
 
-def filter_inquiries(inquiries, transform, sample_rate) -> Tuple[np.ndarray, float]:
+def filter_inquiries(inquiries: np.ndarray, transform, sample_rate: int) -> Tuple[np.ndarray, int]:
     """Filter Inquiries.
 
     The shape of data after reshaping into inquiries requires a bit of pre-processing to apply the

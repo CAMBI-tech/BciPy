@@ -81,7 +81,7 @@ def main(switch: Switch):
                    background_color='black')
 
     ex.show_gui()
-    result = gui.exec_()
+    result = gui.exec()
     switch.quit()
     sys.exit(result)
 

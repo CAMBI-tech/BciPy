@@ -1,21 +1,22 @@
 from typing import List, Tuple
 
-from psychopy import core
+from psychopy import core, visual
 
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
-                                   TargetPositions,
-                                   calibration_inquiry_generator,
-                                   InquirySchedule)
+from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, InquirySchedule,
+                                   StimuliOrder, TargetPositions,
+                                   generate_calibration_inquiries)
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import TriggerHandler, TriggerType, Trigger, FlushFrequency, convert_timing_triggers
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, convert_timing_triggers)
 from bcipy.task import Task
-from bcipy.helpers.symbols import alphabet
 
 
 class MatrixCalibrationTask(Task):
@@ -81,7 +82,7 @@ class MatrixCalibrationTask(Task):
 
         self.matrix = self.init_display()
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the display"""
         return init_calibration_display_task(self.parameters, self.window,
                                              self.experiment_clock,
@@ -96,14 +97,14 @@ class MatrixCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return calibration_inquiry_generator(
+        return generate_calibration_inquiries(
             self.symbol_set,
-            stim_number=self.stim_number,
-            stim_length=self.stim_length,
+            inquiry_count=self.stim_number,
+            stim_per_inquiry=self.stim_length,
             stim_order=self.stim_order,
             jitter=self.jitter,
             target_positions=self.target_positions,
-            nontarget_inquiries=self.nontarget_inquiries,
+            percentage_without_target=self.nontarget_inquiries,
             timing=self.timing,
             color=self.color)
 
@@ -240,7 +241,10 @@ class MatrixCalibrationTask(Task):
 
 
 def init_calibration_display_task(
-        parameters, window, experiment_clock, symbol_set):
+        parameters: Parameters,
+        window: visual.Window,
+        experiment_clock: Clock,
+        symbol_set: core.StaticPeriod) -> MatrixDisplay:
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'],
@@ -271,5 +275,8 @@ def init_calibration_display_task(
         stimuli,
         task_bar,
         info,
+        rows=parameters['matrix_rows'],
+        columns=parameters['matrix_columns'],
+        width_pct=parameters['matrix_width'],
         trigger_type=parameters['trigger_type'],
         symbol_set=symbol_set)

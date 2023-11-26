@@ -3,13 +3,13 @@ devices."""
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Union
+from typing import Optional, Dict, List, NamedTuple, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
 
-IRREGULAR_RATE = 0.0
+IRREGULAR_RATE: int = 0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH
-_SUPPORTED_DEVICES = {}
+_SUPPORTED_DEVICES: Dict[str, 'DeviceSpec'] = {}
 # see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
 SUPPORTED_DATA_TYPES = [
     'float32', 'double64', 'string', 'int32', 'int16', 'int8'
@@ -72,10 +72,10 @@ class DeviceSpec:
     def __init__(self,
                  name: str,
                  channels: Union[List[str], List[ChannelSpec], List[dict]],
-                 sample_rate: float,
+                 sample_rate: int,
                  content_type: str = DEFAULT_DEVICE_TYPE,
-                 description: str = None,
-                 excluded_from_analysis: List[str] = None,
+                 description: Optional[str] = None,
+                 excluded_from_analysis: Optional[List[str]] = None,
                  data_type='float32'):
 
         assert sample_rate >= 0, "Sample rate can't be negative."
@@ -83,7 +83,7 @@ class DeviceSpec:
 
         self.name = name
         self.channel_specs = [channel_spec(ch) for ch in channels]
-        self.sample_rate = sample_rate
+        self.sample_rate = int(sample_rate)
         self.content_type = content_type
         self.description = description or name
         self.data_type = data_type

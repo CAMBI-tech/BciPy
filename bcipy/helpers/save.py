@@ -1,17 +1,20 @@
+# mypy: disable-error-code="arg-type, misc"
 import errno
 import json
 import os
+import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, List
+from typing import Any, List, Union
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID,
                           DEFAULT_LM_PARAMETERS_FILENAME,
                           DEFAULT_LM_PARAMETERS_PATH,
-                          DEFAULT_PARAMETER_FILENAME)
+                          DEFAULT_PARAMETER_FILENAME, SIGNAL_MODEL_FILE_SUFFIX)
 from bcipy.helpers.validate import validate_experiments
+from bcipy.signal.model.base_model import SignalModel
 
 
 def save_json_data(data: Any, location: str, name: str) -> str:
@@ -105,12 +108,12 @@ def save_device_specs(device_specs: List[DeviceSpec], location: str,
                           name)
 
 
-def _save_session_related_data(file, session_dictionary):
+def _save_session_related_data(save_path: str, session_dictionary: dict) -> Any:
     """
     Save Session Related Data.
     Parameters
     ----------
-        file[str]: string of path to save our data in
+        save_path[str]: string of path to save our data in
         session_dictionary[dict]: dictionary of session data. It will appear
             as follows:
                 {{ "series": {
@@ -142,10 +145,27 @@ def _save_session_related_data(file, session_dictionary):
     """
     # Try opening as json, if not able to use open() to create first
     try:
-        file = json.load(file, 'wt')
+        file = json.load(save_path, 'wt')
     except BaseException:
-        file = open(file, 'wt', encoding=DEFAULT_ENCODING)
+        file = open(save_path, 'wt', encoding=DEFAULT_ENCODING)
 
     # Use the file to dump data to
     json.dump(session_dictionary, file, indent=2)
     return file
+
+
+def save_model(model: SignalModel, path: Union[Path, str]):
+    """Save model weights (e.g. after training) to `path`
+
+    Parameters
+    ----------
+        model - SignalModel to serialize
+        path - path to the file which will be created. If the path does not
+            have the SIGNAL_MODEL_FILE_SUFFIX then that will be appended.
+    """
+    path = Path(path).with_suffix(SIGNAL_MODEL_FILE_SUFFIX)
+    with open(path, "wb") as file:
+        # Protocol 4 is the default in Python 3.8, but supported as low as 3.4.
+        # It supports very large objects and some data format optimizations
+        # making it appropriate for signal models.
+        pickle.dump(model, file, protocol=4)

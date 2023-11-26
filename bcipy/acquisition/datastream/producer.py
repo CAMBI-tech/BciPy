@@ -105,16 +105,16 @@ class _ConsumerThread(threading.Thread):
         while True:
             if not self._q.empty():
                 item = self._q.get()
-                log.debug('Getting %s: %s items in queue',
-                          str(item), str(self._q.qsize()))
+                log.info('Getting %s: %s items in queue',
+                         str(item), str(self._q.qsize()))
                 time.sleep(random.random())
 
 
 def main():
     """Main method"""
-    data_queue = Queue()
-    producer = Producer(data_queue)
-    consumer = _ConsumerThread(data_queue)
+    data_queue: Queue = Queue()
+    producer: Producer = Producer(data_queue)
+    consumer: _ConsumerThread = _ConsumerThread(data_queue)
 
     producer.start()
     consumer.start()
