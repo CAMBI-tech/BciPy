@@ -1,3 +1,5 @@
+# bcipy + pip install pyriemann
+
 from sklearn.model_selection import GridSearchCV, PredefinedSplit
 import numpy as np
 import pandas as pd
@@ -11,7 +13,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score, matthews_corrcoef
 from sklearn.svm import SVC
 
-from pyriemann.estimation import ERPCovariances
+from pyriemann.estimation import ERPCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 from pyriemann.spatialfilters import Xdawn
 from sklearn.dummy import DummyClassifier
@@ -28,12 +30,12 @@ k_folds = 10
 mcc = make_scorer(matthews_corrcoef)
 
 scores = {
-    'accuracy': 'accuracy',
-    'precision': 'precision',
-    'recall': 'recall',
-    'f1': 'f1',
+    # 'accuracy': 'accuracy',
+    # 'precision': 'precision',
+    # 'recall': 'recall',
+    # 'f1': 'f1',
     # 'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    'roc_auc': 'roc_auc',
+    # 'roc_auc': 'roc_auc',
     'balanced_accuracy': 'balanced_accuracy',
     'mcc': mcc,
 }
@@ -50,12 +52,12 @@ clfs = {
         make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=41, alpha=54.5982)),
         {},
     ),
-    'SVM': (
-        make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=40, gamma=0.00001, C=54.5982)),
-        {},
-    ),
-    'Xdawn LDA': (
-        make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
+    # 'SVM': (
+    #     make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=40, gamma=0.00001, C=54.5982)),
+    #     {},
+    # ),
+    'TSP SVM': (
+        make_pipeline(Covariances("oas"), TangentSpace(metric="riemann"), SVC(kernel="linear")),
         {},
     ),
     # 'ERPCov TS LR': (
