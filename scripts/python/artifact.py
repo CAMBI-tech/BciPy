@@ -18,7 +18,7 @@ from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
 
-ARTIFACT_LABELLED_FILENAME = 'artifacts_raw.fif'
+ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
 
 def artifact_rejection(
         path: str,
@@ -445,4 +445,4 @@ if __name__ == "__main__":
                             overwrite=True)
                 else:
                     print(f'Skipping {session}')
-            import pdb; pdb.set_trace() # comment out to continue without stopping between sessions
+            # import pdb; pdb.set_trace() # comment out to continue without stopping between sessions

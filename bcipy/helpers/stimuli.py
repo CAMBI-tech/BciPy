@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Iterator, List, Tuple, NamedTuple, Optional, Union
+from typing import Any, Iterator, List, Dict, Tuple, NamedTuple, Optional, Union
 
 import mne
 import numpy as np
