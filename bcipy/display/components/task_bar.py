@@ -1,9 +1,10 @@
 """Task bar component"""
 
-from typing import Dict, List
+from typing import Optional, Dict, List
+
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim
-from psychopy.visual.line import Line
+
 import bcipy.display.components.layout as layout
 
 
@@ -22,16 +23,16 @@ class TaskBar:
 
     def __init__(self,
                  win: visual.Window,
-                 colors: List[str] = None,
+                 colors: Optional[List[str]] = None,
                  font: str = 'Courier New',
                  height: float = 0.1,
                  text: str = ''):
+        self.win = win
         self.colors = colors or ['white']
         self.font = font
         self.height = height
         self.text = text
-        self.layout = layout.at_top(layout.WindowContainer(win),
-                                    self.compute_height())
+        self.layout = layout.at_top(win, self.compute_height())
         self.stim = self.init_stim()
 
     def compute_height(self):
@@ -53,13 +54,14 @@ class TaskBar:
         """Update the task bar to display the given text."""
         self.stim['task_text'].text = text
 
-    def border_stim(self) -> Line:
+    def border_stim(self) -> visual.Line:
         """Create the task bar outline"""
-        return visual.line.Line(win=self.layout.win,
-                                units=self.layout.units,
-                                start=(self.layout.left, self.layout.bottom),
-                                end=(self.layout.right, self.layout.bottom),
-                                lineColor=self.colors[0])
+        return visual.Line(
+            win=self.win,
+            units=self.layout.units,
+            start=(self.layout.left, self.layout.bottom),
+            end=(self.layout.right, self.layout.bottom),
+            lineColor=self.colors[0])
 
     def text_stim(self, **kwargs) -> visual.TextStim:
         """Constructs a TextStim. Uses the config to set default properties
@@ -72,7 +74,7 @@ class TaskBar:
     def default_text_props(self) -> dict:
         """Default properties for constructing a TextStim."""
         return {
-            'win': self.layout.win,
+            'win': self.win,
             'text': self.text,
             'pos': self.layout.center,
             'units': self.layout.units,

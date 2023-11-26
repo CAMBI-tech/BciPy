@@ -1,7 +1,8 @@
-from typing import Optional, Tuple
+from typing import NamedTuple, Tuple
 
 import numpy as np
-from bcipy.signal.process.filter import Notch, Bandpass
+
+from bcipy.signal.process.filter import Bandpass, Notch
 
 
 class Composition:
@@ -10,7 +11,7 @@ class Composition:
     def __init__(self, *transforms):
         self.transforms = transforms
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         for transform in self.transforms:
             data, fs = transform(data, fs)
         return data, fs
@@ -52,14 +53,28 @@ class ChannellwiseScaler:
 class Downsample:
     """Downsampling by an integer factor"""
 
-    def __init__(self, factor: int = 2):
+    def __init__(self, factor: int = 2, *args, **kwargs):
         self.factor = factor
 
-    def __call__(self, data: np.ndarray, fs: Optional[int] = None) -> Tuple[np.ndarray, int]:
-        if fs:
-            return data[:, :: self.factor], fs // self.factor
-        else:
-            return data[:, :: self.factor], None
+    def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
+        return data[:, :: self.factor], fs // self.factor
+
+
+class ERPTransformParams(NamedTuple):
+    """Parameters used for the default transform."""
+    notch_filter_frequency: int = 60
+    filter_low: int = 2
+    filter_high: int = 45
+    filter_order: int = 2
+    down_sampling_rate: int = 2
+
+    def __str__(self):
+        return ' '.join([
+            f"Filter: [{self.filter_low}-{self.filter_high}] Hz \n"
+            f"Order: {self.filter_order} \n",
+            f"Notch: {self.notch_filter_frequency} Hz \n",
+            f"Downsample: {self.down_sampling_rate} \n"
+        ])
 
 
 def get_default_transform(

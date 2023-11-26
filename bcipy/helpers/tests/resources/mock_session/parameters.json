@@ -74,13 +74,17 @@
     "recommended_values": "[10]",
     "type": "int"
   },
-  "trial_length": {
-    "value": "0.5",
+  "trial_window": {
+    "value": "0.0:0.5",
     "section": "bci_config",
-    "readableName": "Data Collection Window Length",
-    "helpTip": "Specifies the length (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.5",
-    "recommended_values": "",
-    "type": "float"
+    "readableName": "Trial Classification Window Length",
+    "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
+    "recommended_values": [
+      "0.0:0.5",
+      "0.0:0.8",
+      "0.2:0.8"
+    ],
+    "type": "range"
   },
   "prestim_length": {
     "value": "1",

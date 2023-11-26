@@ -13,19 +13,16 @@ To use at bcipy root,
     - - `python bcipy/helpers/demo/demo_visualization.py --save"`
         this will save the visualizations generated to the provided or selected path
 """
-from bcipy.config import (TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME,
-                          RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME)
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.signal.process import get_default_transform
-from bcipy.helpers.load import (
-    load_experimental_data,
-    load_json_parameters,
-    load_raw_data,
-)
-from bcipy.helpers.visualization import visualize_erp
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
-
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
+                                load_raw_data)
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.visualization import visualize_erp
+from bcipy.signal.process import get_default_transform
 
 if __name__ == '__main__':
     import argparse
@@ -50,7 +47,7 @@ if __name__ == '__main__':
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
-    poststim_length = parameters.get("trial_length")
+    trial_window = parameters.get("trial_window")
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
@@ -96,7 +93,7 @@ if __name__ == '__main__':
         channel_map,
         trigger_timing,
         labels,
-        poststim_length,
+        trial_window,
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,

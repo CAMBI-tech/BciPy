@@ -1,6 +1,7 @@
 """Functionality for reading and writing raw signal data."""
 import csv
-from typing import List, Optional, TextIO, Tuple
+from io import TextIOWrapper
+from typing import List, Optional, TextIO, Tuple, Union, Any
 
 import numpy as np
 import pandas as pd
@@ -17,18 +18,13 @@ class RawData:
     """Represents the raw data format used by BciPy. Used primarily for loading
     a raw data file into memory."""
 
-    def __init__(self,
-                 daq_type: Optional[str] = None,
-                 sample_rate: Optional[int] = None,
-                 columns: Optional[List[str]] = None,
-                 column_types: Optional[List[str]] = None):
+    def __init__(self, daq_type: str, sample_rate: int, columns: List[str]) -> None:
         self.daq_type = daq_type
         self.sample_rate = sample_rate
-        self.columns = columns or []
-        # accept a custom column type definition or default to all eeg type
-        self.column_types = column_types
-        self._rows = []
-        self._dataframe = None
+        self.columns = columns
+
+        self._dataframe: Optional[pd.DataFrame] = None
+        self._rows: List[Any] = []
 
     @classmethod
     def load(cls, filename: str):
@@ -48,7 +44,7 @@ class RawData:
         return self._rows
 
     @rows.setter
-    def rows(self, value):
+    def rows(self, value: Any) -> None:
         self._rows = value
         self._dataframe = None
 
@@ -67,7 +63,7 @@ class RawData:
         return self.dataframe.select_dtypes(exclude=['object'])
 
     @property
-    def channel_data(self):
+    def channel_data(self) -> np.ndarray:
         """Data for columns with numeric data, excluding the timestamp column."""
         numeric_data = self.numeric_data
 
@@ -76,7 +72,7 @@ class RawData:
         # Start data slice at 1 to remove the timestamp column.
         return numeric_vals[:, 1:numeric_column_count].transpose()
 
-    def by_channel(self, transform: Optional[Composition] = None) -> np.ndarray:
+    def by_channel(self, transform: Optional[Composition] = None) -> Tuple[np.ndarray, int]:
         """Data organized by channel.
 
         Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
@@ -100,7 +96,7 @@ class RawData:
     def by_channel_map(
             self,
             channel_map: List[int],
-            transform: Optional[Composition] = None) -> Tuple[np.ndarray, List[str], List[str]]:
+            transform: Optional[Composition] = None) -> Tuple[np.ndarray, List[str], int]:
         """By Channel Map.
 
         Returns channels with columns removed if index in list (channel_map) is zero. The channel map must align
@@ -115,11 +111,11 @@ class RawData:
         data, fs = self.by_channel(transform)
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
         data = np.delete(data, channels_to_remove, axis=0)
-        channels = np.delete(self.channels, channels_to_remove, axis=0).tolist()
+        channels: List[str] = np.delete(self.channels, channels_to_remove, axis=0).tolist()
 
         return data, channels, fs
 
-    def apply_transform(self, data: np.ndarray, transform: Composition) -> Tuple[np.ndarray, float]:
+    def apply_transform(self, data: np.ndarray, transform: Composition) -> Tuple[np.ndarray, int]:
         """Apply Transform.
 
         Using data provided as an np.ndarray, call the Composition with self.sample_rate to apply
@@ -170,7 +166,7 @@ class RawData:
         mask = (dataframe[column] >= start) & (dataframe[column] <= stop)
         return dataframe[mask]
 
-    def append(self, row: List):
+    def append(self, row: list) -> None:
         """Append the given row of data.
 
         Parameters
@@ -181,8 +177,14 @@ class RawData:
         self._rows.append(row)
         self._dataframe = None
 
+    def __str__(self) -> str:
+        return f"RawData({self.daq_type})"
 
-def maybe_float(val):
+    def __repr__(self) -> str:
+        return f"RawData({self.daq_type})"
+
+
+def maybe_float(val: Any) -> Union[float, Any]:
     """Attempt to convert the given value to float. If conversion fails return
     as is."""
     try:
@@ -211,10 +213,10 @@ class RawDataReader:
     - convert_data : if True attempts to convert data values to floats;
     default is False
     """
+    _file_obj: TextIOWrapper
 
     def __init__(self, file_path: str, convert_data: bool = False):
         self.file_path = file_path
-        self._file_obj = None
         self.convert_data = convert_data
 
     def __enter__(self):
@@ -226,7 +228,8 @@ class RawDataReader:
 
     def __exit__(self, *args, **kwargs):
         """Exit the context manager. Close resources"""
-        self._file_obj.close()
+        if self._file_obj:
+            self._file_obj.close()
 
     def __iter__(self):
         return self
@@ -259,14 +262,14 @@ class RawDataWriter:
     - sample_rate : sample frequency in Hz
     - columns : list of column names
     """
+    _file_obj: TextIOWrapper
 
     def __init__(self, file_path: str, daq_type: str, sample_rate: float,
-                 columns: List[str]):
+                 columns: List[str]) -> None:
         self.file_path = file_path
         self.daq_type = daq_type
         self.sample_rate = sample_rate
         self.columns = columns
-        self._file_obj = None
 
     def __enter__(self):
         """Enter the context manager. Initializes the underlying data file."""
@@ -322,7 +325,7 @@ def load(filename: str) -> RawData:
         raise BciPyCoreException(f"\nError loading BciPy RawData. Valid data not found at: {filename}")
 
 
-def read_metadata(file_obj: TextIO) -> Tuple[str, float]:
+def read_metadata(file_obj: TextIO) -> Tuple[str, int]:
     """Reads the metadata from an open raw data file and retuns the result as
     a tuple. Increments the reader.
 
@@ -335,7 +338,7 @@ def read_metadata(file_obj: TextIO) -> Tuple[str, float]:
     tuple of daq_type, sample_rate
     """
     daq_type = next(file_obj).strip().split(',')[1]
-    sample_rate = float(next(file_obj).strip().split(",")[1])
+    sample_rate = int(float(next(file_obj).strip().split(",")[1]))
     return daq_type, sample_rate
 
 
@@ -372,7 +375,7 @@ def settings(filename: str) -> Tuple[str, float, List[str]]:
 def sample_data(rows: int = 1000,
                 ch_names: List[str] = ['ch1', 'ch2', 'ch3'],
                 daq_type: str = 'SampleDevice',
-                sample_rate: float = 256.0,
+                sample_rate: int = 256,
                 triggers: List[Tuple[float, str]] = []) -> RawData:
     """Creates sample data to be written as a raw_data.csv file. The resulting data has
     a column for the timestamp, one for each channel, and a TRG column.

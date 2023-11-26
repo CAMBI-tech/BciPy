@@ -1,3 +1,4 @@
+# mypy: disable-error-code="import-untyped"
 """Utilities for system information and general functionality that may be
 shared across modules."""
 import importlib
@@ -8,13 +9,14 @@ import platform
 import socket
 import sys
 import time
-import torch
+from enum import Enum
 from pathlib import Path
-from typing import Callable, List, Optional, NamedTuple
+from typing import Callable, List, NamedTuple, Optional
 
 import pkg_resources
 import psutil
 import pyglet
+import torch
 from cpuinfo import get_cpu_info
 
 from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
@@ -73,7 +75,7 @@ def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
     return refresh < 120
 
 
-def git_dir() -> str:
+def git_dir() -> Optional[str]:
     """Git Directory.
 
     Returns the root directory with the .git folder. If this source code
@@ -126,7 +128,7 @@ def bcipy_version() -> str:
     Gets the current bcipy version. If the current instance of bcipy is a
     git repository, appends the current abbreviated sha hash.
     """
-    version = pkg_resources.get_distribution('bcipy').version
+    version: str = pkg_resources.get_distribution('bcipy').version
     sha_hash = git_hash()
 
     return f'{version} - {sha_hash}' if sha_hash else version
@@ -150,7 +152,7 @@ def get_gpu_info() -> List[dict]:
     """Information about GPUs available for processing."""
     properties = []
     for idx in range(torch.cuda.device_count()):
-        prop = torch.get_device_properties(idx)
+        prop = torch.cuda.get_device_properties(idx)
         properties.append(dict(name=prop.name, total_memory=prop.total_memory))
     return properties
 
@@ -168,6 +170,7 @@ def get_system_info() -> dict:
     screen_info = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
+
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -181,7 +184,6 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
-        'cpu_hz': info['hz_actual_friendly'],
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
@@ -193,7 +195,7 @@ def get_system_info() -> dict:
 def configure_logger(
         save_folder: str,
         log_name=LOG_FILENAME,
-        log_level=logging.DEBUG,
+        log_level=logging.INFO,
         version=None) -> None:
     """Configure Logger.
 
@@ -305,3 +307,17 @@ def report_execution_time(func: Callable) -> Callable:
         log.info('{:s} method took {:0.4f}s to execute'.format(func.__name__, (time2 - time1)))
         return response
     return wrap
+
+
+class AutoNumberEnum(Enum):
+    """Enum that auto-numbers the value for each item.
+
+    See: https://docs.python.org/3/howto/enum.html
+    """
+
+    def __new__(cls, *args):
+        """Autoincrements the value of each item added to the enum."""
+        value = len(cls.__members__) + 1
+        obj = object.__new__(cls)
+        obj._value_ = value
+        return obj

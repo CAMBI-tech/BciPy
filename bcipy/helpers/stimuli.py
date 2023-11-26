@@ -1,33 +1,35 @@
+# mypy: disable-error-code="arg-type"
 import glob
 import itertools
 import logging
 import random
 import re
-
 from abc import ABC, abstractmethod
+from collections import Counter
 from enum import Enum
 from os import path, sep
 from typing import Iterator, List, Tuple, NamedTuple, Optional, Union
 
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.list import grouper
-
-from PIL import Image
-# Prevents pillow from filling the console with debug info
-logging.getLogger('PIL').setLevel(logging.WARNING)
-
-from psychopy import core
+import mne
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+
 from mne import Annotations, Epochs
 from mne.io import RawArray
-import mne
+from pandas import Series
+from PIL import Image
+from psychopy import core
 
+from bcipy.config import DEFAULT_TEXT_FIXATION, DEFAULT_FIXATION_PATH
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.list import grouper
 
+# Prevents pillow from filling the console with debug info
+logging.getLogger('PIL').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
-DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
-DEFAULT_TEXT_FIXATION = '+'
+
+NO_TARGET_INDEX = None
 
 
 class StimuliOrder(Enum):
@@ -83,15 +85,15 @@ class InquirySchedule(NamedTuple):
     - durations: `List[List[float]]`
     - colors: `List[List[str]]`
     """
-    stimuli: List[List[str]]
-    durations: List[List[float]]
-    colors: List[List[str]]
+    stimuli: Union[List[List[str]], List[str]]
+    durations: Union[List[List[float]], List[float]]
+    colors: Union[List[List[str]], List[str]]
 
 
 class Reshaper(ABC):
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self, *args, **kwargs) -> Any:
         ...
 
 
@@ -103,11 +105,11 @@ class InquiryReshaper:
                  sample_rate: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray, List[List[float]]]:
         """Extract inquiry data and labels.
 
         Args:
@@ -127,7 +129,7 @@ class InquiryReshaper:
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                a label of [0, K-1] indicates the position of `target_label`, or label of [0 ... 0] indicates
                 `target_label` was not present.
             reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
                 begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
@@ -155,7 +157,7 @@ class InquiryReshaper:
 
         # Label for every inquiry
         labels = np.zeros(
-            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
+            (n_inquiry, trials_per_inquiry), dtype=np.longlong
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
@@ -182,7 +184,7 @@ class InquiryReshaper:
     def extract_trials(
             inquiries: np.ndarray,
             samples_per_trial: int,
-            inquiry_timing: List[List[float]],
+            inquiry_timing: List[List[int]],
             prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
@@ -197,7 +199,7 @@ class InquiryReshaper:
             shape (Channels, Inquiries, Samples)
         samples_per_trial : int
             number of samples per trial
-        inquiry_timing : List[List[float]]
+        inquiry_timing : List[List[int]]
             For each inquiry, a list of the sample index where each trial begins
         prestimulus_samples : int, optional
             Number of samples to move the start of each trial in each inquiry, by default 0.
@@ -219,12 +221,117 @@ class InquiryReshaper:
 
                 try:
                     new_trials.append(inquiries[:, inquiry_idx, start:end])
-                except IndexError:
+                except IndexError:  # pragma: no cover
                     raise BciPyCoreException(
                         f'InquiryReshaper.extract_trials: index out of bounds. \n'
                         f'Inquiry: [{inquiry_idx}] from {start}:{end}. init_time: {time}, '
                         f'prestimulus_samples: {prestimulus_samples}, samples_per_trial: {samples_per_trial} \n')
         return np.stack(new_trials, 1)  # C x T x S
+
+
+class GazeReshaper:
+    def __call__(self,
+                 inq_start_times: List[float],
+                 target_symbols: List[str],
+                 gaze_data: np.ndarray,
+                 sample_rate: int,
+                 symbol_set: List[str],
+                 channel_map: Optional[List[int]] = None,
+                 ) -> dict:
+        """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
+        the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
+        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
+        the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
+        Optional outputs:
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended
+        in chronological order. labels returns the list of target symbols in each inquiry.
+
+        Args:
+            inq_start_times (List[float]): Timestamp of each event in seconds
+            target_symbols (List[str]): Prompted symbol in each inquiry
+            gaze_data (np.ndarray): shape (channels, samples) eye tracking data
+            sample_rate (int): sample rate of data provided in eeg_data
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
+
+        Returns:
+            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
+            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
+
+            reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
+            labels (List[str]) [optional] : Target symbol in each inquiry.
+        """
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
+
+        # Find the value closest to (& greater than) inq_start_times
+        gaze_data_timing = gaze_data[-1, :].tolist()
+
+        start_times = []
+        for times in inq_start_times:
+            temp = list(filter(lambda x: x > times, gaze_data_timing))
+            if len(temp) > 0:
+                start_times.append(temp[0])
+
+        triggers = []
+        for val in start_times:
+            triggers.append(gaze_data_timing.index(val))
+
+        # Label for every inquiry
+        labels = target_symbols
+
+        # Create a dictionary with symbols as keys and data as values
+        # 'A': [], 'B': [] ...
+        data_by_targets: Dict[str, list] = {}
+        for symbol in symbol_set:
+            data_by_targets[symbol] = []
+
+        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+
+        reshaped_data = []
+        # Merge the inquiries if they have the same target letter:
+        for i, inquiry_index in enumerate(triggers):
+            start = inquiry_index
+            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
+            # Check if the data exists for the inquiry:
+            if stop > len(gaze_data[0, :]):
+                continue
+
+            reshaped_data.append(gaze_data[:, start:stop])
+            # (Optional) extracted data (Inquiries x Channels x Samples)
+
+            # Populate the dict by appending the inquiry to the correct key:
+            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+
+        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
+        for symbol in symbol_set:
+            if len(data_by_targets[symbol]) > 0:
+                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
+                data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
+
+            # Note that this is a workaround to the issue of having different number of targetness in
+            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
+            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
+            # This is not ideal, but it works for now.
+
+        # return np.stack(reshaped_data, 0), labels
+        return data_by_targets
+
+    @staticmethod
+    def centralize_all_data(data, symbol_pos):
+        """ Using the symbol locations in matrix, centralize all data (in Tobii units).
+        This data will only be used in certain model types.
+        Args:
+            data (np.ndarray): Data in shape of num_channels x num_samples
+            symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
+        Returns:
+            data (np.ndarray): Centralized data in shape of num_channels x num_samples
+        """
+        for i in range(len(data)):
+            data[i] = data[i] - symbol_pos
+        return data
 
 
 class TrialReshaper(Reshaper):
@@ -234,7 +341,7 @@ class TrialReshaper(Reshaper):
                  eeg_data: np.ndarray,
                  sample_rate: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
@@ -272,7 +379,7 @@ class TrialReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
-        targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
+        targetness_labels = np.zeros(len(triggers), dtype=np.longlong)
         reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
             if trial_label == target_label:
@@ -400,7 +507,7 @@ def inq_generator(query: List[str],
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
-                   always_included: List[str] = None) -> list:
+                   always_included: Optional[List[str]] = None) -> list:
     """Best Selection.
 
     Given set of elements and a value function over the set, picks the len_query
@@ -441,7 +548,7 @@ def best_case_rsvp_inq_gen(alp: list,
                            stim_length: int = 10,
                            stim_order: StimuliOrder = StimuliOrder.RANDOM,
                            is_txt: bool = True,
-                           inq_constants: List[str] = None) -> InquirySchedule:
+                           inq_constants: Optional[List[str]] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
     Generates RSVPKeyboard inquiry by picking n-most likely letters.
@@ -455,8 +562,8 @@ def best_case_rsvp_inq_gen(alp: list,
         color(list[str]): Task specific color for generator
             First element is the target, second element is the fixation
             Observe that [-1] element represents the trial information
-        stim_number(int): number of random stimuli to be created
-        stim_length(int): number of trials in a inquiry
+        inquiry_count(int): number of random stimuli to be created
+        stim_per_inquiry(int): number of trials in a inquiry
         stim_order(StimuliOrder): ordering of stimuli in the inquiry
         inq_constants(list[str]): list of letters that should always be
             included in every inquiry. If provided, must be alp items.
@@ -509,20 +616,26 @@ def best_case_rsvp_inq_gen(alp: list,
     return InquirySchedule(samples, times, colors)
 
 
-def calibration_inquiry_generator(
+def generate_calibration_inquiries(
         alp: List[str],
-        timing: List[float] = [0.5, 1, 0.2],
+        timing: Optional[List[float]] = None,
         jitter: Optional[int] = None,
-        color: List[str] = ['green', 'red', 'white'],
-        stim_number: int = 10,
-        stim_length: int = 10,
+        color: Optional[List[str]] = None,
+        inquiry_count: int = 100,
+        stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
         target_positions: TargetPositions = TargetPositions.RANDOM,
-        nontarget_inquiries: int = 10,
+        percentage_without_target: int = 0,
         is_txt: bool = True) -> InquirySchedule:
-    """Calibration Inquiry Generator.
-
+    """
     Generates inquiries with target letters in all possible positions.
+
+    This function attempts to display all symbols as targets an equal number of
+    times when stim_order is RANDOM. When the stim_order is ALPHABETICAL there
+    is much more variation in the counts (target distribution takes priority)
+    and some symbols may not appear as targets depending on the inquiry_count.
+    The frequency that each symbol is displayed as a nontarget should follow a
+    uniform distribution.
 
     Parameters
     ----------
@@ -532,12 +645,12 @@ def calibration_inquiry_generator(
         jitter(int): jitter for stimuli timing. If None, no jitter is applied.
         color(list[str]): Task specific color for generator
             [target, fixation, stimuli]
-        stim_number(int): number of trials in a inquiry
-        stim_length(int): number of random stimuli to be created
+        inquiry_count(int): number of inquiries in a calibration
+        stim_per_inquiry(int): number of stimuli in each inquiry
         stim_order(StimuliOrder): ordering of stimuli in the inquiry
         target_positions(TargetPositions): positioning of targets to select for the inquiries
-        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
-        is_txt(bool): whether or not the stimuli type is text. False would be an image stimuli.
+        percentage_without_target(int): percentage of inquiries for which target letter flashed is not in inquiry
+        is_txt(bool): whether the stimuli type is text. False would be an image stimuli.
 
     Return
     ------
@@ -546,95 +659,292 @@ def calibration_inquiry_generator(
             timing(list[list[float]]): list of timings
             color(list(list[str])): list of colors)): scheduled inquiries
     """
-    assert len(timing) == 3, "timing must include values for [target, fixation, stimuli]"
-    target_indexes = []
-    no_target = None
+    if timing is None:
+        timing = [0.5, 1, 0.2]
+    if color is None:
+        color = ['green', 'red', 'white']
+    assert len(
+        timing
+    ) == 3, "timing must include values for [target, fixation, stimuli]"
+    time_target, time_fixation, time_stim = timing
+    fixation = get_fixation(is_txt)
 
-    if (target_positions == target_positions.DISTRIBUTED):
-        target_indexes = distributed_target_positions(stim_number, stim_length, nontarget_inquiries)
+    target_indexes = generate_target_positions(inquiry_count, stim_per_inquiry,
+                                               percentage_without_target,
+                                               target_positions)
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        targets = None
     else:
-        # make list of random targets with correct number of non-target inquiries
-        num_nontarget_inquiry = int((nontarget_inquiries / 100) * stim_number)
-        num_target_inquiry = stim_number - num_nontarget_inquiry
-        target_indexes = [no_target] * num_nontarget_inquiry
-        target_indexes.extend(random.choices(range(stim_length), k=num_target_inquiry))
-        random.shuffle(target_indexes)
+        targets = generate_targets(alp, inquiry_count,
+                                   percentage_without_target)
+    inquiries = generate_inquiries(alp, inquiry_count, stim_per_inquiry,
+                                   stim_order)
+    samples = []
+    target = None
+    for i in range(inquiry_count):
+        inquiry = inquiries[i]
+        target_pos = target_indexes[i]
+        target = inquiry_target(inquiry,
+                                target_pos,
+                                symbols=alp,
+                                next_targets=targets,
+                                last_target=target)
+        samples.append([target, fixation, *inquiry])
 
-    samples, times, colors = [], [], []
+    times = [[
+        time_target, time_fixation,
+        *generate_inquiry_stim_timing(time_stim, stim_per_inquiry, jitter)
+    ] for _ in range(inquiry_count)]
 
-    for i in range(stim_number):
-        inquiry = random.sample(alp, k=stim_length)
-
-        if stim_order == StimuliOrder.ALPHABETICAL:
-            inquiry = alphabetize(inquiry)
-
-        target_index = target_indexes[i]
-        if target_index is no_target:
-            target = random.choice(list(set(alp) - set(inquiry)))
-        else:
-            target = inquiry[target_index]
-
-        sample = [target, get_fixation(is_txt=is_txt), *inquiry]
-
-        samples.append(sample)
-
-        # timing for fixation and prompt
-        init_timing = [timing[i] for i in range(len(timing) - 1)]
-        # pull out timing for the inquiry stimuli
-        stim_time = timing[-1]
-        if jitter:
-            _inq_timing = jittered_timing(stim_time, jitter, stim_length)
-            inq_timing = init_timing + _inq_timing
-        else:
-            inq_timing = init_timing + [stim_time] * stim_length
-        times.append(inq_timing)
-        colors.append([color[i] for i in range(len(color) - 1)] +
-                      [color[-1]] * stim_length)
+    inquiry_colors = color[0:2] + [color[-1]] * stim_per_inquiry
+    colors = [inquiry_colors for _ in range(inquiry_count)]
 
     return InquirySchedule(samples, times, colors)
 
 
-def jittered_timing(time: float, jitter: float, stim_count: int) -> List[float]:
+def inquiry_target_counts(inquiries: List[List[str]],
+                          symbols: List[str]) -> dict:
+    """Count the number of times each symbol was presented as a target.
+
+    Args:
+        inquiries - list of inquiries where each inquiry is structured as
+            [target, fixation, *stim]
+        symbols - list of all possible symbols
+    """
+    target_presentations = [inq[0] for inq in inquiries if inq[0] in inq[2:]]
+    counter = dict.fromkeys(symbols, 0)
+    for target in target_presentations:
+        counter[target] += 1
+    return counter
+
+
+def inquiry_nontarget_counts(inquiries: List[List[str]],
+                             symbols: List[str]) -> dict:
+    """Count the number of times each symbol was presented as a nontarget."""
+    counter = dict.fromkeys(symbols, 0)
+    for inq in inquiries:
+        target, _fixation, *stimuli = inq
+        for stim in stimuli:
+            if stim != target:
+                counter[stim] += 1
+    return counter
+
+
+def inquiry_stats(inquiries: List[List[str]],
+                  symbols: List[str]) -> Dict[str, Dict[str, float]]:
+    """Descriptive stats for the number of times each target and nontarget
+    symbol is shown in the inquiries"""
+
+    target_stats = dict(
+        Series(Counter(inquiry_target_counts(inquiries, symbols))).describe())
+
+    nontarget_stats = dict(
+        Series(Counter(inquiry_nontarget_counts(inquiries,
+                                                symbols))).describe())
+
+    return {
+        'target_symbols': target_stats,
+        'nontarget_symbols': nontarget_stats
+    }
+
+
+def generate_inquiries(symbols: List[str], inquiry_count: int,
+                       stim_per_inquiry: int,
+                       stim_order: StimuliOrder) -> List[List[str]]:
+    """Generate a list of inquiries. For each inquiry no symbols are repeated.
+    Inquiries do not include the target or fixation. Symbols should be
+    distributed uniformly across inquiries.
+
+    Args:
+
+        symbols - values from which to select
+        inquiry_count - total number of inquiries to generate
+        stim_per_inquiry - length of each inquiry
+        stim_order - ordering of results
+    """
+    return [
+        generate_inquiry(symbols=symbols,
+                         length=stim_per_inquiry,
+                         stim_order=stim_order) for _ in range(inquiry_count)
+    ]
+
+
+def generate_inquiry(symbols: List[str], length: int,
+                     stim_order: StimuliOrder) -> List[str]:
+    """Generate an inquiry from the list of symbols. No symbols are repeated
+    in the output list. Output does not include the target or fixation.
+
+    Args:
+        symbols - values from which to select
+        length - number of items in the return list
+        stim_order - ordering of results
+    """
+    inquiry = random.sample(symbols, k=length)
+    if stim_order == StimuliOrder.ALPHABETICAL:
+        inquiry = alphabetize(inquiry)
+    return inquiry
+
+
+def inquiry_target(inquiry: List[str],
+                   target_position: Optional[int],
+                   symbols: List[str],
+                   next_targets: Optional[List[str]] = None,
+                   last_target: Optional[str] = None) -> str:
+    """Returns the target for the given inquiry. If the optional
+    target position is not provided a target will randomly be selected from
+    the list of symbols and will not be in the inquiry.
+
+    Args:
+        inquiry - list of symbols to be presented
+        target_position - optional position within the list of the target sym
+        symbols - used if position is not provided to select a random symbol
+            as the target.
+        next_targets - list of targets from which to select
+        last_target - target from the previous inquiry; used to avoid selecting
+            the same target consecutively.
+
+    Returns target symbol
+    """
+    if target_position is None:
+        return random.choice(list(set(symbols) - set(inquiry)))
+
+    if next_targets:
+        # select the next target from the symbols in the current inquiry.
+        # if none of the symbols in the current inquiry are in the choices, the
+        # target is determined strictly from the target_position.
+        choice_index = None
+        target = None
+        for position, symbol in enumerate(inquiry):
+            # avoid repeating targets
+            if symbol == last_target:
+                continue
+            try:
+                symbol_index = next_targets.index(symbol)
+                if choice_index is None or symbol_index < choice_index:
+                    choice_index = symbol_index
+                    symbol_inquiry_position = position
+                    target = symbol
+            except ValueError:
+                continue
+
+        if target is not None:
+            # update next_targets list
+            next_targets.remove(target)  # removes first occurrence of value
+
+            # update inquiry to set the target at the expected position.
+            symbol_at_target_position = inquiry[target_position]
+            inquiry[symbol_inquiry_position] = symbol_at_target_position
+            inquiry[target_position] = target
+
+    return inquiry[target_position]
+
+
+def generate_inquiry_stim_timing(time_stim: float, length: int,
+                                 jitter: bool) -> List[float]:
+    """Generate stimuli timing values for a given inquiry.
+
+    Args:
+        time_stim: seconds to display each stimuli
+        length: Number of timings to generate
+        jitter: whether the timing should be jittered.
+
+    Returns list of times (in seconds)
+    """
+    if jitter:
+        return jittered_timing(time_stim, jitter, length)
+
+    return [time_stim] * length
+
+
+def jittered_timing(time: float, jitter: float,
+                    stim_count: int) -> List[float]:
     """Jittered timing.
 
-    Using a base time and a jitter, generate a list (with length stim_count) of timing that is uniformly distributed.
+    Using a base time and a jitter, generate a list (with length stim_count) of
+    timing that is uniformly distributed.
     """
     assert time > jitter, (
-        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.')
-    return np.random.uniform(low=time - jitter, high=time + jitter, size=(stim_count,)).tolist()
+        f'Jitter timing [{jitter}] must be less than stimuli timing =[{time}] in the inquiry.'
+    )
+    return np.random.uniform(low=time - jitter,
+                             high=time + jitter,
+                             size=(stim_count, )).tolist()
 
 
-def distributed_target_positions(stim_number: int, stim_length: int, nontarget_inquiries: int) -> list:
+def compute_counts(inquiry_count: int,
+                   percentage_without_target: int) -> Tuple[int, int]:
+    """Determine the number of inquiries that should display targets and the
+    number that should not.
+
+    Args:
+        inquiry_count: Number of inquiries in calibration
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+
+    Returns tuple of (target_count, no_target_count)
+    """
+    no_target_count = int(inquiry_count * (percentage_without_target / 100))
+    target_count = inquiry_count - no_target_count
+    return target_count, no_target_count
+
+
+def generate_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                              percentage_without_target: int,
+                              distribution: TargetPositions) -> List[int]:
+    """
+    Generates target positions distributed according to the provided parameter.
+
+    Args:
+        inquiry_count: Number of inquiries in calibration
+        stim_per_inquiry: Number of stimuli in each inquiry
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+        distribution: specifies how targets should be distributed
+
+    Returns list of indexes
+    """
+    if distribution is TargetPositions.DISTRIBUTED:
+        return distributed_target_positions(inquiry_count, stim_per_inquiry,
+                                            percentage_without_target)
+    return random_target_positions(inquiry_count, stim_per_inquiry,
+                                   percentage_without_target)
+
+
+def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                                 percentage_without_target: int) -> list:
     """Distributed Target Positions.
 
-    Generates evenly distributed target positions, including target letter not flashed at all, and shuffles them.
-    Args:
-        stim_number(int): Number of trials in calibration
-        stim_length(int): Number of stimuli in each inquiry
-        nontarget_inquiries(int): percentage of inquiries for which target letter flashed is not in inquiry
+    Generates evenly distributed target positions, including target letter
+    not flashed at all, and shuffles them.
 
-    Return distributed_target_positions(list): targets: array of target indexes to be chosen
+    Args:
+        inquiry_count(int): Number of inquiries in calibration
+        stim_per_inquiry(int): Number of stimuli in each inquiry
+        percentage_without_target(int): percentage of inquiries for which
+            target letter flashed is not in inquiry
+
+    Return distributed_target_positions(list): targets: array of target
+    indexes to be chosen
     """
 
     targets = []
-    no_target = None
 
-    # find number of target and nontarget inquiries
-    num_nontarget_inquiry = int(stim_number * (nontarget_inquiries / 100))
-    num_target_inquiry = stim_number - num_nontarget_inquiry
+    # find number of target and no_target inquiries
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
 
     # find number each target position is repeated, and remaining number
-    num_pos = (int)(num_target_inquiry / stim_length)
-    num_rem_pos = (num_target_inquiry % stim_length)
+    num_pos = (int)(target_count / stim_per_inquiry)
+    num_rem_pos = (target_count % stim_per_inquiry)
 
     # add correct number of None's for nontarget inquiries
-    targets = [no_target] * num_nontarget_inquiry
+    targets = [NO_TARGET_INDEX] * no_target_count
 
     # add distributed list of target positions
-    targets.extend(list(range(stim_length)) * num_pos)
+    targets.extend(list(range(stim_per_inquiry)) * num_pos)
 
     # pick leftover positions randomly
-    rem_pos = list(range(stim_length))
+    rem_pos = list(range(stim_per_inquiry))
     random.shuffle(rem_pos)
     rem_pos = rem_pos[0:num_rem_pos]
     targets.extend(rem_pos)
@@ -643,6 +953,75 @@ def distributed_target_positions(stim_number: int, stim_length: int, nontarget_i
     random.shuffle(targets)
 
     return targets
+
+
+def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
+                            percentage_without_target: int) -> list:
+    """Generates randomly distributed target positions, including target letter
+    not flashed at all, and shuffles them.
+
+    Args:
+        inquiry_count(int): Number of inquiries in calibration
+        stim_per_inquiry(int): Number of stimuli in each inquiry
+        percentage_without_target(int): percentage of inquiries for which
+            target letter flashed is not in inquiry
+
+    Return list of target indexes to be chosen
+    """
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
+
+    target_indexes = [NO_TARGET_INDEX] * no_target_count
+    target_indexes.extend(
+        random.choices(range(stim_per_inquiry), k=target_count))
+    random.shuffle(target_indexes)
+    return target_indexes
+
+
+def generate_targets(symbols: List[str], inquiry_count: int,
+                     percentage_without_target: int) -> List[str]:
+    """Generates list of target symbols. Generates an equal number of each
+    target. The resulting list may be less than the inquiry_count. Used for
+    sampling without replacement to get approximately equal numbers of each
+    target.
+
+    Args:
+        symbols:
+        inquiry_count: number of inquiries in calibration
+        percentage_without_target: percentage of inquiries for which
+            target letter flashed is not in inquiry
+    """
+    target_count, no_target_count = compute_counts(inquiry_count,
+                                                   percentage_without_target)
+
+    # each symbol should appear at least once
+    symbol_count = int(target_count / len(symbols)) or 1
+    targets = symbols * symbol_count
+    random.shuffle(targets)
+    return targets
+
+
+def target_index(inquiry: List[str]) -> Optional[int]:
+    """Given an inquiry, return the index of the target within the choices and
+    None if the target is not included as a choice.
+
+    Parameters
+    ----------
+        inquiry - list of [target, fixation, *choices]
+
+    >>> inquiry = ['T', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+    >>> target_index(inquiry)
+    6
+    >>> inquiry = ['A', '+', 'G', 'J', 'K', 'L', 'M', 'Q', 'T', 'V', 'X', '<']
+    >>> target_index(inquiry)
+    None
+    """
+    assert len(inquiry) > 3, "Not enough choices"
+    target, _fixation, *choices = inquiry
+    try:
+        return choices.index(target)
+    except ValueError:
+        return None
 
 
 def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], List[str]]:
@@ -660,14 +1039,14 @@ def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], L
     """
 
     # Do list comprehensions to get the arrays for the task we need.
-    task_text = ['%s/%s' % (stim + 1, experiment_length)
-                 for stim in range(experiment_length)]
-    task_color = [[str(task_color)] for stim in range(experiment_length)]
+    task_text_list = ['%s/%s' % (stim + 1, experiment_length)
+                      for stim in range(experiment_length)]
+    task_color_list = [str(task_color) for _ in range(experiment_length)]
 
-    return (task_text, task_color)
+    return (task_text_list, task_color_list)
 
 
-def resize_image(image_path: str, screen_size: tuple, sti_height: int) -> Tuple[float, float]:
+def resize_image(image_path: str, screen_size: tuple, sti_height: float) -> Tuple[float, float]:
     """Resize Image.
 
     Returns the width and height that a given image should be displayed at
@@ -703,7 +1082,7 @@ def play_sound(sound_file_path: str,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
                experiment_clock=None,
-               trigger_name: str = None,
+               trigger_name: Optional[str] = None,
                timing: list = []) -> list:
     """Play Sound.
 

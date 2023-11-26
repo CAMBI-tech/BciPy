@@ -2,18 +2,19 @@
 import logging
 import subprocess
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-import bcipy.acquisition.devices as devices
+from bcipy.acquisition import (ClientManager, LslAcquisitionClient,
+                               LslDataServer, await_start,
+                               discover_device_spec)
 from bcipy.acquisition.devices import (DeviceSpec, preconfigured_device,
                                        with_content_type)
-from bcipy.acquisition import (LslAcquisitionClient, await_start,
-                               LslDataServer, discover_device_spec,
-                               ClientManager)
+from bcipy.config import BCIPY_ROOT
+from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
+from bcipy.config import RAW_DATA_FILENAME
 from bcipy.helpers.save import save_device_specs
-from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
 log = logging.getLogger(__name__)
 
@@ -63,7 +64,7 @@ def init_eeg_acquisition(
             await_start(dataserver)
 
         device_spec = init_device(content_type, device_name)
-        raw_data_name = f'{RAW_DATA_FILENAME}.csv' if content_type == 'EEG' else None
+        raw_data_name = raw_data_filename(device_spec)
 
         client = init_lsl_client(parameters, device_spec, save_folder,
                                  raw_data_name)
@@ -79,6 +80,16 @@ def init_eeg_acquisition(
     save_device_specs(manager.device_specs, save_folder, spec_name)
 
     return (manager, servers)
+
+
+def raw_data_filename(device_spec: DeviceSpec) -> str:
+    """Returns the name of the raw data file for the given device."""
+    if device_spec.content_type == 'EEG':
+        return f'{RAW_DATA_FILENAME}.csv'
+
+    content_type = '_'.join(device_spec.content_type.split()).lower()
+    name = '_'.join(device_spec.name.split()).lower()
+    return f"{content_type}_data_{name}.csv"
 
 
 def init_device(content_type: str,
@@ -106,7 +117,7 @@ def init_device(content_type: str,
 
 
 def server_spec(content_type: str,
-                device_name: Optional[str] = None) -> LslDataServer:
+                device_name: Optional[str] = None) -> DeviceSpec:
     """Get the device_spec definition to use for a mock data server. If the
     device_name is provided, the matching preconfigured_device will be used.
     Otherwise, the first matching preconfigured device with the given
@@ -128,7 +139,7 @@ def server_spec(content_type: str,
 
 
 def parse_stream_type(stream_type: str,
-                      delimiter: str = "/") -> Tuple[str, str]:
+                      delimiter: str = "/") -> Tuple[str, Optional[str]]:
     """Parses the stream type into a tuple of (content_type, device_name).
 
     Parameters
@@ -150,7 +161,7 @@ def parse_stream_type(stream_type: str,
 def init_lsl_client(parameters: dict,
                     device_spec: DeviceSpec,
                     save_folder: str,
-                    raw_data_file_name: str = None):
+                    raw_data_file_name: Optional[str] = None):
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
@@ -207,7 +218,7 @@ def analysis_channels(channels: List[str], device_spec: DeviceSpec) -> list:
     ----------
     - channels(list(str)): list of channel names from the raw_data
     (excluding the timestamp)
-    - device_spec(str): device from which the data was collected
+    - device_spec: device from which the data was collected
 
     Returns
     --------

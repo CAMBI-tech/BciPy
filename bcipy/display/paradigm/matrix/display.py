@@ -1,14 +1,17 @@
 """Display for presenting stimuli in a grid."""
-from typing import Dict, List, Optional, Tuple, NamedTuple
 import logging
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 
-from psychopy import visual, core
+from psychopy import core, visual
 
-from bcipy.display import Display, StimuliProperties, InformationProperties, BCIPY_LOGO_PATH
-from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.triggers import _calibration_trigger
-from bcipy.helpers.symbols import alphabet
+import bcipy.display.components.layout as layout
+from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
+                           StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.matrix.layout import symbol_positions
+from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.triggers import _calibration_trigger
 
 
 class SymbolDuration(NamedTuple):
@@ -31,16 +34,20 @@ class MatrixDisplay(Display):
     stim_height: 0.1
     """
 
-    def __init__(
-            self,
-            window: visual.Window,
-            experiment_clock: core.Clock,
-            stimuli: StimuliProperties,
-            task_bar: TaskBar,
-            info: InformationProperties,
-            trigger_type: str = 'text',
-            symbol_set: Optional[List[str]] = None,
-            should_prompt_target: bool = True):
+    def __init__(self,
+                 window: visual.Window,
+                 experiment_clock: core.Clock,
+                 stimuli: StimuliProperties,
+                 task_bar: TaskBar,
+                 info: InformationProperties,
+                 rows: int = 5,
+                 columns: int = 6,
+                 width_pct: float = 0.75,
+                 height_pct: float = 0.8,
+                 trigger_type: str = 'text',
+                 symbol_set: Optional[List[str]] = None,
+                 should_prompt_target: bool = True,
+                 sort_order: Optional[Callable] = None):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -63,6 +70,8 @@ class MatrixDisplay(Display):
         symbol_set default = none : subset of stimuli to be highlighted during an inquiry
         should_prompt_target(bool): when True prompts for the target symbol. Assumes that this is
             the first symbol of each inquiry. For example: [target, fixation, *stim].
+        sort_order - optional function to define the position index for each
+            symbol. Using a custom function it is possible to skip a position.
         """
         self.window = window
 
@@ -76,12 +85,14 @@ class MatrixDisplay(Display):
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
         self.symbol_set = symbol_set or alphabet()
-
+        self.sort_order = sort_order or self.symbol_set.index
         # Set position and parameters for grid of alphabet
-        self.position = stimuli.stim_pos
-        self.grid_stimuli_height = .17
-        self.position_increment = self.grid_stimuli_height + .05
-        self.max_grid_width = 0.7
+        self.grid_stimuli_height = 0.17  # stimuli.stim_height
+
+        display_container = layout.centered(parent=window,
+                                            width_pct=width_pct,
+                                            height_pct=height_pct)
+        self.positions = symbol_positions(display_container, rows, columns)
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
@@ -101,6 +112,20 @@ class MatrixDisplay(Display):
 
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
+
+        self.logger.info(
+            f"Symbol positions ({display_container.units} units):\n{self._stim_positions}"
+        )
+        self.logger.info(f"Matrix center position: {display_container.center}")
+
+    @property
+    def _stim_positions(self) -> Dict[str, Tuple[float, float]]:
+        """Returns a dict with the position for each stim"""
+        assert self.stim_registry, "stim_registry not yet initialized"
+        return {
+            sym: tuple(stim.pos)
+            for sym, stim in self.stim_registry.items()
+        }
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
@@ -158,30 +183,17 @@ class MatrixDisplay(Display):
         return self._timing
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
-        """Build grid.
-
-        Builds a 7x4 matrix of stimuli.
-        """
+        """Build the text stimuli to populate the grid."""
         grid = {}
-        pos = self.position
         for sym in self.symbol_set:
+            pos_index = self.sort_order(sym)
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,
-                                        pos=pos,
+                                        pos=self.positions[pos_index],
                                         height=self.grid_stimuli_height)
-            pos = self.increment_position(pos)
         return grid
-
-    def increment_position(self, pos: Tuple[float, float]) -> Tuple[float, float]:
-        """Computes the position of the next symbol in the matrix."""
-        x_coordinate, y_coordinate = pos
-        x_coordinate += self.position_increment
-        if x_coordinate >= self.max_grid_width:
-            y_coordinate -= self.position_increment
-            x_coordinate = self.position[0]
-        return (x_coordinate, y_coordinate)
 
     def draw_grid(self,
                   opacity: float = 1,

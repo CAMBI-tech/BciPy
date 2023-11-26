@@ -3,11 +3,16 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
+
+from bcipy.helpers.exceptions import SignalException
+from bcipy.helpers.stimuli import InquiryReshaper
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,
+                                                 cross_validation)
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.dimensionality_reduction import \
+    ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pipeline import Pipeline
 from bcipy.helpers.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
@@ -15,9 +20,9 @@ from sklearn.utils.multiclass import unique_labels
 
 
 class PcaRdaKdeModel(SignalModel):
-    reshaper = InquiryReshaper()
+    reshaper: InquiryReshaper = InquiryReshaper()
 
-    def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
+    def __init__(self, k_folds: int = 10, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
@@ -27,7 +32,11 @@ class PcaRdaKdeModel(SignalModel):
         self.max = 1e2
         self.model = None
         self.auc = None
-        self._ready_to_predict = False
+
+    @property
+    def ready_to_predict(self) -> bool:
+        """Returns True if a model has been trained"""
+        return bool(self.model)
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
         """
@@ -96,7 +105,7 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             ModelEvaluationReport: stores AUC
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.evaluate()")
 
         tmp_model = Pipeline([self.model.pipeline[0], self.model.pipeline[1]])
@@ -128,7 +137,7 @@ class PcaRdaKdeModel(SignalModel):
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
 
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
@@ -147,14 +156,14 @@ class PcaRdaKdeModel(SignalModel):
         probs = self.predict_proba(data)
         return probs.argmax(-1)
 
-    def predict_proba(self, data: np.array) -> np.array:
+    def predict_proba(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities.
 
         Returns:
             posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
                 probability for the two labels.
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
@@ -171,13 +180,14 @@ class PcaRdaKdeModel(SignalModel):
         posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
         return posterior
 
-    def save(self, path: Path):
+    def save(self, path: Path) -> None:
         """Save model weights (e.g. after training) to `path`"""
         with open(path, "wb") as f:
             pickle.dump(self.model, f)
 
-    def load(self, path: Path):
-        """Load pretrained model weights from `path`"""
+    def load(self, path: Path) -> SignalModel:
+        """Load pretrained model from `path`"""
         with open(path, "rb") as f:
-            self.model = pickle.load(f)
-        self._ready_to_predict = True
+            model = pickle.load(f)
+
+        return model

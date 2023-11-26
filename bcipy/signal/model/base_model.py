@@ -1,11 +1,36 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List
+from typing import List, NamedTuple
+
 import numpy as np
+
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.stimuli import Reshaper
+from bcipy.signal.process import Composition
+
+
+class SignalModelMetadata(NamedTuple):
+    """Metadata about the SignalModel, including how the model was trained
+    (device, filters, etc)."""
+
+    device_spec: DeviceSpec  # device used to train the model
+    transform: Composition  # data preprocessing steps
+    evidence_type: str = None  # optional; type of evidence produced
 
 
 class SignalModel(ABC):
+
+    @property
+    def metadata(self) -> SignalModelMetadata:
+        """Information regarding the data and parameters used to train the
+        model."""
+        return self._metadata
+
+    @metadata.setter
+    def metadata(self, value):
+        """Set the metadata"""
+        self._metadata = value
+
     @property
     @abstractmethod
     def reshaper(self) -> Reshaper:

@@ -1,20 +1,21 @@
-from psychopy import core
 from typing import List, Tuple
 
-from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import (
-    InformationProperties,
-    PreviewInquiryProperties,
-    StimuliProperties)
-from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
-from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.helpers.clock import Clock
+from psychopy import core
 
-from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions, calibration_inquiry_generator)
+from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
+                           StimuliProperties)
+from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions,
+                                   generate_calibration_inquiries)
+from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.symbols import alphabet
-from bcipy.helpers.triggers import FlushFrequency, TriggerHandler, Trigger, TriggerType, convert_timing_triggers
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
 from bcipy.task import Task
 
 
@@ -91,16 +92,16 @@ class RSVPCalibrationTask(Task):
                 timing(list[list[float]]): list of timings
                 color(list(list[str])): list of colors)
         """
-        return calibration_inquiry_generator(self.alp,
-                                             stim_number=self.stim_number,
-                                             stim_length=self.stim_length,
-                                             stim_order=self.stim_order,
-                                             target_positions=self.target_positions,
-                                             nontarget_inquiries=self.nontarget_inquiries,
-                                             timing=self.timing,
-                                             jitter=self.jitter,
-                                             is_txt=self.rsvp.is_txt_stim,
-                                             color=self.color)
+        return generate_calibration_inquiries(self.alp,
+                                              inquiry_count=self.stim_number,
+                                              stim_per_inquiry=self.stim_length,
+                                              stim_order=self.stim_order,
+                                              target_positions=self.target_positions,
+                                              percentage_without_target=self.nontarget_inquiries,
+                                              timing=self.timing,
+                                              jitter=self.jitter,
+                                              is_txt=self.rsvp.is_txt_stim,
+                                              color=self.color)
 
     def trigger_type(self, symbol: str, target: str, index: int) -> TriggerType:
         """Trigger Type.
@@ -120,7 +121,7 @@ class RSVPCalibrationTask(Task):
 
     def execute(self):
 
-        self.logger.debug(f'Starting {self.name()}!')
+        self.logger.info(f'Starting {self.name()}!')
         run = True
 
         # Check user input to make sure we should be going
@@ -199,15 +200,15 @@ class RSVPCalibrationTask(Task):
             See RSVPDisplay._trigger_pulse() for more information.
         """
         # write offsets. currently, we only check for offsets at the beginning.
-        if self.daq.is_calibrated and first_run:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'starting_offset',
-                    TriggerType.OFFSET,
-                    # offset will factor in true offset and time relative from beginning
-                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
-                )]
-            )
+        # offset will factor in true offset and time relative from beginning
+        if first_run:
+            triggers = []
+            for content_type, client in self.daq.clients_by_type.items():
+                label = offset_label(content_type.name)
+                time = client.offset(
+                    self.rsvp.first_stim_time) - self.rsvp.first_stim_time
+                triggers.append(Trigger(label, TriggerType.OFFSET, time))
+            self.trigger_handler.add_triggers(triggers)
 
         # make sure triggers are written for the inquiry
         self.trigger_handler.add_triggers(convert_timing_triggers(timing, timing[0][0], self.trigger_type))
@@ -215,15 +216,15 @@ class RSVPCalibrationTask(Task):
     def write_offset_trigger(self) -> None:
         """Append an offset value to the end of the trigger file.
         """
-        if self.daq.is_calibrated:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'daq_sample_offset',
-                    TriggerType.SYSTEM,
-                    # to help support future refactoring or use of lsl timestamps only
-                    # we write only the sample offset here
-                    self.daq.offset(self.rsvp.first_stim_time)
-                )])
+        # To help support future refactoring or use of lsl timestamps only
+        # we write only the sample offset here.
+        triggers = []
+        for content_type, client in self.daq.clients_by_type.items():
+            label = offset_label(content_type.name, prefix='daq_sample_offset')
+            time = client.offset(self.rsvp.first_stim_time)
+            triggers.append(Trigger(label, TriggerType.SYSTEM, time))
+
+        self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
     def name(self):
