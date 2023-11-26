@@ -36,7 +36,7 @@ from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.WARNING, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
@@ -124,7 +124,15 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     sample_rate = erp_data.sample_rate
 
     # setup filtering
-    default_transform = get_default_transform(
+    # default_transform = get_default_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=notch_filter,
+    #     bandpass_low=filter_low,
+    #     bandpass_high=filter_high,
+    #     bandpass_order=filter_order,
+    #     downsample_factor=downsample_rate,
+    # )
+    default_transform = get_fir_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=transform_params.notch_filter_frequency,
         bandpass_low=transform_params.filter_low,
@@ -170,7 +178,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         transformation_buffer=buffer,
     )
 
-    inquiries, fs = filter_inquiries(inquiries, dummy_transform, fs)
+    inquiries, fs = filter_inquiries(inquiries, default_transform, fs)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
     data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)

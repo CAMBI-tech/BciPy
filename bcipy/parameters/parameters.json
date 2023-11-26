@@ -8,7 +8,7 @@
     "type": "bool"
   },
   "acq_mode": {
-    "value": "EEG",
+    "value": "EEG/DSI-24",
     "section": "acq_config",
     "readableName": "Acquisition Mode",
     "helpTip": "Specifies the hardware device(s) used for data collection. Default: EEG",
@@ -344,7 +344,7 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.20",
     "section": "bci_config",
     "readableName": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
