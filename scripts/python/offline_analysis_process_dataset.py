@@ -63,6 +63,11 @@ if __name__ == "__main__":
                 # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
                 #     data_folder=session_folder
                 #     )
+
+                # create epochs from inquiry data
+                # chanbel_type = 'eeg' * len(channels)
+                # info = mne.create_info(ch_names=channels, sfreq=fs)
+                epochs = mne.EpochsArray(data)
                 
                 # If using artifact labelled data, or whole dataset filtering, uncomment these lines
                 mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')

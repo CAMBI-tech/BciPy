@@ -4,6 +4,7 @@ import numpy as np
 from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt, sosfilt
 from mne.filter import create_filter, filter_data
 
+from typing import Optional, Tuple
 
 class Notch:
     """Remove a single frequency"""

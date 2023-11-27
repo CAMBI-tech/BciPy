@@ -13,7 +13,7 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score, matthews_corrcoef
 from sklearn.svm import SVC
 
-from pyriemann.estimation import ERPCovariances
+from pyriemann.estimation import ERPCovariances, Covariances
 from pyriemann.tangentspace import TangentSpace
 from pyriemann.spatialfilters import Xdawn
 from sklearn.dummy import DummyClassifier
@@ -63,10 +63,10 @@ clfs = {
         make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
         {},
     ),
-    # 'ERPCov TS LR': (
-    #     make_pipeline(ERPCovariances(estimator='oas'), TangentSpace(), LogisticRegression()),
-    #     {'erpcovariances__estimator': ('lwf', 'oas')},
-    # ),
+    'TS-SVM': (
+        make_pipeline(Covariances("oas"), TangentSpace(metric="riemann"), SVC(kernel="linear")),
+        {},
+    ),
     'PCA_RDA_KDE': (
         make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=10)),
         {},
