@@ -438,9 +438,9 @@ def mne_epochs(
         events_from_annot,
         picks=channels,
         detrend=detrend,
-        baseline=baseline,
+        baseline=(0, 0),
         tmax=trial_length,
-        tmin=-.2,
+        tmin=0,
         proj=False,
         reject_by_annotation=reject_by_annotation,
         preload=preload)

@@ -176,7 +176,7 @@ def load_data_mne(
     filter_order = parameters.get("filter_order")
     static_offset = parameters.get("static_trigger_offset")
 
-    log.error(
+    log.info(
         f"\nData processing settings: \n"
         f"Filter: [{filter_low}-{filter_high}], Order: {filter_order},"
         f" Notch: {notch_filter}, Downsample: {downsample_rate} \n"
@@ -242,7 +242,7 @@ def load_data_mne(
         trigger_timing,
         trigger_labels,
         poststim_length,
-        baseline=(None, 0),
+        baseline=None,
         reject_by_annotation=drop_artifacts)
     
     # TODO use the epoch drop log? write to the session? Then we can use it via the inquiry based method
