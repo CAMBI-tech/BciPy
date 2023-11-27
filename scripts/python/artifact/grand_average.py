@@ -46,21 +46,37 @@ if __name__ == "__main__":
 
             try:
                 session_folder = str(session.resolve())
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, def_transform, _ = load_data_inquiries(
-                #                     data_folder=session_folder)
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, def_transform, _, channels = load_data_inquiries(
+                                    data_folder=session_folder,
+                                    trial_length=0.65)
+                
+                # turn data and labels into epochs
+                channel_types = ['eeg'] * len(channels)
+                mne_info = mne.create_info(channels, sfreq=150, ch_types='eeg')
+                # info = mne.create_info(raw_data.channels, raw_data.sample_rate, channel_types)
+                epochs = mne.EpochsArray(data, info=mne_info)
+                epochs.apply_function(lambda x: x * 1e-6)
                 # epochs, figs = visualize_erp(raw_data, channel_map, trigger_timing, labels, 0.8, def_transform, show=False) # TODO create my own epochs to avoid all the figs
 
-                mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, epochs  = load_data_mne(
-                    data_folder=session_folder,
-                    mne_data_annotations=mne_data.annotations,
-                    drop_artifacts=True,
-                    trial_length=0.65,
-                    parameters=parameters)
+                # breakpoint()
+                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+                # raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, epochs  = load_data_mne(
+                #     data_folder=session_folder,
+                #     mne_data_annotations=mne_data.annotations,
+                #     drop_artifacts=True,
+                #     trial_length=0.65,
+                #     parameters=parameters)
 
                 # average the epochs
-                non_target.append(epochs['1'])
-                target.append(epochs['2'])
+                for i, label in enumerate(labels):
+                    if label == '1':
+                        non_target.append(epochs[i])
+                    else:
+                        target.append(epochs[i])
+
+                if 100 < 5: 
+                    non_target.append(epochs['1'])
+                    target.append(epochs['2'])
                 all_epochs.append(epochs)
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
@@ -68,6 +84,7 @@ if __name__ == "__main__":
 
     
     # concatenate the epochs
+    breakpoint()
     all_mne_epochs = mne.concatenate_epochs(all_epochs)
     target = mne.concatenate_epochs(target)
     target_evoked = target.average()

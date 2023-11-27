@@ -146,7 +146,7 @@ def load_data_inquiries(
         'nontarget_orig': trigger_targetness.count('nontarget'),
         'target_orig': trigger_targetness.count('target')}
 
-    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log
+    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log, channels_used
 
 
 def load_data_mne(
