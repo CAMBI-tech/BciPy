@@ -235,6 +235,8 @@ class GazeReshaper:
                  target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
+                 stimulus_duration: float,
+                 num_stimuli_per_inquiry: int,
                  symbol_set: List[str],
                  channel_map: Optional[List[int]] = None,
                  ) -> dict:
@@ -251,6 +253,9 @@ class GazeReshaper:
             target_symbols (List[str]): Prompted symbol in each inquiry
             gaze_data (np.ndarray): shape (channels, samples) eye tracking data
             sample_rate (int): sample rate of data provided in eeg_data
+            stimulus_duration (float): duration of flash time (in seconds) for each stimulus
+            num_stimuli_per_inquiry (int): number of stimuli in each inquiry (default: 10)
+            symbol_set (List[str]): list of all symbols for the task
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to None; all channels will be used.
 
@@ -288,13 +293,17 @@ class GazeReshaper:
         for symbol in symbol_set:
             data_by_targets[symbol] = []
 
-        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+        buffer = stimulus_duration / 5  # seconds, buffer for each inquiry
+        # NOTE: This buffer is used to account for the screen downtime between each stimulus.
+        # There seems to be a duty cycle of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
+        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry
+        # in seconds, total length of flickering (after prompt) for each inquiry
 
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
-            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
+            stop = int(inquiry_index + (sample_rate * window_length))
             # Check if the data exists for the inquiry:
             if stop > len(gaze_data[0, :]):
                 continue
@@ -314,24 +323,24 @@ class GazeReshaper:
             # Note that this is a workaround to the issue of having different number of targetness in
             # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
             # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
-            # This is not ideal, but it works for now.
 
-        # return np.stack(reshaped_data, 0), labels
         return data_by_targets
 
     @staticmethod
-    def centralize_all_data(data, symbol_pos):
+    def centralize_all_data(data, symbol_pos) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:
-            data (np.ndarray): Data in shape of num_channels x num_samples
+            data (np.ndarray): Data in shape of num_samples x num_dimensions
             symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
         Returns:
-            data (np.ndarray): Centralized data in shape of num_channels x num_samples
+            new_data (np.ndarray): Centralized data in shape of num_samples x num_dimensions
         """
+        new_data = np.copy(data)
         for i in range(len(data)):
-            data[i] = data[i] - symbol_pos
-        return data
+            new_data[i] = data[i] - symbol_pos
+
+        return new_data
 
 
 class TrialReshaper(Reshaper):

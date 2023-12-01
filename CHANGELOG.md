@@ -9,6 +9,7 @@ Our last release candidate before the official 2.0 release!
     - Support for trigger handling relative to a given device #293
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
+    - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287
 - Dynamic Selection Window
