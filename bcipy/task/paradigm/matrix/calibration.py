@@ -267,7 +267,8 @@ def init_calibration_display_task(
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'])
+                                  height=parameters['task_height'],
+                                  padding=parameters['task_padding'])
 
     return MatrixDisplay(
         window,
@@ -278,5 +279,6 @@ def init_calibration_display_task(
         rows=parameters['matrix_rows'],
         columns=parameters['matrix_columns'],
         width_pct=parameters['matrix_width'],
+        height_pct=1 - (2 * task_bar.height_pct),
         trigger_type=parameters['trigger_type'],
         symbol_set=symbol_set)

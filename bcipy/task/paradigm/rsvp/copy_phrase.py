@@ -4,14 +4,10 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
-from bcipy.config import (
-    SESSION_DATA_FILENAME,
-    SESSION_SUMMARY_FILENAME,
-    TRIGGER_FILENAME,
-    WAIT_SCREEN_MESSAGE,
-    DEFAULT_EVIDENCE_PRECISION)
-from bcipy.display import (InformationProperties,
-                           PreviewInquiryProperties,
+from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
+                          SESSION_SUMMARY_FILENAME, TRIGGER_FILENAME,
+                          WAIT_SCREEN_MESSAGE)
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
@@ -927,7 +923,8 @@ def _init_copy_phrase_display(
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'])
+                                 height=parameters['task_height'],
+                                 padding=parameters['task_padding'])
 
     return CopyPhraseDisplay(
         win,

@@ -392,7 +392,7 @@
     "type": "float"
   },
   "font": {
-    "value": "Consolas",
+    "value": "Overpass Mono Medium",
     "section": "bci_config",
     "readableName": "Font",
     "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
@@ -522,6 +522,16 @@
     "helpTip": "Specifies the color of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: white",
     "recommended_values": "",
     "type": "str"
+  },
+  "task_padding": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Task Bar Padding",
+    "helpTip": "Specifies the padding around the task bar text. Default: 0.1",
+    "recommended_values": [
+      "0.05"
+    ],
+    "type": "float"
   },
   "stim_number": {
     "value": "100",

@@ -2,7 +2,7 @@
 import logging
 import sys
 import time
-from typing import Optional, Callable, List, Tuple, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 from psychopy import visual
 from psychopy.visual.circle import Circle
@@ -262,8 +262,11 @@ def demo_matrix_positions(win: visual.Window):
     dimensions as well as the number of rows and columns affects positioning.
     """
     # norm_layout = centered(parent=win, width_pct=1., height_pct=0.5)
-    norm_layout = centered(parent=win, width_pct=0.75, height_pct=1)
-    positions = symbol_positions(norm_layout, rows=5, columns=6)
+    task_bar = at_top(parent=win, height=0.25)
+    win_layout = Layout(win)
+
+    norm_layout = centered(parent=win, width_pct=0.7, height_pct=0.75)
+    positions = symbol_positions(norm_layout, rows=6, columns=6)
 
     for sym, pos in zip(alphabet(), positions):
         stim = visual.TextStim(win,
@@ -272,6 +275,7 @@ def demo_matrix_positions(win: visual.Window):
                                color='white',
                                height=0.17)
         stim.draw()
+    draw_boundary(win, task_bar, line_px=5, color='green')
     draw_boundary(win, norm_layout, line_px=5, color='gray')
     draw_positions(win, positions, size=scaled_size(0.025, win.size))
     win.flip()
