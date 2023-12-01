@@ -50,19 +50,13 @@ def symbol_positions(container: Layout, rows: int,
         scaled_horizontal_spacing = horizontal_spacing
         scaled_vertical_spacing = vertical_spacing
 
-    print(
-        f"horizontal_spacing: {horizontal_spacing}; vertical_spacing: {vertical_spacing}"
-    )
-    print(f"scaled_horizontal_spacing: {scaled_horizontal_spacing}; scaled_vertical_spacing: {scaled_vertical_spacing}")
     if max_spacing and vertical_spacing > max_spacing:
         vertical_spacing = max_spacing
     # Use the minimum spacing
     if scaled_horizontal_spacing < scaled_vertical_spacing:
         vertical_spacing = scaled_height(horizontal_spacing, win_size)
-        print(f"Setting vertical spacing to {vertical_spacing}")
     else:
         horizontal_spacing = scaled_width(vertical_spacing, win_size)
-        print(f"Setting horizontal spacing to {horizontal_spacing}")
 
     # Work back from center to compute the starting position
     center_x, center_y = container.center
