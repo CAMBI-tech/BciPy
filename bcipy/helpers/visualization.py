@@ -278,10 +278,13 @@ def visualize_gaze_inquiries(
     ly = 1 - ly
     ry = 1 - ry
 
-    if means is not None:
-        means[:, 0] = np.clip(means[:, 0], 0, 1)
-        means[:, 1] = np.clip(means[:, 1], 0, 1)
-        means[:, 1] = 1 - means[:, 1]
+    # Define mns as a copy of means to avoid modifying the original array
+    mns = np.copy(means)
+
+    if mns is not None:
+        mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+        mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+        mns[:, 1] = 1 - mns[:, 1]
 
     # scale the eye data to the image
     fig, ax = plt.subplots()
@@ -306,11 +309,11 @@ def visualize_gaze_inquiries(
             colorbar=True)
 
     if raw_plot:
-        # ax.scatter(lx, ly, c='lightcoral', s=1)
+        ax.scatter(lx, ly, c='lightcoral', s=1)
         ax.scatter(rx, ry, c='bisque', s=1)
 
-    if means is not None:
-        for i, (mean, cov) in enumerate(zip(means, covs)):
+    if mns is not None:
+        for i, (mean, cov) in enumerate(zip(mns, covs)):
             v, w = linalg.eigh(cov)
             v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
             u = w[0] / linalg.norm(w[0])
@@ -342,8 +345,7 @@ def visualize_gaze_inquiries(
 
 
 def visualize_centralized_data(
-        left_eye: np.ndarray,
-        right_eye: np.ndarray,
+        gaze_data: np.ndarray,
         save_path: Optional[str] = None,
         show: Optional[bool] = False,
         img_path: Optional[str] = None,
@@ -365,8 +367,7 @@ def visualize_centralized_data(
 
     Parameters
     ----------
-    left_eye: (np.ndarray): Data array for the centralized left eye data.
-    right_eye: (np.ndarray): Data array for the centralized right eye data.
+    gaze_data: (np.ndarray): Data array for the centralized left eye data.
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
@@ -386,33 +387,12 @@ def visualize_centralized_data(
 
     # Transform the eye data to fit the display. Clip values > 1 and < -1
     # The idea here is to have the center at (0,0)
-    lx = np.clip(left_eye[:, 0], -1, 1)
-    ly = np.clip(left_eye[:, 1], -1, 1)
-    rx = np.clip(right_eye[:, 0], -1, 1)
-    ry = np.clip(right_eye[:, 1], -1, 1)
+    dx = np.clip(gaze_data[:, 0], -1, 1)
+    dy = np.clip(gaze_data[:, 1], -1, 1)
     ax.imshow(img, extent=[-1, 1, -1, 1])
 
-    if heatmap:
-        # create a dataframe making a column for each x, y pair for both eyes and a column for the eye (left or right)
-        df = pd.DataFrame({
-            'x': np.concatenate((lx, rx)),
-            'y': np.concatenate((ly, ry)),
-            'eye': ['left'] * len(lx) + ['right'] * len(rx)
-        })
-        ax = sns.kdeplot(
-            data=df,
-            hue='eye',
-            x='x',
-            y='y',
-            fill=False,
-            thresh=0.05,
-            levels=10,
-            cmap="mako",
-            colorbar=True)
-
     if raw_plot:
-        ax.scatter(lx, ly, c='r', s=1)
-        ax.scatter(rx, ry, c='b', s=1)
+        ax.scatter(dx, dy, c='b', s=1)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -455,10 +435,10 @@ def visualize_results_all_symbols(
 
     Parameters
     ----------
-    left_eye: (np.ndarray): Data array for the left eye data.
-    right_eye: (np.ndarray): Data array for the right eye data.
-    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
-    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    left_eye_all: (np.ndarray): Data array for the left eye data, for all symbols.
+    right_eye_all: (np.ndarray): Data array for the right eye data, for all symbols.
+    means_all: Optional[np.ndarray]: Means of the Gaussian Mixture Model, for all symbols
+    covs_all: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model, for all symbols
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
@@ -488,10 +468,13 @@ def visualize_results_all_symbols(
         ly = 1 - ly
         ry = 1 - ry
 
-        if means is not None:
-            means[:, 0] = np.clip(means[:, 0], 0, 1)
-            means[:, 1] = np.clip(means[:, 1], 0, 1)
-            means[:, 1] = 1 - means[:, 1]
+        # Define mns as a copy of means to avoid modifying the original array
+        mns = np.copy(means)
+
+        if mns is not None:
+            mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+            mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+            mns[:, 1] = 1 - mns[:, 1]
 
         if heatmap:
             # create a dataframe making a column for each x, y pair for both eyes and
@@ -513,11 +496,11 @@ def visualize_results_all_symbols(
                 colorbar=True)
 
         if raw_plot:
-            # ax.scatter(lx, ly, c='lightcoral', s=1)
+            ax.scatter(lx, ly, c='lightcoral', s=1)
             ax.scatter(rx, ry, c='bisque', s=1)
 
-        if means is not None:
-            for i, (mean, cov) in enumerate(zip(means, covs)):
+        if mns is not None:
+            for i, (mean, cov) in enumerate(zip(mns, covs)):
                 v, w = linalg.eigh(cov)
                 v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
                 u = w[0] / linalg.norm(w[0])

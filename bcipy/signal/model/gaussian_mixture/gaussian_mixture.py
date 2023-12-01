@@ -8,8 +8,6 @@ from sklearn.model_selection import cross_val_score  # noqa
 from sklearn.utils.estimator_checks import check_estimator  # noqa
 import scipy.stats as stats
 
-from typing import Optional
-
 
 class GazeModelIndividual(SignalModel):
     reshaper = GazeReshaper()
@@ -24,7 +22,7 @@ class GazeModelIndividual(SignalModel):
 
         return self
 
-    def evaluate(self, test_data: np.ndarray):
+    def evaluate(self):
         '''
         Compute mean and covariance of each mixture component.
         '''
@@ -61,12 +59,16 @@ class GazeModelIndividual(SignalModel):
 
         return likelihoods, predictions
 
-    def calculate_acc(self, test_data: np.ndarray, test_labels: Optional[np.ndarray]):
+    def calculate_acc(self, predictions: int, counter: int):
         '''
         Compute model performance characteristics on the provided test data and labels.
-        '''
 
-        # return accuracy
+        predictions: predicted labels for each test point per symbol
+        counter: true labels for each test point per symbol
+        '''
+        accuracy_per_symbol = np.sum(predictions == counter) / len(predictions) * 100
+
+        return accuracy_per_symbol
 
     def save(self, path: Path):
         """Save model state to the provided checkpoint"""
@@ -91,9 +93,10 @@ class GazeModelCombined(SignalModel):
 
         return self
 
-    def evaluate(self, test_data: np.ndarray, sym_pos: np.ndarray):
+    def evaluate(self, sym_pos: np.ndarray):
         '''
         Return mean and covariance of each mixture component.
+        All components have the same mean (aligned with symbol position) and covariance.
 
         test_data: gaze data for each symbol
         sym_pos: mid positions for each symbol in Tobii coordinates
@@ -104,7 +107,7 @@ class GazeModelCombined(SignalModel):
 
         return means, covs
 
-    def predict(self, test_data: np.ndarray):
+    def predict(self, test_data: np.ndarray, means: np.ndarray, covs: np.ndarray):
         '''
         Compute log-likelihood of each sample.
         Predict the labels for the test data.
@@ -112,16 +115,37 @@ class GazeModelCombined(SignalModel):
         # Compute over log-likelihood scores
         # Get the argmax of the scores
 
-        scores = self.model.score_samples(test_data)
+        num_components = len(means)
 
-        # return predictions
+        N, D = test_data.shape
+        K = num_components
 
-    def calculate_acc(self, test_data: np.ndarray, sym_pos: np.ndarray):
+        likelihoods = np.zeros((N, K), dtype=object)
+        predictions = np.zeros(N, dtype=object)
+
+        # Find the likelihoods by insterting the test data into the pdf of each component
+        for i in range(N):
+            for k in range(K):
+                mu = means[k]
+                sigma = covs[k]
+
+                likelihoods[i, k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
+
+            # Find the argmax of the likelihoods to get the predictions
+            predictions[i] = np.argmax(likelihoods[i])
+
+        return likelihoods, predictions
+
+    def calculate_acc(self, predictions: int, counter: int):
         '''
         Compute model performance characteristics on the provided test data and labels.
-        '''
 
-        # return accuracy
+        predictions: predicted labels for each test point per symbol
+        counter: true labels for each test point per symbol
+        '''
+        accuracy_per_symbol = np.sum(predictions == counter) / len(predictions) * 100
+
+        return accuracy_per_symbol
 
     def save(self, path: Path):
         """Save model state to the provided checkpoint"""

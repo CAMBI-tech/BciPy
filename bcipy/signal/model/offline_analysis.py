@@ -252,11 +252,14 @@ def analyze_gaze(
         show=show_figures,
         raw_plot=True,
     )
-    figures.extend(figure_handles)
+    figures.append(figure_handles)
 
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate
+
+    flash_time = parameters.get("time_flash")  # duration of each stimulus
+    stim_size = parameters.get("stim_length")  # number of stimuli per inquiry
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -299,6 +302,8 @@ def analyze_gaze(
         target_symbols=target_symbols,
         gaze_data=data,
         sample_rate=sample_rate,
+        stimulus_duration=flash_time,
+        num_stimuli_per_inquiry=stim_size,
         symbol_set=symbol_set
     )
 
@@ -313,8 +318,8 @@ def analyze_gaze(
         left_eye, right_eye = extract_eye_info(inquiries[i])
         preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
 
-    centralized_data_left = []
-    centralized_data_right = []
+    centralized_data_train = []
+    train_dict = {}
     test_dict = {}
 
     left_eye_all = []
@@ -333,115 +338,125 @@ def analyze_gaze(
         labels = np.array([sym] * len(le))  # Labels are the same for both eyes
         train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
         train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
+        train_dict[sym] = np.concatenate((train_le, train_re), axis=0)
         test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
 
         # Fit the model based on model type.
-        # Model 1: Fit Gaussian mixture (comp=2) on each symbol and each eye separately
         if model_type == "Individual":
-            model.fit(train_re)
+            # Model 1: Fit Gaussian mixture on each symbol separately
+            model.fit(train_dict[sym])
 
-            means, covs = model.evaluate(test_re)
+            means, covs = model.evaluate()
 
             # Visualize the results:
             figure_handles = visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=None,
-                show=show_figures,
+                show=False,
                 raw_plot=True,
             )
-            figures.extend(figure_handles)
+            figures.append(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
 
-            # TODO: Calculate scores for the test set.
-            # scores, predictions = model.predict(test_re)
-
-        # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
         if model_type == "Centralized":
             # Centralize the data using symbol positions:
             # Load json file.
             with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
-            centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
-            centralized_data_right.append(model.reshaper.centralize_all_data(train_re, symbol_positions[sym]))
+            centralized_data_train.append(model.reshaper.centralize_all_data(train_dict[sym], symbol_positions[sym]))
 
     if model_type == "Individual":
-        # Takes in all means and covs from individual symbols, and
-        # calculates the likelihoods and predictions for each test point.
-        # Convert test_dict to a list of arrays:
         accuracy = 0
         acc_all_symbols = {}
         counter = 0
         for sym in symbol_set:
-            # Skip if test_dict is empty for certain symbols:
+            # Continue if there is no test data for this symbol:
             if len(test_dict[sym]) == 0:
                 acc_all_symbols[sym] = 0
                 continue
             likelihoods, predictions = model.predict(
-                test_dict[sym], np.squeeze(
-                    np.array(means_all)), np.squeeze(
-                    np.array(covs_all)))
-            acc_all_symbols[sym] = np.sum(predictions == counter) / len(predictions) * 100
-            accuracy += np.sum(predictions == counter) / len(predictions) * 100
-            print(f"""Correct predictions for {sym}: {np.sum(predictions == counter)} / {len(predictions)},
-                Accuracy {sym}: {np.sum(predictions == counter) / len(predictions) * 100:.2f}""")
+                test_dict[sym],
+                np.squeeze(np.array(means_all)),
+                np.squeeze(np.array(covs_all)))
+            acc_all_symbols[sym] = model.calculate_acc(predictions, counter)
+            accuracy += acc_all_symbols[sym]
             counter += 1
         accuracy /= counter
-        print(f"Overall accuracy: {accuracy:.2f}")
 
         # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
-        figures.extend(figure_handles)
+        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=show_figures)
+        figures.append(figure_handles)
 
     if model_type == "Centralized":
-        cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
-        cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
+        # Model 2: Fit Gaussian mixture on a centralized data
+        all_data = np.concatenate(centralized_data_train, axis=0)
 
         # Visualize the results:
         figure_handles = visualize_centralized_data(
-            cent_left, cent_right,
+            all_data,
             save_path=None,
             show=show_figures,
             raw_plot=True,
         )
-        figures.extend(figure_handles)
+        figures.append(figure_handles)
 
-        # Fit the model:
-        model.fit(cent_left)
+        model.fit(all_data)
 
-        # Add the means back to the symbol positions.
-        # Calculate scores for the test set.
+        # Calculate means, covariances for each symbol.
         for sym in symbol_set:
-            means, covs = model.evaluate(test_dict[sym][0], symbol_positions[sym])
+            means, covs = model.evaluate(symbol_positions[sym])
 
+            # Visualize the results:
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
-            # Visualize the results:
             figure_handles = visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=None,
-                show=show_figures,
+                show=False,
                 raw_plot=True,
             )
-            figures.extend(figure_handles)
+            figures.append(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
 
+        # Compute scores for the test set.
+        accuracy = 0
+        acc_all_symbols = {}
+        counter = 0
+        for sym in symbol_set:
+            if len(test_dict[sym]) == 0:
+                # Continue if there is no test data for this symbol:
+                acc_all_symbols[sym] = 0
+                continue
+            likelihoods, predictions = model.predict(
+                test_dict[sym],
+                np.squeeze(np.array(means_all)),
+                np.squeeze(np.array(covs_all)))
+            acc_all_symbols[sym] = model.calculate_acc(predictions, counter)
+            accuracy += acc_all_symbols[sym]
+            counter += 1
+            accuracy /= counter
+
+        # Plot all accuracies as bar plot:
+        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=show_figures)
+        figures.append(figure_handles)
+
     fig_handles = visualize_results_all_symbols(
         left_eye_all, right_eye_all,
         means_all, covs_all,
         save_path=None,
-        show=True,
+        show=show_figures,
         raw_plot=True,
     )
-    figures.extend(fig_handles)
+    figures.append(fig_handles)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -514,13 +529,13 @@ def offline_analysis(
             erp_model, erp_figure_handles = analyze_erp(
                 raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
             models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
+            figure_handles.append(erp_figure_handles)
 
         if device_spec.content_type == "Eyetracker":
             et_model, et_figure_handles = analyze_gaze(
-                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
+                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Centralized")
             models.append(et_model)
-            figure_handles.extend(et_figure_handles)
+            figure_handles.append(et_figure_handles)
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
