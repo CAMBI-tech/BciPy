@@ -83,7 +83,7 @@ class SimulatorCopyPhrase(Simulator):
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
 
             log.info(f"Current typed: {updated_state.current_sentence}")
-            sleep(.5)
+            sleep(self.parameters.get("sim_sleep_time", 0.5))
 
         final_state = self.state_manager.get_state()
         log.info(f"SIM END")

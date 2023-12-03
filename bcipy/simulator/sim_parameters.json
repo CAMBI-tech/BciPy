@@ -20,5 +20,17 @@
       "1"
     ],
     "type": "str"
+  },
+    "sim_sleep_time": {
+    "value": "0.25",
+    "section": "sim_config",
+    "readableName": "Simulation Time Step ",
+    "helpTip": "How long to sleep in between simulation time steps",
+    "recommended_values": [
+      "0",
+      "0.5",
+      "1"
+    ],
+    "type": "float"
   }
 }
