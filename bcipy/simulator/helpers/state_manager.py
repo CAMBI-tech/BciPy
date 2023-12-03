@@ -5,11 +5,13 @@ from typing import List, Optional, Dict
 
 import numpy as np
 
+from bcipy.helpers import symbols
 from bcipy.helpers.exceptions import FieldException
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
 from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
 from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
+from bcipy.simulator.helpers.rsvp_utils import next_target_letter
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.task.control.criteria import DecisionCriteria, MaxIterationsCriteria, ProbThresholdCriteria
 from bcipy.task.control.handler import EvidenceFusion
@@ -83,6 +85,7 @@ class StateManagerImpl(StateManager):
                                             evidence_likelihoods=list(evidence), fused_likelihood=fused_likelihood,  # TODO change to use evidence_dict
                                             decision=None)
 
+        # can we make decision
         temp_series = copy.deepcopy(self.get_state().series_results)
         temp_series[-1].append(temp_inquiry_result)
         is_decidable = any([decider.decide(temp_series[-1]) for decider in self.state.decision_criterion])
@@ -91,23 +94,15 @@ class StateManagerImpl(StateManager):
         new_state = self.get_state().__dict__
         if is_decidable:
             decision = alphabet()[np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
-            if decision == self.state.target_symbol:  # correct decision
-                new_state['series_n'] += 1  # TODO abstract out into reset function
-                new_state['series_results'].append([])
-                new_state['inquiry_n'] = 0
 
-                new_state['current_sentence'] += decision
+            # resetting series
+            new_state['series_n'] += 1
+            new_state['series_results'].append([])
+            new_state['inquiry_n'] = 0
 
-                next_target_symbol_idx = len(new_state['current_sentence'])
-                if next_target_symbol_idx >= len(self.state.target_sentence):
-                    pass
-                else:
-                    new_state['target_symbol'] = self.state.target_sentence[next_target_symbol_idx]
-
-            else:  # wrong decision
-                new_state['series_n'] += 1
-                new_state['series_results'].append([])
-                new_state['inquiry_n'] = 0
+            # updating current sentence and finding next target
+            new_state['current_sentence'] = new_state['current_sentence'] + decision if decision != BACKSPACE_CHAR else new_state['current_sentence'][:-1]
+            new_state['target_symbol'] = next_target_letter(new_state['current_sentence'], self.state.target_sentence)
 
         else:
             new_state['inquiry_n'] += 1
