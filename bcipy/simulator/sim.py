@@ -1,4 +1,3 @@
-import datetime
 import logging
 import random
 from time import sleep
@@ -9,11 +8,12 @@ import numpy as np
 from bcipy.helpers import load, stimuli, symbols
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
+from bcipy.simulator.helpers.metrics import MetricReferee
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult
 from bcipy.simulator.helpers.log_utils import format_alp_likelihoods
-from bcipy.simulator.interfaces import MetricReferee, ModelHandler
+from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 
 log = logging.getLogger(__name__)

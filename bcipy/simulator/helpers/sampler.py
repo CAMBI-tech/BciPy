@@ -10,7 +10,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.log_utils import format_sample_rows
-from bcipy.simulator.interfaces import SimState
+from bcipy.simulator.helpers.state_manager import SimState
 
 log = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Sampler(ABC):
         ...
 
 
-class SimpleLetterSampler(Sampler):
+class EEGByLetterSampler(Sampler):
 
     def __init__(self, data_engine: RawDataEngine, params: List[Parameters] = None):
         self.data_engine: RawDataEngine = data_engine

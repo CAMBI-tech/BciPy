@@ -1,4 +1,5 @@
 import copy
+import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List, Optional, Dict
@@ -133,9 +134,10 @@ class StateManagerImpl(StateManager):
         sentence = "HELLO_WORLD"  # TODO abstract out with sim_parameters.json
         target_symbol = sentence[0]  # TODO use parameters.get('spelled_letters_count')
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
+        init_stimuli = random.sample(alphabet(), 10)
 
         evidence_types = parameters.get(
             'evidence_types') if parameters else None  # TODO make new parameter and create default series_likelihoods object based off that
 
-        return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence, display_alphabet=[], inquiry_n=0, series_n=0,
+        return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence, display_alphabet=init_stimuli, inquiry_n=0, series_n=0,
                         series_results=[[]], decision_criterion=default_criterion)
