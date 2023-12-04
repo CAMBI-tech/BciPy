@@ -6,7 +6,7 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_ENCODING,
@@ -185,9 +185,9 @@ def save_model(model: SignalModel, path: Union[Path, str]) -> None:
 
 
 def save_stimuli_position_info(
-        stimuli_position_info: dict,
+        stimuli_position_info: Dict[str, Tuple[float, float]],
         path: Union[Path, str],
-        screen_info: dict) -> str:
+        screen_info: Dict[str, Any]) -> str:
     """Save stimuli positions and screen info to `path`
 
    stimuli_position_info: {'A': (0, 0)}
@@ -199,17 +199,9 @@ def save_stimuli_position_info(
         path - path to the file which will be created.
         screen_info - screen info to save to json
     """
-    # assert that stimuli_position_info is a dict with string keys and list values
-    assert all(isinstance(key, str) for key in stimuli_position_info.keys()), \
-        'stimuli_position_info keys must be strings'
-    assert list(map(type, (stimuli_position_info[key] for key in stimuli_position_info)))[0] is tuple, \
-        'stimuli_position_info values must be a tuple'
-
     # assert that screen_info is a dict with at least the key 'screen_resolution'
     assert 'screen_size_pixels' in screen_info.keys(), \
         'screen_size_pixels must be a key in screen_info'
-    assert isinstance(screen_info['screen_size_pixels'], list), \
-        'screen_size_pixels must be a list'
 
     # combine the dicts
     all_data = {**stimuli_position_info, **screen_info}

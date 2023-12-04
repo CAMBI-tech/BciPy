@@ -135,6 +135,7 @@ class MatrixDisplay(Display):
         """
         # draw the grid and flip the window
         self.draw_grid(opacity=self.full_grid_opacity)
+        tmp_task_bar = self.task_bar.current_index
         self.task_bar.current_index = 0
         self.draw_static()
         self.window.flip()
@@ -142,6 +143,7 @@ class MatrixDisplay(Display):
         # capture the screenshot and save it to the specified file path
         capture = self.window.getMovieFrame()
         capture.save(f'{file_path}/{MATRIX_IMAGE_FILENAME}')
+        self.task_bar.current_index = tmp_task_bar
 
     def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
         """Schedule stimuli elements (works as a buffer).
