@@ -59,6 +59,7 @@ class MatrixCalibrationTask(Task):
         self.screen_info = {
             'screen_size_pixels': self.window.size.tolist(),
             'screen_hz': _screen_info.rate,
+            'screen_units': 'norm',
         }
 
         self.parameters = parameters
