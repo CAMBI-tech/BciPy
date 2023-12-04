@@ -27,7 +27,7 @@ class TestDeviceSpecs(unittest.TestCase):
         dsi = supported['DSI-24']
         self.assertEqual('EEG', dsi.content_type)
 
-        self.assertEqual(len(devices.with_content_type('EEG')), 3)
+        self.assertEqual(len(devices.with_content_type('EEG')), 4)
 
     def test_load_from_config(self):
         """Should be able to load a list of supported devices from a

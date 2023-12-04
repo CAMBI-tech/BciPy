@@ -1,8 +1,7 @@
-import shutil
-import tempfile
 import unittest
 
 from mockito import any, mock, unstub, verify, when
+from mock import mock_open, patch
 
 import psychopy
 
@@ -93,7 +92,7 @@ class TestRSVPCalibration(unittest.TestCase):
                     ContentType.EEG: self.eeg_client_mock
                 }
             })
-        self.temp_dir = tempfile.mkdtemp()
+        self.temp_dir = ''
         self.model_metadata = mock({
             'device_spec': device_spec,
             'transform': mock(),
@@ -117,16 +116,16 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def tearDown(self):
         """Override"""
-        shutil.rmtree(self.temp_dir)
         unstub()
 
     def test_initialize(self):
         """Test initialization"""
-        RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         verify(
             bcipy.task.paradigm.rsvp.calibration.calibration,
@@ -138,11 +137,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_execute(self):
         """Test task execute"""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
         when(task).write_offset_trigger().thenReturn(None)
         when(task).write_trigger_data(any(), any()).thenReturn(None)
 
@@ -157,19 +157,21 @@ class TestRSVPCalibration(unittest.TestCase):
         parameters = {}
 
         with self.assertRaises(Exception):
-            RSVPCalibrationTask(
-                win=self.win,
-                daq=self.daq,
-                parameters=parameters,
-                file_save=self.temp_dir)
+            with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+                RSVPCalibrationTask(
+                    win=self.win,
+                    daq=self.daq,
+                    parameters=parameters,
+                    file_save=self.temp_dir)
 
     def test_trigger_type_targetness(self):
         """Test trigger type targetness."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         # non-target
         symbol = 'N'
@@ -187,11 +189,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_trigger_type_fixation(self):
         """Test trigger type fixation."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         # fixation
         symbol = '+'
@@ -202,11 +205,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_trigger_type_prompt(self):
         """Test trigger type prompt."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         # prompt, index = 0, otherwise it would be a target
         symbol = 'P'
@@ -217,11 +221,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_trigger_type_preview(self):
         """Test trigger type preview."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         # preview, index > 0, otherwise it would be a prompt
         symbol = 'inquiry_preview'
@@ -232,11 +237,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_write_trigger_data_first_run(self):
         """Test write trigger data when it is the first run of the task."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         timing_mock = mock()
@@ -258,11 +264,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_write_trigger_data_not_first_run(self):
         """Test write trigger data when it is not the first run of the task."""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
 
         timing_mock = mock()
         timing = [('a', 0.0)]
@@ -276,11 +283,12 @@ class TestRSVPCalibration(unittest.TestCase):
 
     def test_write_offset_trigger(self):
         """Test write offset trigger"""
-        task = RSVPCalibrationTask(
-            win=self.win,
-            daq=self.daq,
-            parameters=self.parameters,
-            file_save=self.temp_dir)
+        with patch('bcipy.helpers.triggers.open', mock_open(read_data=''), create=False):
+            task = RSVPCalibrationTask(
+                win=self.win,
+                daq=self.daq,
+                parameters=self.parameters,
+                file_save=self.temp_dir)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(ContentType.EEG).thenReturn(client_by_type_resp)
         when(bcipy.task.paradigm.rsvp.calibration.calibration).offset_label(
