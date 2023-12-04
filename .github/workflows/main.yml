@@ -83,7 +83,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install kenlm==0.1 --global-option="--max_order=12"
-        pip install psychopy==2023.2.1 --no-deps
     - name: install manually downloaded pyWinhook wheel for Python 3.9
       if: matrix.python-version == 3.9
       run: |
