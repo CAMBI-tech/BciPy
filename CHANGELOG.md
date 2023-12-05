@@ -10,7 +10,7 @@ Our last release candidate before the official 2.0 release!
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
 - Stimuli
-    - Updates to ensure stimuli are presented at the same frequency #287
+    - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Parameters

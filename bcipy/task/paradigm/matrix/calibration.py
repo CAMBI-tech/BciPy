@@ -2,20 +2,24 @@ from typing import List, Tuple
 
 from psychopy import core, visual
 
+from bcipy.acquisition import ClientManager
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.save import save_stimuli_position_info
 from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, InquirySchedule,
                                    StimuliOrder, TargetPositions,
                                    generate_calibration_inquiries)
 from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.system_utils import get_screen_info
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers)
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
 from bcipy.task import Task
 
 
@@ -35,15 +39,29 @@ class MatrixCalibrationTask(Task):
     PARAMETERS:
     ----------
     win (PsychoPy Display Object)
-    daq (Data Acquisition Object)
-    parameters (Dictionary)
+    daq (Data Acquisition Object [ClientManager]])
+    parameters (Parameters Object)
     file_save (String)
     """
 
-    def __init__(self, win, daq, parameters, file_save):
+    def __init__(
+            self,
+            win: visual.Window,
+            daq: ClientManager,
+            parameters: Parameters,
+            file_save: str) -> None:
         super(MatrixCalibrationTask, self).__init__()
         self.window = win
         self.frame_rate = self.window.getActualFrameRate()
+
+        _screen_info = get_screen_info()
+
+        self.screen_info = {
+            'screen_size_pixels': self.window.size.tolist(),
+            'screen_hz': _screen_info.rate,
+            'screen_units': 'norm',
+        }
+
         self.parameters = parameters
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
@@ -122,7 +140,7 @@ class MatrixCalibrationTask(Task):
             return TriggerType.TARGET
         return TriggerType.NONTARGET
 
-    def execute(self):
+    def execute(self) -> str:
 
         self.logger.info(f'Starting {self.name()}!')
         run = True
@@ -184,16 +202,20 @@ class MatrixCalibrationTask(Task):
             # Set run to False to stop looping
             run = False
 
+        # Save the grid screenshot
+        self.matrix.capture_grid_screenshot(self.file_save)
+
         # Say Goodbye!
         self.matrix.info_text = trial_complete_message(
             self.window, self.parameters)
         self.matrix.draw_static()
         self.window.flip()
 
-        # Allow for some training data to be collected
+        # Allow for some additional data to be collected for later processing
         core.wait(self.buffer_val)
 
         self.write_offset_trigger()
+        self.write_stimuli_positions()
 
         return self.file_save
 
@@ -208,16 +230,14 @@ class MatrixCalibrationTask(Task):
             We do not write the calibration trigger used to generate this offset from the display.
             See MatrixDisplay._trigger_pulse() for more information.
         """
-        # write offsets. currently, we only check for offsets at the beginning.
-        if self.daq.is_calibrated and first_run:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'starting_offset',
-                    TriggerType.OFFSET,
-                    # offset will factor in true offset and time relative from beginning
-                    (self.daq.offset(self.matrix.first_stim_time) - self.matrix.first_stim_time)
-                )]
-            )
+        if first_run:
+            triggers = []
+            for content_type, client in self.daq.clients_by_type.items():
+                label = offset_label(content_type.name)
+                time = client.offset(
+                    self.matrix.first_stim_time) - self.matrix.first_stim_time
+                triggers.append(Trigger(label, TriggerType.OFFSET, time))
+            self.trigger_handler.add_triggers(triggers)
 
         # make sure triggers are written for the inquiry
         self.trigger_handler.add_triggers(convert_timing_triggers(timing, timing[0][0], self.trigger_type))
@@ -225,18 +245,28 @@ class MatrixCalibrationTask(Task):
     def write_offset_trigger(self) -> None:
         """Append an offset value to the end of the trigger file.
         """
-        if self.daq.is_calibrated:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'daq_sample_offset',
-                    TriggerType.SYSTEM,
-                    # to help support future refactoring or use of lsl timestamps only
-                    # we write only the sample offset here
-                    self.daq.offset(self.matrix.first_stim_time)
-                )])
+        # To help support future refactoring or use of lsl timestamps only
+        # we write only the sample offset here.
+        triggers = []
+        for content_type, client in self.daq.clients_by_type.items():
+            label = offset_label(content_type.name, prefix='daq_sample_offset')
+            time = client.offset(self.matrix.first_stim_time)
+            triggers.append(Trigger(label, TriggerType.SYSTEM, time))
+
+        self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
-    def name(self):
+    def write_stimuli_positions(self) -> None:
+        """Write Stimuli Positions.
+
+        Write the positions of the stimuli to a json file.
+        """
+        save_stimuli_position_info(
+            self.matrix._stim_positions,
+            self.file_save,
+            self.screen_info)
+
+    def name(self) -> str:
         return 'Matrix Calibration Task'
 
 
