@@ -42,7 +42,8 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
                             self.experiment_clock, self.spelled_text)
 
 
-def init_display(parameters, win, experiment_clock, starting_spelled_text) -> MatrixDisplay:
+def init_display(
+        parameters, win, experiment_clock, starting_spelled_text) -> MatrixDisplay:
     """Constructs a new Matrix display"""
 
     info = InformationProperties(

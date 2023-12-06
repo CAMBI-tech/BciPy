@@ -1,4 +1,5 @@
 """Code for constructing and executing registered tasks"""
+# mypy: disable-error-code="arg-type, misc"
 from typing import List, Optional
 from psychopy import visual
 

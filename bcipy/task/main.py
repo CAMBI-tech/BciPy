@@ -20,6 +20,3 @@ class Task(ABC):
     @abstractmethod
     def name(self) -> str:
         ...
-
-    def configure(self) -> None:
-        ...
