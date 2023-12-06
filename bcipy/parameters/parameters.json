@@ -527,7 +527,7 @@
     "value": "0.05",
     "section": "bci_config",
     "readableName": "Task Bar Padding",
-    "helpTip": "Specifies the padding around the task bar text. Default: 0.1",
+    "helpTip": "Specifies the padding around the task bar text. Default: 0.05",
     "recommended_values": [
       "0.05"
     ],
