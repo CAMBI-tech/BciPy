@@ -266,7 +266,8 @@ def init_calibration_display_task(
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'])
+                                  height=parameters['task_height'],
+                                  padding=parameters['task_padding'])
 
     preview_inquiry = PreviewInquiryProperties(
         preview_only=True,

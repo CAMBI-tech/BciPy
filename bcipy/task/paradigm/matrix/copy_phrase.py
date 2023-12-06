@@ -66,7 +66,8 @@ def init_display(
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'])
+                                 height=parameters['task_height'],
+                                 padding=parameters['task_padding'])
 
     return MatrixDisplay(
         win,
@@ -77,5 +78,6 @@ def init_display(
         rows=parameters['matrix_rows'],
         columns=parameters['matrix_columns'],
         width_pct=parameters['matrix_width'],
+        height_pct=1 - (2 * task_bar.height_pct),
         trigger_type=parameters['trigger_type'],
         should_prompt_target=False)
