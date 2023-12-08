@@ -48,10 +48,13 @@ class VEPDisplay(Display):
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
                  codes: Optional[List[List[int]]] = None,
-                 should_prompt_target: bool = True):
+                 should_prompt_target: bool = True,
+                 frame_rate: Optional[float] = None):
         self.window = window
-        frame_rate = self.window.getActualFrameRate()
-        assert frame_rate, 'An accurate window frame rate could not be established'
+        if not frame_rate:
+            frame_rate = self.window.getActualFrameRate()
+            assert frame_rate, 'An accurate window frame rate could not be established'
+
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)

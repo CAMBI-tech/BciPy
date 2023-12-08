@@ -7,10 +7,12 @@ from bcipy.display import (InformationProperties, VEPStimuliProperties,
                            init_display_window)
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.display.paradigm.vep.codes import ssvep_to_code
+from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
+                                              ssvep_to_code)
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
+from bcipy.helpers.system_utils import get_screen_info
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)
@@ -28,19 +30,22 @@ info = InformationProperties(
 )
 
 task_text = ['1/3', '2/3', '3/3']
-
+stim_screen = 0
 window_parameters = {
     'full_screen': False,
     'window_height': 700,
     'window_width': 700,
-    'stim_screen': 1,
+    'stim_screen': stim_screen,
     'background_color': 'black'
 }
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = True
-frameRate = win.getActualFrameRate()
+frame_rate = win.getActualFrameRate()
+if not frame_rate:
+    # Allow the demo to work using the configured rate.
+    frame_rate = get_screen_info(stim_screen).rate
 
-print(f'Monitor refresh rate: {frameRate} Hz')
+print(f'Monitor refresh rate: {frame_rate} Hz')
 
 stim_color = [
     'green', 'red', '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3',
@@ -48,9 +53,9 @@ stim_color = [
 ]
 
 # Note: these rates work for a 60hz display
-flicker_rates = [4, 5, 6, 10, 12, 15]
+flicker_rates = DEFAULT_FLICKER_RATES
 codes = [
-    ssvep_to_code(refresh_rate=60, flicker_rate=hz)
+    ssvep_to_code(refresh_rate=int(frame_rate), flicker_rate=hz)
     for hz in flicker_rates
 ]
 
@@ -67,7 +72,7 @@ stim_props = VEPStimuliProperties(
     stim_color=stim_color,
     inquiry=[],
     stim_length=1,  # how many times to stimuli
-    animation_seconds=1.0)
+    animation_seconds=2.0)
 task_bar = CalibrationTaskBar(win, inquiry_count=3, current_index=0, font=font)
 vep = VEPDisplay(win,
                  experiment_clock,
@@ -76,7 +81,8 @@ vep = VEPDisplay(win,
                  info,
                  box_config=box_config,
                  codes=codes,
-                 should_prompt_target=True)
+                 should_prompt_target=True,
+                 frame_rate=frame_rate)
 wait_seconds = 2
 
 inquiries: List[List[Any]] = [[

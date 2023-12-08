@@ -211,11 +211,11 @@ class VEPCalibrationTask(Task):
 
 
 def init_calibration_display(parameters: Parameters,
-                             window,
-                             experiment_clock,
-                             symbol_set,
-                             timing,
-                             colors):
+                             window: visual.Window,
+                             experiment_clock: Clock,
+                             symbol_set: List[str],
+                             timing: List[float],
+                             colors: List[str]) -> VEPDisplay:
     """Initialize the display"""
     info = InformationProperties(
         info_color=[parameters['info_color']],
