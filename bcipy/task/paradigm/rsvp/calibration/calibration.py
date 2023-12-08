@@ -1,14 +1,16 @@
 from typing import List, Tuple
 
-from psychopy import core
+from psychopy import core, visual
 
+from bcipy.acquisition import ClientManager
 from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import (StimuliOrder, TargetPositions,
+from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.stimuli import (InquirySchedule, StimuliOrder, TargetPositions,
                                    generate_calibration_inquiries)
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
@@ -16,6 +18,7 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
+
 from bcipy.task import Task
 
 
@@ -40,7 +43,12 @@ class RSVPCalibrationTask(Task):
     file_save (str)
     """
 
-    def __init__(self, win, daq, parameters, file_save):
+    def __init__(
+            self,
+            win: visual.Window,
+            daq: ClientManager,
+            parameters: Parameters,
+            file_save: str) -> None:
         super(RSVPCalibrationTask, self).__init__()
 
         self.window = win
@@ -83,7 +91,7 @@ class RSVPCalibrationTask(Task):
         self.is_txt_stim = parameters['is_txt_stim']
         self.enable_breaks = parameters['enable_breaks']
 
-    def generate_stimuli(self):
+    def generate_stimuli(self) -> InquirySchedule:
         """Generates the inquiries to be presented.
         Returns:
         --------
@@ -111,7 +119,7 @@ class RSVPCalibrationTask(Task):
         """
         if index == 0:
             return TriggerType.PROMPT
-        if symbol == 'inquiry_preview' and index == 1:
+        if symbol == 'inquiry_preview':
             return TriggerType.PREVIEW
         if symbol == '+':
             return TriggerType.FIXATION
@@ -119,7 +127,7 @@ class RSVPCalibrationTask(Task):
             return TriggerType.TARGET
         return TriggerType.NONTARGET
 
-    def execute(self):
+    def execute(self) -> str:
 
         self.logger.info(f'Starting {self.name()}!')
         run = True
@@ -188,7 +196,7 @@ class RSVPCalibrationTask(Task):
 
         return self.file_save
 
-    def write_trigger_data(self, timing: List[Tuple[str, float]], first_run) -> None:
+    def write_trigger_data(self, timing: List[Tuple[str, float]], first_run: bool) -> None:
         """Write Trigger Data.
 
         Using the timing provided from the display and calibration information from the data acquisition
@@ -227,12 +235,15 @@ class RSVPCalibrationTask(Task):
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
-    def name(self):
+    def name(self) -> str:
         return 'RSVP Calibration Task'
 
 
 def init_calibration_display_task(
-        parameters, window, static_clock, experiment_clock):
+        parameters: Parameters,
+        window: visual.Window,
+        static_clock: core.StaticPeriod,
+        experiment_clock: Clock) -> CalibrationDisplay:
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'],
@@ -255,7 +266,8 @@ def init_calibration_display_task(
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'])
+                                  height=parameters['task_height'],
+                                  padding=parameters['task_padding'])
 
     preview_inquiry = PreviewInquiryProperties(
         preview_only=True,

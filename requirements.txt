@@ -21,5 +21,6 @@ Pillow==9.4.0
 py-cpuinfo==9.0.0
 pyedflib==0.1.34
 PyQt6==6.6.0
+PyQt6-Qt6==6.6.0
 pywavelets==1.4.1
 tqdm==4.62.2

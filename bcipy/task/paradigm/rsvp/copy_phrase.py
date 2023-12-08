@@ -4,14 +4,11 @@ from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
-from bcipy.config import (
-    SESSION_DATA_FILENAME,
-    SESSION_SUMMARY_FILENAME,
-    TRIGGER_FILENAME,
-    WAIT_SCREEN_MESSAGE,
-    DEFAULT_EVIDENCE_PRECISION)
-from bcipy.display import (InformationProperties,
-                           PreviewInquiryProperties,
+from bcipy.acquisition import ClientManager
+from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
+                          SESSION_SUMMARY_FILENAME, TRIGGER_FILENAME,
+                          WAIT_SCREEN_MESSAGE)
+from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
@@ -32,6 +29,8 @@ from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
+from bcipy.language.main import LanguageModel
+from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
 from bcipy.task.control.evidence import (EvidenceEvaluator,
@@ -106,8 +105,15 @@ class RSVPCopyPhraseTask(Task):
         'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
-    def __init__(self, win, daq, parameters, file_save, signal_models,
-                 language_model, fake):
+    def __init__(
+            self,
+            win: visual.Window,
+            daq: ClientManager,
+            parameters: Parameters,
+            file_save: str,
+            signal_models: List[SignalModel],
+            language_model: LanguageModel,
+            fake: bool) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
         self.logger = logging.getLogger(__name__)
         self.window = win
@@ -172,7 +178,7 @@ class RSVPCopyPhraseTask(Task):
         self.rsvp = self.init_display()
 
     def init_evidence_evaluators(self,
-                                 signal_models) -> List[EvidenceEvaluator]:
+                                 signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
         """Initializes the evidence evaluators from the provided signal models.
 
         Returns a list of evaluators for active devices. Raises an exception if
@@ -303,7 +309,7 @@ class RSVPCopyPhraseTask(Task):
             self.logger.info('User wants to exit.')
         return should_continue
 
-    def wait(self, seconds: Optional[float] = None):
+    def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
 
         Parameters
@@ -357,7 +363,7 @@ class RSVPCopyPhraseTask(Task):
 
         return stim_times, proceed
 
-    def show_feedback(self, selection: str, correct: bool = True):
+    def show_feedback(self, selection: str, correct: bool = True) -> None:
         """Display the selection as feedback if the 'show_feedback'
         parameter is configured.
 
@@ -679,7 +685,7 @@ class RSVPCopyPhraseTask(Task):
             data.likelihood = list(self.copy_phrase_task.conjugator.likelihood)
         return data
 
-    def exit_display(self):
+    def exit_display(self) -> None:
         """Close the UI and cleanup."""
         # Update task state and reset the static
         self.rsvp.update_task_bar(text=self.spelled_text)
@@ -803,7 +809,7 @@ class TaskSummary:
                  session: Session,
                  show_preview: bool = False,
                  preview_mode: int = 0,
-                 trigger_path: Optional[str] = None):
+                 trigger_path: Optional[str] = None) -> None:
         assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
         self.show_preview = show_preview
@@ -927,7 +933,8 @@ def _init_copy_phrase_display(
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'])
+                                 height=parameters['task_height'],
+                                 padding=parameters['task_padding'])
 
     return CopyPhraseDisplay(
         win,

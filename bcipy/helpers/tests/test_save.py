@@ -2,10 +2,15 @@ import os
 import shutil
 import unittest
 import tempfile
+import json
 
-from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_PARAMETER_FILENAME, DEFAULT_EXPERIMENT_ID
+from bcipy.config import (
+    DEFAULT_PARAMETERS_PATH,
+    DEFAULT_PARAMETER_FILENAME,
+    DEFAULT_EXPERIMENT_ID,
+    STIMULI_POSITIONS_FILENAME)
 from bcipy.helpers import save
-from bcipy.helpers.save import init_save_data_structure
+from bcipy.helpers.save import init_save_data_structure, save_stimuli_position_info
 from mockito import any, unstub, when
 
 
@@ -79,6 +84,34 @@ class TestSave(unittest.TestCase):
                 'does_not_exist.json',
                 self.task,
                 self.experiment)
+
+
+class TestSaveStimuliPositions(unittest.TestCase):
+
+    def setUp(self):
+        self.save_directory = tempfile.mkdtemp()
+        self.stimuli_positions = {'symbol': (0, 0)}
+        self.filename = STIMULI_POSITIONS_FILENAME
+        self.screen_info = {'screen_size_pixels': [1920, 1080]}
+        self.expected_output = {
+            'symbol': [0, 0],
+            'screen_size_pixels': [1920, 1080]}
+
+    def tearDown(self):
+        shutil.rmtree(self.save_directory)
+
+    def test_save_stimuli_position_info_writes_json(self):
+        save_stimuli_position_info(self.stimuli_positions, self.save_directory, self.screen_info)
+        self.assertTrue(os.path.isfile(os.path.join(self.save_directory, self.filename)))
+
+    def test_save_stimuli_position_info_writes_correct_json(self):
+        save_stimuli_position_info(self.stimuli_positions, self.save_directory, self.screen_info)
+        # load the json file
+        with open(os.path.join(self.save_directory, self.filename)) as f:
+            data = json.load(f)
+
+        # assert the data is correct
+        self.assertEqual(data, self.expected_output)
 
 
 if __name__ == '__main__':

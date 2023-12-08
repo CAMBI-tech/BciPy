@@ -6,13 +6,16 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, List, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID,
+from bcipy.config import (DEFAULT_ENCODING,
+                          DEFAULT_EXPERIMENT_ID,
                           DEFAULT_LM_PARAMETERS_FILENAME,
                           DEFAULT_LM_PARAMETERS_PATH,
-                          DEFAULT_PARAMETER_FILENAME, SIGNAL_MODEL_FILE_SUFFIX)
+                          DEFAULT_PARAMETER_FILENAME,
+                          SIGNAL_MODEL_FILE_SUFFIX,
+                          STIMULI_POSITIONS_FILENAME)
 from bcipy.helpers.validate import validate_experiments
 from bcipy.signal.model.base_model import SignalModel
 
@@ -33,16 +36,26 @@ def save_json_data(data: Any, location: str, name: str) -> str:
     return str(path)
 
 
-def save_experiment_data(experiments, fields, location, name) -> str:
+def save_experiment_data(
+        experiments: dict,
+        fields: dict,
+        location: str,
+        name: str) -> str:
     validate_experiments(experiments, fields)
     return save_json_data(experiments, location, name)
 
 
-def save_field_data(fields, location, name) -> str:
+def save_field_data(
+        fields: dict,
+        location: str,
+        name: str) -> str:
     return save_json_data(fields, location, name)
 
 
-def save_experiment_field_data(data, location, name) -> str:
+def save_experiment_field_data(
+        data: dict,
+        location: str,
+        name: str) -> str:
     return save_json_data(data, location, name)
 
 
@@ -154,7 +167,7 @@ def _save_session_related_data(save_path: str, session_dictionary: dict) -> Any:
     return file
 
 
-def save_model(model: SignalModel, path: Union[Path, str]):
+def save_model(model: SignalModel, path: Union[Path, str]) -> None:
     """Save model weights (e.g. after training) to `path`
 
     Parameters
@@ -169,3 +182,27 @@ def save_model(model: SignalModel, path: Union[Path, str]):
         # It supports very large objects and some data format optimizations
         # making it appropriate for signal models.
         pickle.dump(model, file, protocol=4)
+
+
+def save_stimuli_position_info(
+        stimuli_position_info: Dict[str, Tuple[float, float]],
+        path: Union[Path, str],
+        screen_info: Dict[str, Any]) -> str:
+    """Save stimuli positions and screen info to `path`
+
+   stimuli_position_info: {'A': (0, 0)}
+   screen_info: {'screen_size_pixels': [1920, 1080], 'screen_refresh': 160}
+
+    Parameters
+    ----------
+        stimuli_position_info - stimuli position info to save to json
+        path - path to the file which will be created.
+        screen_info - screen info to save to json
+    """
+    # assert that screen_info is a dict with at least the key 'screen_resolution'
+    assert 'screen_size_pixels' in screen_info.keys(), \
+        'screen_size_pixels must be a key in screen_info'
+
+    # combine the dicts
+    all_data = {**stimuli_position_info, **screen_info}
+    return save_json_data(all_data, path, STIMULI_POSITIONS_FILENAME)

@@ -6,6 +6,7 @@ omit =
         *tests*
         *test*
         *demo*
+        *exceptions.py
         */gui/*
 
 [report]

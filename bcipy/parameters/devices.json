@@ -60,6 +60,23 @@
         "excluded_from_analysis": ["TRG", "F7"]
     },
     {
+        "name": "DSI-Flex",
+        "content_type": "EEG",
+        "channels": [
+            { "name": "F3", "label": "Fz", "units": "microvolts", "type": "EEG" },
+            { "name": "S2", "label": "Oz", "units": "microvolts", "type": "EEG" },
+            { "name": "S3", "label": "P4", "units": "microvolts", "type": "EEG" },
+            { "name": "S4", "label": "P3", "units": "microvolts", "type": "EEG" },
+            { "name": "S5", "label": "PO8", "units": "microvolts", "type": "EEG" },
+            { "name": "S6", "label": "Pz", "units": "microvolts", "type": "EEG" },
+            { "name": "S7", "label": "PO7", "units": "microvolts", "type": "EEG" },
+            { "name": "TRG", "label": "TRG", "units": "microvolts", "type": "EEG" }
+        ],
+        "sample_rate": 300.0,
+        "description": "Wearable Sensing DSI-Flex",
+        "excluded_from_analysis": ["TRG"]
+    },
+    {
         "name": "g.USBamp-1",
         "content_type": "EEG",
         "channels": [
