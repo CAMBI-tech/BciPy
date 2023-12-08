@@ -322,7 +322,7 @@ class VEPDisplay(Display):
                 start_pos = self.starting_position(sym)
                 animation_paths[sym] = animation_path(start_pos, end_pos,
                                                       frames)
-
+        counter = 0
         self.static_clock.reset()
         while self.static_clock.getTime() < self.timing_animation:
             for frame in range(frames):
@@ -332,6 +332,10 @@ class VEPDisplay(Display):
                     sti.draw()
                 self.draw_static()
                 self.window.flip()
+                counter += 1
+        self.logger.debug(
+            f"{counter} animation frames rendered in {self.timing_animation} seconds"
+        )
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
