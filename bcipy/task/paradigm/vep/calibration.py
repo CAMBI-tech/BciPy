@@ -215,8 +215,7 @@ def init_calibration_display(parameters: Parameters,
                              experiment_clock,
                              symbol_set,
                              timing,
-                             colors,
-                             num_boxes=6):
+                             colors):
     """Initialize the display"""
     info = InformationProperties(
         info_color=[parameters['info_color']],
@@ -227,7 +226,7 @@ def init_calibration_display(parameters: Parameters,
     )
 
     layout = centered(width_pct=0.95, height_pct=0.80)
-    box_config = BoxConfiguration(layout, num_boxes=num_boxes, height_pct=0.30)
+    box_config = BoxConfiguration(layout, height_pct=0.30)
 
     stim_props = VEPStimuliProperties(stim_font=parameters['font'],
                                       stim_pos=box_config.positions,

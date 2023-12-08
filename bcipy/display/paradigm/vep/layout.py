@@ -2,7 +2,7 @@
 
 from itertools import cycle
 from math import sqrt
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Tuple
 
 from bcipy.display.components.layout import (Layout, above, below, left_of,
                                              right_of)
@@ -89,11 +89,11 @@ def checkerboard(squares: int, colors: Tuple[str, str], center: Tuple[float,
 class BoxConfiguration():
     """Computes box size and positions for a VEP display.
 
-    In this configuration, there is one row on top and one on the bottom.
+    In this configuration, there are 6 areas configured with one row of 3 on top
+    and one row on the bottom.
 
     Parameters
     ----------
-        num_boxes - number of boxes; currently supports 4 or 6.
         layout - defines the boundaries within a Window in which the text areas
             will be placed
         spacing_pct - used to specify spacing between boxes within a row.
@@ -102,30 +102,25 @@ class BoxConfiguration():
 
     def __init__(self,
                  layout: Layout,
-                 num_boxes: int,
-                 spacing_pct: Optional[float] = None,
+                 spacing_pct: float = 0.05,
                  height_pct: float = 0.25):
         self.layout = layout
-        self.num_boxes = num_boxes
         self.height_pct = height_pct
         self.validate()
 
-        default_spacing = {4: 0.1, 6: 0.05}
-        if not spacing_pct:
-            spacing_pct = default_spacing[num_boxes]
         self.spacing_pct = spacing_pct
+        self._num_boxes = 6
         self._row_count = 2
 
     def validate(self):
         """Validate invariants"""
-        assert self.num_boxes == 4 or self.num_boxes == 6, 'Number of boxes must be 4 or 6'
         assert self.height_pct <= 0.5, "Rows can't take more than 50% of the height"
 
     def _box_size(self, validate: bool = True) -> Tuple[float, float]:
         """Computes the size of each box"""
         if validate:
             self.validate()
-        number_per_row = self.num_boxes / self._row_count
+        number_per_row = self._num_boxes / self._row_count
 
         # left and right boxes go to the edges, with a space between each box
         spaces_per_row = number_per_row - 1
@@ -165,9 +160,6 @@ class BoxConfiguration():
         left = right_of(layout.left, width / 2)
         right = left_of(layout.right, width / 2)
 
-        if self.num_boxes == 4:
-            return [(left, top), (right, top), (left, bottom), (right, bottom)]
-
         middle = layout.horizontal_middle
         return [(left, top), (middle, top), (right, top), (left, bottom),
                 (middle, bottom), (right, bottom)]
@@ -175,8 +167,6 @@ class BoxConfiguration():
     @property
     def names(self) -> List[str]:
         """Box names for each position."""
-        if self.num_boxes == 4:
-            return ['LEFT_TOP', 'RIGHT_TOP', 'LEFT_BOTTOM', 'RIGHT_BOTTOM']
         return [
             'LEFT_TOP', 'MIDDLE_TOP', 'RIGHT_TOP', 'LEFT_BOTTOM',
             'MIDDLE_BOTTOM', 'RIGHT_BOTTOM'

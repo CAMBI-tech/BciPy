@@ -28,7 +28,6 @@ info = InformationProperties(
 )
 
 task_text = ['1/3', '2/3', '3/3']
-num_boxes = 6
 
 window_parameters = {
     'full_screen': False,
@@ -56,7 +55,7 @@ codes = [
 ]
 
 layout = centered(width_pct=0.95, height_pct=0.80)
-box_config = BoxConfiguration(layout, num_boxes=num_boxes, height_pct=0.30)
+box_config = BoxConfiguration(layout, height_pct=0.30)
 
 experiment_clock = Clock()
 len_stimuli = 10
