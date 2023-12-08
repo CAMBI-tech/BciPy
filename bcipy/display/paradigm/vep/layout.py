@@ -134,6 +134,11 @@ class BoxConfiguration():
         return (width, height)
 
     @property
+    def num_boxes(self) -> int:
+        """The number of boxes"""
+        return self._num_boxes
+    
+    @property
     def box_size(self) -> Tuple[float, float]:
         """Size of each box"""
         return self._box_size()
