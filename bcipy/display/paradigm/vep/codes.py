@@ -8,6 +8,8 @@ from bcipy.helpers.exceptions import BciPyCoreException
 
 log = logging.getLogger(__name__)
 
+DEFAULT_FLICKER_RATES = [4, 5, 6, 10, 12, 15]
+
 
 def create_vep_codes(length=32, count=4) -> List[List[int]]:
     """Create a list of random VEP codes.
