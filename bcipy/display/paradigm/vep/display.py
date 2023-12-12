@@ -209,7 +209,7 @@ class VEPDisplay(Display):
             target - (symbol, duration, color) tuple
         """
         assert isinstance(target.symbol, str), "Target must be a str"
-        self.logger.info(f"Target: {target.symbol}")
+        self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
         # Show all symbols in the matrix at reduced opacity
         for sym in self.symbol_set:
@@ -233,7 +233,7 @@ class VEPDisplay(Display):
         for sti in self.sti.values():
             sti.draw()
 
-        if target_box_index:
+        if target_box_index is not None:
             self.highlight_target_box(target_box_index)
 
         self.draw_static()
