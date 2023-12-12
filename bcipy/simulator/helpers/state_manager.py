@@ -67,7 +67,7 @@ class StateManagerImpl(StateManager):
         self.parameters = parameters
         self.fuser_class: EvidenceFuser.__class__ = fuser_class
 
-        self.max_inq_len = self.parameters.get('max_inq_len', 50)
+        self.max_inq_len = self.parameters.get('max_inq_len', 100)
 
     def is_done(self) -> bool:
         # TODO add stoppage criterion, Stoppage criterion is seperate from decision. Decision should we go on to next letter or not
@@ -93,6 +93,10 @@ class StateManagerImpl(StateManager):
         decision = None
 
         new_state = self.get_state().__dict__
+        new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
+                                           evidence_likelihoods=list(evidence), decision=decision, fused_likelihood=fused_likelihood)
+
+        new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
             decision = alphabet()[np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
 

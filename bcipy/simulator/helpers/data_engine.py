@@ -91,7 +91,7 @@ class RawDataEngine(DataEngine):
             self for chaining
         """
 
-        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]  # TODO store how good evidence was in session
+        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]  # TODO store how good evidence was in session | store data source as well
         types = [int, int, int, str, int, np.ndarray]
 
         rows = []

@@ -87,9 +87,11 @@ class SimulatorCopyPhrase(Simulator):
 
         final_state = self.state_manager.get_state()
         log.info(f"SIM END")
+        log.info(f"FINAL TYPED: {final_state.current_sentence}")
+        log.info(self.referee.score(self).__dict__)
+
         log.debug(f"Final State: {final_state}")
 
-        # TODO visualize result metrics
 
     def __make_stimuli(self, state: SimState):
         # TODO abstract out

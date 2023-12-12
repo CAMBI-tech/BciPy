@@ -1,12 +1,10 @@
 from pathlib import Path
 from typing import List
 
-import numpy as np
-
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.load import load_json_parameters
 from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.metrics import MetricReferee, DummyRef
+from bcipy.simulator.helpers.metrics import MetricReferee, RefereeImpl, SimMetrics1Handler
 from bcipy.simulator.helpers.model_handler import SignalModelHandler1, ModelHandler
 from bcipy.simulator.helpers.sampler import Sampler, EEGByLetterSampler
 from bcipy.simulator.helpers.state_manager import StateManager, StateManagerImpl
@@ -51,7 +49,7 @@ class SimulationFactoryV2:
         stateManager: StateManager = StateManagerImpl(sim_parameters)
         sampler: Sampler = EEGByLetterSampler(data_engine)
         model_handler: ModelHandler = SignalModelHandler1(model_file)
-        referee: MetricReferee = DummyRef()
+        referee: MetricReferee = RefereeImpl(metric_handlers={'basic': SimMetrics1Handler()})
 
         sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, referee)
 

@@ -25,4 +25,5 @@ if __name__ == "__main__":
     args = vars(parser.parse_args())
 
     simulator: Simulator = SimulationFactoryV2.create(**args)
+
     simulator.run()

@@ -14,7 +14,7 @@ fileHandler.setLevel(logging.DEBUG)
 
 # Create a log format using Log Record attributes
 fmt_file = logging.Formatter(
-    "%(asctime)s | %(levelname)s | %(filename)s:%(lineno)s >> %(message)s"
+    "%(levelname)s | %(filename)s:%(lineno)s >> %(message)s"
 )
 
 fmt = logging.Formatter(
