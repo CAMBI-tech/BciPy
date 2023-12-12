@@ -185,6 +185,7 @@ class VEPDisplay(Display):
         self.log_inquiry(stim)
         self.animate_inquiry(stim)
         core.wait(self.timing_fixation)
+        self._reset_text_boxes()
         self.stimulate()
 
         # clear everything expect static stimuli
