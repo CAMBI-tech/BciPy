@@ -10,7 +10,7 @@ from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
 # from bcipy.helpers.symbols import qwerty_order
 
-font = 'Overpass Mono Medium'
+font = 'Overpass Mono'
 # Initialize Stimulus
 window_parameters = {
     'full_screen': True,

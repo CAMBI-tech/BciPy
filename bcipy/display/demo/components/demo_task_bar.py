@@ -41,7 +41,7 @@ def demo_copy_phrase(win: visual.Window):
     task_bar = CopyPhraseTaskBar(win,
                                  task_text='HELLO_WORLD',
                                  spelled_text='HELLO',
-                                 font='Overpass Mono Medium',
+                                 font='Overpass Mono',
                                  colors=['white', 'green'],
                                  padding=0.05)
 

@@ -10,7 +10,7 @@ from bcipy.display import (InformationProperties, StimuliProperties,
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
-font = "Overpass Mono Medium"
+font = "Overpass Mono"
 info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
