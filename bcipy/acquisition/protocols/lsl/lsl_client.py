@@ -1,7 +1,8 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import Optional, List
+from typing import Dict, List, Optional
 
+import pandas as pd
 from pylsl import (StreamInfo, StreamInlet, local_clock, resolve_byprop,
                    resolve_stream)
 
@@ -54,6 +55,26 @@ class LslAcquisitionClient:
         self.max_buffer_len = max_buffer_len
         self.save_directory = save_directory
         self.raw_data_file_name = raw_data_file_name
+        self._max_samples = None
+
+    @property
+    def first_sample_time(self) -> float:
+        """Timestamp returned by the first sample. If the data is being
+        recorded this value reflects the timestamp of the first recorded sample"""
+        if self.recorder:
+            return self.recorder.first_sample_time
+        return self._first_sample_time
+
+    @property
+    def max_samples(self) -> int:
+        """Maximum number of samples available at any given time."""
+        if self._max_samples is None:
+            if self.device_spec.sample_rate == IRREGULAR_RATE:
+                self._max_samples = int(self.max_buffer_len)
+            else:
+                self._max_samples = int(self.max_buffer_len *
+                                        self.device_spec.sample_rate)
+        return self._max_samples
 
     def start_acquisition(self) -> bool:
         """Connect to the datasource and start acquiring data.
@@ -74,7 +95,7 @@ class LslAcquisitionClient:
 
         self.inlet = StreamInlet(
             stream_info,
-            max_buflen=self.max_buffer_len,
+            max_buflen=4 * self.max_buffer_len,  # TODO: revisit this value
             max_chunklen=1)
 
         if self.device_spec:
@@ -94,14 +115,6 @@ class LslAcquisitionClient:
             self.buffer = RingBuffer(size_max=self.max_samples)
         _, self._first_sample_time = self.inlet.pull_sample()
         return True
-
-    @property
-    def first_sample_time(self) -> float:
-        """Timestamp returned by the first sample. If the data is being
-        recorded this value reflects the timestamp of the first recorded sample"""
-        if self.recorder:
-            return self.recorder.first_sample_time
-        return self._first_sample_time
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
@@ -126,11 +139,33 @@ class LslAcquisitionClient:
         """Context manager exit method to clean up resources."""
         self.stop_acquisition()
 
+    def _data_stats(self, data: List[Record]) -> Dict[str, float]:
+        """Summarize a list of records for logging and inspection."""
+        if data:
+            diffs = pd.DataFrame(data)['timestamp'].diff()
+            data_start = data[0].timestamp
+            data_end = data[-1].timestamp
+            precision = 3
+            return {
+                'count': len(data),
+                'seconds': round(data_end - data_start, precision),
+                'from': round(data_start, precision),
+                'to': round(data_end, precision),
+                'expected_diff': round(1 / self.device_spec.sample_rate,
+                                       precision),
+                'mean_diff': round(diffs.mean(), precision),
+                'max_diff': round(diffs.max(), precision)
+            }
+        return {}
+
     def get_data(self,
                  start: Optional[float] = None,
                  end: Optional[float] = None,
                  limit: Optional[int] = None) -> List[Record]:
         """Get data in time range.
+
+        Only data in the current buffer is available to query;
+        requests for data outside of this will fail.
 
         Parameters
         ----------
@@ -142,38 +177,31 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.info(f"Getting data from: {start} to: {end} limit: {limit}")
+        log.info(f"Requesting data from: {start} to: {end} limit: {limit}")
 
-        # Only data in the current buffer is available to query;
-        # requests for data outside of this will fail. Buffer size is
-        # set using the max_buffer_len parameter.
         data = self.get_latest_data()
-
         if not data:
             log.info('No records available')
             return []
 
-        log.info((f'{len(data)} records available '
-                  f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
-        start = start or data[0].timestamp
-        end = end or data[-1].timestamp
-        limit = limit or -1
-        assert start >= data[0].timestamp, (
-            f'Start time of {start} is out of range: '
-            f'({data[0].timestamp} to {data[-1].timestamp}).')
+        data_start = data[0].timestamp
+        data_end = data[-1].timestamp
+        log.info(f'Available data: {self._data_stats(data)}')
+
+        if start is None:
+            start = data_start
+        if end is None:
+            end = data_end
+
+        assert start >= data_start, 'Start time out of range'
+        assert end <= data_end, 'End time out of range'
 
         data_slice = [
             record for record in data if start <= record.timestamp <= end
         ][0:limit]
-        log.info(f'{len(data_slice)} records returned')
-        return data_slice
+        log.info(f"Filtered records: {self._data_stats(data_slice)}")
 
-    @property
-    def max_samples(self) -> int:
-        """Maximum number of samples available at any given time."""
-        if self.device_spec.sample_rate == IRREGULAR_RATE:
-            return int(self.max_buffer_len)
-        return int(self.max_buffer_len * self.device_spec.sample_rate)
+        return data_slice
 
     def get_latest_data(self) -> List[Record]:
         """Add all available samples in the inlet to the buffer.
@@ -182,14 +210,27 @@ class LslAcquisitionClient:
         max_buffer_len and the amount of data available in the inlet."""
         if not self.buffer:
             return []
-        samples, timestamps = self.inlet.pull_chunk(
-            max_samples=self.max_samples)
 
-        for i, sample in enumerate(samples):
-            self.buffer.append(
-                Record(data=sample, timestamp=timestamps[i], rownum=None))
+        count = self._pull_chunk()
+        # Pull all the data from LSL and append it to the local buffer.
+        while count == self.max_samples:
+            count = self._pull_chunk()
 
         return self.buffer.get()
+
+    def _pull_chunk(self) -> int:
+        """Pull a chunk of samples from LSL and record in the buffer.
+        Returns the count of samples pulled.
+        """
+        log.debug(f"Pulling from LSL (max_samples: {self.max_samples})")
+        # A timeout of 0.0 gets currently available samples without blocking.
+        samples, timestamps = self.inlet.pull_chunk(
+            timeout=0.0, max_samples=self.max_samples)
+        count = len(samples)
+        log.debug(f"\tReceived {count} samples")
+        for sample, stamp in zip(samples, timestamps):
+            self.buffer.append(Record(sample, stamp))
+        return count
 
     def convert_time(self, experiment_clock: Clock, timestamp: float) -> float:
         """
