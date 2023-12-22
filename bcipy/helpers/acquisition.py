@@ -165,7 +165,9 @@ def init_lsl_client(parameters: dict,
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
-    log.info(f"Setting an acquisition buffer of {data_buffer_seconds} seconds")
+    log.info(
+        f"Setting an acquisition buffer for {device_spec.name} of {data_buffer_seconds} seconds"
+    )
     return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,

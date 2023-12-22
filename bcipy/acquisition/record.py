@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Defines the Record namedtuple"""
-from typing import Any, List, NamedTuple
+from typing import Any, List, NamedTuple, Optional
 
 
 class Record(NamedTuple):
@@ -9,4 +9,4 @@ class Record(NamedTuple):
     of channel information (float)."""
     data: List[Any]
     timestamp: float
-    rownum: int = None
+    rownum: Optional[int] = None

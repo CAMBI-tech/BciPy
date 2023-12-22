@@ -222,12 +222,12 @@ class LslAcquisitionClient:
         """Pull a chunk of samples from LSL and record in the buffer.
         Returns the count of samples pulled.
         """
-        log.info(f"Pulling from LSL (max_samples: {self.max_samples})")
+        log.debug(f"Pulling from LSL (max_samples: {self.max_samples})")
         # A timeout of 0.0 gets currently available samples without blocking.
         samples, timestamps = self.inlet.pull_chunk(
             timeout=0.0, max_samples=self.max_samples)
         count = len(samples)
-        log.info(f"\tReceived {count} samples")
+        log.debug(f"\tReceived {count} samples")
         for sample, stamp in zip(samples, timestamps):
             self.buffer.append(Record(sample, stamp))
         return count
