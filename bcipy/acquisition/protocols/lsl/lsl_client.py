@@ -127,6 +127,7 @@ class LslAcquisitionClient:
             log.info("Closing LSL connection")
             self.inlet.close_stream()
             self.inlet = None
+            log.info("Inlet closed")
 
         self.buffer = None
 
