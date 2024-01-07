@@ -1,12 +1,11 @@
 import copy
 import random
-from abc import ABC, abstractmethod
+from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Dict
+from typing import List, Optional
 
 import numpy as np
 
-from bcipy.helpers import symbols
 from bcipy.helpers.exceptions import FieldException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
@@ -14,8 +13,6 @@ from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsS
 from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
 from bcipy.simulator.helpers.rsvp_utils import next_target_letter
 from bcipy.simulator.helpers.types import InquiryResult
-from bcipy.task.control.criteria import DecisionCriteria, MaxIterationsCriteria, ProbThresholdCriteria
-from bcipy.task.control.handler import EvidenceFusion
 
 
 @dataclass
@@ -74,6 +71,11 @@ class StateManagerImpl(StateManager):
         return self.state.total_inquiry_count() > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
 
     def update(self, evidence) -> InquiryResult:
+        """ Updating the current state based on provided evidence
+            - fuses prior evidence with current evidence and makes potential decision
+            - stores inquiry, including typing decision or lack of decision
+            - resets series on decision and updates target letter
+        """
 
         fuser = self.fuser_class()
         current_series: List[InquiryResult] = self.state.series_results[self.state.series_n]

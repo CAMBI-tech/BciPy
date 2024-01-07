@@ -38,6 +38,7 @@ class RawDataEngine(DataEngine):
     def __init__(self, source_dirs: List[str]):
         # TODO read parameters from source dirx
         # TODO maybe rely upon single source of data, write some scripts that clean data and group them
+        # TODO use os.walk() and take in single source_dir that has all data folders
         self.source_dirs: List[str] = source_dirs
         self.parameter_files: List[Parameters] = []
         self.data: Optional[List[ExtractedExperimentData]] = None
@@ -112,7 +113,6 @@ class RawDataEngine(DataEngine):
                 rows.extend(symbol_rows)
 
         self.schema = pd.DataFrame(rows)
-        # breakpoint()
 
         return self
 
@@ -121,5 +121,3 @@ class RawDataEngine(DataEngine):
 
     def get_parameters(self):
         return self.parameter_files
-
-# TODO ReplaySessionDataEngine
