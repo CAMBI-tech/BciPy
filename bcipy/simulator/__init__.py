@@ -21,7 +21,6 @@ fmt = logging.Formatter(
     "%(levelname)s >> %(message)s"
 )
 
-
 # Set the log format on each handler
 stdoutHandler.setFormatter(fmt)
 fileHandler.setFormatter(fmt_file)

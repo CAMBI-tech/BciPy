@@ -21,7 +21,7 @@
     ],
     "type": "str"
   },
-    "sim_sleep_time": {
+  "sim_sleep_time": {
     "value": "0.25",
     "section": "sim_config",
     "readableName": "Simulation Time Step ",

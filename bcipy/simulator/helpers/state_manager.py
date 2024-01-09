@@ -67,8 +67,10 @@ class StateManagerImpl(StateManager):
         self.max_inq_len = self.parameters.get('max_inq_len', 100)
 
     def is_done(self) -> bool:
-        # TODO add stoppage criterion, Stoppage criterion is seperate from decision. Decision should we go on to next letter or not
-        return self.state.total_inquiry_count() > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
+        # TODO add stoppage criterion, Stoppage criterion is seperate from
+        # decision. Decision should we go on to next letter or not
+        return self.state.total_inquiry_count(
+        ) > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
 
     def update(self, evidence) -> InquiryResult:
         """ Updating the current state based on provided evidence
@@ -79,13 +81,16 @@ class StateManagerImpl(StateManager):
 
         fuser = self.fuser_class()
         current_series: List[InquiryResult] = self.state.series_results[self.state.series_n]
-        prior_likelihood: Optional[np.ndarray] = current_series.pop().fused_likelihood if current_series else None  # most recent likelihood
+        prior_likelihood: Optional[np.ndarray] = current_series.pop(
+        ).fused_likelihood if current_series else None  # most recent likelihood
         evidence_dict = {"SM": evidence}  # TODO create wrapper object for Evidences
         fused_likelihood = fuser.fuse(prior_likelihood, evidence_dict)
 
         # finding out whether max iterations is hit or prob threshold is hit
-        temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
-                                            evidence_likelihoods=list(evidence), fused_likelihood=fused_likelihood,  # TODO change to use evidence_dict
+        temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
+                                            stimuli=self.state.display_alphabet,
+                                            # TODO change to use evidence_dict
+                                            evidence_likelihoods=list(evidence), fused_likelihood=fused_likelihood,
                                             decision=None)
 
         # can we make decision
@@ -95,8 +100,10 @@ class StateManagerImpl(StateManager):
         decision = None
 
         new_state = self.get_state().__dict__
-        new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
-                                           evidence_likelihoods=list(evidence), decision=decision, fused_likelihood=fused_likelihood)
+        new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
+                                           stimuli=self.state.display_alphabet,
+                                           evidence_likelihoods=list(evidence), decision=decision,
+                                           fused_likelihood=fused_likelihood)
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
@@ -108,14 +115,18 @@ class StateManagerImpl(StateManager):
             new_state['inquiry_n'] = 0
 
             # updating current sentence and finding next target
-            new_state['current_sentence'] = new_state['current_sentence'] + decision if decision != BACKSPACE_CHAR else new_state['current_sentence'][:-1]
+            new_state['current_sentence'] = new_state['current_sentence'] + \
+                decision if decision != BACKSPACE_CHAR else new_state['current_sentence'][
+                :-1]
             new_state['target_symbol'] = next_target_letter(new_state['current_sentence'], self.state.target_sentence)
 
         else:
             new_state['inquiry_n'] += 1
 
-        new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0, stimuli=self.state.display_alphabet,
-                                           evidence_likelihoods=list(evidence), decision=decision, fused_likelihood=fused_likelihood)
+        new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
+                                           stimuli=self.state.display_alphabet,
+                                           evidence_likelihoods=list(evidence), decision=decision,
+                                           fused_likelihood=fused_likelihood)
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
 
@@ -142,8 +153,10 @@ class StateManagerImpl(StateManager):
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
         init_stimuli = random.sample(alphabet(), 10)
 
+        # TODO make new parameter and create default series_likelihoods object based off that
         evidence_types = parameters.get(
-            'evidence_types') if parameters else None  # TODO make new parameter and create default series_likelihoods object based off that
+            'evidence_types') if parameters else None
 
-        return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence, display_alphabet=init_stimuli, inquiry_n=0, series_n=0,
+        return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence,
+                        display_alphabet=init_stimuli, inquiry_n=0, series_n=0,
                         series_results=[[]], decision_criterion=default_criterion)

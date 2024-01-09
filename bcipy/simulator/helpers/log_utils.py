@@ -3,7 +3,7 @@ from typing import List
 import pandas as pd
 
 
-def format_alp_likelihoods(likelihoods, alp):
+def fmt_stim_likelihoods(likelihoods, alp):
     rounded = [round(lik, 3) for lik in likelihoods]
     formatted = [f"{a} : {l}" for a, l in zip(alp, rounded)]
     return formatted

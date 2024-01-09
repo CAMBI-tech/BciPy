@@ -59,8 +59,10 @@ class RawDataEngine(DataEngine):
         """
         log.debug(f"Loading data from {len(self.source_dirs)} source directories")
 
-        self.parameter_files = [load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for data_folder in
-                                self.source_dirs]
+        self.parameter_files = [
+            load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for
+            data_folder in
+            self.source_dirs]
 
         assert len(self.source_dirs) == len(self.parameter_files)  # TODO more general parameter validation function
 
@@ -92,7 +94,8 @@ class RawDataEngine(DataEngine):
             self for chaining
         """
 
-        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]  # TODO store how good evidence was in session | store data source as well
+        # TODO store how good evidence was in session | store data source as well
+        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]
         types = [int, int, int, str, int, np.ndarray]
 
         rows = []

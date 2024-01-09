@@ -32,7 +32,6 @@ class MultiplyFuser(EvidenceFuser):
 
         return ret_likelihood
 
-
     def __normalize_likelihood(self, likelihood):
 
         cleaned_likelihood = likelihood.copy()

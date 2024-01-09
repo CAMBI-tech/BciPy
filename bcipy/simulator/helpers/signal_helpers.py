@@ -12,7 +12,7 @@ from bcipy.config import (
     DEFAULT_DEVICE_SPEC_FILENAME,
 )
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.load import load_raw_data, load_experimental_data
+from bcipy.helpers.load import load_raw_data
 from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
@@ -30,7 +30,8 @@ class ExtractedExperimentData:  # TODO clean up design
     decoded_triggers: tuple
 
 
-def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
+def process_raw_data_for_model(data_folder, parameters,
+                               reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
     assert parameters, "Parameters are required for offline analysis."
 
     log.debug(f"Processing raw data for {data_folder}")
@@ -118,4 +119,5 @@ def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshape
     # define the training classes using integers, where 0=nontargets/1=targets
     # labels = inquiry_labels.flatten()
 
-    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing, (trigger_targetness, trigger_timing, trigger_symbols))
+    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing,
+                                   (trigger_targetness, trigger_timing, trigger_symbols))
