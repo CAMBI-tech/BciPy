@@ -9,7 +9,7 @@ def fmt_stim_likelihoods(likelihoods, alp):
     return formatted
 
 
-def format_sample_rows(sample_rows: List[pd.Series]):
+def format_sample_rows(sample_rows: List[pd.DataFrame]):
     formatted_rows = []
     for row in sample_rows:
         new_row = row.drop(columns=['eeg'], axis=1, inplace=False)

@@ -1,5 +1,5 @@
 import pickle
-from abc import ABC
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from bcipy.helpers.symbols import alphabet
@@ -9,11 +9,13 @@ from bcipy.simulator.helpers.state_manager import SimState
 
 class ModelHandler(ABC):
 
+    @abstractmethod
     def generate_evidence(self, state: SimState, features):
-        ...
+        """ Run model on features to generate evidence """
 
+    @abstractmethod
     def get_model(self, key=None):
-        ...
+        """ get the model """
 
 
 class SignalModelHandler1(ModelHandler):

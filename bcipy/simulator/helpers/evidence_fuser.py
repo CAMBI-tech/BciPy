@@ -23,7 +23,8 @@ class MultiplyFuser(EvidenceFuser):
     def fuse(self, prior_likelihood, evidence) -> np.ndarray:
 
         len_dist = len(list(evidence.values())[0])
-        prior_likelihood = prior_likelihood if prior_likelihood is not None else EvidenceFuser.make_prior(len_dist)
+        prior_likelihood = prior_likelihood if prior_likelihood is not None else EvidenceFuser.make_prior(
+            len_dist)
         ret_likelihood = prior_likelihood.copy()
 
         for value in evidence.values():

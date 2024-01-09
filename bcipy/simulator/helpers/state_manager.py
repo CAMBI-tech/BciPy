@@ -44,7 +44,8 @@ class SimState:
 
 class StateManager(ABC):
 
-    def update(self, evidence: np.ndarray):  # TODO change evidence type to dictionary or some dataclass
+    def update(self,
+               evidence: np.ndarray):  # TODO change evidence type to dictionary or some dataclass
         raise NotImplementedError()
 
     def is_done(self) -> bool:
@@ -90,13 +91,15 @@ class StateManagerImpl(StateManager):
         temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
                                             stimuli=self.state.display_alphabet,
                                             # TODO change to use evidence_dict
-                                            evidence_likelihoods=list(evidence), fused_likelihood=fused_likelihood,
+                                            evidence_likelihoods=list(evidence),
+                                            fused_likelihood=fused_likelihood,
                                             decision=None)
 
         # can we make decision
         temp_series = copy.deepcopy(self.get_state().series_results)
         temp_series[-1].append(temp_inquiry_result)
-        is_decidable = any([decider.decide(temp_series[-1]) for decider in self.state.decision_criterion])
+        is_decidable = any(
+            [decider.decide(temp_series[-1]) for decider in self.state.decision_criterion])
         decision = None
 
         new_state = self.get_state().__dict__
@@ -107,7 +110,8 @@ class StateManagerImpl(StateManager):
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
-            decision = alphabet()[np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
+            decision = alphabet()[
+                np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
 
             # resetting series
             new_state['series_n'] += 1
@@ -116,9 +120,11 @@ class StateManagerImpl(StateManager):
 
             # updating current sentence and finding next target
             new_state['current_sentence'] = new_state['current_sentence'] + \
-                decision if decision != BACKSPACE_CHAR else new_state['current_sentence'][
-                :-1]
-            new_state['target_symbol'] = next_target_letter(new_state['current_sentence'], self.state.target_sentence)
+                                            decision if decision != BACKSPACE_CHAR else new_state[
+                                                                                            'current_sentence'][
+                                                                                        :-1]
+            new_state['target_symbol'] = next_target_letter(new_state['current_sentence'],
+                                                            self.state.target_sentence)
 
         else:
             new_state['inquiry_n'] += 1
@@ -143,8 +149,8 @@ class StateManagerImpl(StateManager):
             state_dict[state_field] = state_value
             self.state = SimState(**state_dict)
             return self.get_state()
-        else:
-            raise FieldException(f"Cannot find state field {state_field}")
+        
+        raise FieldException(f"Cannot find state field {state_field}")
 
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:

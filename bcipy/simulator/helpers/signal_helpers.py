@@ -5,7 +5,7 @@ from typing import List
 
 import numpy as np
 
-import bcipy.acquisition.devices as devices
+from bcipy.acquisition import devices
 from bcipy.config import (
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,

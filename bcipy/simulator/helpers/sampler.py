@@ -29,7 +29,8 @@ class EEGByLetterSampler(Sampler):
 
     def __init__(self, data_engine: RawDataEngine, params: List[Parameters] = None):
         self.data_engine: RawDataEngine = data_engine
-        self.parameter_files: List[Parameters] = params if params else self.data_engine.parameter_files
+        self.parameter_files: List[
+            Parameters] = params if params else self.data_engine.parameter_files
         self.model_input_reshaper: Callable = self.__default_reshaper
         self.alphabet: List[str] = params[0].get('symbol_set') if params else alphabet()
         self.data: pd.DataFrame = self.data_engine.transform().get_data()
@@ -49,9 +50,10 @@ class EEGByLetterSampler(Sampler):
         for symbol in inquiry_letter_subset:
             is_target = int(symbol == target_letter)
             # filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
-            filtered_data = self.data.query(f'target == {is_target}')
-            if not len(filtered_data):
-                raise TaskConfigurationException(message="No eeg sample found with provided data and query")
+            filtered_data: pd.DataFrame = self.data.query(f'target == {is_target}')
+            if filtered_data is None or len(filtered_data) == 0:
+                raise TaskConfigurationException(
+                    message="No eeg sample found with provided data and query")
 
             row = filtered_data.sample(1)
             sample_rows.append(row)

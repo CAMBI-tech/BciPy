@@ -1,3 +1,5 @@
+""" Simulator package. View README """
+
 import datetime
 import logging
 import sys

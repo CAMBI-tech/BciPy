@@ -14,7 +14,7 @@ if __name__ == "__main__":
         action="append",
         type=Path,
         required=True,
-        help="Raw data folders to be processed. This argument can be repeated to accumulate sessions data.")
+        help="Raw data folders to be processed. Repeatable arg to accumulate sessions data.")
     parser.add_argument(
         "-sm",
         "--smodel_files",
@@ -23,7 +23,12 @@ if __name__ == "__main__":
         required=True,
         help="Signal models to be used")
 
-    # TODO parameters file arg
+    parser.add_argument(
+        "-p",
+        "--parameters",
+        type=Path,
+        required=False,  # For now
+        help="Parameter File to be used")
 
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)
 

@@ -25,33 +25,32 @@ class SimulatorCopyPhrase(Simulator):
     Copy Phrase simulator.
 
     Run loop:
-        - The loop runs until StateManager determines simulation is over
-        - The generated stimuli are passed into sampler, which returns some eeg response
-        - The Model handler will generate predictions and feed back into StateManager
-        - StateManager will resolve the state while the MetricReferee observes and records any metrics
+    - The loop runs until StateManager determines simulation is over
+    - The generated stimuli are passed into sampler, which returns some eeg response
+    - The Model handler will generate predictions and feed back into StateManager
+    - StateManager will resolve the state while the MetricReferee observes and records any metrics
 
     Main components:
-        - DataEngine:       loading and storing data
-        - Sampler:          logic for sampling from data, composed of DataEngine
-        - StateManager:     manages run loop details and fuses model evidence with current state
-        - MetricReferee:    tracks and scores the simulation on different metrics for later evaluation
-        - ModelHandler:     wrapper for models that deals with loading in models and generating evidence
+    - DataEngine:       loading and storing data
+    - Sampler:          logic for sampling from data, composed of DataEngine
+    - StateManager:     manages run loop details and fuses model evidence with current state
+    - MetricReferee:    tracks and scores the simulation on different metrics for later evaluation
+    - ModelHandler:     wrapper for models that deals with loading in models and generating evidence
 
     Requirements:
     - run closed loop simulation of {TaskType} with {data} with {simulation_params}
     """
 
     def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, parameter_path: str = None, save_dir: str = None,
-                 verbose=False, visualize=False):
-        super(SimulatorCopyPhrase, self).__init__()
+                 state_manager: StateManager, referee: MetricReferee, parameter_path: str = None,
+                 save_dir: str = None):
+        super().__init__()
 
         self.save_dir: str = save_dir
         self.model_handler: ModelHandler = model_handler
         self.sampler: Sampler = sampler
         self.referee: MetricReferee = referee
         self.state_manager: StateManager = state_manager
-
         self.data_engine: DataEngine = data_engine
 
         self.parameters = self.load_parameters(parameter_path)
@@ -59,16 +58,14 @@ class SimulatorCopyPhrase(Simulator):
         self.symbol_set = alphabet()
         self.write_output = False
 
-        self.verbose = verbose
-        self.visualize = visualize
-
     def run(self):
         log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
 
         while not self.state_manager.is_done():
             curr_state = self.state_manager.get_state()
             log.info(
-                f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | Target {curr_state.target_symbol}")
+                f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | " +
+                f"Target {curr_state.target_symbol}")
 
             self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(curr_state))
             sampled_data = self.sampler.sample(curr_state)
@@ -82,7 +79,9 @@ class SimulatorCopyPhrase(Simulator):
 
             inq_record: InquiryResult = self.state_manager.update(evidence)
             updated_state = self.state_manager.get_state()
-            log.debug(f"Fused Likelihoods {fmt_stim_likelihoods(inq_record.fused_likelihood, self.symbol_set)}")
+            log.debug(
+                f"Fused Likelihoods + "
+                f"{fmt_stim_likelihoods(inq_record.fused_likelihood, self.symbol_set)}")
 
             if inq_record.decision:
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
@@ -106,8 +105,8 @@ class SimulatorCopyPhrase(Simulator):
         if val_func is not None:
             return stimuli.best_selection(self.symbol_set, list(
                 val_func), subset_length, always_included=always_in_stimuli)
-        else:
-            return random.sample(self.symbol_set, subset_length)
+
+        return random.sample(self.symbol_set, subset_length)
 
     def load_parameters(self, path):
         # TODO validate parameters
