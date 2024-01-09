@@ -11,8 +11,9 @@ from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
 from bcipy.display.components.layout import scaled_size
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
-from bcipy.display.paradigm.vep.codes import (create_vep_codes,
-                                              round_refresh_rate)
+from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
+                                              round_refresh_rate,
+                                              ssvep_to_code)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
@@ -47,9 +48,12 @@ class VEPDisplay(Display):
                  box_config: BoxConfiguration,
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
-                 codes: Optional[List[List[int]]] = None,
+                 flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
                  frame_rate: Optional[float] = None):
+        assert len(
+            flicker_rates
+        ) >= box_config.num_boxes, 'Not enough flicker rates provided'
         self.window = window
         if not frame_rate:
             frame_rate = self.window.getActualFrameRate()
@@ -109,9 +113,12 @@ class VEPDisplay(Display):
         self.info_text = info.build_info_text(window)
 
         # build the VEP stimuli
-        if not codes:
-            codes = create_vep_codes(length=self.refresh_rate,
-                                     count=self.vep_type)
+        self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
+        rate = round_refresh_rate(frame_rate)
+        codes = [
+            ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
+            for hz in flicker_rates
+        ]
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
                       ('orange', 'green')]
         vep_stim_size = scaled_size(0.24, self.window_size)

@@ -8,9 +8,7 @@ from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
-                                              round_refresh_rate,
-                                              ssvep_to_code)
+from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
@@ -235,7 +233,7 @@ def init_calibration_display(parameters: Parameters,
                                       stim_color=colors,
                                       inquiry=[],
                                       stim_length=1,
-                                      animation_seconds=1.0)
+                                      animation_seconds=parameters['time_vep_animation'])
 
     task_bar = CalibrationTaskBar(window,
                                   inquiry_count=parameters['stim_number'],
@@ -244,19 +242,14 @@ def init_calibration_display(parameters: Parameters,
                                   font=parameters['font'],
                                   height=parameters['task_height'])
 
-    # issue #186641183 ; determine a better configuration strategy
-    flicker_rates = DEFAULT_FLICKER_RATES
-    rate = round_refresh_rate(window.getActualFrameRate())
-    codes = [
-        ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
-        for hz in flicker_rates
-    ]
+    # issue #186641183 ; determine a better configuration strategy for flicker
+
     return VEPDisplay(window,
                       experiment_clock,
                       stim_props,
                       task_bar,
                       info,
                       symbol_set=symbol_set,
-                      codes=codes,
                       box_config=box_config,
+                      flicker_rates=DEFAULT_FLICKER_RATES,
                       should_prompt_target=True)

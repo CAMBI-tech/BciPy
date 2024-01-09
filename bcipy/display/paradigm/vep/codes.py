@@ -8,6 +8,7 @@ from bcipy.helpers.exceptions import BciPyCoreException
 
 log = logging.getLogger(__name__)
 
+# These rates work for a 60hz display
 DEFAULT_FLICKER_RATES = [4, 5, 6, 10, 12, 15]
 
 

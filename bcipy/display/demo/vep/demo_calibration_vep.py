@@ -7,8 +7,7 @@ from bcipy.display import (InformationProperties, VEPStimuliProperties,
                            init_display_window)
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
-                                              ssvep_to_code)
+from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
@@ -52,13 +51,6 @@ stim_color = [
     '#FF8232'
 ]
 
-# Note: these rates work for a 60hz display
-flicker_rates = DEFAULT_FLICKER_RATES
-codes = [
-    ssvep_to_code(refresh_rate=int(frame_rate), flicker_rate=hz)
-    for hz in flicker_rates
-]
-
 layout = centered(width_pct=0.95, height_pct=0.80)
 box_config = BoxConfiguration(layout, height_pct=0.30)
 
@@ -80,7 +72,7 @@ vep = VEPDisplay(win,
                  task_bar,
                  info,
                  box_config=box_config,
-                 codes=codes,
+                 flicker_rates=DEFAULT_FLICKER_RATES,
                  should_prompt_target=True,
                  frame_rate=frame_rate)
 wait_seconds = 2
