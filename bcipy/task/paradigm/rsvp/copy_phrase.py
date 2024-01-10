@@ -190,7 +190,7 @@ class RSVPCopyPhraseTask(Task):
             evaluator = init_evidence_evaluator(self.alp, model)
             content_type = evaluator.consumes
             evidence_type = evaluator.produces
-            if content_type in self.daq.device_content_types:
+            if content_type in self.daq.active_device_content_types:
                 evaluators.append(evaluator)
                 if evidence_type in evidence_types:
                     raise DuplicateModelEvidence(

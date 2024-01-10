@@ -102,6 +102,7 @@ class TestCopyPhrase(unittest.TestCase):
                 'is_calibrated': True,
                 'offset': lambda x: 0.0,
                 'device_content_types': [ContentType.EEG],
+                'active_device_content_types': [ContentType.EEG],
                 'clients_by_type': {
                     ContentType.EEG: self.eeg_client_mock
                 }
