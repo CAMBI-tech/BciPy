@@ -132,7 +132,7 @@ def demo_vep(win: visual.Window):
     layout = centered(width_pct=0.9, height_pct=0.9)
     layout.parent = win
 
-    box_config = BoxConfiguration(layout, num_boxes=4, height_pct=0.28)
+    box_config = BoxConfiguration(layout, height_pct=0.28)
     size = box_config.box_size
     positions = box_config.positions
 
