@@ -134,7 +134,7 @@ def bcipy_version() -> str:
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_screen_info() -> ScreenInfo:
+def get_screen_info(stim_screen: Optional[int] = None) -> ScreenInfo:
     """Gets the screen information.
 
     Note: Use this method if only the screen resolution is needed; it is much more efficient
@@ -144,7 +144,10 @@ def get_screen_info() -> ScreenInfo:
     -------
         ScreenInfo(width, height, rate)
      """
-    screen = pyglet.canvas.get_display().get_default_screen()
+    if stim_screen:
+        screen = pyglet.canvas.get_display().get_screens()[stim_screen]
+    else:
+        screen = pyglet.canvas.get_display().get_default_screen()
     return ScreenInfo(screen.width, screen.height, screen.get_mode().rate)
 
 
