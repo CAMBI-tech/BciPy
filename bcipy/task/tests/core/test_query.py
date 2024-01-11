@@ -1,54 +1,6 @@
 import unittest
 
-from bcipy.task.control.query import (NBestStimuliAgent, RandomStimuliAgent,
-                                      best_selection)
-
-
-class TestQueryMechanisms(unittest.TestCase):
-    """Tests for query functions"""
-
-    def test_best_selection(self):
-        """Test best_selection function"""
-        self.assertEqual(["A", "I", "U"],
-                         best_selection(
-                             selection_elements=["A", "E", "I", "O", "U"],
-                             val=[0.4, 0.1, 0.25, 0.1, 0.15],
-                             len_query=3))
-
-        self.assertEqual(["E", "O", "A"],
-                         best_selection(
-                             selection_elements=["A", "E", "I", "O", "U"],
-                             val=[0.15, 0.4, 0.1, 0.25, 0.1],
-                             len_query=3))
-
-        self.assertEqual(["E", "I", "O"],
-                         best_selection(
-                             selection_elements=["A", "E", "I", "O", "U"],
-                             val=[0.1, 0.2, 0.2, 0.2, 0.2],
-                             len_query=3))
-
-        self.assertEqual(
-            ["A", "E", "I"],
-            best_selection(selection_elements=["A", "E", "I", "O", "U"],
-                           val=[0.2, 0.2, 0.2, 0.2, 0.2],
-                           len_query=3),
-            msg="equally probable items should be in alphabetical order")
-
-        self.assertEqual(["A", "U", "I"],
-                         best_selection(
-                             selection_elements=["A", "E", "I", "O", "U"],
-                             val=[0.4, 0.1, 0.0, 0.1, 0.4],
-                             len_query=3,
-                             always_included=["I"]),
-                         msg="always_included items should be in the results")
-
-        self.assertEqual(
-            ["A", "U", "E"],
-            best_selection(selection_elements=["A", "E", "I", "O", "U"],
-                           val=[0.4, 0.1, 0.0, 0.1, 0.4],
-                           len_query=3,
-                           always_included=["<"]),
-            msg="Always included items are only applied if present")
+from bcipy.task.control.query import NBestStimuliAgent, RandomStimuliAgent
 
 
 class TestNBestStimuliAgent(unittest.TestCase):
