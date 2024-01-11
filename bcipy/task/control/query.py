@@ -1,7 +1,8 @@
-import numpy as np
 import random
-from typing import List, Optional
 from abc import ABC, abstractmethod
+from typing import List, Optional
+
+import numpy as np
 
 from bcipy.helpers.stimuli import best_selection
 
