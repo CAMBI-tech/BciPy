@@ -678,11 +678,11 @@
     "type": "str"
   },
   "lm_backspace_prob": {
-    "value": "0.05",
+    "value": "0.0",
     "section": "bci_config",
     "readableName": "Backspace Probability",
-    "helpTip": "Specifies the initial probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.05",
-    "recommended_values": "",
+    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
+    "recommended_values": "0.05",
     "type": "float"
   },
   "show_preview_inquiry": {
