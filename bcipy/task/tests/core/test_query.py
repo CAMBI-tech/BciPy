@@ -11,43 +11,79 @@ class TestNBestStimuliAgent(unittest.TestCase):
         probabilities"""
         agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
                                   len_query=3)
-        self.assertEqual(["A", "I", "U"],
-                         agent.return_stimuli(
-                             list_distribution=[[0.4, 0.1, 0.25, 0.1, 0.15]],
-                             constants=None))
+        stim = agent.return_stimuli(
+            list_distribution=[[0.4, 0.1, 0.25, 0.1, 0.15]], constants=None)
+        self.assertTrue("A" in stim)
+        self.assertTrue("I" in stim)
+        self.assertTrue("U" in stim)
+
+    def test_highest_probs_ordering(self):
+        """Test the NBestStimuliAgent should order the returned symbols
+        by decreasing probability."""
+        agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
+                                  len_query=3)
+        stims = [
+            agent.return_stimuli(
+                list_distribution=[[0.4, 0.1, 0.25, 0.1, 0.15]],
+                constants=None) for _ in range(10)
+        ]
+
+        self.assertTrue(all([stim == ['A', 'I', 'U'] for stim in stims]),
+                        msg="All queries should be the same")
 
     def test_multiple_value_lists(self):
         """Test with multiple values in the list distribution."""
         agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
                                   len_query=3)
-        self.assertEqual(
-            ["E", "O", "A"],
-            agent.return_stimuli(
-                list_distribution=[[0.4, 0.1, 0.25, 0.1, 0.15],
-                                   [0.15, 0.4, 0.1, 0.25, 0.1]],
-                constants=None),
-            msg="Last list of probabilities should be used for selection")
+        stim = agent.return_stimuli(
+            list_distribution=[[0.4, 0.1, 0.25, 0.1, 0.15],
+                               [0.15, 0.4, 0.1, 0.25, 0.1]],
+            constants=None)
+        self.assertTrue("E" in stim)
+        self.assertTrue("O" in stim)
+        self.assertTrue("A" in stim)
 
     def test_all_equal_probs(self):
         """Test where all probabilities are equal"""
         agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
                                   len_query=3)
+        stims = [
+            agent.return_stimuli(list_distribution=[[0.2, 0.2, 0.2, 0.2, 0.2]],
+                                 constants=None) for _ in range(10)
+        ]
+        stim_strings = [''.join(sorted(stim)) for stim in stims]
+        self.assertTrue(len(set(stim_strings)) > 1,
+                        msg="All queries should not have the same symbols")
 
-        self.assertEqual(["A", "E", "I"],
-                         agent.return_stimuli(
-                             list_distribution=[[0.2, 0.2, 0.2, 0.2, 0.2]],
-                             constants=None),
-                         msg="Should return the first n values")
+    def test_some_equal_probs(self):
+        """Test ordering where some probabilities are equal."""
+        agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
+                                  len_query=3)
+        stims = [
+            agent.return_stimuli(list_distribution=[[0.4, 0.1, 0.2, 0.1, 0.2]],
+                                 constants=None) for _ in range(10)
+        ]
+
+        unsorted_stim_strings = [''.join(stim) for stim in stims]
+        self.assertTrue(len(set(unsorted_stim_strings)) > 1,
+                        msg="All queries should not have the same ordering")
+
+        sorted_stim_strings = [''.join(sorted(stim)) for stim in stims]
+        self.assertEqual(1,
+                         len(set(sorted_stim_strings)),
+                         msg="All queries should have the same symbols")
+        self.assertEqual("AIU", list(set(sorted_stim_strings))[0])
 
     def test_constants(self):
         """Test with constant items included in results."""
         agent = NBestStimuliAgent(alphabet=["A", "E", "I", "O", "U"],
                                   len_query=3)
 
-        self.assertEqual(["E", "I", "U"],
-                         agent.return_stimuli(
-                             list_distribution=[[0.1, 0.3, 0.3, 0.2, 0.1]],
-                             constants=["U"]))
+        stims = agent.return_stimuli(
+            list_distribution=[[0.1, 0.3, 0.3, 0.2, 0.1]], constants=["U"])
+        self.assertTrue("E" in stims)
+        self.assertTrue("I" in stims)
+        self.assertTrue("U" in stims)
 
 
 class TestRandomStimuliAgent(unittest.TestCase):
