@@ -87,7 +87,7 @@ class NBestStimuliAgent(StimuliAgent):
         """Returns a list of the n most likely symbols based on the provided
         probabilities, where n is self.len_query. Symbols of the same
         probability will be ordered randomly.
-        
+
         Parameters
         ----------
             list_distribution - list of lists of probabilities. Only the last list will
@@ -101,8 +101,6 @@ class NBestStimuliAgent(StimuliAgent):
                               val=list(probs),
                               len_query=self.len_query,
                               always_included=constants)
-
-
 
     def do_series(self):
         pass
