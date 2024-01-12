@@ -2,6 +2,7 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.language.model.seq2seq import Seq2SeqLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
@@ -9,17 +10,19 @@ from bcipy.helpers.symbols import SPACE_CHAR, alphabet
 import argparse
 import numpy as np
 import sys
+from scipy.stats import bootstrap
+from datetime import datetime
+import os
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--verbose', dest='verbose', type=int, required=True,
-                        help=('0: Only output model averages\n1: Output results from each phrase\n2: '
-                              'Output results from each character'))
+    parser.add_argument('--verbose', dest='verbose', type=int, default=0,
+        help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
 
     parser.add_argument('--model', dest='model', type=int, required=True,
                         help=('1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: '
-                              'KenLM n-gram\n4: Causal Hugging Face'))
+                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (80/20 Causal/Ngram'))
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
                         help='Phrase set filename')
@@ -35,6 +38,21 @@ if __name__ == "__main__":
                         action="store_true",
                         help="Use CUDA GPU during inference")
     parser.add_argument("--left-context", help="left language model context for causal model", default="")
+    parser.add_argument('--add-char', help="add character to symbol set", action='append', dest="extra_chars")
+    parser.add_argument("--time-outliers", help="print time outliers at end", action="store_true")
+    parser.add_argument('--stats-file', help="write summary stats to specified file")
+    parser.add_argument('--stats-extra', help="extra string to write to stats file as first column")
+    parser.add_argument("--phrase-limit", type=int, help="max phrases to evaluate")
+    parser.add_argument("--beam-width", type=int, default=8, help="search beam width")
+    parser.add_argument("--batch-size", type=int, default=8, help="inference batch size")
+    parser.add_argument("--token-backoff", type=int, default=-1, help="tokens removed during search, -1=last space")
+    parser.add_argument('--ppl-file', help="output sentence and ppl to a file")
+    parser.add_argument('--symbol-file', help="output symbol log probs to a file")
+    parser.add_argument("--fp16", help="convert model to fp16 (CUDA only)", action="store_true")
+    parser.add_argument("--mixed-case-context", help="use mixed case left context", action="store_true", default=False)
+    parser.add_argument("--case-simple", help="simple automatic casing of let context", action="store_true", default=False)
+    parser.add_argument("--ngram-lm", help="ngram model to load")
+    parser.add_argument("--ngram-mix", type=float, default=0.5, help="mixture weight for ngram in type 6 mix")
 
     args = parser.parse_args()
 
@@ -50,6 +68,13 @@ if __name__ == "__main__":
         print("ERROR: For causal model you must specify name of model using --model-name")
         sys.exit(1)
 
+    if model == 6 and (not args.model_name or not args.ngram_lm):
+        print(f"ERROR: For causal model you must specify name of causal LLM using --model-name and ngram LM using --ngram-lm")
+        sys.exit(1)
+
+    if args.case_simple and not args.mixed_case_context:
+        print(f"WARNING: You should probably also set --mixed-case-context with --case-simple")
+
     # Allow passing in of space characters in the context using <sp> word
     args.left_context = args.left_context.replace("<sp>", " ")
 
@@ -64,11 +89,25 @@ if __name__ == "__main__":
     phrases = phrase_file.readlines()
     phrase_file.close()
 
+    # We may want to limit to only the first so many phrases
+    if args.phrase_limit:
+        while len(phrases) > args.phrase_limit:
+            phrases.pop()
+
     lm = None
+
+    ppl_file = None
+    if args.ppl_file:
+        ppl_file = open(args.ppl_file, "w")
 
     start = timer()
 
     symbol_set = alphabet()
+    if args.extra_chars:
+        for char in args.extra_chars:
+            symbol_set += char
+        print(f"Modified symbol_set: {symbol_set}")
+
     response_type = ResponseType.SYMBOL
     if model == 1:
         lm = UnigramLanguageModel(response_type, symbol_set)
@@ -82,12 +121,43 @@ if __name__ == "__main__":
                                  lang_model_name=args.model_name,
                                  lm_device=device,
                                  lm_path=args.model_dir,
+                                 lm_left_context=args.left_context,
+                                 beam_width=args.beam_width,
+                                 batch_size=args.batch_size,
+                                 token_backoff=args.token_backoff,
+                                 fp16=args.fp16,
+                                 mixed_case_context=args.mixed_case_context,
+                                 case_simple=args.case_simple)
+    elif model == 5:
+        lm = Seq2SeqLanguageModel(response_type=response_type,
+                                 symbol_set=symbol_set,
+                                 lang_model_name=args.model_name,
+                                 lm_device=device,
+                                 lm_path=args.model_dir,
                                  lm_left_context=args.left_context)
+    elif model == 6:
+        lm = MixtureLanguageModel(response_type=response_type,
+                                  symbol_set=symbol_set,
+                                  lm_types=["causal", "kenlm"],
+                                  lm_weights=[1.0 - args.ngram_mix, args.ngram_mix],
+                                  lm_params=[{"lang_model_name": args.model_name,
+                                              "lm_device": device,
+                                              "lm_path": args.model_dir,
+                                              "lm_left_context": args.left_context,
+                                              "beam_width": args.beam_width,
+                                              "batch_size": args.batch_size,
+                                              "token_backoff": args.token_backoff,
+                                              "fp16": args.fp16,
+                                              "mixed_case_context": args.mixed_case_context,
+                                              "case_simple": args.case_simple
+                                              },
+                                             {"lm_path": args.ngram_lm}])
+
     else:
         parser.print_help()
         exit()
 
-    print(f"Model load time = {timer() - start:.6f}")
+    print(f"Model load time = {timer() - start:.2f}")
 
     phrase_count = 0
     sum_per_symbol_logprob = 0.0
@@ -96,6 +166,10 @@ if __name__ == "__main__":
     overall_predict_details_arr = np.array([])
 
     start = timer()
+
+    sum_log_prob = 0.0
+    sum_symbols = 0
+    all_symbol_log_probs = []
 
     # Iterate over phrases
     for phrase in phrases:
@@ -156,6 +230,7 @@ if __name__ == "__main__":
                     accum += score
                     prev_token = token
                     context += token
+                    all_symbol_log_probs.append(score)
 
             # Compute summary stats on prediction times for this phrase
             per_symbol_time = np.average(predict_time_arr)
@@ -174,41 +249,106 @@ if __name__ == "__main__":
                           f"{phrase_max:.6f}]\n")
             else:
                 per_symbol_logprob = accum / symbols
+                sent_ppl = pow(10, -1 * per_symbol_logprob)
 
                 # Phrase-level output
                 if verbose >= 1:
-                    print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, "
-                          f"ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
-                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} "
-                          f"[{phrase_min:.6f}, {phrase_max:.6f}]\n")
+                    print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {sent_ppl:.4f}")
+                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
 
                 sum_per_symbol_logprob += per_symbol_logprob
                 phrase_count += 1
 
-    average_per_symbol_logprob = sum_per_symbol_logprob / phrase_count
+                # Optional output to a file with a sentence and its ppl and log prob
+                if ppl_file:
+                    ppl_file.write(f"{sent_ppl:.4f}\t{accum:.4f}\t{sentence}\n")
+                    ppl_file.flush()
+
+                # To calculate the overall file perplexity, we need the sum of log probs of all sentences.
+                # This is how SRILM does it and makes it less sensitive to particular outlier sentences.
+                sum_log_prob += accum
+                sum_symbols += symbols
+
+    inference_time = timer() - start
+
+    if ppl_file:
+        ppl_file.close()
 
     overall_per_symbol_time = np.average(overall_predict_time_arr)
     overall_std_time = np.std(overall_predict_time_arr)
     overall_min_time = np.min(overall_predict_time_arr)
     overall_max_time = np.max(overall_predict_time_arr)
 
-    ci_floor = overall_per_symbol_time - (3 * overall_std_time)
-    ci_ceiling = overall_per_symbol_time + (3 * overall_std_time)
+    ci_floor = overall_per_symbol_time - (2 * overall_std_time)
+    ci_ceiling = overall_per_symbol_time + (2 * overall_std_time)
+
+    ppl = float("+inf")
+    if sum_symbols > 0:
+        ppl = pow(10, -1 * sum_log_prob / sum_symbols)
 
     # Model-level output
     print(f"OVERALL \
         \nphrases = {phrase_count}, \
-        \naverage per symbol logprob = {average_per_symbol_logprob:.4f}, \
-        \nppl = {pow(10,-1 * average_per_symbol_logprob):.4f}, \
         \nzero-prob events = {zero_prob} \
-        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} \
-        [{overall_min_time:.6f}, {overall_max_time:.6f}] \
-        \n95% CI = [{ci_floor}, {ci_ceiling}]\n")
+        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}] \
+        \n95% CI = [{ci_floor:.6f}, {ci_ceiling:.6f}] \
+        \ninference time = {inference_time:.2f}\
+        \nsum logprob = {sum_log_prob:.2f} \
+        \nsum symbols = {sum_symbols} \
+        \nmean symbol log prob = {np.average(all_symbol_log_probs):.4f} \
+        \nppl = {ppl:.4f}")
 
-    print(f"Inference time = {timer() - start:.6f}")
+    # Optional fill that contains the log prob of each prediction
+    # Could be useful for recomputing confidence intervals or such
+    if args.symbol_file:
+        symbol_file = open(args.symbol_file, "w")
+        for log_prob in all_symbol_log_probs:
+            symbol_file.write(str(log_prob) + "\n")
+        symbol_file.close()
 
-    for (i, time) in enumerate(overall_predict_time_arr):
-        if time < ci_floor:
-            print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
-        if time > ci_ceiling:
-            print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+    if args.stats_file:
+        # Single line file output, useful for running experiments
+        print(f"Outputting stats to {args.stats_file}, running bootstrap on {len(all_symbol_log_probs)} samples.")
+        time_bootstrap = timer()
+        bootstrap_log_prob = bootstrap(data=(all_symbol_log_probs,),
+                                        statistic=np.mean,
+                                        confidence_level=0.95)
+        print(f"Bootstrap completed in {(timer() - time_bootstrap):.2f} seconds.")
+
+        ppl_high = pow(10, -1 * bootstrap_log_prob.confidence_interval.low)
+        ppl_low = pow(10, -1 * bootstrap_log_prob.confidence_interval.high)
+        error_bar = (ppl_high - ppl_low) / 2.0
+
+        extra = ""
+        extra_col = ""
+        if args.stats_extra:
+            extra = args.stats_extra + "\t"
+            extra_col = "\t"
+        params = -1
+        if model == 4:
+            params = lm.get_num_parameters()
+
+        exists = os.path.isfile(args.stats_file)
+        with open(args.stats_file, 'a') as file:
+            if not exists:
+                # Header if the stats file doesn't already exist
+                file.write(f"{extra_col}ppl\tsum_log_prob\tsum_symbols\tboot_ppl_pm\tboot_ppl_low\tboot_ppl_high\tphrases\ttime\tparams\tdate_time\n")
+            file.write(f"{extra}"
+                         f"{ppl:.6f}"
+                         f"\t{sum_log_prob:.6f}"
+                         f"\t{sum_symbols}"
+                         f"\t{error_bar:.6f}"
+                         f"\t{ppl_low:.6f}"
+                         f"\t{ppl_high:.6f}"
+                         f"\t{phrase_count}"
+                         f"\t{inference_time:.6f}"
+                         f"\t{params}"
+                         f"\t{datetime.now()}\n")
+
+    # Optionally print the predictions that took an abnormal amount of time
+    if args.time_outliers:
+        for (i, time) in enumerate(overall_predict_time_arr):
+            if time < ci_floor:
+                print(f"LOW OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
+            if time > ci_ceiling:
+                print(f"HIGH OUTLIER: {overall_predict_details_arr[i]}, predict time = {time:.6f}\n")
