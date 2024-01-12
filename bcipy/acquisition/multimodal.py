@@ -89,8 +89,8 @@ class ClientManager():
         """Returns a list of ContentTypes provided by the active configured
         devices."""
         return [
-            content_type for content_type, spec in self._clients.items()
-            if spec.is_active
+            content_type for content_type, client in self._clients.items()
+            if client.device_spec.is_active
         ]
 
     @property
