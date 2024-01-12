@@ -1,8 +1,8 @@
 from typing import List, Tuple
 from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
-from bcipy.language.main import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR, alphabet
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidModelException
+from bcipy.helpers.exceptions import InvalidLanguageModelException
 import torch
 from scipy.special import logsumexp
 from scipy.special import softmax
@@ -172,12 +172,12 @@ class Seq2SeqLanguageModel(LanguageModel):
         try:
             self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
         except:
-            raise InvalidModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
+            raise InvalidLanguageModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
         self.vocab_size = self.tokenizer.vocab_size
         try:
             self.model = AutoModelForSeq2SeqLM.from_pretrained(self.model_dir)
         except:
-            raise InvalidModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
+            raise InvalidLanguageModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
 
         self.model.eval()
         self.model.to(self.device)
