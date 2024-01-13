@@ -54,6 +54,7 @@ if __name__ == "__main__":
     parser.add_argument("--ngram-lm", help="ngram model to load")
     parser.add_argument("--ngram-mix", type=float, default=0.5, help="mixture weight for ngram in type 6 mix")
     parser.add_argument('--srilm-file', help="output SRILM debug 2 log file")
+    parser.add_argument("--skip-norm", help="skip normalization over symbol set for KenLM model", action="store_true", default=False)
 
     args = parser.parse_args()
 
@@ -121,7 +122,7 @@ if __name__ == "__main__":
     elif model == 2:
         lm = MixtureLanguageModel(response_type, symbol_set)
     elif model == 3:
-        lm = KenLMLanguageModel(response_type, symbol_set, args.model_dir)
+        lm = KenLMLanguageModel(response_type, symbol_set, args.model_dir, args.skip_norm)
     elif model == 4:
         lm = CausalLanguageModel(response_type=response_type,
                                  symbol_set=symbol_set,
