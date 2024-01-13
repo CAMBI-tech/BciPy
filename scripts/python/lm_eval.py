@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--model', dest='model', type=int, required=True,
                         help=('1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: '
-                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (80/20 Causal/Ngram'))
+                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (Causal/Ngram'))
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
                         help='Phrase set filename')
@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser.add_argument("--case-simple", help="simple automatic casing of let context", action="store_true", default=False)
     parser.add_argument("--ngram-lm", help="ngram model to load")
     parser.add_argument("--ngram-mix", type=float, default=0.5, help="mixture weight for ngram in type 6 mix")
+    parser.add_argument('--srilm-file', help="output SRILM debug 2 log file")
 
     args = parser.parse_args()
 
@@ -99,6 +100,12 @@ if __name__ == "__main__":
     ppl_file = None
     if args.ppl_file:
         ppl_file = open(args.ppl_file, "w")
+
+    # Optional output of a log file in the same format as SRILM at debug level 2.
+    # This allows us to compute a mixture weight based on the multiple log files using compute-best-mix script.
+    srilm_file = None
+    if args.srilm_file:
+        srilm_file = open(args.srilm_file, "w")
 
     start = timer()
 
@@ -185,6 +192,14 @@ if __name__ == "__main__":
             tokens = sentence.split()
             symbols = len(tokens)
 
+            # SRILM starts with the sentence being evaluated
+            if srilm_file:
+                for (i, symbol) in enumerate(tokens):
+                    if i > 0:
+                        srilm_file.write(" ")
+                    srilm_file.write(symbol.replace("_", "<sp>"))
+                srilm_file.write("\n")
+
             # Initial previous token is the start symbol, initial context empty
             prev_token = "<s>"
             context = ""
@@ -227,10 +242,19 @@ if __name__ == "__main__":
                     if verbose >= 2:
                         print(f"p( {token} | {prev_token} ...) = {p:.6f} [ {score:.6f} ]")
                         print(f"prediction time = {predict_time:.6f}")
-                    accum += score
-                    prev_token = token
-                    context += token
-                    all_symbol_log_probs.append(score)
+
+                # SRILM line for a character looks like: "	p( w | <s> ) 	= [2gram] 0.095760 [ -1.018816 ]"
+                if srilm_file:
+                    extra = ""
+                    if i > 0:
+                        extra = " ..."
+                    # The 1gram bit is only relevant for the n-gram, we'll just hard code to 1gram for everything
+                    srilm_file.write(f"\tp( {token.replace('_', '<sp>')} | {prev_token.replace('_', '<sp>')}{extra}) \t= [1gram] {p:.6f} [ {score:.6f} ]\n")
+
+                accum += score
+                prev_token = token
+                context += token
+                all_symbol_log_probs.append(score)
 
             # Compute summary stats on prediction times for this phrase
             per_symbol_time = np.average(predict_time_arr)
@@ -269,10 +293,20 @@ if __name__ == "__main__":
                 sum_log_prob += accum
                 sum_symbols += symbols
 
+        # SRILM state for the sentence
+        if srilm_file:
+            srilm_file.write(f"0 sentences, {symbols} words, 0 OOVs\n")
+            srilm_file.write(f"0 zeroprobs, logprob= {accum:.4f} ppl= {sent_ppl:.3f} ppl1= {sent_ppl:.3f}\n")
+            srilm_file.write("\n")
+            srilm_file.flush()
+
     inference_time = timer() - start
 
     if ppl_file:
         ppl_file.close()
+
+    if srilm_file:
+        srilm_file.close()
 
     overall_per_symbol_time = np.average(overall_predict_time_arr)
     overall_std_time = np.std(overall_predict_time_arr)
