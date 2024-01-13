@@ -305,9 +305,6 @@ if __name__ == "__main__":
     if ppl_file:
         ppl_file.close()
 
-    if srilm_file:
-        srilm_file.close()
-
     overall_per_symbol_time = np.average(overall_predict_time_arr)
     overall_std_time = np.std(overall_predict_time_arr)
     overall_min_time = np.min(overall_predict_time_arr)
@@ -319,6 +316,12 @@ if __name__ == "__main__":
     ppl = float("+inf")
     if sum_symbols > 0:
         ppl = pow(10, -1 * sum_log_prob / sum_symbols)
+
+    # SRILM final overall stats lines
+    if srilm_file:
+        srilm_file.write(f"file {args.phrases}: 0 sentences, {sum_symbols} words, 0 OOVs\n")
+        srilm_file.write(f"0 zeroprobs, logprob= {sum_log_prob:.4f} ppl= {ppl:.3f} ppl1= {ppl:.3f}\n")
+        srilm_file.close()
 
     # Model-level output
     print(f"OVERALL \
