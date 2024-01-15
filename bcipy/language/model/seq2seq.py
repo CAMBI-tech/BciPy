@@ -8,6 +8,7 @@ from scipy.special import logsumexp
 from scipy.special import softmax
 from collections import Counter
 
+
 class Seq2SeqLanguageModel(LanguageModel):
     """Transformer seq2seq models like the ByT5 byte-level pretrained model by Google."""
 
@@ -28,9 +29,6 @@ class Seq2SeqLanguageModel(LanguageModel):
             lm_path          - load fine-tuned model from specified directory
             lm_device        - device to use for making predictions (cpu, mps, or cuda)
             lm_left_context  - text to condition start of sentence on
-            beam_width       - how many hypotheses to keep during the search
-            batch_size       - how many sequences to pass in at a time during inference
-            token_backoff    - how many tokens to remove prior to search extension, -1 = previous space
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
@@ -58,15 +56,6 @@ class Seq2SeqLanguageModel(LanguageModel):
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
-
-    def _convert_space(self, s: str) -> str:
-        ret = ""
-        for ch in s:
-            if ch == ' ':
-                ret += SPACE_CHAR
-            else:
-                ret += ch
-        return ret
 
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
@@ -157,7 +146,6 @@ class Seq2SeqLanguageModel(LanguageModel):
                 next_char_pred[ch.upper()] = char_probs[i]
 
         next_char_pred[BACKSPACE_CHAR] = 0.0
-
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
 
