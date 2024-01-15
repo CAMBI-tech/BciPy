@@ -95,7 +95,7 @@ class Seq2SeqLanguageModel(LanguageModel):
         char_to_log_probs = {}
         for i in range(len(outputs.sequences)):
             ascii = int(outputs.sequences[i][2]) - 3
-            # Convert to lower
+            # Convert to lower case
             if 65 <= ascii <= 90:
                 ascii += 32
             # Skip symbols we don't care about
@@ -107,8 +107,7 @@ class Seq2SeqLanguageModel(LanguageModel):
                     char_to_log_probs[ch] = logsumexp([char_to_log_probs[ch], float(outputs.sequences_scores[i])])
                 else:
                     char_to_log_probs[ch] = float(outputs.sequences_scores[i])
-
-        print(f"DEBUG char_to_log_probs {char_to_log_probs}")
+        #print(f"DEBUG char_to_log_probs {char_to_log_probs}")
 
         # Parallel array to symbol_set for storing the marginals
         char_probs = []
@@ -124,12 +123,12 @@ class Seq2SeqLanguageModel(LanguageModel):
                 char_probs += char_to_log_probs[target_ch],
             else:
                 char_probs += 0.0,
-        print(f"DEBUG char_probs 1 {char_probs}")
+        #print(f"DEBUG char_probs 1 {char_probs}")
 
         # Normalize to a distribution that sums to 1
         char_probs = softmax(char_probs)
 
-        print(f"DEBUG char_probs 2 {char_probs}, sum={sum(char_probs)}, len={len(char_probs)}")
+        #print(f"DEBUG char_probs 2 {char_probs}, sum={sum(char_probs)}, len={len(char_probs)}")
 
         # width = 120
         # print("             " + "_" * width)
@@ -138,13 +137,11 @@ class Seq2SeqLanguageModel(LanguageModel):
         # print("             " + "_" * width)
 
         next_char_pred = Counter()
-
         for i, ch in enumerate(self.symbol_set_lower):
             if ch is SPACE_CHAR:
                 next_char_pred[ch] = char_probs[i]
             else:
                 next_char_pred[ch.upper()] = char_probs[i]
-
         next_char_pred[BACKSPACE_CHAR] = 0.0
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
