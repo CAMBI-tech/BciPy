@@ -82,7 +82,7 @@ class Seq2SeqLanguageModel(LanguageModel):
         print(f"input_ids_with_span, size {len(input_ids_with_span)}, {input_ids_with_span}")
 
         outputs = self.model.generate(
-            input_ids_with_span,
+            input_ids_with_span.to(self.device),
             max_length=3,
             num_beams=self.num_results,
             num_return_sequences=self.num_results,
