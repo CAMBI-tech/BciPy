@@ -9,6 +9,12 @@ def fmt_stim_likelihoods(likelihoods, alp):
     return formatted
 
 
+def fmt_fused_likelihoods_for_hist(likelihoods, alp):
+    rounded = [round(lik, 3) for lik in likelihoods]
+    formatted = [(a, l) for a, l in zip(alp, rounded)]
+    return formatted
+
+
 def format_sample_rows(sample_rows: List[pd.DataFrame]):
     formatted_rows = []
     for row in sample_rows:

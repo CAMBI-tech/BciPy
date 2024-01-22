@@ -1,18 +1,23 @@
 import copy
+import logging
 import random
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Dict
 
 import numpy as np
 
 from bcipy.helpers.exceptions import FieldException
+from bcipy.helpers.language_model import histogram
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
 from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
 from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
+from bcipy.simulator.helpers.log_utils import fmt_fused_likelihoods_for_hist
 from bcipy.simulator.helpers.rsvp_utils import next_target_letter
-from bcipy.simulator.helpers.types import InquiryResult
+from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -44,8 +49,8 @@ class SimState:
 
 class StateManager(ABC):
 
-    def update(self,
-               evidence: np.ndarray):  # TODO change evidence type to dictionary or some dataclass
+    # TODO change evidence type to dictionary or some dataclass
+    def update(self, evidence: Dict[str, SimEvidence]):
         raise NotImplementedError()
 
     def is_done(self) -> bool:
@@ -84,14 +89,14 @@ class StateManagerImpl(StateManager):
         current_series: List[InquiryResult] = self.state.series_results[self.state.series_n]
         prior_likelihood: Optional[np.ndarray] = current_series.pop(
         ).fused_likelihood if current_series else None  # most recent likelihood
-        evidence_dict = {"SM": evidence}  # TODO create wrapper object for Evidences
-        fused_likelihood = fuser.fuse(prior_likelihood, evidence_dict)
+
+        fused_likelihood = fuser.fuse(prior_likelihood, evidence)
 
         # finding out whether max iterations is hit or prob threshold is hit
         temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
                                             stimuli=self.state.display_alphabet,
                                             # TODO change to use evidence_dict
-                                            evidence_likelihoods=list(evidence),
+                                            evidences=evidence,
                                             fused_likelihood=fused_likelihood,
                                             decision=None)
 
@@ -105,13 +110,18 @@ class StateManagerImpl(StateManager):
         new_state = self.get_state().__dict__
         new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
                                            stimuli=self.state.display_alphabet,
-                                           evidence_likelihoods=list(evidence), decision=decision,
+                                           evidences=evidence, decision=decision,
                                            fused_likelihood=fused_likelihood)
+
+        log.debug(
+            f"Fused Likelihoods | current typed - {self.state.current_sentence} | stimuli {self.state.display_alphabet} \n "
+            f"{histogram(fmt_fused_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}")
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
             decision = alphabet()[
-                np.argmax(evidence)]  # deciding the maximum probability symbol TODO abstract
+                np.argmax(
+                    fused_likelihood)]  # deciding the maximum probability symbol TODO abstract
 
             # resetting series
             new_state['series_n'] += 1
@@ -119,10 +129,8 @@ class StateManagerImpl(StateManager):
             new_state['inquiry_n'] = 0
 
             # updating current sentence and finding next target
-            new_state['current_sentence'] = new_state['current_sentence'] + \
-                                            decision if decision != BACKSPACE_CHAR else new_state[
-                                                                                            'current_sentence'][
-                                                                                        :-1]
+            new_state['current_sentence'] = new_state['current_sentence'] + decision \
+                if decision != BACKSPACE_CHAR else new_state['current_sentence'][:-1]
             new_state['target_symbol'] = next_target_letter(new_state['current_sentence'],
                                                             self.state.target_sentence)
 
@@ -131,7 +139,7 @@ class StateManagerImpl(StateManager):
 
         new_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
                                            stimuli=self.state.display_alphabet,
-                                           evidence_likelihoods=list(evidence), decision=decision,
+                                           evidences=evidence, decision=decision,
                                            fused_likelihood=fused_likelihood)
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
@@ -149,7 +157,7 @@ class StateManagerImpl(StateManager):
             state_dict[state_field] = state_value
             self.state = SimState(**state_dict)
             return self.get_state()
-        
+
         raise FieldException(f"Cannot find state field {state_field}")
 
     @staticmethod
@@ -158,10 +166,6 @@ class StateManagerImpl(StateManager):
         target_symbol = sentence[0]  # TODO use parameters.get('spelled_letters_count')
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
         init_stimuli = random.sample(alphabet(), 10)
-
-        # TODO make new parameter and create default series_likelihoods object based off that
-        evidence_types = parameters.get(
-            'evidence_types') if parameters else None
 
         return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence,
                         display_alphabet=init_stimuli, inquiry_n=0, series_n=0,

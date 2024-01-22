@@ -1,7 +1,7 @@
 import logging
 import random
 from time import sleep
-from typing import Optional
+from typing import Optional, Dict
 
 import numpy as np
 
@@ -9,12 +9,14 @@ from bcipy.helpers import load, stimuli, symbols
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.metrics import MetricReferee
+from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
-from bcipy.simulator.helpers.types import InquiryResult
+from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
 from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods
 from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
+from bcipy.task.data import EvidenceType
 
 log = logging.getLogger(__name__)
 
@@ -62,26 +64,28 @@ class SimulatorCopyPhrase(Simulator):
         log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
 
         while not self.state_manager.is_done():
+            self.state_manager.mutate_state('display_alphabet',
+                                            self.__make_stimuli(self.state_manager.get_state()))
             curr_state = self.state_manager.get_state()
+
             log.info(
                 f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | " +
-                f"Target {curr_state.target_symbol}")
+                f"Target '{curr_state.target_symbol}' | " +
+                f"Stimuli {curr_state.display_alphabet}")
 
-            self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(curr_state))
-            sampled_data = self.sampler.sample(curr_state)
-            # TODO make this evidence be a dict (mapping of evidence type to evidence)
-            evidence = self.model_handler.generate_evidence(curr_state,
-                                                            sampled_data)
+            sampled_data = self.sampler.sample(self.state_manager.get_state())
+            evidence: Dict[str, SimEvidence] = self.model_handler.generate_evidence(curr_state,
+                                                                                    sampled_data)
 
             log.debug(
-                f"Evidence for stimuli {curr_state.display_alphabet} " +
-                f"\n {fmt_stim_likelihoods(evidence, self.symbol_set)}")
+                f"EEG Evidence for stimuli {curr_state.display_alphabet} " +
+                f"\n {fmt_stim_likelihoods(evidence['sm'].evidence, self.symbol_set)}")
 
-            inq_record: InquiryResult = self.state_manager.update(evidence)
+            reshaped_evidence = self.__reshape_evidences(evidence)
+            log.debug(f"reshaped evidence {reshaped_evidence}")
+
+            inq_record: InquiryResult = self.state_manager.update(reshaped_evidence)
             updated_state = self.state_manager.get_state()
-            log.debug(
-                f"Fused Likelihoods + "
-                f"{fmt_stim_likelihoods(inq_record.fused_likelihood, self.symbol_set)}")
 
             if inq_record.decision:
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
@@ -105,8 +109,26 @@ class SimulatorCopyPhrase(Simulator):
         if val_func is not None:
             return stimuli.best_selection(self.symbol_set, list(
                 val_func), subset_length, always_included=always_in_stimuli)
+        elif self.parameters.get('sim_lm_active', 0) == 1:  # use lang model for priors to make stim
+            lm_model = self.model_handler.get_model('lm')
+            lm_model_evidence = lm_model.predict(list(state.current_sentence))
+            val_func = format_lm_output(lm_model_evidence, self.symbol_set)
+            return stimuli.best_selection(self.symbol_set, list(
+                val_func), subset_length, always_included=always_in_stimuli)
 
         return random.sample(self.symbol_set, subset_length)
+
+    def __reshape_evidences(self, evidences: Dict[str, SimEvidence]) -> Dict[str, SimEvidence]:
+
+        # reshaping lm_evidence to look like signal model evidence
+        reshaped_evidence = evidences.copy()
+        if "lm" in evidences:
+            unshaped_lm_evidence = evidences["lm"].evidence  # [('B', 0.5), ('C', 0.2), ('_', 0.02)]
+            reshaped_lm_lik = format_lm_output(list(unshaped_lm_evidence), self.symbol_set)
+            reshaped_evidence['lm'] = SimEvidence(EvidenceType.LM, np.array(reshaped_lm_lik),
+                                                  evidences["lm"].symbol_set)
+
+        return reshaped_evidence
 
     def load_parameters(self, path):
         # TODO validate parameters
