@@ -23,11 +23,10 @@ class SignalModelHandler1(ModelHandler):
     def __init__(self, model_file):
         self.model_file = model_file
         self.signal_model: Optional[SignalModel] = None
-
-    def generate_evidence(self, state: SimState, features):
         with open(self.model_file, "rb") as signal_file:
             self.signal_model = pickle.load(signal_file)
 
+    def generate_evidence(self, state: SimState, features):
         stimuli = state.display_alphabet
         alp = alphabet()
         eeg_evidence = self.signal_model.predict(features, stimuli, alp)
