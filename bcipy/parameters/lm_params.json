@@ -6,6 +6,18 @@
       "type": "filepath"
     }
   },
+  "classifier": {
+      "model_name": {
+	  "description": "Name of the HuggingFace model to load. Required for the Classifier model.",
+	  "value": "microsoft/deberta-v3-xsmall",
+	  "type": "str"
+      },
+      "model_path": {
+	  "description": "Directory containing fine-tuned classifier model, relative to classifier.py directory. Required for the Classifier model.",
+	  "value": "../lms/deberta-char-classifier/",
+	  "type": "directorypath"
+      }
+  },
   "causal": {
     "model_name": {
       "description": "Name of the HuggingFace model to load. Required for the Causal model.",
