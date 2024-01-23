@@ -47,7 +47,7 @@ class Seq2SeqLanguageModel(LanguageModel):
         self.left_context_tokens = []
 
         # Not sure if this matters for performance or accuracy?
-        self.num_results = 64
+        self.num_results = 1024
 
         # We optionally load the model from a local directory, but if this is not specified, we load a Hugging Face model
         self.model_dir = lm_path or lang_model_name
@@ -83,7 +83,7 @@ class Seq2SeqLanguageModel(LanguageModel):
 
         outputs = self.model.generate(
             input_ids_with_span.to(self.device),
-            max_length=3,
+            max_length=18,            
             num_beams=self.num_results,
             num_return_sequences=self.num_results,
             early_stopping=True,

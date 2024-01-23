@@ -333,7 +333,7 @@ class CausalLanguageModel(LanguageModel):
             if self.fp16 and self.device == "cuda":
                 self.model = self.model.half()
         except:
-            raise InvalidModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
+            raise InvalidLanguageModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
 
         self.model.eval()
 
