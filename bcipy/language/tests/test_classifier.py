@@ -88,7 +88,7 @@ class TestClassifierLanguageModel(unittest.TestCase):
         self.assertAlmostEqual(sum(probs), 1, places=3)
 
     def test_predict_middle_of_word(self):
-        """Test the predict method in the middle of a word with gpt2 model."""
+        """Test the predict method in the middle of a word with classifier model."""
         symbol_probs = self.model.predict(evidence=list("TH"))
         probs = [prob for sym, prob in symbol_probs]
 
@@ -107,7 +107,7 @@ class TestClassifierLanguageModel(unittest.TestCase):
 
     def test_phrase(self):
         """Test that a phrase can be used for input with classifier model"""
-        symbol_probs = self.gpt2_model.predict(list("does_it_make_sen"))
+        symbol_probs = self.model.predict(list("does_it_make_sen"))
         most_likely_sym, _prob = sorted(symbol_probs,
                                         key=itemgetter(1),
                                         reverse=True)[0]
