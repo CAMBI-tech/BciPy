@@ -167,7 +167,7 @@ class ClassifierLanguageModel(LanguageModel):
             context = cased_context
 
         else:
-            context = context.lower
+            context = context.lower()
 
         context_lower = context.lower()
 
@@ -182,7 +182,7 @@ class ClassifierLanguageModel(LanguageModel):
         tensor = torch.tensor([tokens]).to(self.device)
         with torch.no_grad():
             logits = self.model(tensor).logits
-            char_probs = torch.softmax(logits, dim=1).to("cpu").numpy()
+            char_probs = torch.softmax(logits, dim=1).to("cpu").numpy()[0]
 
             # Apostrophe is not in our symbol set, redistribute prob mass
             char_probs[26] = 0.0
