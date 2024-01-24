@@ -51,7 +51,8 @@ class MixtureLanguageModel(LanguageModel):
                  symbol_set: List[str],
                  lm_types: Optional[List[str]] = None,
                  lm_weights: Optional[List[float]] = None,
-                 lm_params: Optional[List[Dict[str, str]]] = None):
+                 lm_params: Optional[List[Dict[str, str]]] = None,
+                 **_):
         """
         Initialize instance variables and load the language model with given path
         Args:

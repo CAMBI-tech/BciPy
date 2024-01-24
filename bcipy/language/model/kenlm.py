@@ -19,7 +19,8 @@ class KenLMLanguageModel(LanguageModel):
                  response_type: ResponseType,
                  symbol_set: List[str],
                  lm_path: Optional[str] = None,
-                 skip_symbol_norm: Optional[bool] = False):
+                 skip_symbol_norm: Optional[bool] = False,
+                 **_):
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None

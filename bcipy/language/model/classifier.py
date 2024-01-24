@@ -26,7 +26,7 @@ class ClassifierLanguageModel(LanguageModel):
                  fp16: bool = False,
                  mixed_case_context = False,
                  case_simple = False,
-                 ):
+                 **_):
         """
         Initialize instance variables and load the language model with given path
         Args:

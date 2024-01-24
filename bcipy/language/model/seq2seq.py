@@ -19,7 +19,7 @@ class Seq2SeqLanguageModel(LanguageModel):
                  lm_path: str = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
-                 ):
+                 **_):
         """
         Initialize instance variables and load the language model with given path
         Args:

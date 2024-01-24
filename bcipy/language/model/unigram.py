@@ -9,7 +9,7 @@ from bcipy.config import LM_PATH
 class UnigramLanguageModel(LanguageModel):
     """Character language model based on trained unigram weights"""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: Optional[str] = None):
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: Optional[str] = None, **_):
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None
