@@ -23,8 +23,6 @@ class ClassifierLanguageModel(LanguageModel):
                  lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
-                 beam_width: int = 8,
-                 batch_size: int = 8,
                  fp16: bool = False,
                  mixed_case_context = False,
                  case_simple = False,
@@ -38,8 +36,6 @@ class ClassifierLanguageModel(LanguageModel):
             lm_path            - load fine-tuned model from specified directory
             lm_device          - device to use for making predictions (cpu, mps, or cuda)
             lm_left_context    - text to condition start of sentence on
-            beam_width         - how many hypotheses to keep during the search
-            batch_size         - how many sequences to pass in at a time during inference
             fp16               - convert model to fp16 to save memory/compute on CUDA
             mixed_case_context - use mixed case for language model left context
             case_simple        - simple fixing of left context case
@@ -68,10 +64,6 @@ class ClassifierLanguageModel(LanguageModel):
 
         local_model_path = lm_path or classifier_params['model_path']['value']
         self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
-
-        # parameters for search
-        self.beam_width = beam_width
-        self.batch_size = batch_size
 
         self.simple_upper_words = {"i": "I",
                                     "i'll": "I'll",
@@ -145,7 +137,6 @@ class ClassifierLanguageModel(LanguageModel):
         assert self.model is not None, "language model does not exist!"
 
         converted_context = "".join(evidence)
-        converted_context_lower = converted_context.lower()
 
         context = converted_context.replace(SPACE_CHAR, ' ')
 
@@ -168,8 +159,6 @@ class ClassifierLanguageModel(LanguageModel):
 
         else:
             context = context.lower()
-
-        context_lower = context.lower()
 
         tokens = []
         tokens.extend(self.left_context_tokens)
