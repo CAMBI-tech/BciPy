@@ -3,6 +3,7 @@ from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.seq2seq import Seq2SeqLanguageModel
+from bcipy.language.model.causal_byte import CausalByteLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
@@ -22,7 +23,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--model', dest='model', type=int, required=True,
                         help=('1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: '
-                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (Causal/Ngram'))
+                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (Causal/Ngram\n7: Causal Byte'))
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
                         help='Phrase set filename')
@@ -72,6 +73,10 @@ if __name__ == "__main__":
 
     if model == 6 and (not args.model_name or not args.ngram_lm):
         print(f"ERROR: For causal model you must specify name of causal LLM using --model-name and ngram LM using --ngram-lm")
+        sys.exit(1)
+
+    if model == 7 and not args.model_name:
+        print("ERROR: For causal bye model you must specify name of model using --model-name")
         sys.exit(1)
 
     if args.case_simple and not args.mixed_case_context:
@@ -160,6 +165,16 @@ if __name__ == "__main__":
                                              "case_simple": args.case_simple
                                             },
                                             {"lm_path": args.ngram_lm}])
+    elif model == 7:
+        lm = CausalByteLanguageModel(response_type=response_type,
+                                     symbol_set=symbol_set,
+                                     lang_model_name=args.model_name,
+                                     lm_device=device,
+                                     lm_path=args.model_dir,
+                                     lm_left_context=args.left_context,
+                                     fp16=args.fp16,
+                                     mixed_case_context=args.mixed_case_context,
+                                     case_simple=args.case_simple)
     else:
         parser.print_help()
         exit()
