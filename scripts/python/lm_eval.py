@@ -3,16 +3,26 @@ from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.seq2seq import Seq2SeqLanguageModel
+from bcipy.language.model.classifier import ClassifierLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
 from bcipy.helpers.symbols import SPACE_CHAR, alphabet
 import argparse
 import numpy as np
-import sys
+import json
 from scipy.stats import bootstrap
 from datetime import datetime
 import os
+
+MODEL_MAPPING = {
+    "unigram": UnigramLanguageModel,
+    "mixture": MixtureLanguageModel,
+    "kenlm": KenLMLanguageModel,
+    "causal": CausalLanguageModel,
+    "seq2seq": Seq2SeqLanguageModel,
+    "classifier": ClassifierLanguageModel
+}
 
 if __name__ == "__main__":
 
@@ -20,9 +30,9 @@ if __name__ == "__main__":
     parser.add_argument('--verbose', dest='verbose', type=int, default=0,
         help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
 
-    parser.add_argument('--model', dest='model', type=int, required=True,
-                        help=('1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: '
-                              'KenLM n-gram\n4: Causal Hugging Face\n5: Seq2Seq\n6: Mixture (Causal/Ngram'))
+    model_options = MODEL_MAPPING.keys()
+    parser.add_argument('--model', dest='model', required=True,
+                        choices=model_options)
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
                         help='Phrase set filename')
@@ -55,6 +65,7 @@ if __name__ == "__main__":
     parser.add_argument("--ngram-mix", type=float, default=0.5, help="mixture weight for ngram in type 6 mix")
     parser.add_argument('--srilm-file', help="output SRILM debug 2 log file")
     parser.add_argument("--skip-norm", help="skip normalization over symbol set for KenLM model", action="store_true", default=False)
+    parser.add_argument("--mixture-params", help="JSON file path containing custom mixture model parameters", type=str)
 
     args = parser.parse_args()
 
@@ -62,17 +73,13 @@ if __name__ == "__main__":
     model = args.model
     phrases = args.phrases
 
-    if model == 3 and not args.model_dir:
-        print("ERROR: For KenLM n-gram model you must specify filename of model using --model-dir")
-        sys.exit(1)
+    # if model == "kenlm" and not args.model_dir:
+    #     print("ERROR: For KenLM n-gram model you must specify filename of model using --model-dir")
+    #     sys.exit(1)
 
-    if model == 4 and not args.model_name:
-        print("ERROR: For causal model you must specify name of model using --model-name")
-        sys.exit(1)
-
-    if model == 6 and (not args.model_name or not args.ngram_lm):
-        print(f"ERROR: For causal model you must specify name of causal LLM using --model-name and ngram LM using --ngram-lm")
-        sys.exit(1)
+    # if model == "causal" and not args.model_name:
+    #     print("ERROR: For causal model you must specify name of model using --model-name")
+    #     sys.exit(1)
 
     if args.case_simple and not args.mixed_case_context:
         print(f"WARNING: You should probably also set --mixed-case-context with --case-simple")
@@ -117,52 +124,49 @@ if __name__ == "__main__":
         print(f"Modified symbol_set: {symbol_set}")
 
     response_type = ResponseType.SYMBOL
-    if model == 1:
-        lm = UnigramLanguageModel(response_type, symbol_set)
-    elif model == 2:
-        lm = MixtureLanguageModel(response_type, symbol_set)
-    elif model == 3:
-        lm = KenLMLanguageModel(response_type, symbol_set, args.model_dir, args.skip_norm)
-    elif model == 4:
-        lm = CausalLanguageModel(response_type=response_type,
-                                 symbol_set=symbol_set,
-                                 lang_model_name=args.model_name,
-                                 lm_device=device,
-                                 lm_path=args.model_dir,
-                                 lm_left_context=args.left_context,
-                                 beam_width=args.beam_width,
-                                 batch_size=args.batch_size,
-                                 token_backoff=args.token_backoff,
-                                 fp16=args.fp16,
-                                 mixed_case_context=args.mixed_case_context,
-                                 case_simple=args.case_simple)
-    elif model == 5:
-        lm = Seq2SeqLanguageModel(response_type=response_type,
-                                 symbol_set=symbol_set,
-                                 lang_model_name=args.model_name,
-                                 lm_device=device,
-                                 lm_path=args.model_dir,
-                                 lm_left_context=args.left_context)
-    elif model == 6:
-        lm = MixtureLanguageModel(response_type=response_type,
-                                 symbol_set=symbol_set,
-                                 lm_types=["CAUSAL", "KENLM"],
-                                 lm_weights=[1.0 - args.ngram_mix, args.ngram_mix],
-                                 lm_params=[{"lang_model_name": args.model_name,
-                                             "lm_device": device,
-                                             "lm_path": args.model_dir,
-                                             "lm_left_context": args.left_context,
-                                             "beam_width": args.beam_width,
-                                             "batch_size": args.batch_size,
-                                             "token_backoff": args.token_backoff,
-                                             "fp16": args.fp16,
-                                             "mixed_case_context": args.mixed_case_context,
-                                             "case_simple": args.case_simple
-                                            },
-                                            {"lm_path": args.ngram_lm}])
-    else:
-        parser.print_help()
-        exit()
+
+    kwargs = {
+        "lm_path": args.model_dir,
+        "skip_symbol_norm": args.skip_norm,
+        "lang_model_name": args.model_name,
+        "lm_device": device,
+        "lm_left_context": args.left_context,
+        "beam_width": args.beam_width,
+        "batch_size": args.batch_size,
+        "token_backoff": args.token_backoff,
+        "fp16": args.fp16,
+        "mixed_case_context": args.mixed_case_context,
+        "case_simple": args.case_simple,
+    }
+
+    mixture_params = dict()
+    if args.mixture_params is not None:
+        with open(args.mixture_params, 'r') as file:
+            mixture_params = json.load(file)
+
+
+    lm = MODEL_MAPPING[model](response_type, symbol_set, **kwargs, **mixture_params)
+
+    # elif model == 6:
+    #     lm = MixtureLanguageModel(response_type=response_type,
+    #                              symbol_set=symbol_set,
+    #                              lm_types=["CAUSAL", "KENLM"],
+    #                              lm_weights=[1.0 - args.ngram_mix, args.ngram_mix],
+    #                              lm_params=[{"lang_model_name": args.model_name,
+    #                                          "lm_device": device,
+    #                                          "lm_path": args.model_dir,
+    #                                          "lm_left_context": args.left_context,
+    #                                          "beam_width": args.beam_width,
+    #                                          "batch_size": args.batch_size,
+    #                                          "token_backoff": args.token_backoff,
+    #                                          "fp16": args.fp16,
+    #                                          "mixed_case_context": args.mixed_case_context,
+    #                                          "case_simple": args.case_simple
+    #                                         },
+    #                                         {"lm_path": args.ngram_lm}])
+    # else:
+    #     parser.print_help()
+    #     exit()
 
     print(f"Model load time = {timer() - start:.2f}")
 

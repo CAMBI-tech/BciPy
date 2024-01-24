@@ -1,0 +1,11 @@
+{
+    "lm_types":["CAUSAL","KENLM"],
+    "lm_weights":[0.8, 0.2],
+    "lm_params":[
+        {
+            "lang_model_name": "facebook/opt-350m",
+            "lm_device": "cuda"
+        },
+        {}
+    ]
+}
