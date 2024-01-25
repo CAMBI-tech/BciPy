@@ -13,6 +13,7 @@ from scipy.special import softmax
 
 from bcipy.config import LM_PATH
 
+# This updates transformers 4.20.0 to be able to use the ByGPT5 tokenizer and model
 from transformers.models.auto.tokenization_auto import TOKENIZER_MAPPING
 from transformers.models.auto.configuration_auto import CONFIG_MAPPING
 from transformers.models.t5.configuration_t5 import T5Config
@@ -77,7 +78,9 @@ class CausalByteLanguageModel(LanguageModel):
         self.model_name = lang_model_name or causal_params['model_name']['value']
 
         local_model_path = lm_path or causal_params['model_path']['value']
-        self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        # This is a pain to always locate in a certain BciPy directory
+        #self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        self.model_dir = f"{local_model_path}" if local_model_path != "" else self.model_name
 
         self.simple_upper_words = {"i": "I",
                                     "i'll": "I'll",
