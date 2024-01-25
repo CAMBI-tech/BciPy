@@ -147,27 +147,6 @@ if __name__ == "__main__":
 
     lm = MODEL_MAPPING[model](response_type, symbol_set, **kwargs, **mixture_params)
 
-    # elif model == 6:
-    #     lm = MixtureLanguageModel(response_type=response_type,
-    #                              symbol_set=symbol_set,
-    #                              lm_types=["CAUSAL", "KENLM"],
-    #                              lm_weights=[1.0 - args.ngram_mix, args.ngram_mix],
-    #                              lm_params=[{"lang_model_name": args.model_name,
-    #                                          "lm_device": device,
-    #                                          "lm_path": args.model_dir,
-    #                                          "lm_left_context": args.left_context,
-    #                                          "beam_width": args.beam_width,
-    #                                          "batch_size": args.batch_size,
-    #                                          "token_backoff": args.token_backoff,
-    #                                          "fp16": args.fp16,
-    #                                          "mixed_case_context": args.mixed_case_context,
-    #                                          "case_simple": args.case_simple
-    #                                         },
-    #                                         {"lm_path": args.ngram_lm}])
-    # else:
-    #     parser.print_help()
-    #     exit()
-
     print(f"Model load time = {timer() - start:.2f}")
 
     phrase_count = 0
