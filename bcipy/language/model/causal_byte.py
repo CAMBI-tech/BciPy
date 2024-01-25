@@ -56,6 +56,8 @@ class CausalByteLanguageModel(LanguageModel):
         self.vocab = {}
         self.index_to_word = {}
         self.index_to_word_lower = {}
+        self.result_to_vocab_indexes = []
+        self.symbol_set_lower = None
         self.device = lm_device
         self.left_context = lm_left_context
         self.fp16 = fp16
@@ -95,12 +97,28 @@ class CausalByteLanguageModel(LanguageModel):
         Build a vocabulary table mapping token index to word strings
         """
 
+        # List of empty lists
+        self.result_to_vocab_indexes = [ [] for _ in range(len(self.symbol_set_lower)) ]
+
+        #print(f"DEBUG symbol_set_lower {self.symbol_set_lower}")
+
         for i in range(self.vocab_size):
             word = self.tokenizer.decode([i])
-            print(f"DEBUG vocab {i} '{word}'")
+            #print(f"DEBUG vocab {i} '{word}'")
             word_lower = word.lower()
             self.index_to_word[i] = word
             self.index_to_word_lower[i] = word_lower
+            # Create a mapping between the vocab index and the index in the result set
+            try:
+                # Special case for space
+                if word == " ":
+                    self.result_to_vocab_indexes[self.symbol_set_lower.index(SPACE_CHAR)].append(i)
+                elif word != SPACE_CHAR:
+                    self.result_to_vocab_indexes[self.symbol_set_lower.index(word_lower)].append(i)
+            except ValueError:
+                pass
+
+        #print(f'DEBUG map {self.result_to_vocab_indexes}')
 
         # Get the index we use for the start or end pseudo-word
         if self.left_context == "":
@@ -108,7 +126,7 @@ class CausalByteLanguageModel(LanguageModel):
 
         # Get token id(s) for the left context we condition all sentences on
         self.left_context_tokens = self._encode(self.left_context)
-        print(f"DEBUG left_context_tokens = {self.left_context_tokens}")
+        #print(f"DEBUG left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
@@ -156,19 +174,47 @@ class CausalByteLanguageModel(LanguageModel):
         tokens.extend(self.left_context_tokens)
         tokens.extend(self._encode(context))
 
-        print(f"DEBUG tokens {tokens}")
+        #print(f"DEBUG tokens {tokens}")
 
         tensor = torch.tensor([tokens]).to(self.device)
         with torch.no_grad():
             logits = self.model(tensor).logits # Shape is (1, 1, 384)
             log_probs = torch.log_softmax(logits[-1, -1, :], dim=0).to("cpu")
 
-        # All probs are 1.0
-        # All models sizes are 1, 384?
-        print(f"DEBUG: logits {logits} {logits.shape}")
-        print(f"DEBUG: log_probs {log_probs} {log_probs.shape}")
+        #print(f"DEBUG: logits {logits} {logits.shape}")
+        #print(f"DEBUG: log_probs {log_probs} {log_probs.shape}")
 
-        return list()
+        # Create a simple list with the probabilities of all the characters we need to return
+        char_probs = []
+        for i in range(len(self.symbol_set_lower)):
+            # List of 1 or more indexes in the LLM vocab we need to sum
+            indexes = self.result_to_vocab_indexes[i]
+            if len(indexes) == 1:
+                char_probs.append(float(log_probs[indexes[0]]))
+            elif len(indexes) > 1:
+                # Create a list of the log probs for this character
+                char_log_probs = []
+                for index in indexes:
+                    char_log_probs.append(log_probs[index])
+                char_probs.append(logsumexp(char_log_probs))
+            else:
+                # This should only happen if the language model doesn't have all our characters
+                char_probs.append(float("-inf"))
+
+        # Normalize to a distribution that sums to 1
+        char_probs = softmax(char_probs)
+        #print(f"DEBUG after {char_probs} {sum(char_probs)}")
+
+        # Now construct the return dictionary that maps the character to its probability
+        next_char_pred = Counter()
+        for i, ch in enumerate(self.symbol_set_lower):
+            if ch is SPACE_CHAR:
+                next_char_pred[ch] = char_probs[i]
+            else:
+                next_char_pred[ch.upper()] = char_probs[i]
+        next_char_pred[BACKSPACE_CHAR] = 0.0
+
+        return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
 
         #char_probs = softmax(char_probs)
         #next_char_pred = Counter()
@@ -199,6 +245,16 @@ class CausalByteLanguageModel(LanguageModel):
 
         self.model.eval()
         self.model.to(self.device)
+
+        self.symbol_set_lower = []
+        for ch in self.symbol_set:
+            if ch is SPACE_CHAR:
+                self.symbol_set_lower.append(SPACE_CHAR)
+            elif ch is BACKSPACE_CHAR:
+                continue
+            else:
+                self.symbol_set_lower.append(ch.lower())
+
         self._build_vocab()
 
     def state_update(self, evidence: List[str]) -> List[Tuple]:
