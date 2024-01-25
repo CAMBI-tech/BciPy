@@ -90,8 +90,8 @@ class TestClientManager(unittest.TestCase):
         self.assertTrue(ContentType.EEG in manager.device_content_types)
         self.assertTrue(ContentType.EYETRACKER in manager.device_content_types)
 
-        self.assertEqual([ContentType.EEG], manager.active_device_content_types)
-
+        self.assertEqual([ContentType.EEG],
+                         manager.active_device_content_types)
 
     def test_dispatching_properties(self):
         """Test that property calls may be dispatched to the default client"""
