@@ -2,8 +2,6 @@ from collections import Counter
 import torch
 from typing import Optional, List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import itertools
-import heapq
 
 from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
@@ -20,7 +18,6 @@ from transformers.models.auto.configuration_auto import CONFIG_MAPPING
 from transformers.models.t5.configuration_t5 import T5Config
 from transformers.models.auto.modeling_auto import MODEL_FOR_CAUSAL_LM_MAPPING
 from uniformers.models.bygpt5 import ByGPT5LMHeadModel, ByGPT5Tokenizer, ByGPT5Config
-from transformers.pipelines.text_generation import TextGenerationPipeline
 
 class CausalByteLanguageModel(LanguageModel):
     """Character byte-level language model based on a pre-trained causal model, e.g. ByGPT5"""
@@ -245,8 +242,8 @@ class CausalByteLanguageModel(LanguageModel):
             raise InvalidLanguageModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
         self.vocab_size = self.tokenizer.vocab_size
         try:
-            #self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
-            self.model = ByGPT5LMHeadModel.from_pretrained(self.model_dir)
+            self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
+            #self.model = ByGPT5LMHeadModel.from_pretrained(self.model_dir)
             if self.fp16 and self.device == "cuda":
                 self.model = self.model.half()
         except:
