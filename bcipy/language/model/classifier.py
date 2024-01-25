@@ -118,6 +118,8 @@ class ClassifierLanguageModel(LanguageModel):
         # print(f"left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
+        if text == "":
+            return []
         tokens = self.tokenizer.encode(text)
         if len(tokens) > 1 and self.model_name.startswith("facebook/opt"):
             tokens = tokens[1:]
