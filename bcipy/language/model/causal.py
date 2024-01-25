@@ -72,7 +72,9 @@ class CausalLanguageModel(LanguageModel):
         self.model_name = lang_model_name or causal_params['model_name']['value']
 
         local_model_path = lm_path or causal_params['model_path']['value']
-        self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        # This is a pain to always locate in a certain BciPy directory
+        #self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        self.model_dir = f"{local_model_path}" if local_model_path != "" else self.model_name
 
         # parameters for search
         self.beam_width = beam_width
