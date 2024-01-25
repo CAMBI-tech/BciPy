@@ -129,9 +129,16 @@ class CausalByteLanguageModel(LanguageModel):
         #print(f"DEBUG left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
+        #print(f"DEBUG _encode '{text}'")
         tokens = self.tokenizer.encode(text)
         if len(tokens) > 1 and self.model_name.startswith("facebook/opt"):
+            # Some models always add </s> at start which we don't want since we may have our own left context
             tokens = tokens[1:]
+        elif len(tokens) > 1 and self.model_name.startswith("google/byt5"):
+            # Some models always add </s> at end
+            #print(f"DEBUG '{text}' shorter1 {tokens}")
+            tokens = tokens[:-1]
+            #print(f"DEBUG '{text}' shorter2 {tokens}")
 
         return tokens
 
@@ -172,7 +179,9 @@ class CausalByteLanguageModel(LanguageModel):
 
         tokens = []
         tokens.extend(self.left_context_tokens)
-        tokens.extend(self._encode(context))
+        # Don't extend if the context is empty, this avoids some models like byt5 from adding extra </s> at start
+        if len(context) > 0:
+            tokens.extend(self._encode(context))
 
         #print(f"DEBUG tokens {tokens}")
 
@@ -181,8 +190,8 @@ class CausalByteLanguageModel(LanguageModel):
             logits = self.model(tensor).logits # Shape is (1, 1, 384)
             log_probs = torch.log_softmax(logits[-1, -1, :], dim=0).to("cpu")
 
-        #print(f"DEBUG: logits {logits} {logits.shape}")
-        #print(f"DEBUG: log_probs {log_probs} {log_probs.shape}")
+       #print(f"DEBUG: logits {logits} {logits.shape}")
+       # print(f"DEBUG: log_probs {log_probs} {log_probs.shape}")
 
         # Create a simple list with the probabilities of all the characters we need to return
         char_probs = []
