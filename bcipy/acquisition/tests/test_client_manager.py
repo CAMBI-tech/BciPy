@@ -14,6 +14,7 @@ class TestClientManager(unittest.TestCase):
         self.eeg_device_mock.name = 'DSI-24'
         self.eeg_device_mock.content_type = 'EEG'
         self.eeg_device_mock.sample_rate = 300
+        self.eeg_device_mock.is_active = True
 
         self.eeg_client_mock = Mock()
         self.eeg_client_mock.device_spec = self.eeg_device_mock
@@ -24,6 +25,7 @@ class TestClientManager(unittest.TestCase):
         self.gaze_device_mock = Mock()
         self.gaze_device_mock.content_type = 'Eyetracker'
         self.gaze_device_mock.sample_rate = 60
+        self.gaze_device_mock.is_active = False
         self.gaze_client_mock = Mock()
         self.gaze_client_mock.device_spec = self.gaze_device_mock
 
@@ -79,6 +81,17 @@ class TestClientManager(unittest.TestCase):
         manager.add_client(self.gaze_client_mock)
         self.assertEqual(2, len(manager.device_specs))
         self.assertTrue(self.gaze_device_mock in manager.device_specs)
+
+    def test_device_content_types(self):
+        """Test properties related to content types"""
+        manager = ClientManager()
+        manager.add_client(self.eeg_client_mock)
+        manager.add_client(self.gaze_client_mock)
+        self.assertTrue(ContentType.EEG in manager.device_content_types)
+        self.assertTrue(ContentType.EYETRACKER in manager.device_content_types)
+
+        self.assertEqual([ContentType.EEG],
+                         manager.active_device_content_types)
 
     def test_dispatching_properties(self):
         """Test that property calls may be dispatched to the default client"""
