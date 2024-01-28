@@ -21,7 +21,6 @@ class ModelHandler(ABC):
     @abstractmethod
     def generate_evidence(self, state: SimState, features):
         """ Run model on features to generate evidence """
-        breakpoint()
 
     @abstractmethod
     def get_model(self, key=None):

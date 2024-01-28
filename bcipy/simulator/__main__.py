@@ -10,11 +10,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-d",
-        "--data_folders",
-        action="append",
+        "--data_folder",
         type=Path,
         required=True,
-        help="Raw data folders to be processed. Repeatable arg to accumulate sessions data.")
+        help="Raw data folders to be processed. Singular wrapper dir with data folders")
     parser.add_argument(
         "-sm",
         "--smodel_files",
@@ -27,7 +26,7 @@ if __name__ == "__main__":
         "-p",
         "--parameters",
         type=Path,
-        required=False,  # For now
+        required=True,
         help="Parameter File to be used")
 
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)

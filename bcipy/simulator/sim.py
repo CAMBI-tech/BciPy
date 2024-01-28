@@ -6,6 +6,7 @@ from typing import Optional, Dict
 import numpy as np
 
 from bcipy.helpers import load, stimuli, symbols
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.metrics import MetricReferee
@@ -44,7 +45,7 @@ class SimulatorCopyPhrase(Simulator):
     """
 
     def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, parameter_path: str = None,
+                 state_manager: StateManager, referee: MetricReferee, parameters: Parameters = None,
                  save_dir: str = None):
         super().__init__()
 
@@ -55,7 +56,7 @@ class SimulatorCopyPhrase(Simulator):
         self.state_manager: StateManager = state_manager
         self.data_engine: DataEngine = data_engine
 
-        self.parameters = self.load_parameters(parameter_path)
+        self.parameters: Parameters = self.load_parameters(parameters)
 
         self.symbol_set = alphabet()
         self.write_output = False
@@ -130,18 +131,12 @@ class SimulatorCopyPhrase(Simulator):
 
         return reshaped_evidence
 
-    def load_parameters(self, path):
+    def load_parameters(self, params: Optional[Parameters]):
         # TODO validate parameters
-        if not path:
-            # TODO fix this parameter logic. for now assuming one parameter file speaks for all
-            parameters = self.data_engine.get_parameters()[0]
+        if params:
+            return params
         else:
-            parameters = load.load_json_parameters(path, value_cast=True)
-
-        sim_parameters = load.load_json_parameters(
-            "bcipy/simulator/sim_parameters.json", value_cast=True)
-        parameters.add_missing_items(sim_parameters)
-        return parameters
+            return self.data_engine.get_parameters()
 
     def get_param(self, name):
         pass
