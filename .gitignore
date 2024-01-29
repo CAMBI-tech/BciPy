@@ -36,3 +36,4 @@ bcipy/language/lms/out_*
 bcipy/language/out/
 
 
+bcipy/simulator/tests/resource/

@@ -1,4 +1,6 @@
+import shutil
 import unittest
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -7,11 +9,22 @@ import pandas as pd
 from bcipy.helpers import load
 from bcipy.simulator.helpers.data_engine import DataEngine, RawDataEngine, RawDataEngineWrapper
 
-
 # Import the module or class you want to test
+
+FILE_PATH_PREFIX = "bcipy/simulator/tests"
 
 
 class TestRawDataEngine(unittest.TestCase):
+
+    @classmethod
+    def setUp(cls) -> None:
+        with zipfile.ZipFile(f'{FILE_PATH_PREFIX}/resource/rsvpTest1.zip', 'r') as zip_ref:
+            zip_ref.extractall(f'{FILE_PATH_PREFIX}/resource/rsvpTest1')
+
+    @classmethod
+    def tearDown(cls) -> None:
+        shutil.rmtree(f'{FILE_PATH_PREFIX}/resource/rsvpTest1')
+
     @classmethod
     def check_eeg_shape(cls, schema: pd.DataFrame):
         # checking all eeg response data has same shape
@@ -57,7 +70,10 @@ class TestRawDataEngine(unittest.TestCase):
         self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
 
     def test_RawDataEngineWrapper(self):
-        source_dir = "/Users/srikarananthoju/cambi/tab_test_dynamic/wrapper"
+        # Testing loading and transformaing data from a singular wrapper folder
+
+        # source_dir = "/Users/srikarananthoju/cambi/tab_test_dynamic/wrapper"
+        source_dir = FILE_PATH_PREFIX + "/resource/rsvpTest1/wrapper"
         param_path = "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/parameters.json"
         params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
 
