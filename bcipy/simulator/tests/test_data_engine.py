@@ -12,14 +12,13 @@ from bcipy.simulator.helpers.data_engine import DataEngine, RawDataEngine, RawDa
 
 
 class TestRawDataEngine(unittest.TestCase):
-
     @classmethod
     def check_eeg_shape(cls, schema: pd.DataFrame):
         # checking all eeg response data has same shape
 
         eeg_responses = schema['eeg']
         ret = True
-        ret = ret and (None in eeg_responses or np.NaN in eeg_responses)
+        ret = ret and not (None in eeg_responses or np.NaN in eeg_responses)
         shape_set = set(eeg_responses.apply(lambda x: x.shape))
         ret = ret and (len(shape_set) == 1)
 
@@ -66,6 +65,18 @@ class TestRawDataEngine(unittest.TestCase):
         self.assertEqual(len(data_engine.source_dirs), 2)
 
         data_engine.transform()
+        self.assertTrue(len(data_engine.get_data()))
+
+        self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
+
+    def test_matrix_single(self):
+        source_dir = "/Users/srikarananthoju/cambi/data/matrixTestWrapper"
+        param_path = "/Users/srikarananthoju/cambi/data/matrixTestWrapper/S007_Matrix_Calibration_Thu_20_Jul_2023_09hr48min56sec_-0400/parameters.json"
+        params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
+
+        data_engine = RawDataEngineWrapper(source_dir, params)
+        data_engine.transform()
+
         self.assertTrue(len(data_engine.get_data()))
 
         self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
