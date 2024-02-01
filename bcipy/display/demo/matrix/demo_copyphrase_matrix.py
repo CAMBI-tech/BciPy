@@ -10,7 +10,7 @@ from bcipy.display import (InformationProperties, StimuliProperties,
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
-font = "Overpass Mono Medium"
+font = "Overpass Mono"
 info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
@@ -82,9 +82,9 @@ display = MatrixDisplay(win,
 
 counter = 0
 
-for idx_o in range(len(spelled_text)):
+for spelled in spelled_text:
 
-    display.update_task_bar(text=spelled_text[idx_o])
+    display.update_task_bar(text=spelled)
     display.draw_static()
     win.flip()
 
