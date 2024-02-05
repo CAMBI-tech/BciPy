@@ -2,6 +2,8 @@
 
 from abc import ABC, abstractmethod
 
+from bcipy.helpers.parameters import Parameters
+
 
 class Simulator(ABC):
     """Simulator.
@@ -17,5 +19,5 @@ class Simulator(ABC):
         """ Run loop for simulation"""
 
     @abstractmethod
-    def get_param(self, name):
-        """ retrieving parameter """
+    def get_parameters(self) -> Parameters:
+        """ retrieving parameters copy"""

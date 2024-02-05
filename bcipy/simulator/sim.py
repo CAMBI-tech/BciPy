@@ -138,5 +138,5 @@ class SimulatorCopyPhrase(Simulator):
         else:
             return self.data_engine.get_parameters()
 
-    def get_param(self, name):
-        pass
+    def get_parameters(self):
+        return self.parameters.copy()
