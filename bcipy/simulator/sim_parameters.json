@@ -34,7 +34,7 @@
     "type": "float"
   },
   "sim_lm_active": {
-    "value": "0",
+    "value": "1",
     "section": "sim_config",
     "readableName": "is lm active or off",
     "helpTip": "",
