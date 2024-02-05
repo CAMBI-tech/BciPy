@@ -6,6 +6,7 @@ from typing import Optional, Dict
 import numpy as np
 
 from bcipy.helpers import load, stimuli, symbols
+from bcipy.helpers.language_model import histogram
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
@@ -14,7 +15,8 @@ from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
-from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods
+from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence, \
+    fmt_likelihoods_for_hist
 from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 from bcipy.task.data import EvidenceType
@@ -82,8 +84,8 @@ class SimulatorCopyPhrase(Simulator):
                 f"EEG Evidence for stimuli {curr_state.display_alphabet} " +
                 f"\n {fmt_stim_likelihoods(evidence['sm'].evidence, self.symbol_set)}")
 
-            reshaped_evidence = self.__reshape_evidences(evidence)
-            log.debug(f"reshaped evidence {reshaped_evidence}")
+            reshaped_evidence: Dict[str, SimEvidence] = self.__reshape_evidences(evidence)
+            log.debug(f"Evidence Shapes {fmt_reshaped_evidence(reshaped_evidence)}")
 
             inq_record: InquiryResult = self.state_manager.update(reshaped_evidence)
             updated_state = self.state_manager.get_state()
