@@ -5,14 +5,15 @@ from typing import List
 
 import numpy as np
 
-import bcipy.acquisition.devices as devices
+from bcipy.acquisition import devices
 from bcipy.config import (
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME,
 )
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.load import load_raw_data, load_experimental_data
+from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.helpers.load import load_raw_data
 from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
@@ -30,14 +31,23 @@ class ExtractedExperimentData:  # TODO clean up design
     decoded_triggers: tuple
 
 
-def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
+def process_raw_data_for_model(data_folder, parameters,
+                               reshaper: InquiryReshaper = InquiryReshaper()) -> ExtractedExperimentData:
     assert parameters, "Parameters are required for offline analysis."
 
     log.debug(f"Processing raw data for {data_folder}")
     # extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
-    window_length = trial_window[1] - trial_window[0]
+    if trial_window is None:
+        # using trial_length instead and converting to trial window
+        trial_length = parameters.get('trial_length')
+        if not trial_length:
+            raise TaskConfigurationException(
+                "Could not find trial_window or trial_length in parameters")
 
+        trial_window = tuple([0, trial_length])  # trial_length=0.5 -> trial_window=(0,0.5)
+
+    window_length = trial_window[1] - trial_window[0]
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
@@ -118,4 +128,5 @@ def process_raw_data_for_model(data_folder, parameters, reshaper: InquiryReshape
     # define the training classes using integers, where 0=nontargets/1=targets
     # labels = inquiry_labels.flatten()
 
-    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing, (trigger_targetness, trigger_timing, trigger_symbols))
+    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing,
+                                   (trigger_targetness, trigger_timing, trigger_symbols))

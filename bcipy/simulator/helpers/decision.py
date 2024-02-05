@@ -2,15 +2,16 @@ from abc import ABC
 
 import numpy as np
 import logging
-from typing import Dict, List
-from copy import copy
+from typing import List
 
 from bcipy.simulator.helpers.types import InquiryResult
 
 log = logging.getLogger(__name__)
 
 
-# TODO copied over criteria.py. Still debating whether to tie our simulator to that class or not. For now, just hotfixing logic to fit with my implementation
+# TODO copied over criteria.py. Still debating whether to tie our
+# simulator to that class or not. For now, just hotfixing logic to fit
+# with my implementation
 
 class SimDecisionCriteria(ABC):
     """Abstract class for Criteria which can be applied to evaluate a inquiry

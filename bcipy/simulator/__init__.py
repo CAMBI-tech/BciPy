@@ -1,3 +1,5 @@
+""" Simulator package. View README """
+
 import datetime
 import logging
 import sys
@@ -20,7 +22,6 @@ fmt_file = logging.Formatter(
 fmt = logging.Formatter(
     "%(levelname)s >> %(message)s"
 )
-
 
 # Set the log format on each handler
 stdoutHandler.setFormatter(fmt)

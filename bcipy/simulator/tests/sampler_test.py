@@ -6,13 +6,11 @@ import numpy as np
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.metrics import DummyRef
+from bcipy.simulator.helpers.metrics import RefereeImpl, SimMetrics1Handler
 from bcipy.simulator.helpers.sampler import Sampler, EEGByLetterSampler
-from bcipy.simulator.helpers.state_manager import StateManagerImpl, StateManager, SimState
+from bcipy.simulator.helpers.state_manager import StateManagerImpl, StateManager
 from bcipy.simulator.helpers.model_handler import SignalModelHandler1
 from bcipy.simulator.sim import SimulatorCopyPhrase
-
-
 
 if __name__ == "__main__":
     args = dict()
@@ -39,5 +37,6 @@ if __name__ == "__main__":
     sample: np.ndarray = sampler.sample(stateManager.get_state())
 
     model_handler = SignalModelHandler1(model_file)
-    sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, DummyRef())
+    sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager,
+                              RefereeImpl(metric_handlers={'basic': SimMetrics1Handler()}))
     sim.run()

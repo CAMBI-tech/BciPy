@@ -1,20 +1,23 @@
 import logging
 import random
 from time import sleep
-from typing import Optional
+from typing import Optional, Dict
 
 import numpy as np
 
 from bcipy.helpers import load, stimuli, symbols
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.metrics import MetricReferee
+from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
-from bcipy.simulator.helpers.types import InquiryResult
-from bcipy.simulator.helpers.log_utils import format_alp_likelihoods
+from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
+from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods
 from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
+from bcipy.task.data import EvidenceType
 
 log = logging.getLogger(__name__)
 
@@ -25,59 +28,65 @@ class SimulatorCopyPhrase(Simulator):
     Copy Phrase simulator.
 
     Run loop:
-        - The loop runs until StateManager determines simulation is over
-        - The generated stimuli are passed into sampler, which returns some eeg response
-        - The Model handler will generate predictions and feed back into StateManager
-        - StateManager will resolve the state while the MetricReferee observes and records any metrics
+    - The loop runs until StateManager determines simulation is over
+    - The generated stimuli are passed into sampler, which returns some eeg response
+    - The Model handler will generate predictions and feed back into StateManager
+    - StateManager will resolve the state while the MetricReferee observes and records any metrics
 
     Main components:
-        - DataEngine:       loading and storing data
-        - Sampler:          logic for sampling from data, composed of DataEngine
-        - StateManager:     manages run loop details and fuses model evidence with current state
-        - MetricReferee:    tracks and scores the simulation on different metrics for later evaluation
-        - ModelHandler:     wrapper for models that deals with loading in models and generating evidence
+    - DataEngine:       loading and storing data
+    - Sampler:          logic for sampling from data, composed of DataEngine
+    - StateManager:     manages run loop details and fuses model evidence with current state
+    - MetricReferee:    tracks and scores the simulation on different metrics for later evaluation
+    - ModelHandler:     wrapper for models that deals with loading in models and generating evidence
 
     Requirements:
     - run closed loop simulation of {TaskType} with {data} with {simulation_params}
     """
 
     def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, parameter_path: str = None, save_dir: str = None, verbose=False, visualize=False):
-        super(SimulatorCopyPhrase, self).__init__()
+                 state_manager: StateManager, referee: MetricReferee, parameters: Parameters = None,
+                 save_dir: str = None):
+        super().__init__()
 
         self.save_dir: str = save_dir
         self.model_handler: ModelHandler = model_handler
         self.sampler: Sampler = sampler
         self.referee: MetricReferee = referee
         self.state_manager: StateManager = state_manager
-
         self.data_engine: DataEngine = data_engine
 
-        self.parameters = self.load_parameters(parameter_path)
+        self.parameters: Parameters = self.load_parameters(parameters)
 
         self.symbol_set = alphabet()
         self.write_output = False
-
-        self.verbose = verbose
-        self.visualize = visualize
 
     def run(self):
         log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
 
         while not self.state_manager.is_done():
+            self.state_manager.mutate_state('display_alphabet',
+                                            self.__make_stimuli(self.state_manager.get_state()))
             curr_state = self.state_manager.get_state()
-            log.info(f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | Target {curr_state.target_symbol}")
 
-            self.state_manager.mutate_state('display_alphabet', self.__make_stimuli(curr_state))
-            sampled_data = self.sampler.sample(curr_state)
-            evidence = self.model_handler.generate_evidence(curr_state,
-                                                            sampled_data)  # TODO make this evidence be a dict (mapping of evidence type to evidence)
+            log.info(
+                f"Series {curr_state.series_n} | Inquiry {curr_state.inquiry_n} | " +
+                f"Target '{curr_state.target_symbol}' | " +
+                f"Stimuli {curr_state.display_alphabet}")
 
-            log.debug(f"Evidence for stimuli {curr_state.display_alphabet} \n {format_alp_likelihoods(evidence, self.symbol_set)}")
+            sampled_data = self.sampler.sample(self.state_manager.get_state())
+            evidence: Dict[str, SimEvidence] = self.model_handler.generate_evidence(curr_state,
+                                                                                    sampled_data)
 
-            inq_record: InquiryResult = self.state_manager.update(evidence)
+            log.debug(
+                f"EEG Evidence for stimuli {curr_state.display_alphabet} " +
+                f"\n {fmt_stim_likelihoods(evidence['sm'].evidence, self.symbol_set)}")
+
+            reshaped_evidence = self.__reshape_evidences(evidence)
+            log.debug(f"reshaped evidence {reshaped_evidence}")
+
+            inq_record: InquiryResult = self.state_manager.update(reshaped_evidence)
             updated_state = self.state_manager.get_state()
-            log.debug(f"Fused Likelihoods {format_alp_likelihoods(inq_record.fused_likelihood, self.symbol_set)}")
 
             if inq_record.decision:
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
@@ -86,12 +95,11 @@ class SimulatorCopyPhrase(Simulator):
             sleep(self.parameters.get("sim_sleep_time", 0.5))
 
         final_state = self.state_manager.get_state()
-        log.info(f"SIM END")
+        log.info("SIM END")
         log.info(f"FINAL TYPED: {final_state.current_sentence}")
         log.info(self.referee.score(self).__dict__)
 
         log.debug(f"Final State: {final_state}")
-
 
     def __make_stimuli(self, state: SimState):
         # TODO abstract out
@@ -100,21 +108,35 @@ class SimulatorCopyPhrase(Simulator):
         always_in_stimuli = [symbols.SPACE_CHAR, symbols.BACKSPACE_CHAR]
 
         if val_func is not None:
-            return stimuli.best_selection(self.symbol_set, list(val_func), subset_length, always_included=always_in_stimuli)
-        else:
-            return random.sample(self.symbol_set, subset_length)
+            return stimuli.best_selection(self.symbol_set, list(
+                val_func), subset_length, always_included=always_in_stimuli)
+        elif self.parameters.get('sim_lm_active', 0) == 1:  # use lang model for priors to make stim
+            lm_model = self.model_handler.get_model('lm')
+            lm_model_evidence = lm_model.predict(list(state.current_sentence))
+            val_func = format_lm_output(lm_model_evidence, self.symbol_set)
+            return stimuli.best_selection(self.symbol_set, list(
+                val_func), subset_length, always_included=always_in_stimuli)
 
-    def load_parameters(self, path):
+        return random.sample(self.symbol_set, subset_length)
+
+    def __reshape_evidences(self, evidences: Dict[str, SimEvidence]) -> Dict[str, SimEvidence]:
+
+        # reshaping lm_evidence to look like signal model evidence
+        reshaped_evidence = evidences.copy()
+        if "lm" in evidences:
+            unshaped_lm_evidence = evidences["lm"].evidence  # [('B', 0.5), ('C', 0.2), ('_', 0.02)]
+            reshaped_lm_lik = format_lm_output(list(unshaped_lm_evidence), self.symbol_set)
+            reshaped_evidence['lm'] = SimEvidence(EvidenceType.LM, np.array(reshaped_lm_lik),
+                                                  evidences["lm"].symbol_set)
+
+        return reshaped_evidence
+
+    def load_parameters(self, params: Optional[Parameters]):
         # TODO validate parameters
-        if not path:
-            parameters = self.data_engine.get_parameters()[0]  # TODO fix this parameter logic. for now assuming one parameter file speaks for all
+        if params:
+            return params
         else:
-            parameters = load.load_json_parameters(path, value_cast=True)
-
-        sim_parameters = load.load_json_parameters(
-            "bcipy/simulator/sim_parameters.json", value_cast=True)
-        parameters.add_missing_items(sim_parameters)
-        return parameters
+            return self.data_engine.get_parameters()
 
     def get_param(self, name):
         pass

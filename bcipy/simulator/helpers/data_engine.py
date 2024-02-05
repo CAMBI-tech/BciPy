@@ -1,4 +1,5 @@
 import logging
+import os
 from abc import ABC
 from pathlib import Path
 from typing import Optional, List
@@ -10,7 +11,8 @@ from bcipy.config import DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers import load
 from bcipy.helpers.list import grouper
 from bcipy.helpers.parameters import Parameters
-from bcipy.simulator.helpers.signal_helpers import ExtractedExperimentData, process_raw_data_for_model
+from bcipy.simulator.helpers.signal_helpers import ExtractedExperimentData, \
+    process_raw_data_for_model
 
 log = logging.getLogger(__name__)
 
@@ -32,19 +34,22 @@ class DataEngine(ABC):
 
 class RawDataEngine(DataEngine):
     """
-    Object that loads in list of previous session data folders and transforms data into implemented schema
+    Object that loads in list of session data folders and transforms data into sample-able pd.df
     """
 
-    def __init__(self, source_dirs: List[str]):
+    def __init__(self, source_dirs: List[str], parameters: Parameters):
         # TODO read parameters from source dirx
-        # TODO maybe rely upon single source of data, write some scripts that clean data and group them
+        # TODO use os.walk() and take in single source_dir that has all data folders
         self.source_dirs: List[str] = source_dirs
-        self.parameter_files: List[Parameters] = []
+        self.parameters: Parameters = parameters
         self.data: Optional[List[ExtractedExperimentData]] = None
-        self.trials_by_inquiry: List[np.ndarray] = []  # shape (i_inquiry, n_channel, m_trial, x_sample).
+        self.trials_by_inquiry: List[
+            np.ndarray] = []  # shape (i_inquiry, n_channel, m_trial, x_sample).
         self.symbols_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
         self.labels_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
         self.schema: Optional[pd.DataFrame] = None
+
+        # TODO validate parameters
 
         self.load()
 
@@ -58,19 +63,17 @@ class RawDataEngine(DataEngine):
         """
         log.debug(f"Loading data from {len(self.source_dirs)} source directories")
 
-        self.parameter_files = [load.load_json_parameters(str(Path(data_folder, DEFAULT_PARAMETER_FILENAME)), value_cast=True) for data_folder in
-                                self.source_dirs]
+        self.data: List[ExtractedExperimentData] = [
+            process_raw_data_for_model(source_dir, self.parameters) for source_dir in
+            self.source_dirs]
 
-        assert len(self.source_dirs) == len(self.parameter_files)  # TODO more general parameter validation function
-
-        self.data = [process_raw_data_for_model(source_dir, parameter) for source_dir, parameter in
-                     zip(self.source_dirs, self.parameter_files)]
-
-        for data_source, parameter in zip(self.data, self.parameter_files):
+        for data_source in self.data:
             trigger_targetness, trigger_timing, trigger_symbols = data_source.decoded_triggers
-            self.trials_by_inquiry.append(np.split(data_source.trials, data_source.inquiries.shape[1], 1))
+            self.trials_by_inquiry.append(
+                np.split(data_source.trials, data_source.inquiries.shape[1], 1))
             self.symbols_by_inquiry.append([list(group) for group in
-                                            grouper(trigger_symbols, parameter.get('stim_length'),
+                                            grouper(trigger_symbols,
+                                                    self.parameters.get('stim_length'),
                                                     incomplete="ignore")])
 
             self.labels_by_inquiry.append(data_source.labels)
@@ -91,8 +94,7 @@ class RawDataEngine(DataEngine):
             self for chaining
         """
 
-        cols = ["series_n", "inquiry_n", "trial_n", "symbol", "target", "eeg"]  # TODO store how good evidence was in session | store data source as well
-        types = [int, int, int, str, int, np.ndarray]
+        # TODO store how good evidence was in session | store data source as well
 
         rows = []
         for d_i in range(len(self.data)):
@@ -102,9 +104,11 @@ class RawDataEngine(DataEngine):
                 inquiry_eeg = self.trials_by_inquiry[d_i][i]
 
                 symbol_rows = []
-                for t_i in range(len(symbols)):
-                    channel_eeg_samples_for_t = [channel[t_i] for channel in inquiry_eeg]  # (channel_n, sample_n)
-                    row = {'inquiry_n': i, 'trial_n': t_i, 'symbol': symbols[t_i], 'target': inquiry_labels[t_i],
+                for t_i, symbol in enumerate(symbols):
+                    channel_eeg_samples_for_t = [channel[t_i] for channel in
+                                                 inquiry_eeg]  # (channel_n, sample_n)
+                    row = {'inquiry_n': i, 'trial_n': t_i, 'symbol': symbol,
+                           'target': inquiry_labels[t_i],
                            'eeg': np.array(channel_eeg_samples_for_t)}
 
                     symbol_rows.append(row)
@@ -112,14 +116,36 @@ class RawDataEngine(DataEngine):
                 rows.extend(symbol_rows)
 
         self.schema = pd.DataFrame(rows)
-        # breakpoint()
 
         return self
 
     def get_data(self):
-        return self.schema.copy() if self.schema is not None else self.data
+        return self.schema.copy() if self.schema is not None else None
 
     def get_parameters(self):
-        return self.parameter_files
+        return self.parameters
 
-# TODO ReplaySessionDataEngine
+
+class RawDataEngineWrapper(RawDataEngine):
+    """
+    Data engine that assumes all data is stored within single data folder
+        - single data folder contains dataDir1, dataDir2, ...
+        - each data dir contains its raw_data and triggers
+    """
+
+    def __init__(self, source_dir: str, parameters: Parameters):
+        data_paths = self.get_data_dirs(source_dir)
+        super().__init__(data_paths, parameters)
+
+    @staticmethod
+    def get_data_dirs(source_dir: str) -> [str]:
+        """
+        Returns all the data dirs within the source dir
+            - e.g [dataDir1Path, dataDir2Path ... ]
+        """
+
+        assert source_dir
+
+        directories: List[str] = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
+
+        return directories

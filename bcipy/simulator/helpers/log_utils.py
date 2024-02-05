@@ -3,9 +3,9 @@ from typing import List
 import pandas as pd
 
 
-def format_alp_likelihoods(likelihoods, alp):
+def fmt_fused_likelihoods_for_hist(likelihoods, alp):
     rounded = [round(lik, 3) for lik in likelihoods]
-    formatted = [f"{a} : {l}" for a, l in zip(alp, rounded)]
+    formatted = [(a, l) for a, l in zip(alp, rounded)]
     return formatted
 
 

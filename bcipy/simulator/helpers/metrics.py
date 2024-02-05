@@ -29,14 +29,16 @@ class RefereeHandler(ABC):
 class SimMetrics1Handler(RefereeHandler):
 
     def handle(self, sim: Simulator) -> Dict[str, Any]:
-        state: SimState = sim.__getattribute__("state_manager").get_state()
+        state: SimState = getattr(sim, ("state_manager")).get_state()
 
         info: Dict = SimMetrics1().__dict__
         info['total_inquiries'] = state.total_inquiry_count()
         info['total_series'] = state.series_n
 
-        flattened_inquiries: List[InquiryResult] = reduce(lambda l1, l2: l1 + l2, state.series_results, [])
-        info['total_decisions'] = len(list(filter(lambda inq: bool(inq.decision), flattened_inquiries)))
+        flattened_inquiries: List[InquiryResult] = reduce(lambda l1, l2: l1 + l2,
+                                                          state.series_results, [])
+        info['total_decisions'] = len(
+            list(filter(lambda inq: bool(inq.decision), flattened_inquiries)))
 
         inq_counts = []
         for series in state.series_results:
@@ -52,27 +54,28 @@ class MetricReferee(ABC):
     # May change to SimState that is passed around not whole Simulator
     # Depends on how much data encapsulated by SimState
     @abstractmethod
-    def score(self, sim: Simulator) -> SimMetrics1:
-        ...
+    def score(self, sim: Simulator):
+        """ Generate registered metrics for simulation  """
 
     @abstractmethod
     def visualize(self, sim: Simulator):
-        ...
+        """ Generate registered visualizations for sim """
 
     @abstractmethod
     def set_metric_handler(self, name: str, handler: RefereeHandler):
-        ...
+        """ Add a metric calculation that will be executed upon self.score() """
 
     @abstractmethod
     def set_viz_handler(self, name: str, handler: RefereeHandler):
-        ...
+        """ Register a visualization that will be executed upon self.visualize() """
 
 
 class RefereeImpl(MetricReferee):
 
     def __init__(self, metric_handlers=None, viz_handlers=None):
-        self.metric_handlers: Dict[str, RefereeHandler] = metric_handlers if metric_handlers else dict()
-        self.viz_handlers: Dict[str, RefereeHandler] = viz_handlers if viz_handlers else dict()
+        self.metric_handlers: Dict[
+            str, RefereeHandler] = metric_handlers if metric_handlers else {}
+        self.viz_handlers: Dict[str, RefereeHandler] = viz_handlers if viz_handlers else {}
 
         self.inquiry_time: float = 1  # 1 inq -> 1 second
         # TODO maybe some configurable parameters for visualizations

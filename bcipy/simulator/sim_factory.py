@@ -1,56 +1,38 @@
+""" Factory for Simulator objects """
 from pathlib import Path
 from typing import List
 
-from bcipy.config import DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.load import load_json_parameters
-from bcipy.simulator.helpers.data_engine import RawDataEngine
+from bcipy.simulator.helpers.data_engine import RawDataEngine, RawDataEngineWrapper
 from bcipy.simulator.helpers.metrics import MetricReferee, RefereeImpl, SimMetrics1Handler
-from bcipy.simulator.helpers.model_handler import SignalModelHandler1, ModelHandler
+from bcipy.simulator.helpers.model_handler import SignalModelHandler1, ModelHandler, \
+    SigLmModelHandler1
 from bcipy.simulator.helpers.sampler import Sampler, EEGByLetterSampler
 from bcipy.simulator.helpers.state_manager import StateManager, StateManagerImpl
 from bcipy.simulator.sim import SimulatorCopyPhrase
-from bcipy.simulator.sim_copy_phrase import SimulatorCopyPhraseReplay
-from bcipy.simulator.simulator_base import Simulator
-
-
-class SimulationFactory:
-
-    @staticmethod
-    def create(
-            sim_task="",
-            parameter_path="",
-            smodel_files=None,
-            lmodel_files=None,
-            data_folders=None,
-            out_dir="",
-            **kwargs) -> Simulator:
-        if sim_task == 'RSVP_COPY_PHRASE':
-            # TODO validate arguments
-
-            if not parameter_path:
-                data_folder = data_folders[0]
-                parameter_path = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
-
-            return SimulatorCopyPhraseReplay(parameter_path, out_dir, smodel_files, lmodel_files, data_folders[0],
-                                             verbose=kwargs.get('verbose', False))
-
-        # TODO refactor for sampling simulator
 
 
 class SimulationFactoryV2:
+    """ Factory class to create Simulator instances """
+
     @staticmethod
-    def create(data_folders: List[str], smodel_files: List[str], sim_param_path="bcipy/simulator/sim_parameters.json", **kwargs):
-        out_dir = kwargs.get('out_dir', Path(__file__).resolve().parent)
+    def create(data_folder: str, smodel_files: List[str],
+               sim_param_path="bcipy/simulator/sim_parameters.json", **kwargs):
+        # out_dir = kwargs.get('out_dir', Path(__file__).resolve().parent)
 
         model_file = Path(smodel_files.pop())
         sim_parameters = load_json_parameters(sim_param_path, value_cast=True)
+        base_parameters = load_json_parameters(kwargs.get('parameters'), value_cast=True)
+        base_parameters.add_missing_items(sim_parameters)
 
-        data_engine = RawDataEngine(data_folders)
-        stateManager: StateManager = StateManagerImpl(sim_parameters)
+        data_engine = RawDataEngineWrapper(data_folder, base_parameters)
+        state_manager: StateManager = StateManagerImpl(sim_parameters)
         sampler: Sampler = EEGByLetterSampler(data_engine)
-        model_handler: ModelHandler = SignalModelHandler1(model_file)
+        model_handler: ModelHandler = SigLmModelHandler1(model_file, base_parameters) \
+            if sim_parameters.get("sim_lm_active", 0) == 1 else SignalModelHandler1(model_file)
         referee: MetricReferee = RefereeImpl(metric_handlers={'basic': SimMetrics1Handler()})
 
-        sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, stateManager, referee)
+        sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, state_manager, referee,
+                                  parameters=base_parameters)
 
         return sim

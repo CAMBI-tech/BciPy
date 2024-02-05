@@ -3,11 +3,14 @@ from typing import Optional, Dict
 
 import numpy as np
 
+from bcipy.simulator.helpers.types import SimEvidence
+
 
 class EvidenceFuser(ABC):
 
     @abstractmethod
-    def fuse(self, prior_likelihood: Optional[np.ndarray], evidence: Dict) -> np.ndarray:
+    def fuse(self, prior_likelihood: Optional[np.ndarray],
+             evidence: Dict[str, SimEvidence]) -> np.ndarray:
         ...
 
     @staticmethod
@@ -22,16 +25,19 @@ class MultiplyFuser(EvidenceFuser):
 
     def fuse(self, prior_likelihood, evidence) -> np.ndarray:
 
-        len_dist = len(list(evidence.values())[0])
-        prior_likelihood = prior_likelihood if prior_likelihood is not None else EvidenceFuser.make_prior(len_dist)
+        distribution_shape = len(list(evidence.values())[0].evidence)
+        prior_likelihood = prior_likelihood if prior_likelihood is not None \
+            else EvidenceFuser.make_prior(distribution_shape)
+
         ret_likelihood = prior_likelihood.copy()
 
-        for value in evidence.values():
-            ret_likelihood *= value[:]
+        for sim_evidence in evidence.values():
+            likelihoods = sim_evidence.evidence
+            assert ret_likelihood.shape == likelihoods.shape
+            ret_likelihood *= likelihoods[:]
         ret_likelihood = self.__normalize_likelihood(ret_likelihood)
 
         return ret_likelihood
-
 
     def __normalize_likelihood(self, likelihood):
 
