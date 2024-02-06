@@ -1,7 +1,9 @@
+import dataclasses
+import json
 import logging
 import random
 from time import sleep
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 import numpy as np
 
@@ -103,6 +105,8 @@ class SimulatorCopyPhrase(Simulator):
 
         log.debug(f"Final State: {final_state}")
 
+        self.output_run()
+
     def __make_stimuli(self, state: SimState):
         # TODO abstract out
         subset_length = 10
@@ -139,6 +143,19 @@ class SimulatorCopyPhrase(Simulator):
             return params
         else:
             return self.data_engine.get_parameters()
+
+    def output_run(self):
+        """ Outputs the results of a run to json file """
+
+        final_state = self.state_manager.get_state()
+        final_state_json: Dict = final_state.to_json()
+
+        metric_dict = self.referee.score(self).__dict__
+        metric_dict.update(final_state_json)  # adding state data to metrics
+
+        output_path = "bcipy/simulator/generated"
+        with open(f"{output_path}/result.json", 'w') as output_file:
+            json.dump(metric_dict, output_file)
 
     def get_parameters(self):
         return self.parameters.copy()

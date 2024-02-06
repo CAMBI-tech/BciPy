@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import logging
 import random
 from abc import ABC
@@ -45,6 +46,15 @@ class SimState:
             cur_likelihood = self.series_results[-1][-1].fused_likelihood
 
         return cur_likelihood
+
+    def to_json(self):
+        d = dataclasses.asdict(self)
+        d['series_results'] = [list(map(lambda ir: ir.to_json(), lis)) for lis in
+                               self.series_results]
+
+        d['decision_criterion'] = [str(dec) for dec in self.decision_criterion]
+
+        return d
 
 
 class StateManager(ABC):

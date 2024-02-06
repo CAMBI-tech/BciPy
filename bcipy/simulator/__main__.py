@@ -6,6 +6,7 @@ import logging
 import sys
 from pathlib import Path
 
+from bcipy.simulator.helpers.decision import MaxIterationsSim
 from bcipy.simulator.sim_factory import SimulationFactoryV2
 from bcipy.simulator.simulator_base import Simulator
 

@@ -38,6 +38,9 @@ class SimDecisionCriteria(ABC):
         """
         raise NotImplementedError()
 
+    def __str__(self):
+        return type(self).__name__
+
 
 class MinIterations(SimDecisionCriteria):
     """ Returns true if the minimum number of iterations have not yet
