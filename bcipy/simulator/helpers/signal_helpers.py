@@ -6,23 +6,22 @@ from typing import List
 import numpy as np
 
 from bcipy.acquisition import devices
-from bcipy.config import (
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME,
-)
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.load import load_raw_data
-from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
+from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
+from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
+                                  get_default_transform)
 
 log = logger.getLogger(__name__)
 
 
 @dataclass()
 class ExtractedExperimentData:  # TODO clean up design
+    source_dir: str
     inquiries: np.ndarray
     trials: np.ndarray
     labels: List
@@ -128,5 +127,5 @@ def process_raw_data_for_model(data_folder, parameters,
     # define the training classes using integers, where 0=nontargets/1=targets
     # labels = inquiry_labels.flatten()
 
-    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing,
+    return ExtractedExperimentData(data_folder, inquiries, trials, inquiry_labels, inquiry_timing,
                                    (trigger_targetness, trigger_timing, trigger_symbols))
