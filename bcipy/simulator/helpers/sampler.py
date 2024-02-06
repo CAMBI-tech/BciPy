@@ -55,11 +55,12 @@ class EEGByLetterSampler(Sampler):
                 raise TaskConfigurationException(
                     message="No eeg sample found with provided data and query")
 
-            row = filtered_data.sample(1)
+            row = filtered_data.sample(1).iloc[0]
             sample_rows.append(row)
 
         log.debug(f"EEG Samples: \n {format_sample_rows(sample_rows)}")
-        eeg_responses = [r['eeg'].to_numpy()[0] for r in sample_rows]
+
+        eeg_responses = [r['eeg'] for r in sample_rows]
         sample = self.model_input_reshaper(eeg_responses)
 
         return sample

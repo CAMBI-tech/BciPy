@@ -17,13 +17,10 @@ def fmt_likelihoods_for_hist(likelihoods, alp):
     return formatted
 
 
-def format_sample_rows(sample_rows: List[pd.DataFrame]):
-    formatted_rows = []
-    for row in sample_rows:
-        new_row = row.drop(columns=['eeg'], axis=1, inplace=False)
-        formatted_rows.append(new_row.to_string(index=False, header=True))
-
-    return ", ".join(formatted_rows)
+def format_sample_rows(sample_rows: List[pd.Series]) -> str:
+    """Returns a tabular representation of the sample rows."""
+    return pd.DataFrame(sample_rows).drop(columns=['eeg']).to_string(
+        index=False, header=True)
 
 
 def fmt_reshaped_evidence(evidences: Dict[str, SimEvidence]):
