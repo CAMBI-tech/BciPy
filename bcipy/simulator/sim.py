@@ -1,11 +1,14 @@
+import dataclasses
+import json
 import logging
 import random
 from time import sleep
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
 
 import numpy as np
 
 from bcipy.helpers import load, stimuli, symbols
+from bcipy.helpers.language_model import histogram
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
@@ -14,7 +17,8 @@ from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
-from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods
+from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence, \
+    fmt_likelihoods_for_hist
 from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 from bcipy.task.data import EvidenceType
@@ -82,8 +86,8 @@ class SimulatorCopyPhrase(Simulator):
                 f"EEG Evidence for stimuli {curr_state.display_alphabet} " +
                 f"\n {fmt_stim_likelihoods(evidence['sm'].evidence, self.symbol_set)}")
 
-            reshaped_evidence = self.__reshape_evidences(evidence)
-            log.debug(f"reshaped evidence {reshaped_evidence}")
+            reshaped_evidence: Dict[str, SimEvidence] = self.__reshape_evidences(evidence)
+            log.debug(f"Evidence Shapes {fmt_reshaped_evidence(reshaped_evidence)}")
 
             inq_record: InquiryResult = self.state_manager.update(reshaped_evidence)
             updated_state = self.state_manager.get_state()
@@ -100,6 +104,8 @@ class SimulatorCopyPhrase(Simulator):
         log.info(self.referee.score(self).__dict__)
 
         log.debug(f"Final State: {final_state}")
+
+        self.output_run()
 
     def __make_stimuli(self, state: SimState):
         # TODO abstract out
@@ -138,5 +144,18 @@ class SimulatorCopyPhrase(Simulator):
         else:
             return self.data_engine.get_parameters()
 
-    def get_param(self, name):
-        pass
+    def output_run(self):
+        """ Outputs the results of a run to json file """
+
+        final_state = self.state_manager.get_state()
+        final_state_json: Dict = final_state.to_json()
+
+        metric_dict = self.referee.score(self).__dict__
+        metric_dict.update(final_state_json)  # adding state data to metrics
+
+        output_path = "bcipy/simulator/generated"
+        with open(f"{output_path}/result.json", 'w') as output_file:
+            json.dump(metric_dict, output_file)
+
+    def get_parameters(self):
+        return self.parameters.copy()

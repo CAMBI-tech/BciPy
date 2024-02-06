@@ -1,4 +1,5 @@
 import copy
+import dataclasses
 import logging
 import random
 from abc import ABC
@@ -13,7 +14,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
 from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
 from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
-from bcipy.simulator.helpers.log_utils import fmt_fused_likelihoods_for_hist
+from bcipy.simulator.helpers.log_utils import fmt_likelihoods_for_hist
 from bcipy.simulator.helpers.rsvp_utils import next_target_letter
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
 
@@ -45,6 +46,15 @@ class SimState:
             cur_likelihood = self.series_results[-1][-1].fused_likelihood
 
         return cur_likelihood
+
+    def to_json(self):
+        d = dataclasses.asdict(self)
+        d['series_results'] = [list(map(lambda ir: ir.to_json(), lis)) for lis in
+                               self.series_results]
+
+        d['decision_criterion'] = [str(dec) for dec in self.decision_criterion]
+
+        return d
 
 
 class StateManager(ABC):
@@ -115,7 +125,7 @@ class StateManagerImpl(StateManager):
 
         log.debug(
             f"Fused Likelihoods | current typed - {self.state.current_sentence} | stimuli {self.state.display_alphabet} \n "
-            f"{histogram(fmt_fused_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}")
+            f"{histogram(fmt_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}")
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
