@@ -2,5 +2,13 @@
   "default": {
     "fields": [],
     "summary": "Default experiment to test various BciPy features without registering a full experiment."
+  },
+  "lm_testing": {
+    "fields": [],
+    "summary": "Test adding the random language model"
+  },
+  "BCI-FIT_Main": {
+    "fields": [],
+    "summary": "BCI-FIT main sessions"
   }
 }

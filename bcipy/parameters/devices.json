@@ -65,7 +65,7 @@
         "name": "DSI-Flex",
         "content_type": "EEG",
         "channels": [
-            { "name": "F3", "label": "Fz", "units": "microvolts", "type": "EEG" },
+            { "name": "P4", "label": "Cz", "units": "microvolts", "type": "EEG" },
             { "name": "S2", "label": "Oz", "units": "microvolts", "type": "EEG" },
             { "name": "S3", "label": "P4", "units": "microvolts", "type": "EEG" },
             { "name": "S4", "label": "P3", "units": "microvolts", "type": "EEG" },
@@ -120,6 +120,6 @@
         "sample_rate": 60.0,
         "description": "Tobii Nano. For use with the Tobii Pro SDK.",
         "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"],
-        "status": "active"
+        "status": "passive"
     }
 ]
