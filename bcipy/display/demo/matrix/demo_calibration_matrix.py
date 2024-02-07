@@ -40,37 +40,22 @@ matrix_display = MatrixDisplay(win,
                                task_bar=task_bar,
                                info=info)
 
-time_target = 2
-time_fixation = 2
+time_target = 1
+time_fixation = 0.5
 time_flash = 0.25
 timing = [time_target] + [time_fixation] + [time_flash] * 5
 colors = ['green', 'lightgray'] + ['white'] * 5
 task_buffer = 2
 
-matrix_display.schedule_to(stimuli=['A', '+', 'F', '<', 'A', 'B', 'C'],
-                           timing=timing,
-                           colors=colors)
-matrix_display.update_task_bar()
-matrix_display.do_inquiry()
-core.wait(task_buffer)
+inquiries = [
+    ['A', '+', 'F', '<', 'A', 'B', 'C'],
+    ['B', '+', 'F', '<', 'A', 'B', 'C'],
+    ['C', '+', 'F', '<', 'A', 'B', 'C'],
+    ['<', '+', 'F', '<', 'A', 'B', 'C']
+]
 
-matrix_display.schedule_to(stimuli=['B', '+', 'F', '<', 'A', 'B', 'C'],
-                           timing=timing,
-                           colors=colors)
-matrix_display.update_task_bar()
-matrix_display.do_inquiry()
-core.wait(task_buffer)
-
-matrix_display.schedule_to(stimuli=['C', '+', 'F', '<', 'A', 'B', 'C'],
-                           timing=timing,
-                           colors=colors)
-matrix_display.update_task_bar()
-matrix_display.do_inquiry()
-core.wait(task_buffer)
-
-matrix_display.schedule_to(stimuli=['<', '+', 'F', '<', 'A', 'B', 'C'],
-                           timing=timing,
-                           colors=colors)
-matrix_display.update_task_bar()
-matrix_display.do_inquiry()
-core.wait(task_buffer)
+for inquiry in inquiries:
+    matrix_display.schedule_to(stimuli=inquiry, timing=timing, colors=colors)
+    matrix_display.update_task_bar()
+    matrix_display.do_inquiry()
+    core.wait(task_buffer)

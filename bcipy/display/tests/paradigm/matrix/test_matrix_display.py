@@ -163,6 +163,7 @@ class TestMatrixDisplay(unittest.TestCase):
         when(self.matrix.window).callOnFlip(any(), any()).thenReturn()
         # mock the drawing of text stims
         when(self.matrix).draw_static().thenReturn()
+        when(self.matrix).draw_components().thenReturn()
         when(self.text_stim_mock).draw().thenReturn()
         when(self.matrix.window).flip().thenReturn()
         # skip the core wait

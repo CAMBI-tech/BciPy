@@ -137,7 +137,7 @@ class MatrixDisplay(Display):
         self.draw_grid(opacity=self.full_grid_opacity)
         tmp_task_bar = self.task_bar.current_index
         self.task_bar.current_index = 0
-        self.draw_static()
+        self.draw_components()
         self.window.flip()
 
         # capture the screenshot and save it to the specified file path
@@ -273,7 +273,7 @@ class MatrixDisplay(Display):
                        color=grid_color or self.grid_color,
                        highlight=highlight,
                        highlight_color=highlight_color)
-        self.draw_static()
+        self.draw_components()
         self.window.flip()
         if duration:
             core.wait(duration)
@@ -342,6 +342,11 @@ class MatrixDisplay(Display):
 
     def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
+        self.draw_grid(self.start_opacity)
+        self.draw_components()
+
+    def draw_components(self) -> None:
+        """Draw task bar and info text components."""
         if self.task_bar:
             self.task_bar.draw()
 
