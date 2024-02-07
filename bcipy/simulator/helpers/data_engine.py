@@ -101,22 +101,16 @@ class RawDataEngine(DataEngine):
 
         rows = []
         for data_source in self.data:
-            _targets, _times, trigger_symbols = data_source.decoded_triggers
-            eeg_by_inquiry = np.split(data_source.trials, data_source.inquiries.shape[1], 1)
-            symbols_by_inquiry = [
-                    list(group)
-                    for group in grouper(trigger_symbols,
-                                         self.parameters.get('stim_length'),
-                                         incomplete="ignore")
-                ]
+            symbols_by_inquiry = data_source.symbols_by_inquiry
+            labels_by_inquiry = data_source.labels_by_inquiry
 
-            for i, inquiry_eeg in enumerate(eeg_by_inquiry):
+            for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
                 # iterate through each inquiry
-                symbols = symbols_by_inquiry[i]
-                inquiry_labels = data_source.labels[i]
+                inquiry_symbols = symbols_by_inquiry[i]
+                inquiry_labels = labels_by_inquiry[i]
 
-                for sym_i, symbol in enumerate(symbols):
-                    # iterate through each trial in the inquiry
+                for sym_i, symbol in enumerate(inquiry_symbols):
+                    # iterate through each symbol in the inquiry
                     eeg_samples = [channel[sym_i] for channel in inquiry_eeg
                                    ]  # (channel_n, sample_n)
                     rows.append(Trial(source=data_source.source_dir,
