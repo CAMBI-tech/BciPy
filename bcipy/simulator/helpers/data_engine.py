@@ -1,18 +1,15 @@
 import logging
-import os
 from abc import ABC
 from pathlib import Path
-from typing import Optional, List
+from typing import List, NamedTuple, Optional
 
 import numpy as np
 import pandas as pd
 
-from bcipy.config import DEFAULT_PARAMETER_FILENAME
-from bcipy.helpers import load
 from bcipy.helpers.list import grouper
 from bcipy.helpers.parameters import Parameters
-from bcipy.simulator.helpers.signal_helpers import ExtractedExperimentData, \
-    process_raw_data_for_model
+from bcipy.simulator.helpers.signal_helpers import (ExtractedExperimentData,
+                                                    process_raw_data_for_model)
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +28,27 @@ class DataEngine(ABC):
     def get_parameters(self) -> List[Parameters]:
         ...
 
+class Trial(NamedTuple):
+    """Data for a given trial (a symbol within an Inquiry).
+
+    TODO: add series to facilitate easier lookup in session data.
+
+    Attrs
+    -----
+        source - directory of the data source
+        inquiry_n - starts at 0; does not reset at each series
+        inquiry_pos  - starts at 1; position in which the symbol was presented
+        symbol - alphabet symbol that was presented
+        target - 1 or 0 indicating a boolean of whether this was a target symbol
+        eeg - EEG data associated with this trial
+    """
+    source: str
+    # series_n: int
+    inquiry_n: int
+    inquiry_pos: int
+    symbol: str
+    target: int
+    eeg: np.ndarray
 
 class RawDataEngine(DataEngine):
     """
@@ -43,14 +61,9 @@ class RawDataEngine(DataEngine):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
         self.data: Optional[List[ExtractedExperimentData]] = None
-        self.trials_by_inquiry: List[
-            np.ndarray] = []  # shape (i_inquiry, n_channel, m_trial, x_sample).
-        self.symbols_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
-        self.labels_by_inquiry: List[List] = []  # shape (i_inquiry, s_alphabet_subset)
         self.schema: Optional[pd.DataFrame] = None
 
         # TODO validate parameters
-
         self.load()
 
     def load(self) -> DataEngine:
@@ -63,20 +76,10 @@ class RawDataEngine(DataEngine):
         """
         log.debug(f"Loading data from {len(self.source_dirs)} source directories")
 
-        self.data: List[ExtractedExperimentData] = [
-            process_raw_data_for_model(source_dir, self.parameters) for source_dir in
-            self.source_dirs]
-
-        for data_source in self.data:
-            trigger_targetness, trigger_timing, trigger_symbols = data_source.decoded_triggers
-            self.trials_by_inquiry.append(
-                np.split(data_source.trials, data_source.inquiries.shape[1], 1))
-            self.symbols_by_inquiry.append([list(group) for group in
-                                            grouper(trigger_symbols,
-                                                    self.parameters.get('stim_length'),
-                                                    incomplete="ignore")])
-
-            self.labels_by_inquiry.append(data_source.labels)
+        self.data = [
+            process_raw_data_for_model(source_dir, self.parameters)
+            for source_dir in self.source_dirs
+        ]
 
         log.info("Finished loading all data")
         return self
@@ -84,7 +87,7 @@ class RawDataEngine(DataEngine):
     def transform(self) -> DataEngine:
         """
         Organizes all data into the following schema
-            - Dataframe {"series_n":int, "inquiry_n":int, "trial_n":int, "symbol":str, "target":int, "eeg":ndarray}
+            - Dataframe {"inquiry_n":int, "trial_n":int, "symbol":str, "target":int, "eeg":ndarray}
 
         The "eeg" data for trial looks like this
             - ndarray.shape = (channel_n, sample_n)
@@ -94,26 +97,28 @@ class RawDataEngine(DataEngine):
             self for chaining
         """
 
-        # TODO store how good evidence was in session | store data source as well
+        # TODO store how good evidence was in session
 
         rows = []
-        for d_i in range(len(self.data)):
-            for i in range(len(self.trials_by_inquiry[d_i])):
-                symbols = self.symbols_by_inquiry[d_i][i]
-                inquiry_labels = self.labels_by_inquiry[d_i][i]
-                inquiry_eeg = self.trials_by_inquiry[d_i][i]
+        for data_source in self.data:
+            symbols_by_inquiry = data_source.symbols_by_inquiry
+            labels_by_inquiry = data_source.labels_by_inquiry
 
-                symbol_rows = []
-                for t_i, symbol in enumerate(symbols):
-                    channel_eeg_samples_for_t = [channel[t_i] for channel in
-                                                 inquiry_eeg]  # (channel_n, sample_n)
-                    row = {'inquiry_n': i, 'trial_n': t_i, 'symbol': symbol,
-                           'target': inquiry_labels[t_i],
-                           'eeg': np.array(channel_eeg_samples_for_t)}
+            for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
+                # iterate through each inquiry
+                inquiry_symbols = symbols_by_inquiry[i]
+                inquiry_labels = labels_by_inquiry[i]
 
-                    symbol_rows.append(row)
-
-                rows.extend(symbol_rows)
+                for sym_i, symbol in enumerate(inquiry_symbols):
+                    # iterate through each symbol in the inquiry
+                    eeg_samples = [channel[sym_i] for channel in inquiry_eeg
+                                   ]  # (channel_n, sample_n)
+                    rows.append(Trial(source=data_source.source_dir,
+                                  inquiry_n=i,
+                                  inquiry_pos=sym_i + 1,
+                                  symbol=symbol,
+                                  target=inquiry_labels[sym_i],
+                                  eeg=np.array(eeg_samples)))
 
         self.schema = pd.DataFrame(rows)
 

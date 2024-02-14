@@ -6,29 +6,51 @@ from typing import List
 import numpy as np
 
 from bcipy.acquisition import devices
-from bcipy.config import (
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME,
-)
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_raw_data
-from bcipy.helpers.stimuli import update_inquiry_timing, InquiryReshaper
+from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
+from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
+                                  get_default_transform)
 
 log = logger.getLogger(__name__)
 
 
 @dataclass()
 class ExtractedExperimentData:  # TODO clean up design
+    source_dir: str
     inquiries: np.ndarray
     trials: np.ndarray
     labels: List
     inquiry_timing: List
 
     decoded_triggers: tuple
+    trials_per_inquiry: int
+
+    @property
+    def trials_by_inquiry(self) -> List[np.ndarray]:
+        """EEG data by inquiry.
+        shape (i_inquiry, n_channel, m_trial, x_sample)
+        """
+        return np.split(self.trials, self.inquiries.shape[1], 1)
+
+    @property
+    def symbols_by_inquiry(self) -> List[List[str]]:
+        """Get symbols by inquiry. shape (i_inquiry, s_alphabet_subset)"""
+        _targets, _times, trigger_symbols = self.decoded_triggers
+        return [
+            list(group) for group in grouper(
+                trigger_symbols, self.trials_per_inquiry, incomplete="ignore")
+        ]
+
+    @property
+    def labels_by_inquiry(self) -> List[List[int]]:
+        """Shape (i_inquiry, s_alphabet_subset)"""
+        return self.labels
 
 
 def process_raw_data_for_model(data_folder, parameters,
@@ -128,5 +150,11 @@ def process_raw_data_for_model(data_folder, parameters,
     # define the training classes using integers, where 0=nontargets/1=targets
     # labels = inquiry_labels.flatten()
 
-    return ExtractedExperimentData(inquiries, trials, inquiry_labels, inquiry_timing,
-                                   (trigger_targetness, trigger_timing, trigger_symbols))
+    return ExtractedExperimentData(
+        data_folder,
+        inquiries,
+        trials,
+        inquiry_labels,
+        inquiry_timing,
+        decoded_triggers=(trigger_targetness, trigger_timing, trigger_symbols),
+        trials_per_inquiry=trials_per_inquiry)
