@@ -7,9 +7,9 @@ from decimal import Decimal
 from enum import Enum
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
 
-from PyQt5.QtCore import QEvent, Qt, QTimer, pyqtSlot
-from PyQt5.QtGui import QFont, QPixmap, QShowEvent
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox,
+from PyQt6.QtCore import Qt, QTimer, pyqtSlot
+from PyQt6.QtGui import QFont, QPixmap, QShowEvent, QWheelEvent
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QScrollArea,
                              QSpinBox, QVBoxLayout, QWidget)
@@ -19,7 +19,7 @@ from bcipy.helpers.parameters import parse_range
 
 def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
     """Create a Font object with the given parameters."""
-    return QFont(font_family, size, QFont.Normal)
+    return QFont(font_family, size, weight=0)
 
 
 def invalid_length(min=1, max=25) -> bool:
@@ -68,10 +68,10 @@ class AlertMessageType(Enum):
 
     Custom enum used to abstract PyQT message types from downstream users.
     """
-    WARN = QMessageBox.Warning
-    QUESTION = QMessageBox.Question
-    INFO = QMessageBox.Information
-    CRIT = QMessageBox.Critical
+    WARN = QMessageBox.Icon.Warning
+    QUESTION = QMessageBox.Icon.Question
+    INFO = QMessageBox.Icon.Information
+    CRIT = QMessageBox.Icon.Critical
 
 
 class AlertResponse(Enum):
@@ -79,10 +79,10 @@ class AlertResponse(Enum):
 
     Custom enum used to abstract PyQT alert responses from downstream users.
     """
-    OK = QMessageBox.Ok
-    CANCEL = QMessageBox.Cancel
-    YES = QMessageBox.Yes
-    NO = QMessageBox.No
+    OK = QMessageBox.StandardButton.Ok
+    CANCEL = QMessageBox.StandardButton.Cancel
+    YES = QMessageBox.StandardButton.Yes
+    NO = QMessageBox.StandardButton.No
 
 
 class PushButton(QPushButton):
@@ -173,7 +173,7 @@ class AlertMessageResponse(Enum):
 
 def alert_message(
         message: str,
-        title: str = None,
+        title: Optional[str] = None,
         message_type: AlertMessageType = AlertMessageType.INFO,
         message_response: AlertMessageResponse = AlertMessageResponse.OTE,
         message_timeout: float = 0) -> MessageBox:
@@ -222,8 +222,8 @@ class FormInput(QWidget):
     def __init__(self,
                  label: str,
                  value: str,
-                 help_tip: str = None,
-                 options: List[str] = None,
+                 help_tip: Optional[str] = None,
+                 options: Optional[List[str]] = None,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
@@ -245,7 +245,7 @@ class FormInput(QWidget):
 
     def eventFilter(self, source, event):
         """Event filter that suppresses the scroll wheel event."""
-        if (event.type() == QEvent.Wheel and source is self.control):
+        if (event.type() == QWheelEvent and source is self.control):
             return True
         return False
 
@@ -581,7 +581,7 @@ class RangeWidget(QWidget):
 
     def __init__(self,
                  value: Tuple[int, int],
-                 options: List[str] = None,
+                 options: Optional[List[str]] = None,
                  label_low: str = "Low:",
                  label_high="High:"):
         super(RangeWidget, self).__init__()
@@ -827,6 +827,7 @@ class BCIGui(QWidget):
                    id: int = -1,
                    background_color: str = 'white',
                    text_color: str = 'default',
+                   font_family: str = 'Times',
                    action: Optional[Callable] = None) -> PushButton:
         """Add Button."""
         btn = PushButton(message, self.window)
@@ -835,7 +836,7 @@ class BCIGui(QWidget):
         btn.resize(size[0], size[1])
 
         btn.setStyleSheet(
-            f'background-color: {background_color}; color: {text_color};')
+            f'background-color: {background_color}; color: {text_color}; font-family: {font_family};')
 
         if action:
             btn.clicked.connect(action)
@@ -904,7 +905,7 @@ class BCIGui(QWidget):
                            position: list,
                            background_color: str = 'white',
                            text_color: str = 'default',
-                           size: list = None,
+                           size: Optional[list] = None,
                            font_family='Times',
                            font_size=12,
                            wrap_text=False) -> QLabel:
@@ -948,7 +949,7 @@ class BCIGui(QWidget):
                             message_type=message_type,
                             message_response=message_response,
                             message_timeout=message_timeout)
-        return msg.exec_()
+        return msg.exec()
 
     def get_filename_dialog(self,
                             message: str = 'Open File',
@@ -970,7 +971,7 @@ class ScrollableFrame(QWidget):
                  height: int,
                  width: int,
                  background_color: str = 'black',
-                 widget: QWidget = None):
+                 widget: Optional[QWidget] = None):
         super().__init__()
 
         self.height = height
@@ -983,8 +984,8 @@ class ScrollableFrame(QWidget):
 
         # create the scrollable are
         self.frame = QScrollArea()
-        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.frame.setWidgetResizable(True)
         self.frame.setFixedWidth(self.width)
         self.setFixedHeight(self.height)
@@ -1109,7 +1110,7 @@ def start_app() -> None:
                            message_response=AlertMessageResponse.OCE,
                            message_timeout=5)
 
-    sys.exit(bcipy_gui.exec_())
+    sys.exit(bcipy_gui.exec())
 
 
 if __name__ == '__main__':

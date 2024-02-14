@@ -1,6 +1,6 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
 
-from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
@@ -36,13 +36,14 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
     TASK_NAME = 'Matrix Copy Phrase Task'
     MODE = 'Matrix'
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the Matrix display"""
         return init_display(self.parameters, self.window,
                             self.experiment_clock, self.spelled_text)
 
 
-def init_display(parameters, win, experiment_clock, starting_spelled_text):
+def init_display(
+        parameters, win, experiment_clock, starting_spelled_text) -> MatrixDisplay:
     """Constructs a new Matrix display"""
 
     info = InformationProperties(
@@ -65,7 +66,8 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'])
+                                 height=parameters['task_height'],
+                                 padding=parameters['task_padding'])
 
     return MatrixDisplay(
         win,
@@ -73,5 +75,9 @@ def init_display(parameters, win, experiment_clock, starting_spelled_text):
         stimuli,
         task_bar,
         info,
+        rows=parameters['matrix_rows'],
+        columns=parameters['matrix_columns'],
+        width_pct=parameters['matrix_width'],
+        height_pct=1 - (2 * task_bar.height_pct),
         trigger_type=parameters['trigger_type'],
         should_prompt_target=False)

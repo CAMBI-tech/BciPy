@@ -1,24 +1,23 @@
+# mypy: disable-error-code="misc"
 """Data server that streams EEG data over a LabStreamingLayer StreamOutlet
 using pylsl."""
 import logging
-from queue import Empty, Queue
-from typing import Generator
 import time
 import uuid
+from queue import Empty, Queue
+from typing import Optional, Generator
 
 from pylsl import StreamInfo, StreamOutlet
 
-from bcipy.config import DEFAULT_ENCODING
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
+from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME
 
 log = logging.getLogger(__name__)
 
 # pylint: disable=too-many-arguments
-
-MARKER_STREAM_NAME = 'TRG_device_stream'
 
 
 class LslDataServer(StoppableThread):
@@ -45,17 +44,24 @@ class LslDataServer(StoppableThread):
             channel at a fixed frequency.
         marker_stream_name: str, optional
             name of the sample marker stream
+        chunk_size: int, optional chunk size.
     """
 
-    def __init__(self, device_spec: DeviceSpec, generator: Generator = None, include_meta: bool = True,
-                 add_markers: bool = False, marker_stream_name: str = MARKER_STREAM_NAME):
+    def __init__(self,
+                 device_spec: DeviceSpec,
+                 generator: Optional[Generator] = None,
+                 include_meta: bool = True,
+                 add_markers: bool = False,
+                 marker_stream_name: str = MARKER_STREAM_NAME,
+                 chunk_size: int = 0):
         super(LslDataServer, self).__init__()
 
         self.device_spec = device_spec
         self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
 
-        log.info("Starting LSL server for device: %s", device_spec.name)
+        log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
+        print(f"Chunk size: {chunk_size}")
         info = StreamInfo(device_spec.name,
                           device_spec.content_type, device_spec.channel_count,
                           device_spec.sample_rate,
@@ -72,7 +78,7 @@ class LslDataServer(StoppableThread):
                 if channel.type:
                     channel_node.append_child_value('type', channel.type)
 
-        self.outlet = StreamOutlet(info)
+        self.outlet = StreamOutlet(info, chunk_size=chunk_size)
 
         self.add_markers = add_markers
         if add_markers:
@@ -82,7 +88,8 @@ class LslDataServer(StoppableThread):
             # "gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) +
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
-            log.info(f"Creating marker stream {marker_stream_name}")
+            log.debug("Creating marker stream")
+            print(f"Marker channel name: {marker_stream_name}")
             markers_info = StreamInfo(marker_stream_name,
                                       "Markers", 1, 0, 'string',
                                       "uid12345_markers")
@@ -92,7 +99,7 @@ class LslDataServer(StoppableThread):
     def stop(self):
         """Stop the thread and cleanup resources."""
 
-        log.info("[*] Stopping data server")
+        log.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
         # Allows pylsl to cleanup; The outlet will no longer be discoverable
@@ -112,7 +119,7 @@ class LslDataServer(StoppableThread):
         sample_counter = 0
         self.started = True
 
-        data_queue = Queue()
+        data_queue: Queue = Queue()
         with Producer(data_queue, generator=self.generator,
                       freq=1 / self.device_spec.sample_rate):
             while self.running():
@@ -128,7 +135,7 @@ class LslDataServer(StoppableThread):
                     # deleted in another thread.
                     break
 
-        log.info("[*] No longer pushing data")
+        log.debug("[*] No longer pushing data")
 
 
 def _settings(filename):
@@ -141,7 +148,7 @@ def _settings(filename):
         return (daq_type, sample_hz, channels)
 
 
-def await_start(dataserver: LslDataServer, max_wait: float = 2):
+def await_start(dataserver: LslDataServer, max_wait: float = 2.0):
     """Blocks until server is started. Raises if max_wait is exceeded before
     server is started.
 
@@ -153,7 +160,7 @@ def await_start(dataserver: LslDataServer, max_wait: float = 2):
     """
 
     dataserver.start()
-    wait = 0
+    wait = 0.0
     wait_interval = 0.01
     while not dataserver.started:
         time.sleep(wait_interval)
@@ -165,7 +172,6 @@ def await_start(dataserver: LslDataServer, max_wait: float = 2):
 
 def main():
     """Initialize and start the server."""
-    import time
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator
@@ -177,6 +183,7 @@ def main():
                         "if missing, random data will be served.")
     parser.add_argument('-m', '--markers', action="store_true", default=False)
     parser.add_argument('-n', '--name', default='DSI-24', help='Name of the device spec to mock.')
+    parser.add_argument('-c', '--chunk_size', default=0, type=int, help='Chunk size')
     args = parser.parse_args()
 
     if args.filename:
@@ -191,11 +198,14 @@ def main():
 
     markers = True if args.markers else False
     try:
-        server = LslDataServer(device_spec=device_spec, generator=generator, add_markers=markers)
+        server = LslDataServer(device_spec=device_spec,
+                               generator=generator,
+                               add_markers=markers,
+                               chunk_size=args.chunk_size)
 
-        log.info("New server created")
+        log.debug("New server created")
         server.start()
-        log.info("Server started")
+        log.debug("Server started")
         while True:
             time.sleep(1)
     except KeyboardInterrupt:

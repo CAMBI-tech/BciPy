@@ -1,24 +1,23 @@
+# mypy: disable-error-code="no-redef"
 """Functionality for converting the bcipy raw data output to other formats"""
 import logging
 import os
 import tarfile
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-
-import numpy as np
-
-from pyedflib import FILETYPE_EDFPLUS, EdfWriter, FILETYPE_BDFPLUS
-from tqdm import tqdm
-
-from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
-from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.raw_data import RawData
-from bcipy.signal.process import Composition, get_default_transform
-from bcipy.helpers.triggers import trigger_decoder, trigger_durations
+from typing import Dict, List, Tuple, Optional, Union
 
 import mne
+import numpy as np
 from mne.io import RawArray
+from pyedflib import FILETYPE_BDFPLUS, FILETYPE_EDFPLUS, EdfWriter
+from tqdm import tqdm
 
+from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.helpers.load import load_json_parameters, load_raw_data
+from bcipy.helpers.raw_data import RawData
+from bcipy.helpers.triggers import trigger_decoder, trigger_durations
+from bcipy.signal.process import Composition, get_default_transform
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +25,12 @@ FILE_LENGTH_LIMIT = 150
 
 
 def convert_to_edf(data_dir: str,
-                   edf_path: str = None,
+                   edf_path: Optional[str] = None,
                    overwrite: bool = False,
                    write_targetness: bool = False,
                    use_event_durations: bool = False,
                    remove_pre_fixation: bool = False,
-                   pre_filter: bool = False) -> Path:
+                   pre_filter: bool = False) -> str:
     """ Converts BciPy data to the EDF+ filetype using pyEDFlib.
 
     See https://www.edfplus.info/ for more detailed information about the edf specification.
@@ -62,7 +61,7 @@ def convert_to_edf(data_dir: str,
     if not edf_path.endswith('.edf'):
         raise ValueError(f'edf_path=[{edf_path}] must end in .edf')
 
-    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
+    data, channels, fs, events, annotation_channels, filt = pyedf_convert(
         data_dir,
         write_targetness=write_targetness,
         use_event_durations=use_event_durations,
@@ -78,16 +77,16 @@ def convert_to_edf(data_dir: str,
         FILETYPE_EDFPLUS,
         overwrite,
         annotation_channels,
-        pre_filter)
+        filt)
 
 
 def convert_to_bdf(data_dir: str,
-                   bdf_path: str = None,
+                   bdf_path: Optional[str] = None,
                    overwrite: bool = False,
                    write_targetness: bool = False,
                    use_event_durations: bool = False,
                    remove_pre_fixation: bool = False,
-                   pre_filter: bool = False) -> Path:
+                   pre_filter: bool = False) -> Union[Path, str]:
     """ Converts BciPy data to the BDF+ filetype using pyEDFlib.
 
     See https://www.biosemi.com/faq/file_format.htm for more detailed information about the BDF specification.
@@ -118,7 +117,7 @@ def convert_to_bdf(data_dir: str,
     if not bdf_path.endswith('.bdf'):
         raise ValueError(f'bdf_path=[{bdf_path}] must end in .bdf')
 
-    data, channels, fs, events, annotation_channels, pre_filter = pyedf_convert(
+    data, channels, fs, events, annotation_channels, filt = pyedf_convert(
         data_dir,
         write_targetness=write_targetness,
         use_event_durations=use_event_durations,
@@ -134,14 +133,20 @@ def convert_to_bdf(data_dir: str,
         FILETYPE_BDFPLUS,
         overwrite,
         annotation_channels,
-        pre_filter)
+        filt)
 
 
 def pyedf_convert(data_dir: str,
                   write_targetness: bool = False,
                   use_event_durations: bool = False,
                   remove_pre_fixation: bool = False,
-                  pre_filter: bool = False) -> Tuple[RawData, List[str], int, List[Tuple[str, int, int]], int]:
+                  pre_filter: bool = False) -> Tuple[
+                      np.ndarray,
+                      List[str],
+                      int,
+                      List[Tuple[float, float, str]],
+                      int,
+                      Union[bool, str]]:
     """ Converts BciPy data to formats that can be used by pyEDFlib.
 
     Parameters
@@ -168,9 +173,9 @@ def pyedf_convert(data_dir: str,
             otherwise a string of the filter parameters used to filter the data
     """
 
-    params = load_json_parameters(Path(data_dir, DEFAULT_PARAMETER_FILENAME),
+    params = load_json_parameters(str(Path(data_dir, DEFAULT_PARAMETER_FILENAME)),
                                   value_cast=True)
-    data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
+    data = load_raw_data(str(Path(data_dir, f'{RAW_DATA_FILENAME}.csv')))
     fs = data.sample_rate
     if pre_filter:
         default_transform = get_default_transform(
@@ -182,9 +187,10 @@ def pyedf_convert(data_dir: str,
             downsample_factor=params.get("down_sampling_rate"),
         )
         raw_data, fs = data.by_channel(transform=default_transform)
-        pre_filter = (f"HP:{params.get('filter_low')} LP:{params.get('filter_high')}"
-                      f"N:{params.get('notch_filter_frequency')} D:{params.get('down_sampling_rate')} "
-                      f"O:{params.get('filter_order')}")
+        pre_filter: str = (
+            f"HP:{params.get('filter_low')} LP:{params.get('filter_high')}"
+            f"N:{params.get('notch_filter_frequency')} D:{params.get('down_sampling_rate')} "
+            f"O:{params.get('filter_order')}")
     else:
         raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
@@ -248,14 +254,14 @@ def compile_triggers(labels: List[str], targetness: List[str], timing: List[floa
 
 
 def write_pyedf(output_path: str,
-                raw_data: np.array,
+                raw_data: np.ndarray,
                 ch_names: List[str],
                 sample_rate: float,
                 events: List[Tuple[float, float, str]],
                 file_type: str = FILETYPE_EDFPLUS,
                 overwrite: bool = False,
                 annotation_channels: int = 1,
-                pre_filter: Optional[str] = None) -> Path:
+                pre_filter: Union[bool, str] = False) -> str:
     """
     Converts BciPy raw_data to the EDF+ or BDF+ filetype using pyEDFlib.
 
@@ -486,7 +492,7 @@ def tar_name_checker(tar_file_name: str) -> str:
 
 def convert_to_mne(
         raw_data: RawData,
-        channel_map: List[int] = None,
+        channel_map: Optional[List[int]] = None,
         channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',

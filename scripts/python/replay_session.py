@@ -94,7 +94,9 @@ def generate_replay_outputs(
         f"Static offset: {static_offset}"
     )
 
-    raw_data = load_raw_data(Path(data_folder, f"{RAW_DATA_FILENAME}.csv"))
+    data_list = load_raw_data(data_folder, [f"{RAW_DATA_FILENAME}.csv"])
+    # NOTE: With the current inputs this function only loads the EEG data. Update needed for eyetracker data.
+    raw_data = data_list[0]
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate

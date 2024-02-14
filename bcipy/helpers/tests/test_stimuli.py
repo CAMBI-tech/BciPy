@@ -21,8 +21,7 @@ from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    inquiry_target, inquiry_target_counts,
                                    jittered_timing, play_sound,
                                    random_target_positions, soundfiles,
-                                   ssvep_to_code, target_index,
-                                   update_inquiry_timing)
+                                   target_index, update_inquiry_timing)
 
 MOCK_FS = 44100
 
@@ -713,6 +712,22 @@ class TestStimuliGeneration(unittest.TestCase):
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
 
+    def test_best_case_inquiry_gen_invalid_alp(self):
+        """Test best_case_rsvp_inq_gen throws error when passed invalid alp shape"""
+        alp = ['a', 'b', 'c', 'd']
+        session_stimuli = [0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2]
+        stim_length = 5
+        with self.assertRaises(BciPyCoreException, msg='Missing information about the alphabet.'):
+            best_case_rsvp_inq_gen(
+                alp=alp,
+                session_stimuli=session_stimuli,
+                timing=[1, 0.2],
+                color=['red', 'white'],
+                stim_number=1,
+                stim_length=stim_length,
+                is_txt=True
+            )
+
     def test_best_case_inquiry_gen_with_inq_constants(self):
         """Test best_case_rsvp_inq_gen with inquiry constants"""
 
@@ -854,6 +869,22 @@ class TestTrialReshaper(unittest.TestCase):
         self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
 
+    def test_trial_reshaper_with_no_channel_map(self):
+        sample_rate = 256
+        trial_length_s = 0.5
+        reshaped_trials, labels = TrialReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            sample_rate=sample_rate,
+            channel_map=None,
+            poststimulus_length=trial_length_s
+        )
+        trial_length_samples = int(sample_rate * trial_length_s)
+        expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
+        self.assertTrue(np.all(labels == [1, 0, 0]))
+        self.assertTrue(reshaped_trials.shape == expected_shape)
+
 
 class TestInquiryReshaper(unittest.TestCase):
 
@@ -918,6 +949,20 @@ class TestInquiryReshaper(unittest.TestCase):
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
 
+    def test_inquiry_reshaper_with_no_channel_map(self):
+        reshaped_data, labels, _ = InquiryReshaper()(
+            trial_targetness_label=self.target_info,
+            timing_info=self.timing_info,
+            eeg_data=self.eeg,
+            sample_rate=self.sample_rate,
+            trials_per_inquiry=self.trials_per_inquiry,
+            channel_map=None,
+            poststimulus_length=self.trial_length
+        )
+        expected_shape = (self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        self.assertTrue(reshaped_data.shape == expected_shape)
+        self.assertTrue(np.all(labels == self.true_labels))
+
     def test_inquiry_reshaper_trial_extraction(self):
         timing = [[1, 3, 4], [1, 4, 5], [1, 2, 3], [4, 5, 6]]
         # make a fake eeg data array (n_channels, n_inquiry, n_samples)
@@ -973,59 +1018,6 @@ class TestUpdateInquiryTiming(unittest.TestCase):
         )
         expected_timing = [[50, 201 // downsample]]
         self.assertTrue(new_timing == expected_timing)
-
-
-class SSVEPStimuli(unittest.TestCase):
-
-    def test_default_flicker_and_refresh_rate_return_codes(self):
-        response = ssvep_to_code()
-        self.assertIsInstance(response, list)
-        self.assertEqual(response[0], 0)
-
-    def test_ssvep_to_codes_returns_the_length_of_refresh_rate(self):
-        refresh_rate = 40
-        flicker_rate = 2
-        response = ssvep_to_code(flicker_rate=flicker_rate,
-                                 refresh_rate=refresh_rate)
-        self.assertTrue(len(response) == refresh_rate)
-        self.assertEqual(response[0], 0)
-        self.assertEqual(response[-1], 1)
-
-    def test_ssvep_to_code_raises_exception_when_refresh_rate_less_than_flicker_rate(
-            self):
-        flicker_rate = 300
-        refresh_rate = 1
-
-        with self.assertRaises(BciPyCoreException):
-            ssvep_to_code(refresh_rate, flicker_rate)
-
-    def test_when_division_of_refresh_rate_by_flicker_rate_raise_exception_if_noninteger(
-            self):
-        flicker_rate = 11
-        refresh_rate = 60
-
-        with self.assertRaises(BciPyCoreException):
-            ssvep_to_code(refresh_rate, flicker_rate)
-
-    def test_ssvep_to_code_returns_expected_codes(self):
-        flicker_rate = 2
-        refresh_rate = 4
-        response = ssvep_to_code(flicker_rate=flicker_rate,
-                                 refresh_rate=refresh_rate)
-        expected_output = [0, 0, 1, 1]
-        self.assertEqual(response, expected_output)
-
-    def test_ssvep_to_code_raises_exception_when_flicker_rate_one_or_less(
-            self):
-        flicker_rate = 1
-        refresh_rate = 2
-        with self.assertRaises(BciPyCoreException):
-            ssvep_to_code(refresh_rate, flicker_rate)
-
-        flicker_rate = 0
-        refresh_rate = 2
-        with self.assertRaises(BciPyCoreException):
-            ssvep_to_code(refresh_rate, flicker_rate)
 
 
 class TestSoundStimuli(unittest.TestCase):

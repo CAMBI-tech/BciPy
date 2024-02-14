@@ -4,6 +4,12 @@ import unittest
 
 from bcipy.task.data import EvidenceType, Inquiry, Session
 
+SYMBOL_SET = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    '<', '_'
+]
+
 
 def sample_stim_seq(include_evidence: bool = False):
     """Generates a sample Inquiry."""
@@ -129,14 +135,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""
-        alp = [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '<', '_'
-        ]
-
         stim_seq = sample_stim_seq(include_evidence=True)
-        evidence = stim_seq.stim_evidence(alp, n_most_likely=5)
+        evidence = stim_seq.stim_evidence(SYMBOL_SET, n_most_likely=5)
         self.assertEqual(len(evidence['most_likely']), 5)
         self.assertAlmostEqual(evidence['most_likely']['<'], 0.05, places=2)
 
@@ -173,7 +173,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_empty_session(self):
         """Test initial session creation"""
-        session = Session(save_location=".")
+
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         self.assertEqual(0, session.total_number_series)
         self.assertEqual(0, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
@@ -188,7 +189,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_session(self):
         """Test session functionality"""
-        session = Session(save_location=".")
+
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq())
 
@@ -221,7 +223,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_session_add_series(self):
         """Test session functionality for adding a series"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
 
         session.add_series()
         self.assertEqual(0, session.total_number_series)
@@ -243,7 +245,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_session_deserialization(self):
         """Test that a Session can be deserialized"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq())
 
@@ -272,7 +274,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_task_summary(self):
         """Test that arbitrary data can be added."""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         self.assertFalse('task_summary' in session.as_dict())
 
         session.task_summary = {"typing_accuracy": 22}
@@ -282,7 +284,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_has_evidence(self):
         """Test that a Session has evidence"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq(include_evidence=True))
         self.assertTrue(session.has_evidence())

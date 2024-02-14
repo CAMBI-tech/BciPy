@@ -4,7 +4,7 @@ from collections import abc
 from json import dump, load
 from pathlib import Path
 from re import fullmatch
-from typing import Any, Dict, NamedTuple, Tuple
+from typing import Optional, Any, Dict, NamedTuple, Tuple
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
@@ -52,7 +52,7 @@ def parse_range(range_str: str) -> Tuple:
     return (low, high)
 
 
-def serialize_value(value_type: str, value: any) -> str:
+def serialize_value(value_type: str, value: Any) -> str:
     """Serialize the given value to a string. Serialized values should be able
     to be cast using the conversions."""
     if value_type == 'bool':
@@ -73,7 +73,7 @@ class Parameters(dict):
         cast_values: bool - if True cast values to specified type; default is False.
         """
 
-    def __init__(self, source: str = None, cast_values: bool = False):
+    def __init__(self, source: Optional[str] = None, cast_values: bool = False):
         super().__init__()
         self.source = source
         self.cast_values = cast_values
@@ -119,28 +119,28 @@ class Parameters(dict):
         return params
 
     @property
-    def supported_types(self):
+    def supported_types(self) -> set:
         """Supported types for casting values"""
         return self.conversions.keys()
 
-    def cast_value(self, entry: dict):
+    def cast_value(self, entry: dict) -> Any:
         """Takes an entry with a desired type and attempts to cast it to that type."""
         cast = self.conversions[entry['type']]
         return cast(entry['value'])
 
-    def serialized_value(self, value, entry_type):
+    def serialized_value(self, value, entry_type) -> str:
         """Convert a value back into its serialized form"""
         serialized = str(value)
         return serialized.lower() if entry_type == 'bool' else serialized
 
-    def __getitem__(self, key):
+    def __getitem__(self, key) -> Any:
         """Override to handle cast values"""
         entry = self.get_entry(key)
         if self.cast_values:
             return self.cast_value(entry)
         return entry
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key, value) -> None:
         """Override to handle cast values"""
         if self.cast_values:
             # Can only set values for existing entries when cast.
@@ -149,53 +149,53 @@ class Parameters(dict):
         else:
             self.add_entry(key, value)
 
-    def add_entry(self, key, value):
+    def add_entry(self, key, value) -> None:
         """Adds a configuration parameter."""
         self.check_valid_entry(key, value)
         super().__setitem__(key, value)
 
-    def get_entry(self, key):
+    def get_entry(self, key) -> dict:
         """Get the non-cast entry associated with the given key."""
         return super().__getitem__(key)
 
-    def get(self, key, d=None):
+    def get(self, key, d=None) -> Any:
         """Override to handle cast values"""
         entry = super().get(key, d)
         if self.cast_values and entry != d:
             return self.cast_value(entry)
         return entry
 
-    def entries(self):
+    def entries(self) -> list:
         """Uncast items"""
         return super().items()
 
-    def items(self):
+    def items(self) -> list:
         """Override to handle cast values"""
         if self.cast_values:
             return [(key, self.cast_value(entry))
                     for key, entry in self.entries()]
         return self.entries()
 
-    def values(self):
+    def values(self) -> list:
         """Override to handle cast values"""
         vals = super().values()
         if self.cast_values:
             return [self.cast_value(entry) for entry in vals]
         return vals
 
-    def update(self, *args, **kwargs):
+    def update(self, *args, **kwargs) -> None:
         """Override to ensure update uses __setitem___"""
         for key, value in dict(*args, **kwargs).items():
             self[key] = value
 
-    def copy(self):
+    def copy(self) -> 'Parameters':
         """Override
         """
         params = Parameters(source=None, cast_values=self.cast_values)
         params.load(super().copy())
         return params
 
-    def load(self, data: dict):
+    def load(self, data: dict) -> None:
         """Load values from a dict, validating entries (see check_valid_entry) and raising
         an exception for invalid values.
 
@@ -204,7 +204,7 @@ class Parameters(dict):
         for name, entry in data.items():
             self.add_entry(name, entry)
 
-    def load_from_source(self):
+    def load_from_source(self) -> None:
         """Load data from the configured JSON file."""
         if self.source:
             with codecsopen(self.source, 'r',
@@ -212,7 +212,7 @@ class Parameters(dict):
                 data = load(json_file)
                 self.load(data)
 
-    def check_valid_entry(self, entry_name: str, entry: dict):
+    def check_valid_entry(self, entry_name: str, entry: dict) -> None:
         """Checks if the given entry is valid. Raises an exception unless the entry is formatted:
 
         "fake_data": {
@@ -252,7 +252,7 @@ class Parameters(dict):
             return (path.parent, path.name)
         return (None, None)
 
-    def save(self, directory: str = None, name: str = None):
+    def save(self, directory: Optional[str] = None, name: Optional[str] = None) -> str:
         """Save parameters to the given location
 
         directory: str - optional location to save; default is the source_directory.
@@ -310,7 +310,7 @@ class Parameters(dict):
                                              original_value=None)
         return diffs
 
-    def instantiate(self, named_tuple_class: type) -> NamedTuple:
+    def instantiate(self, named_tuple_class: NamedTuple) -> NamedTuple:
         """Instantiate a namedtuple whose fields represent a subset of the
         parameters."""
         vals = [

@@ -112,9 +112,9 @@ class _ConsumerThread(threading.Thread):
 
 def main():
     """Main method"""
-    data_queue = Queue()
-    producer = Producer(data_queue)
-    consumer = _ConsumerThread(data_queue)
+    data_queue: Queue = Queue()
+    producer: Producer = Producer(data_queue)
+    consumer: _ConsumerThread = _ConsumerThread(data_queue)
 
     producer.start()
     consumer.start()

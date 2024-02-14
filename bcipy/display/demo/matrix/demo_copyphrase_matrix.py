@@ -5,25 +5,26 @@ prior to integration.
 
 from psychopy import core
 
-from bcipy.display import (init_display_window, InformationProperties,
-                           StimuliProperties)
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
+font = "Overpass Mono"
 info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
     info_height=[0.1],
-    info_font=['Arial'],
+    info_font=[font],
     info_text=['Matrix Copy Phrase Demo'],
 )
 task_height = 0.1
 
 inter_stim_buffer = .5
 
-stim_properties = StimuliProperties(stim_font='Arial',
+stim_properties = StimuliProperties(stim_font=font,
                                     stim_pos=(-0.6, 0.4),
-                                    stim_height=0.1,
+                                    stim_height=0.17,
                                     is_txt_stim=True)
 
 # Initialize Stimulus
@@ -70,7 +71,7 @@ task_bar = CopyPhraseTaskBar(win,
                              task_text='COPY_PHRASE',
                              spelled_text='COPY_PHA',
                              colors=['white', 'green'],
-                             font='Menlo')
+                             font=font)
 
 display = MatrixDisplay(win,
                         experiment_clock,
@@ -81,9 +82,9 @@ display = MatrixDisplay(win,
 
 counter = 0
 
-for idx_o in range(len(spelled_text)):
+for spelled in spelled_text:
 
-    display.update_task_bar(text=spelled_text[idx_o])
+    display.update_task_bar(text=spelled)
     display.draw_static()
     win.flip()
 

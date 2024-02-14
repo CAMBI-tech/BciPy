@@ -24,7 +24,7 @@ class TestRawData(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.path = Path(self.temp_dir, 'test_raw_data.csv')
         self.daq_type = 'Test-Device'
-        self.sample_rate = 300.0
+        self.sample_rate = 300
         self.columns = ['timestamp', 'ch1', 'ch2', 'ch3']
         self.row1 = [1, 1.0, 2.0, 3.0]
         self.row2 = [2, 4.0, 5.0, 6.0]

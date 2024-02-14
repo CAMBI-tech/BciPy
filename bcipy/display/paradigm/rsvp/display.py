@@ -1,6 +1,6 @@
 import logging
 import os.path as path
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 
 from psychopy import core, visual, event
 
@@ -34,7 +34,7 @@ class RSVPDisplay(Display):
             stimuli: StimuliProperties,
             task_bar: TaskBar,
             info: InformationProperties,
-            preview_inquiry: PreviewInquiryProperties = None,
+            preview_inquiry: Optional[PreviewInquiryProperties] = None,
             trigger_type: str = 'image',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False):
@@ -117,9 +117,9 @@ class RSVPDisplay(Display):
             info.draw()
 
     def schedule_to(self,
-                    stimuli: List[str] = None,
-                    timing: List[float] = None,
-                    colors: List[str] = None):
+                    stimuli: Optional[List[str]] = None,
+                    timing: Optional[List[float]] = None,
+                    colors: Optional[List[str]] = None):
         """Schedule stimuli elements (works as a buffer).
 
         Args:
@@ -357,7 +357,7 @@ class RSVPDisplay(Display):
             stim_info.append(current_stim)
         return stim_info
 
-    def update_task_bar(self, text: str = None) -> None:
+    def update_task_bar(self, text: Optional[str] = None) -> None:
         """Update task state.
 
         Removes letters or appends to the right.

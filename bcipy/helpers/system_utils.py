@@ -1,3 +1,4 @@
+# mypy: disable-error-code="import-untyped"
 """Utilities for system information and general functionality that may be
 shared across modules."""
 import importlib
@@ -74,7 +75,7 @@ def is_screen_refresh_rate_low(refresh: Optional[float] = None) -> bool:
     return refresh < 120
 
 
-def git_dir() -> str:
+def git_dir() -> Optional[str]:
     """Git Directory.
 
     Returns the root directory with the .git folder. If this source code
@@ -127,13 +128,13 @@ def bcipy_version() -> str:
     Gets the current bcipy version. If the current instance of bcipy is a
     git repository, appends the current abbreviated sha hash.
     """
-    version = pkg_resources.get_distribution('bcipy').version
+    version: str = pkg_resources.get_distribution('bcipy').version
     sha_hash = git_hash()
 
     return f'{version} - {sha_hash}' if sha_hash else version
 
 
-def get_screen_info() -> ScreenInfo:
+def get_screen_info(stim_screen: Optional[int] = None) -> ScreenInfo:
     """Gets the screen information.
 
     Note: Use this method if only the screen resolution is needed; it is much more efficient
@@ -143,7 +144,10 @@ def get_screen_info() -> ScreenInfo:
     -------
         ScreenInfo(width, height, rate)
      """
-    screen = pyglet.canvas.get_display().get_default_screen()
+    if stim_screen:
+        screen = pyglet.canvas.get_display().get_screens()[stim_screen]
+    else:
+        screen = pyglet.canvas.get_display().get_default_screen()
     return ScreenInfo(screen.width, screen.height, screen.get_mode().rate)
 
 
@@ -151,7 +155,7 @@ def get_gpu_info() -> List[dict]:
     """Information about GPUs available for processing."""
     properties = []
     for idx in range(torch.cuda.device_count()):
-        prop = torch.get_device_properties(idx)
+        prop = torch.cuda.get_device_properties(idx)
         properties.append(dict(name=prop.name, total_memory=prop.total_memory))
     return properties
 
@@ -169,6 +173,7 @@ def get_system_info() -> dict:
     screen_info = get_screen_info()
     info = get_cpu_info()
     gpu_info = get_gpu_info()
+
     return {
         'os': sys.platform,
         'py_version': sys.version,
@@ -182,7 +187,6 @@ def get_system_info() -> dict:
         'processor': platform.processor(),
         'cpu_count': os.cpu_count(),
         'cpu_brand': info['brand_raw'],
-        'cpu_hz': info['hz_actual_friendly'],
         'gpu_available': torch.cuda.is_available(),
         'gpu_count': len(gpu_info),
         'gpu_details': gpu_info,
@@ -211,7 +215,9 @@ def configure_logger(
         '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
     root_logger.addHandler(handler)
 
-    print(f'Printing all BciPy logs to: {logfile}')
+    # print to console the absolute path of the log file to aid in debugging
+    path_to_logs = os.path.abspath(logfile)
+    print(f'Printing all BciPy logs to: {path_to_logs}')
 
     if version:
         logging.info(f'Start of Session for BciPy Version: ({version})')

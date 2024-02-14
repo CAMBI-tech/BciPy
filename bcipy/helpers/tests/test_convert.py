@@ -2,33 +2,25 @@
 import os
 import shutil
 import tempfile
-from typing import Tuple, Union
 import unittest
 import warnings
-
 from pathlib import Path
+from typing import Tuple, Union
 
-from mockito import mock, when, unstub, verify, verifyNoMoreInteractions, any as any_value
+from mne.io import read_raw_bdf, read_raw_edf
+from mockito import any as any_value
+from mockito import mock, unstub, verify, verifyNoMoreInteractions, when
 
-from bcipy.config import DEFAULT_ENCODING, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_PARAMETER_FILENAME
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETER_FILENAME,
+                          RAW_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers import convert
-from bcipy.helpers.convert import (
-    archive_list,
-    compress,
-    convert_to_bdf,
-    convert_to_edf,
-    convert_to_mne,
-    decompress,
-    pyedf_convert,
-    tobii_to_norm,
-    norm_to_tobii,
-)
+from bcipy.helpers.convert import (archive_list, compress, convert_to_bdf,
+                                   convert_to_edf, convert_to_mne, decompress,
+                                   norm_to_tobii, pyedf_convert, tobii_to_norm)
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import sample_data, write, RawData
+from bcipy.helpers.raw_data import RawData, sample_data, write
 from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
 from bcipy.signal.generator.generator import gen_random_data
-
-from mne.io import read_raw_edf, read_raw_bdf
 
 
 def create_bcipy_session_artifacts(
@@ -137,8 +129,8 @@ class TestEDFConvert(unittest.TestCase):
             warnings.simplefilter('ignore')
             edf = read_raw_edf(path, preload=True)
 
-        self.assertIn('target', edf.annotations.description)
-        self.assertIn('nontarget', edf.annotations.description)
+        self.assertTrue('target' in edf.annotations.description)
+        self.assertTrue('nontarget' in edf.annotations.description)
 
     def test_convert_to_edf_without_write_targetness(self):
         """Test creating the EDF with labels as event annotations"""
@@ -400,7 +392,7 @@ class TestPyedfconvert(unittest.TestCase):
     def test_pyedf_convert_with_write_targetness(self):
         """Test the pyedf_convert function with targetness for event annotations"""
         data, channels, fs, events, annotation_channels, _ = pyedf_convert(
-            self.temp_dir, write_targetness=True)
+            self.temp_dir, write_targetness=True, remove_pre_fixation=True)
 
         self.assertTrue(len(data) > 0)
         self.assertTrue(len(channels) > 0)
@@ -410,7 +402,7 @@ class TestPyedfconvert(unittest.TestCase):
         self.assertEqual(annotation_channels, 1)
         for event in events:
             _, _, label = event
-            # in this casae label and targetness should not be the same
+            # in this case label and targetness should not be the same
             self.assertTrue(label in ['target', 'nontarget'])
 
     def test_pyedf_convert_without_write_targetness(self):

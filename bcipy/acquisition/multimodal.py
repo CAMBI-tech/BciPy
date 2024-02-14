@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type"
 """Functionality for managing multiple devices."""
 import logging
 from typing import Any, Dict, List, Optional
@@ -25,12 +26,12 @@ class ContentType(AutoNumberEnum):
     def __init__(self, synonyms: List[str]):
         self.synonyms = synonyms
 
-    EEG = []
-    EYETRACKER = ['gaze', 'eye_tracker']
-    MARKERS = ['switch']
+    EEG: List[str] = []
+    EYETRACKER: List[str] = ['gaze', 'eye_tracker']
+    MARKERS: List[str] = ['switch']
 
     @classmethod
-    def _missing_(cls, value: Any):
+    def _missing_(cls, value: Any) -> 'ContentType':
         """Lookup function used when a value is not found."""
         value = str(value).lower()
         for member in cls:
@@ -58,14 +59,14 @@ class ClientManager():
         default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, default_content_type: ContentType = ContentType.EEG):
+    def __init__(self, default_content_type: ContentType = ContentType.EEG) -> None:
         self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
 
     @property
     def clients(self) -> List[LslAcquisitionClient]:
         """Returns a list of the managed clients."""
-        return self._clients.values()
+        return list(self._clients.values())
 
     @property
     def clients_by_type(self) -> Dict[ContentType, LslAcquisitionClient]:
@@ -81,7 +82,16 @@ class ClientManager():
     def device_content_types(self) -> List[ContentType]:
         """Returns a list of ContentTypes provided by the configured devices.
         """
-        return self._clients.keys()
+        return list(self._clients.keys())
+
+    @property
+    def active_device_content_types(self) -> List[ContentType]:
+        """Returns a list of ContentTypes provided by the active configured
+        devices."""
+        return [
+            content_type for content_type, client in self._clients.items()
+            if client.device_spec.is_active
+        ]
 
     @property
     def default_client(self) -> Optional[LslAcquisitionClient]:
@@ -111,9 +121,9 @@ class ClientManager():
 
     def get_data_by_device(
         self,
-        start: float = None,
-        seconds: float = None,
-        content_types: List[ContentType] = None,
+        start: Optional[float] = None,
+        seconds: Optional[float] = None,
+        content_types: Optional[List[ContentType]] = None,
         strict: bool = True
     ) -> Dict[ContentType, List[Record]]:
         """Get data for one or more devices. The number of samples for each
@@ -154,7 +164,7 @@ class ClientManager():
         for client in self.clients:
             client.cleanup()
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> Any:
         """Dispatch unknown properties and methods to the client with the
         default content type."""
         client = self.default_client

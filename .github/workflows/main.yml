@@ -26,7 +26,7 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Update OS, pip & install custom dependencies
       run: |
         sudo apt-get update
         sudo apt-get install libgtk-3-dev
@@ -36,14 +36,13 @@ jobs:
         sudo apt-get install libsndfile*
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
+        pip install kenlm==0.1 --global-option="--max_order=12"
+        pip install psychopy==2023.2.1 --no-deps
         pip install attrdict3
+    - name: Install dependencies
+      run: |
         pip install -r dev_requirements.txt
         pip install -e .
-        pip install kenlm==0.1 --global-option="--max_order=12"
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 bcipy
     - name: Unit test
       if: always()
       run: |
@@ -59,6 +58,12 @@ jobs:
         else 
           echo "Ubuntu test failure"
         fi
+    - name: type-check
+      run: |
+        mypy bcipy
+    - name: lint
+      run: |
+        flake8 bcipy
 
   build-windows:
 
@@ -74,25 +79,29 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies for python3.9
+    - name: update pip & install custom dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install kenlm==0.1 --global-option="--max_order=12"
+        pip install psychopy==2023.2.1 --no-deps
+    - name: install manually downloaded pyWinhook wheel for Python 3.9
       if: matrix.python-version == 3.9
       run: |
-        python -m pip install --upgrade pip
-        pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl 
-    - name: Install dependencies
+        pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl
+    - name: install dependencies
       run: |
-        python -m pip install --upgrade pip
         pip install -r dev_requirements.txt
         pip install -e .
-        pip install kenlm==0.1 --global-option="--max_order=12"
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 bcipy
-    - name: Unit test
+    - name: unittest
       if: always()
       run: |
         coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+    - name: type-check
+      run: |
+        mypy bcipy
+    - name: lint
+      run: |
+        flake8 bcipy
 
   build-macos:
 
@@ -103,22 +112,31 @@ jobs:
         python-version: [3.8, 3.9]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: update pip & install custom dependencies
       run: |
+        brew install labstreaminglayer/tap/lsl
         python -m pip install --upgrade pip
+        pip install kenlm==0.1 --global-option="--max_order=12"
+        pip install psychopy==2023.2.1 --no-deps
+    - name: install dependencies
+      run: |
         pip install -r dev_requirements.txt
         pip install -e .
-        pip install kenlm==0.1 --global-option="--max_order=12"
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 bcipy
-    - name: Unit test
+    - name: unittest
       if: always()
       run: |
         coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+        coverage report
+    - name: type-check
+      run: |
+        mypy bcipy
+    - name: lint
+      run: |
+        flake8 bcipy
+
+    

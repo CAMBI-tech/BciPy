@@ -1,6 +1,7 @@
+# mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from logging import Logger
-from typing import List, Tuple, Union
+from typing import Any, List, Optional, Tuple, Union
 
 from psychopy import visual
 
@@ -32,7 +33,7 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def wait_screen(self) -> None:
+    def wait_screen(self, *args, **kwargs) -> None:
         """Wait Screen.
 
         Define what happens on the screen when a user pauses a session.
@@ -131,17 +132,18 @@ class StimuliProperties:
     def __init__(
             self,
             stim_font: str,
-            stim_pos: Tuple[float, float],
+            stim_pos: Union[Tuple[float, float], List[Tuple[float, float]]],
             stim_height: float,
-            stim_inquiry: List[str] = None,
-            stim_colors: List[str] = None,
-            stim_timing: List[float] = None,
+            stim_inquiry: Optional[List[str]] = None,
+            stim_colors: Optional[List[str]] = None,
+            stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: float = None):
+            prompt_time: Optional[float] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
         stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
+            or a list of positions (ex. for matrix displays)
         stim_height(float): Height of all stimuli
         stim_inquiry(List[str]): Ordered list of text to build stimuli with
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
@@ -263,15 +265,15 @@ class PreviewInquiryProperties:
 
 class VEPStimuliProperties(StimuliProperties):
 
-    def __init__(
-            self,
-            stim_font: str,
-            stim_pos: List[Tuple[float, float]],
-            stim_height: float,
-            timing: Tuple[float, float, float] = None,
-            stim_color: List[List[str]] = None,
-            inquiry: List[List[str]] = None,
-            stim_length: int = 1):
+    def __init__(self,
+                 stim_font: str,
+                 stim_pos: List[Tuple[float, float]],
+                 stim_height: float,
+                 timing: List[float],
+                 stim_color: List[str],
+                 inquiry: List[List[Any]],
+                 stim_length: int = 1,
+                 animation_seconds: float = 1.0):
         """Initialize VEP Stimuli Parameters.
         stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
         stim_font(str): Font to apply to all VEP stimuli
@@ -291,6 +293,7 @@ class VEPStimuliProperties(StimuliProperties):
         # dynamic properties, must be a a list of lists where each list is a different box
         self.stim_colors = stim_color
         self.stim_inquiry = inquiry
+        self.animation_seconds = animation_seconds
 
     def build_init_stimuli(self, window: visual.Window) -> None:
         """"Build Initial Stimuli."""

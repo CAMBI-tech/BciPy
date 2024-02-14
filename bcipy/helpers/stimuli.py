@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type"
 import glob
 import itertools
 import logging
@@ -7,28 +8,27 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Dict, Iterator, List, NamedTuple, Optional, Tuple
-
-from pandas import Series
-from PIL import Image
-
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.list import grouper
-
-# Prevents pillow from filling the console with debug info
-logging.getLogger('PIL').setLevel(logging.WARNING)
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple, Union
 
 import mne
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
+
 from mne import Annotations, Epochs
 from mne.io import RawArray
+from pandas import Series
+from PIL import Image
 from psychopy import core
 
+from bcipy.config import DEFAULT_TEXT_FIXATION, DEFAULT_FIXATION_PATH
+from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.helpers.list import grouper
+
+# Prevents pillow from filling the console with debug info
+logging.getLogger('PIL').setLevel(logging.WARNING)
 log = logging.getLogger(__name__)
-DEFAULT_FIXATION_PATH = 'bcipy/static/images/main/PLUS.png'
-DEFAULT_TEXT_FIXATION = '+'
+
 NO_TARGET_INDEX = None
 
 
@@ -85,15 +85,15 @@ class InquirySchedule(NamedTuple):
     - durations: `List[List[float]]`
     - colors: `List[List[str]]`
     """
-    stimuli: List[List[str]]
-    durations: List[List[float]]
-    colors: List[List[str]]
+    stimuli: Union[List[List[str]], List[str]]
+    durations: Union[List[List[float]], List[float]]
+    colors: Union[List[List[str]], List[str]]
 
 
 class Reshaper(ABC):
 
     @abstractmethod
-    def __call__(self):
+    def __call__(self, *args, **kwargs) -> Any:
         ...
 
 
@@ -105,11 +105,11 @@ class InquiryReshaper:
                  sample_rate: int,
                  trials_per_inquiry: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  transformation_buffer: float = 0.0,
-                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray]:
+                 target_label: str = 'target') -> Tuple[np.ndarray, np.ndarray, List[List[float]]]:
         """Extract inquiry data and labels.
 
         Args:
@@ -129,7 +129,7 @@ class InquiryReshaper:
         Returns:
             reshaped_data (np.ndarray): inquiry data of shape (Channels, Inquiries, Samples)
             labels (np.ndarray): integer label for each inquiry. With `trials_per_inquiry=K`,
-                a label of [0, K-1] indicates the position of `target_label`, or label of K indicates
+                a label of [0, K-1] indicates the position of `target_label`, or label of [0 ... 0] indicates
                 `target_label` was not present.
             reshaped_trigger_timing (List[List[int]]): For each inquiry, a list of the sample index where each trial
                 begins, accounting for the prestim buffer that may have been added to the front of each inquiry.
@@ -157,7 +157,7 @@ class InquiryReshaper:
 
         # Label for every inquiry
         labels = np.zeros(
-            (n_inquiry, trials_per_inquiry), dtype=np.compat.long
+            (n_inquiry, trials_per_inquiry), dtype=np.longlong
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
@@ -184,7 +184,7 @@ class InquiryReshaper:
     def extract_trials(
             inquiries: np.ndarray,
             samples_per_trial: int,
-            inquiry_timing: List[List[float]],
+            inquiry_timing: List[List[int]],
             prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
@@ -199,7 +199,7 @@ class InquiryReshaper:
             shape (Channels, Inquiries, Samples)
         samples_per_trial : int
             number of samples per trial
-        inquiry_timing : List[List[float]]
+        inquiry_timing : List[List[int]]
             For each inquiry, a list of the sample index where each trial begins
         prestimulus_samples : int, optional
             Number of samples to move the start of each trial in each inquiry, by default 0.
@@ -221,12 +221,117 @@ class InquiryReshaper:
 
                 try:
                     new_trials.append(inquiries[:, inquiry_idx, start:end])
-                except IndexError:
+                except IndexError:  # pragma: no cover
                     raise BciPyCoreException(
                         f'InquiryReshaper.extract_trials: index out of bounds. \n'
                         f'Inquiry: [{inquiry_idx}] from {start}:{end}. init_time: {time}, '
                         f'prestimulus_samples: {prestimulus_samples}, samples_per_trial: {samples_per_trial} \n')
         return np.stack(new_trials, 1)  # C x T x S
+
+
+class GazeReshaper:
+    def __call__(self,
+                 inq_start_times: List[float],
+                 target_symbols: List[str],
+                 gaze_data: np.ndarray,
+                 sample_rate: int,
+                 symbol_set: List[str],
+                 channel_map: Optional[List[int]] = None,
+                 ) -> dict:
+        """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
+        the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
+        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
+        the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
+        Optional outputs:
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended
+        in chronological order. labels returns the list of target symbols in each inquiry.
+
+        Args:
+            inq_start_times (List[float]): Timestamp of each event in seconds
+            target_symbols (List[str]): Prompted symbol in each inquiry
+            gaze_data (np.ndarray): shape (channels, samples) eye tracking data
+            sample_rate (int): sample rate of data provided in eeg_data
+            channel_map (List[int], optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
+
+        Returns:
+            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
+            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
+
+            reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
+            labels (List[str]) [optional] : Target symbol in each inquiry.
+        """
+        if channel_map:
+            # Remove the channels that we are not interested in
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
+
+        # Find the value closest to (& greater than) inq_start_times
+        gaze_data_timing = gaze_data[-1, :].tolist()
+
+        start_times = []
+        for times in inq_start_times:
+            temp = list(filter(lambda x: x > times, gaze_data_timing))
+            if len(temp) > 0:
+                start_times.append(temp[0])
+
+        triggers = []
+        for val in start_times:
+            triggers.append(gaze_data_timing.index(val))
+
+        # Label for every inquiry
+        labels = target_symbols
+
+        # Create a dictionary with symbols as keys and data as values
+        # 'A': [], 'B': [] ...
+        data_by_targets: Dict[str, list] = {}
+        for symbol in symbol_set:
+            data_by_targets[symbol] = []
+
+        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+
+        reshaped_data = []
+        # Merge the inquiries if they have the same target letter:
+        for i, inquiry_index in enumerate(triggers):
+            start = inquiry_index
+            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
+            # Check if the data exists for the inquiry:
+            if stop > len(gaze_data[0, :]):
+                continue
+
+            reshaped_data.append(gaze_data[:, start:stop])
+            # (Optional) extracted data (Inquiries x Channels x Samples)
+
+            # Populate the dict by appending the inquiry to the correct key:
+            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+
+        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
+        for symbol in symbol_set:
+            if len(data_by_targets[symbol]) > 0:
+                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
+                data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
+
+            # Note that this is a workaround to the issue of having different number of targetness in
+            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
+            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
+            # This is not ideal, but it works for now.
+
+        # return np.stack(reshaped_data, 0), labels
+        return data_by_targets
+
+    @staticmethod
+    def centralize_all_data(data, symbol_pos):
+        """ Using the symbol locations in matrix, centralize all data (in Tobii units).
+        This data will only be used in certain model types.
+        Args:
+            data (np.ndarray): Data in shape of num_channels x num_samples
+            symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
+        Returns:
+            data (np.ndarray): Centralized data in shape of num_channels x num_samples
+        """
+        for i in range(len(data)):
+            data[i] = data[i] - symbol_pos
+        return data
 
 
 class TrialReshaper(Reshaper):
@@ -236,7 +341,7 @@ class TrialReshaper(Reshaper):
                  eeg_data: np.ndarray,
                  sample_rate: int,
                  offset: float = 0,
-                 channel_map: List[int] = None,
+                 channel_map: Optional[List[int]] = None,
                  poststimulus_length: float = 0.5,
                  prestimulus_length: float = 0.0,
                  target_label: str = "target") -> Tuple[np.ndarray, np.ndarray]:
@@ -274,7 +379,7 @@ class TrialReshaper(Reshaper):
         triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
-        targetness_labels = np.zeros(len(triggers), dtype=np.compat.long)
+        targetness_labels = np.zeros(len(triggers), dtype=np.longlong)
         reshaped_trials = []
         for trial_idx, (trial_label, trigger) in enumerate(zip(trial_targetness_label, triggers)):
             if trial_label == target_label:
@@ -300,7 +405,7 @@ def mne_epochs(mne_data: RawArray,
                trigger_timing: List[float],
                trial_length: float,
                trigger_labels: List[int],
-               baseline: Tuple[float, float] = (None, 0)) -> Epochs:
+               baseline: Optional[Tuple[Any, float]] = None) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
@@ -309,6 +414,8 @@ def mne_epochs(mne_data: RawArray,
     annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     mne_data.set_annotations(annotations)
     events_from_annot, _ = mne.events_from_annotations(mne_data)
+    if not baseline:
+        baseline = (None, 0.0)
     return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
 
 
@@ -375,7 +482,7 @@ def inq_generator(query: List[str],
 def best_selection(selection_elements: list,
                    val: list,
                    len_query: int,
-                   always_included: List[str] = None) -> list:
+                   always_included: Optional[List[str]] = None) -> list:
     """Best Selection.
 
     Given set of elements and a value function over the set, picks the len_query
@@ -416,7 +523,7 @@ def best_case_rsvp_inq_gen(alp: list,
                            stim_length: int = 10,
                            stim_order: StimuliOrder = StimuliOrder.RANDOM,
                            is_txt: bool = True,
-                           inq_constants: List[str] = None) -> InquirySchedule:
+                           inq_constants: Optional[List[str]] = None) -> InquirySchedule:
     """Best Case RSVP Inquiry Generation.
 
     Generates RSVPKeyboard inquiry by picking n-most likely letters.
@@ -486,9 +593,9 @@ def best_case_rsvp_inq_gen(alp: list,
 
 def generate_calibration_inquiries(
         alp: List[str],
-        timing: List[float] = None,
+        timing: Optional[List[float]] = None,
         jitter: Optional[int] = None,
-        color: List[str] = None,
+        color: Optional[List[str]] = None,
         inquiry_count: int = 100,
         stim_per_inquiry: int = 10,
         stim_order: StimuliOrder = StimuliOrder.RANDOM,
@@ -656,8 +763,8 @@ def generate_inquiry(symbols: List[str], length: int,
 def inquiry_target(inquiry: List[str],
                    target_position: Optional[int],
                    symbols: List[str],
-                   next_targets: List[str] = None,
-                   last_target: str = None) -> str:
+                   next_targets: Optional[List[str]] = None,
+                   last_target: Optional[str] = None) -> str:
     """Returns the target for the given inquiry. If the optional
     target position is not provided a target will randomly be selected from
     the list of symbols and will not be in the inquiry.
@@ -681,7 +788,6 @@ def inquiry_target(inquiry: List[str],
         # if none of the symbols in the current inquiry are in the choices, the
         # target is determined strictly from the target_position.
         choice_index = None
-        symbol_inquiry_position = None
         target = None
         for position, symbol in enumerate(inquiry):
             # avoid repeating targets
@@ -870,7 +976,7 @@ def generate_targets(symbols: List[str], inquiry_count: int,
     return targets
 
 
-def target_index(inquiry: List[str]) -> int:
+def target_index(inquiry: List[str]) -> Optional[int]:
     """Given an inquiry, return the index of the target within the choices and
     None if the target is not included as a choice.
 
@@ -908,14 +1014,14 @@ def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], L
     """
 
     # Do list comprehensions to get the arrays for the task we need.
-    task_text = ['%s/%s' % (stim + 1, experiment_length)
-                 for stim in range(experiment_length)]
-    task_color = [[str(task_color)] for stim in range(experiment_length)]
+    task_text_list = ['%s/%s' % (stim + 1, experiment_length)
+                      for stim in range(experiment_length)]
+    task_color_list = [str(task_color) for _ in range(experiment_length)]
 
-    return (task_text, task_color)
+    return (task_text_list, task_color_list)
 
 
-def resize_image(image_path: str, screen_size: tuple, sti_height: int) -> Tuple[float, float]:
+def resize_image(image_path: str, screen_size: tuple, sti_height: float) -> Tuple[float, float]:
     """Resize Image.
 
     Returns the width and height that a given image should be displayed at
@@ -951,7 +1057,7 @@ def play_sound(sound_file_path: str,
                sound_callback=None,
                sound_load_buffer_time: float = 0.5,
                experiment_clock=None,
-               trigger_name: str = None,
+               trigger_name: Optional[str] = None,
                timing: list = []) -> list:
     """Play Sound.
 
@@ -1029,43 +1135,3 @@ def get_fixation(is_txt: bool) -> str:
         return DEFAULT_TEXT_FIXATION
     else:
         return DEFAULT_FIXATION_PATH
-
-
-def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:
-    """Convert SSVEP to Code.
-
-    Converts a SSVEP (steady state visual evoked potential; ex. 10 Hz) to a code (0,1)
-    given the refresh rate of the monitor (Hz) provided and a desired flicker rate (Hz).
-
-    Parameters:
-    -----------
-        refresh_rate: int, refresh rate of the monitor (Hz)
-        flicker_rate: int, desired flicker rate (Hz)
-    Returns:
-    --------
-        list of 0s and 1s that represent the code for the SSVEP on the monitor.
-    """
-    if flicker_rate > refresh_rate:
-        raise BciPyCoreException('flicker rate cannot be greater than refresh rate')
-    if flicker_rate <= 1:
-        raise BciPyCoreException('flicker rate must be greater than 1')
-
-    # get the number of frames per flicker
-    length_flicker = refresh_rate / flicker_rate
-
-    if length_flicker.is_integer():
-        length_flicker = int(length_flicker)
-    else:
-        err_message = f'flicker rate={flicker_rate} is not an integer multiple of refresh rate={refresh_rate}'
-        log.exception(err_message)
-        raise BciPyCoreException(err_message)
-
-    # start the first frames as off (0) for length of flicker;
-    # it will then toggle on (1)/ off (0) for length of flicker until all frames are filled for refresh rate.
-    t = 0
-    codes = []
-    for _ in range(flicker_rate):
-        codes += [t] * length_flicker
-        t = 1 - t
-
-    return codes

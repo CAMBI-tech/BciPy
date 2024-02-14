@@ -11,12 +11,13 @@
     "value": "EEG",
     "section": "acq_config",
     "readableName": "Acquisition Mode",
-    "helpTip": "Specifies the hardware device(s) used for data collection.",
+    "helpTip": "Specifies the hardware device(s) used for data collection. Default: EEG.",
     "recommended_values": [
       "EEG",
       "EEG/DSI-24",
       "Eyetracker",
-      "EEG+Eyetracker"
+      "EEG+Eyetracker",
+      "EEG+Eyetracker:passive"
     ],
     "type": "str"
   },
@@ -32,10 +33,10 @@
     "type": "str"
   },
   "static_trigger_offset": {
-    "value": "0.100",
+    "value": "0.1",
     "section": "bci_config",
     "readableName": "Static Trigger Offset",
-    "helpTip": "Specifies the static trigger offset (in seconds) used to align triggers properly with EEG data from LSL. The system includes built-in offset correction, but there is still a hardware-limited offset between EEG and trigger timing values for which the system does not account. The default value of 0.1 has been verified for OHSU hardware. The correct value may be different for other computers, and must be determined on a case-by-case basis. Default: .1",
+    "helpTip": "Specifies the static trigger offset (in seconds) used to align triggers properly with EEG data from LSL. The system includes built-in offset correction, but there is still a hardware-limited offset between EEG and trigger timing values for which the system does not account. The default value of 0.1 has been verified for OHSU hardware. The correct value may be different for other computers, and must be determined on a case-by-case basis. Default: 0.1",
     "recommended_values": "",
     "type": "float"
   },
@@ -153,7 +154,7 @@
     "type": "bool"
   },
   "high_voltage_value": {
-    "value": "75E+6",
+    "value": "75000000.0",
     "section": "artifact_rejection",
     "readableName": "High Voltage Threshold Value",
     "helpTip": "Specifies the high voltage threshold (in microvolts) for artifact rejection (High Voltage Threshold must be set to ‘true’). Default: 75E+6. This is not implemented in the current version of the system.",
@@ -169,7 +170,7 @@
     "type": "bool"
   },
   "low_voltage_value": {
-    "value": "-75E-6",
+    "value": "-0.000075",
     "section": "artifact_rejection",
     "readableName": "LowVoltage Threshold Value",
     "helpTip": "Specifies the low voltage threshold (in microvolts) for artifact rejection (Low Voltage Threshold must be set to ‘true’). Default: -75E-6 This is not implemented in the current version of the system.",
@@ -227,6 +228,30 @@
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended_values": "",
     "type": "int"
+  },
+  "matrix_rows": {
+    "value": "5",
+    "section": "bci_config",
+    "readableName": "Matrix Rows",
+    "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_columns": {
+    "value": "6",
+    "section": "bci_config",
+    "readableName": "Matrix Columns",
+    "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "matrix_width": {
+    "value": "0.7",
+    "section": "bci_config",
+    "readableName": "Matrix Width (%)",
+    "helpTip": "Specifies the max percentage of the display that the matrix grid should utilize. Must be between 0 and 1",
+    "recommended_values": "",
+    "type": "float"
   },
   "acq_show_viewer": {
     "value": "false",
@@ -343,6 +368,14 @@
     "recommended_values": "",
     "type": "float"
   },
+  "time_vep_animation": {
+    "value": "1.0",
+    "section": "bci_config",
+    "readableName": "Time VEP Animation (sec)",
+    "helpTip": "The amount of time in seconds for the animation moving symbols to boxes.",
+    "recommended_values": "",
+    "type": "float"
+  },
   "stim_jitter": {
     "value": "0.0",
     "section": "bci_config",
@@ -368,7 +401,7 @@
     "type": "float"
   },
   "font": {
-    "value": "Consolas",
+    "value": "Overpass Mono Medium",
     "section": "bci_config",
     "readableName": "Font",
     "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
@@ -499,6 +532,16 @@
     "recommended_values": "",
     "type": "str"
   },
+  "task_padding": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Task Bar Padding",
+    "helpTip": "Specifies the padding around the task bar text. Default: 0.05",
+    "recommended_values": [
+      "0.05"
+    ],
+    "type": "float"
+  },
   "stim_number": {
     "value": "100",
     "section": "bci_config",
@@ -625,7 +668,7 @@
     "value": "KENLM",
     "section": "lang_model_config",
     "readableName": "Language Model Type",
-    "helpTip": "Specifies which language model to use. Default: MIXTURE",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
     "recommended_values": [
       "UNIFORM",
       "CAUSAL",
@@ -635,11 +678,11 @@
     "type": "str"
   },
   "lm_backspace_prob": {
-    "value": "0.05",
+    "value": "0.0",
     "section": "bci_config",
     "readableName": "Backspace Probability",
-    "helpTip": "Specifies the initial probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.05",
-    "recommended_values": "",
+    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
+    "recommended_values": "0.05",
     "type": "float"
   },
   "show_preview_inquiry": {

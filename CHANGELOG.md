@@ -6,14 +6,19 @@ Our last release candidate before the official 2.0 release!
 
 - Multimodal Acquisition and Querying
     - Support for multiple devices in online querying #286
+    - Support for trigger handling relative to a given device #293
+- Model
+    - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
 - Stimuli
-    - Updates to ensure stimuli are presented at the same frequency #287
+    - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Parameters
     - Add a Range type parameter #285
-- Cleanup
-    - Change default log level to INFO to prevent too many messages in the experiment logs #288
+- Housekeeping
+    - Add mypy typing to the codebase #301
+    - Change default log level to INFO to prevent too many messages in the experiment logs #288 
+    - Upgrade requirements for m1/2 chips #299/#300
 
 
 # 2.0.0-rc.3
@@ -28,9 +33,11 @@ Our last release candidate before the official 2.0 release!
     - Set channel spec information in devices.json. Removed aliases. #266 Updated default analysis channels for Wearable Sensing devices #279
     - Refactor to allow multiple devices to be configured for multimodal acquisition. #277
     - Refinements to LSL server to use the device ChannelSpec information for generating metadata. #282
+    - Updated data consumers to explicitly set a chunk size. Refinements to LSL server to simulate different chunk sizes. #292
 - Matrix
     - Matrix calibration refinements #262
     - Matrix Copy Phrase Task #261
+    - Matrix displays can be parameterized with a given number of rows and columns. #289
 - RSVP
     - RSVP Calibration pulls out inquiry preview parameters and calls the display with them if enabled
     - RSVP Display `do_inquiry` accepts a preview_calibration argument that will present the full inquiry to come if True after the prompt and before the fixation
