@@ -3,12 +3,11 @@ import json
 import logging
 import random
 from time import sleep
-from typing import Optional, Dict, Any
+from typing import Optional, Dict
 
 import numpy as np
 
-from bcipy.helpers import load, stimuli, symbols
-from bcipy.helpers.language_model import histogram
+from bcipy.helpers import stimuli, symbols
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
@@ -17,8 +16,7 @@ from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
 from bcipy.simulator.helpers.state_manager import StateManager, SimState
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
-from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence, \
-    fmt_likelihoods_for_hist
+from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence
 from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 from bcipy.task.data import EvidenceType
@@ -105,7 +103,7 @@ class SimulatorCopyPhrase(Simulator):
 
         log.debug(f"Final State: {final_state}")
 
-        self.output_run()
+        self.save_run()
 
     def __make_stimuli(self, state: SimState):
         # TODO abstract out
@@ -144,18 +142,21 @@ class SimulatorCopyPhrase(Simulator):
         else:
             return self.data_engine.get_parameters()
 
-    def output_run(self):
+    def save_run(self):
         """ Outputs the results of a run to json file """
 
+        # creating result.json object with final state and metrics
         final_state = self.state_manager.get_state()
         final_state_json: Dict = final_state.to_json()
-
-        metric_dict = self.referee.score(self).__dict__
+        metric_dict = dataclasses.asdict(self.referee.score(self))
         metric_dict.update(final_state_json)  # adding state data to metrics
 
-        output_path = "bcipy/simulator/generated"
-        with open(f"{output_path}/result.json", 'w') as output_file:
-            json.dump(metric_dict, output_file)
+        # writing result.json
+        with open(f"{self.save_dir}/result.json", 'w') as output_file:
+            json.dump(metric_dict, output_file, indent=1)
+
+        # writing params
+        self.parameters.save(directory=self.save_dir)
 
     def get_parameters(self):
         return self.parameters.copy()

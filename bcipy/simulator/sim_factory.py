@@ -17,7 +17,7 @@ class SimulationFactoryV2:
 
     @staticmethod
     def create(data_folder: str, smodel_files: List[str],
-               sim_param_path="bcipy/simulator/sim_parameters.json", **kwargs):
+               sim_param_path="bcipy/simulator/sim_parameters.json", save_dir=None, **kwargs):
         # out_dir = kwargs.get('out_dir', Path(__file__).resolve().parent)
 
         model_file = Path(smodel_files.pop())
@@ -33,6 +33,6 @@ class SimulationFactoryV2:
         referee: MetricReferee = RefereeImpl(metric_handlers={'basic': SimMetrics1Handler()})
 
         sim = SimulatorCopyPhrase(data_engine, model_handler, sampler, state_manager, referee,
-                                  parameters=base_parameters)
+                                  parameters=base_parameters, save_dir=save_dir)
 
         return sim
