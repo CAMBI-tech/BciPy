@@ -673,7 +673,8 @@
       "UNIFORM",
       "CAUSAL",
       "KENLM",
-      "MIXTURE"
+      "MIXTURE",
+      "ORACLE"
     ],
     "type": "str"
   },
