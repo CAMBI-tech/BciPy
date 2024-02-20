@@ -5,15 +5,16 @@ from typing import Optional
 
 import numpy as np
 
-from bcipy.helpers.language_model import init_language_model, histogram, with_min_prob
-from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
+from bcipy.helpers.language_model import (histogram, init_language_model,
+                                          with_min_prob)
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.language import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.simulator.helpers.state_manager import SimState
 from bcipy.simulator.helpers.types import SimEvidence
 from bcipy.task.data import EvidenceType
 
-log = logging.getLogger(__name__)
+log = logging.getLogger()
 
 
 class ModelHandler(ABC):
@@ -34,6 +35,7 @@ class SignalModelHandler1(ModelHandler):
         self.signal_model: Optional[SignalModel] = None
         with open(self.model_file, "rb") as signal_file:
             self.signal_model = pickle.load(signal_file)
+        log.debug("Initialized SignalModelHandler1")
 
     def generate_evidence(self, state: SimState, features):
         stimuli = state.display_alphabet
@@ -55,11 +57,13 @@ class SigLmModelHandler1(ModelHandler):
             sm_model_file: path to signal model pickle
             parameters: only needs to contain which type of language model
         """
+        log.info("Initializing SigLmModelHandler1")
         self.sm_model_file = sm_model_file
         self.signal_model: Optional[SignalModel] = None
         self.lm_model: LanguageModel = init_language_model(parameters)
+        log.debug(f"Initialized language model: {type(self.lm_model)}")
         self.alp = alphabet()
-        self.backspace_prob: float = 0.05
+        self.backspace_prob: float = parameters.get('lm_backspace_prob', 0.05)
 
         with open(self.sm_model_file, "rb") as signal_file:
             self.signal_model = pickle.load(signal_file)

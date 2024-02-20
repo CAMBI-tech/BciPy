@@ -16,11 +16,11 @@ from bcipy.simulator.simulator_base import Simulator
 def configure_logger(log_path, file_name):
     """ configures logger for standard out nad file output """
 
-    log = logging.getLogger(None)  # configuring root logger
+    log = logging.getLogger()  # configuring root logger
     log.setLevel(logging.DEBUG)
     # Create handlers for logging to the standard output and a file
     stdoutHandler = logging.StreamHandler(stream=sys.stdout)
-    fileHandler = logging.FileHandler(f"{log_path}/{file_name}.log")
+    fileHandler = logging.FileHandler(f"{log_path}/{file_name}.log", 'w', encoding='utf-8')
 
     # Set the log levels on the handlers
     stdoutHandler.setLevel(logging.INFO)
@@ -82,8 +82,7 @@ if __name__ == "__main__":
     args['save_dir'] = init_save_dir(output_path, now_time)
 
     # setting up logging
-    log_path = f"{args['save_dir']}/logs"
-    configure_logger(log_path, now_time)
+    configure_logger(log_path=f"{args['save_dir']}/logs", file_name=now_time)
 
     simulator: Simulator = SimulationFactoryV2.create(**args)
 
