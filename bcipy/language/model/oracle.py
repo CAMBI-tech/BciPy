@@ -10,6 +10,9 @@ from bcipy.language.model.uniform import equally_probable
 
 logger = logging.getLogger()
 
+TARGET_BUMP_MIN = 0.0
+TARGET_BUMP_MAX = 0.95
+
 
 class OracleLanguageModel(LanguageModel):
     """Language model which knows the target phrase the user is attempting to
@@ -34,12 +37,34 @@ class OracleLanguageModel(LanguageModel):
                  task_text: str = None,
                  target_bump: float = 0.1):
         super().__init__(response_type=response_type, symbol_set=symbol_set)
-        assert task_text, "task_text is required"
         self.task_text = task_text
         self.target_bump = target_bump
         logger.debug(
             f"Initialized OracleLanguageModel(task_text='{task_text}', target_bump={target_bump})"
         )
+
+    @property
+    def task_text(self):
+        """Get the task_text property"""
+        return self._task_text
+
+    @task_text.setter
+    def task_text(self, value: str):
+        """Setter for task_text"""
+        assert value, "task_text is required"
+        self._task_text = value
+
+    @property
+    def target_bump(self):
+        """Get the target_bump property"""
+        return self._target_bump
+
+    @target_bump.setter
+    def target_bump(self, value: float):
+        """Setter for target_bump"""
+        msg = f"target_bump should be between {TARGET_BUMP_MIN} and {TARGET_BUMP_MAX}"
+        assert TARGET_BUMP_MIN <= value <= TARGET_BUMP_MAX, msg
+        self._target_bump = value
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]

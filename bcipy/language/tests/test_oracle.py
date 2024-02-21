@@ -73,3 +73,40 @@ class TestOracleLanguageModel(unittest.TestCase):
         self.assertAlmostEqual(0.2,
                                probs_dict['H'] - probs_dict['A'],
                                places=1)
+
+    def test_setting_task_text_to_none(self):
+        """Test that task_text is required"""
+        lmodel = OracleLanguageModel(task_text="HELLO_WORLD")
+        with self.assertRaises(AssertionError):
+            lmodel.task_text = None
+
+    def test_updating_task_text(self):
+        """Test updating the task_text property."""
+        lm = OracleLanguageModel(task_text="HELLO_WORLD", target_bump=0.2)
+        probs = dict(lm.predict(evidence=list("HELLO_")))
+        self.assertTrue(probs['W'] > probs['T'],
+                        "Target should have a higher value")
+
+        lm.task_text = "HELLO_THERE"
+        probs = dict(lm.predict(evidence=list("HELLO_")))
+        self.assertTrue(probs['T'] > probs['W'],
+                        "Target should have a higher value")
+
+    def test_target_bump_bounds(self):
+        """Test the bounds of target_bump property"""
+        with self.assertRaises(AssertionError):
+            OracleLanguageModel(task_text="HI", target_bump=-1.0)
+
+        with self.assertRaises(AssertionError):
+            OracleLanguageModel(task_text="HI", target_bump=1.1)
+
+        lm = OracleLanguageModel(task_text="HI", target_bump=0.0)
+        with self.assertRaises(AssertionError):
+            lm.target_bump = -1.0
+
+        lm.target_bump = 0.5
+        self.assertEqual(0.5, lm.target_bump)
+
+
+if __name__ == '__main__':
+    unittest.main()
