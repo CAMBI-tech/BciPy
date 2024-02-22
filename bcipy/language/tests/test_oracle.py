@@ -107,6 +107,28 @@ class TestOracleLanguageModel(unittest.TestCase):
         lm.target_bump = 0.5
         self.assertEqual(0.5, lm.target_bump)
 
+    def test_evidence_exceeds_task(self):
+        """Test probs when evidence exceeds task_text."""
+        lm = OracleLanguageModel(task_text="HELLO")
+
+        probs = dict(lm.predict(evidence="HELL"))
+        self.assertEqual(2, len(set(probs.values())))
+        self.assertEqual(max(probs.values()), probs['O'])
+
+        probs = dict(lm.predict(evidence="HELLO"))
+        self.assertEqual(1, len(set(probs.values())))
+
+        probs = dict(lm.predict(evidence="HELLP"))
+        self.assertEqual(2, len(set(probs.values())))
+        self.assertEqual(max(probs.values()), probs[BACKSPACE_CHAR])
+
+        probs = dict(lm.predict(evidence="HELLO_"))
+        self.assertEqual(1, len(set(probs.values())))
+
+        probs = dict(lm.predict(evidence="HELPED"))
+        self.assertEqual(2, len(set(probs.values())))
+        self.assertEqual(max(probs.values()), probs[BACKSPACE_CHAR])
+
 
 if __name__ == '__main__':
     unittest.main()

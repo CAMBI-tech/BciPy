@@ -22,6 +22,9 @@ class OracleLanguageModel(LanguageModel):
     the target letter, which has a slightly higher probability. How much higher
     depends on the configured parameter.
 
+    After the target text has been correctly spelled subsequent predictions
+    yield all symbols with equal probability.
+
     Parameters
     ----------
         response_type - SYMBOL only
@@ -84,11 +87,15 @@ class OracleLanguageModel(LanguageModel):
         """
         spelled_text = ''.join(evidence)
         probs = equally_probable(self.symbol_set)
+        symbol_probs = list(zip(self.symbol_set, probs))
         target = self._next_target(spelled_text)
 
-        sym = (target, probs[0] + self.target_bump)
-        symbol_probs = list(zip(self.symbol_set, probs))
-        updated_symbol_probs = with_min_prob(symbol_probs, sym)
+        if target:
+            sym = (target, probs[0] + self.target_bump)
+            updated_symbol_probs = with_min_prob(symbol_probs, sym)
+        else:
+            updated_symbol_probs = symbol_probs
+
         return sorted(updated_symbol_probs,
                       key=lambda pair: self.symbol_set.index(pair[0]))
 
@@ -98,11 +105,19 @@ class OracleLanguageModel(LanguageModel):
     def load(self) -> None:
         """Restore model state from the provided checkpoint"""
 
-    def _next_target(self, spelled_text: str) -> str:
+    def _next_target(self, spelled_text: str) -> Optional[str]:
         """Computes the next target letter based on the currently spelled_text.
         """
-        if self.task_text[0:len(spelled_text)] == spelled_text:
-            # if correctly spelled so far, get the next letter.
+        len_spelled = len(spelled_text)
+        len_task = len(self.task_text)
+
+        if len_spelled >= len_task and spelled_text[
+                0:len_task] == self.task_text:
+            return None
+
+        if len_spelled < len_task and self.task_text[
+                0:len_spelled] == spelled_text:
+            # correctly spelled so far, get the next letter.
             return self.task_text[len(spelled_text)]
         return BACKSPACE_CHAR
 
