@@ -5,6 +5,7 @@ import datetime
 from pathlib import Path
 
 from bcipy.simulator.helpers import artifact
+from bcipy.simulator.helpers.sim_runner import MultiSimRunner, SingleSimRunner
 from bcipy.simulator.sim_factory import SimulationFactoryV2
 from bcipy.simulator.simulator_base import Simulator
 
@@ -23,26 +24,22 @@ if __name__ == "__main__":
         type=Path,
         required=True,
         help="Signal models to be used")
-
     parser.add_argument(
         "-p",
         "--parameters",
         type=Path,
         required=True,
         help="Parameter File to be used")
-
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)
-
     args = vars(parser.parse_args())
-
-    output_path = "bcipy/simulator/generated"  # TODO read from parameters
-    now_time = datetime.datetime.now().strftime("%m-%d-%H:%M")
-    args['save_dir'] = artifact.init_save_dir(output_path, now_time)
-
-    # setting up logging
-    log_path = f"{args['save_dir']}/logs"
-    artifact.configure_logger(log_path, now_time)
 
     simulator: Simulator = SimulationFactoryV2.create(**args)
 
-    simulator.run()
+    sim_run_count = simulator.get_parameters().get('sim_run_count', 1)
+
+    if sim_run_count > 1:  # running multiple times
+        runner = MultiSimRunner(simulator, sim_run_count)
+        runner.run()
+    else:
+        runner = SingleSimRunner(simulator)
+        runner.run()

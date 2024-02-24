@@ -158,5 +158,8 @@ class SimulatorCopyPhrase(Simulator):
         # writing params
         self.parameters.save(directory=self.save_dir)
 
+    def reset(self):
+        self.state_manager.reset_state()
+
     def get_parameters(self):
         return self.parameters.copy()

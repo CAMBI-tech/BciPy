@@ -28,13 +28,15 @@ def configure_logger(log_path, file_name):
     fileHandler.setFormatter(fmt_file)
 
     # Add each handler to the Logger object
-    log.addHandler(stdoutHandler)
+    if stdoutHandler.stream.name not in [handler.stream.name for handler in log.handlers]:
+        log.addHandler(stdoutHandler)
+
     log.addHandler(fileHandler)
 
 
 def init_save_dir(output_path, save_dir_name):
     """ creating wrapper dir to save sim results to.
-     - Saves to /generated
+     - Saves to {output_path}
      - Adds a unique 4-digit id to end
      """
 

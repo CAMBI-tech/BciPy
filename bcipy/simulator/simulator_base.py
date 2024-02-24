@@ -21,3 +21,6 @@ class Simulator(ABC):
     @abstractmethod
     def get_parameters(self) -> Parameters:
         """ retrieving parameters copy"""
+
+    def reset(self):
+        ...
