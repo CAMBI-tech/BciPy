@@ -1,10 +1,13 @@
 """ Wrappers that run a simulation """
 import datetime
+import json
 import os
 import time
+from typing import Dict
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers import artifact
+from bcipy.simulator.helpers.metrics import average_sim_metrics
 from bcipy.simulator.simulator_base import Simulator
 
 
@@ -22,6 +25,10 @@ class MultiSimRunner:
         # making wrapper dir for all simulations
         os.makedirs(self.wrapper_save_dir)
 
+        # list of metrics from sim runs
+        all_run_metrics = []
+
+        # running simulator n times. resetting after each run
         for i in range(self.n):
 
             # creating save dir for sim_i, then mutating sim_i save_directory
@@ -35,10 +42,15 @@ class MultiSimRunner:
             if self.iteration_sleep > 0:
                 time.sleep(self.iteration_sleep)
 
-            # TODO accumulate referee metrics
+            # aggregating metrics from each run
+            run_metrics = self.simulator.referee.score(self.simulator)
+            all_run_metrics.append(run_metrics)
+
             self.simulator.reset()
 
-        # TODO save averaged results to a file in root of wrapper dir
+        # save averaged results to a file in root of wrapper dir
+        average_metrics = average_sim_metrics(all_run_metrics)
+        self.__save_average_metrics(average_metrics)
 
     def __make_default_save_path(self):
         output_path = "bcipy/simulator/generated"
@@ -46,6 +58,12 @@ class MultiSimRunner:
         dir_name = f"SIM_MULTI_{self.n}_{now_time}"
 
         return f"{output_path}/{dir_name}"
+
+    def __save_average_metrics(self, avg_metric_dict: Dict):
+        """ Writing average dictionary of metrics to a json file in root of MultiRun save dir """
+
+        with open(f"{self.wrapper_save_dir}/avg_metrics.json", 'w') as output_file:
+            json.dump(avg_metric_dict, output_file, indent=1)
 
 
 class SingleSimRunner:

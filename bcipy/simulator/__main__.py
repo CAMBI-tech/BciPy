@@ -4,7 +4,6 @@ import argparse
 import datetime
 from pathlib import Path
 
-from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.sim_runner import MultiSimRunner, SingleSimRunner
 from bcipy.simulator.sim_factory import SimulationFactoryV2
 from bcipy.simulator.simulator_base import Simulator
