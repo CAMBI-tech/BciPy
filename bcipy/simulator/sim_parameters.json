@@ -53,5 +53,16 @@
       "/lm_parameters.json"
     ],
     "type": "str"
+  },
+  "sim_run_count": {
+    "value": "5",
+    "section": "sim_config",
+    "readableName": "How many times to run simulator",
+    "helpTip": "",
+    "recommended_values": [
+      "1",
+      "5"
+    ],
+    "type": "int"
   }
 }
