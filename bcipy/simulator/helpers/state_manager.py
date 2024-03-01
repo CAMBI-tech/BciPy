@@ -74,6 +74,9 @@ class StateManager(ABC):
     def mutate_state(self, state_field, state_value):
         pass
 
+    def reset_state(self):
+        ...
+
 
 class StateManagerImpl(StateManager):
 
@@ -171,6 +174,10 @@ class StateManagerImpl(StateManager):
             return self.get_state()
 
         raise FieldException(f"Cannot find state field {state_field}")
+
+    def reset_state(self):
+        self.state = self.initial_state(self.parameters)
+        return self
 
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:
