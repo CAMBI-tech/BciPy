@@ -13,7 +13,7 @@ live session.
 module from shell as
 such:
 
-``python3 bcipy/simulator -d "pathToDataFolder1" -d "pathToOptionalDataFolder2" -sm "pathToSignalModel.pkl"``
+``python3 bcipy/simulator -d "pathToDataFolder" -p "pathToParametersFile" -sm "pathToSignalModel.pkl"``
 
 Then view generated LOG file for analysis
 
@@ -23,6 +23,11 @@ Then view generated LOG file for analysis
   which simulator will
   sample EEG responses. Should contain
   _raw_data.csv_, _triggers.txt_, _parameters.json_
+- `g` : optional glob filter that can be used to select a subset of data.
+  - Ex. `"*Matrix_Copy*Jan_2024*"` will select all data for all Matrix Copy Phrase sessions recorded in January of 2024 (assuming the BciPy folder naming convention).
+  - Glob patterns can also include nested directories (ex. `"*/*Matrix_Copy*"`).
+- `p` : path to the parameters.json file used to run the simulation. These parameters will be applied to
+  all raw_data files when loading.
 - `sm`: the signal model argument is necessary to generate evidence
 
 ### Architecture
