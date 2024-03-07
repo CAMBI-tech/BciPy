@@ -46,3 +46,4 @@ def init_save_dir(output_path, save_dir_name):
     os.makedirs(f"{save_dir}/logs")
 
     return save_dir
+

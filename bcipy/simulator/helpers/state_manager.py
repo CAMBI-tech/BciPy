@@ -187,3 +187,23 @@ class StateManagerImpl(StateManager):
         return SimState(target_symbol=target_symbol, current_sentence="", target_sentence=sentence,
                         display_alphabet=init_stimuli, inquiry_n=0, series_n=0,
                         series_results=[[]], decision_criterion=default_criterion)
+
+
+def format_sim_state_dump(state: SimState):
+    """ Formats a SimState dump to look similar to session.json """
+
+    # TODO
+    ret = {'series': {}}
+
+    series_dict = {}
+    for i, series in enumerate(state.series_results):
+        if series:
+            curr_series_dict = {}
+            series_dict[str(i + 1)] = curr_series_dict
+            for inq_idx, inq in enumerate(series):
+                inq_dict = inq.to_json()
+                curr_series_dict[str(inq_idx)] = inq_dict
+                for evidence_type, evidence in inq_dict['evidences'].items():
+                    pass
+
+    return ret
