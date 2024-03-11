@@ -157,7 +157,8 @@ def visualize_gaze(
         title += 'Raw Gaze '
 
     if img_path is None:
-        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        img_path = '/Users/basak/Downloads/matrix.png'
     img = plt.imread(img_path)
     channels = data.channels
     left_eye_channel_map = [1 if channel in left_keys else 0 for channel in channels]
@@ -267,7 +268,8 @@ def visualize_gaze_inquiries(
     title = 'Raw Gaze Inquiries '
 
     if img_path is None:
-        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        img_path = '/Users/basak/Downloads/matrix.png'
     img = plt.imread(img_path)
 
     # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
@@ -343,6 +345,90 @@ def visualize_gaze_inquiries(
 
     return fig
 
+def visualize_pupil_size(
+        means: Optional[np.ndarray] = None,
+        covs: Optional[np.ndarray] = None,
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
+    """Visualize Gaze Inquiries.
+
+    Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of
+    trailed data (left & right eye), the gaze distribution for each prompted symbol are plotted, along
+    with the contour plots of mean and covariances calculated by the Gaussian Mixture Model.
+    The figures may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
+
+    Parameters
+    ----------
+    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
+    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
+        Phrase tasks.
+        Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
+    """
+
+    title = 'Pupil Size '
+
+    if img_path is None:
+        img_path = '/Users/basak/Downloads/GB Feb 15/GB_Matrix_Calibration_Thu_15_Feb_2024_15hr24min24sec_-0800/matrix.png'
+    img = plt.imread(img_path)
+
+    # Define mns as a copy of means to avoid modifying the original array
+    mns = np.copy(means)
+
+    if mns is not None:
+        # mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+        # mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+        mns[:, 1] = 1 - mns[:, 1]
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[0, 1, 0, 1])
+
+    if mns is not None:
+        for i, (mean, cov) in enumerate(zip(mns, covs)):
+            v, w = linalg.eigh(cov)
+            v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
+
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180.0 * angle / np.pi  # convert to degrees
+            ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+            ell.set_clip_box(ax)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    plt.title(f'{title}Plot')
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return fig
+
 
 def visualize_centralized_data(
         gaze_data: np.ndarray,
@@ -379,7 +465,8 @@ def visualize_centralized_data(
     title = 'Centralized Data for All Symbols '
 
     if img_path is None:
-        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        img_path = '/Users/basak/Downloads/matrix.png'
     img = plt.imread(img_path)
 
     # scale the eye data to the image
@@ -452,7 +539,8 @@ def visualize_results_all_symbols(
     title = 'Map of Gaze Data and Contours '
 
     if img_path is None:
-        img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
+        img_path = '/Users/basak/Downloads/matrix.png'
     img = plt.imread(img_path)
 
     # scale the eye data to the image
@@ -726,11 +814,20 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
 
     Returns a list of the figure handles created.
     """
+    title = 'Overall Accuracy: '
 
     fig, ax = plt.subplots()
     ax.bar(accuracy_dict.keys(), accuracy_dict.values())
     ax.set_xlabel('Symbol')
     ax.set_ylabel('Accuracy')
-    ax.set_title('Overall Accuracy: ' + str(round(accuracy, 2)))
+    ax.set_title(title + str(round(accuracy, 2)))
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_').replace(':', '')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
     return fig

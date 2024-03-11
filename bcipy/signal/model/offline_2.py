@@ -22,13 +22,15 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.convert import norm_to_tobii
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
                                          visualize_gaze_inquiries,
                                          visualize_centralized_data,
                                          visualize_results_all_symbols,
-                                         visualize_gaze_accuracies)
+                                         visualize_gaze_accuracies, 
+                                         visualize_pupil_size)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import GazeModelIndividual, GazeModelCombined
@@ -311,13 +313,45 @@ def analyze_gaze(
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
     preprocessed_data = {i: [] for i in symbol_set}
+    nan_values = {i: [] for i in symbol_set}
+    pupil_sizes = {i: [] for i in symbol_set}
     for i in symbol_set:
         # Skip if there's no evidence for this symbol:
         if len(inquiries[i]) == 0:
             continue
 
-        left_eye, right_eye = extract_eye_info(inquiries[i])
+        left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i])
+        # Save the number of nan values in each symbol out of all data
+        nan_values[i] = np.array([deleted_samples, all_samples])
         preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
+        pupil_sizes[i] = np.array([left_pupil, right_pupil])  # Channels x Sample Size
+
+    # # Visualize the nans:
+    # nans = np.concatenate(list(nan_values.values()))
+    # import matplotlib.pyplot as plt
+    # plt.bar(np.arange(len(nans)), nans)
+    # plt.show()
+        
+    # Visualize the pupil sizes
+    with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
+        symbol_positions = json.load(params_file)
+    
+    covs_all = []
+    means_all = []
+    for sym in symbol_set:
+        cov = np.cov(pupil_sizes[sym][0])
+        cov_matrix = cov/100 * np.eye(2)
+        covs_all.append(cov_matrix)
+        means_all.append(norm_to_tobii(symbol_positions[sym]))
+
+    fig_handles = visualize_pupil_size(
+        means_all, covs_all,
+        save_path=data_folder if save_figures else None,
+        show=show_figures,
+        raw_plot=True,
+        )
+
+    breakpoint()
 
     centralized_data_train = []
     train_dict = {}

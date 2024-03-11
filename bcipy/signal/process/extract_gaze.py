@@ -32,12 +32,18 @@ def extract_eye_info(data):
     # Remove ALL blinks (i.e. Nan values) regardless of which eye it occurs.
     # Make sure that the number of samples are the same for both eyes
     left_eye_nan_idx = np.isnan(left_eye).any(axis=1)
+    deleted_samples = left_eye_nan_idx.sum()
+    all_samples = len(left_eye)
     left_eye = left_eye[~left_eye_nan_idx]
     right_eye = right_eye[~left_eye_nan_idx]
+    left_pupil = left_pupil[~left_eye_nan_idx]
+    right_pupil = right_pupil[~left_eye_nan_idx]
 
     right_eye_nan_idx = np.isnan(right_eye).any(axis=1)
     left_eye = left_eye[~right_eye_nan_idx]
     right_eye = right_eye[~right_eye_nan_idx]
+    left_pupil = left_pupil[~right_eye_nan_idx]
+    right_pupil = right_pupil[~right_eye_nan_idx]
 
     try:
         len(left_eye) != len(right_eye)
@@ -45,4 +51,4 @@ def extract_eye_info(data):
         raise SignalException(
             'Number of samples for left and right eye are not the same.')
 
-    return left_eye, right_eye
+    return left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples
