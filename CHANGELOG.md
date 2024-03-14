@@ -58,6 +58,7 @@ Our last release candidate before the official 2.0 release!
     - added KenLM model `kenlm.py` #268
     - added mixture model `mixture.py` and script to tune weights `mixture_tuning.py` #268
     - added script to evaluate language model performance `lm_eval.py` #268
+    - added Oracle model #316
 - Signal Model
     - added `RdaKdeModel` and restructured to pull out common elements from the PcaRdaKdeModel #279
 - Bug Fixes
