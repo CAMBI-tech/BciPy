@@ -55,7 +55,7 @@
     "type": "str"
   },
   "sim_run_count": {
-    "value": "5",
+    "value": "1",
     "section": "sim_config",
     "readableName": "How many times to run simulator",
     "helpTip": "",

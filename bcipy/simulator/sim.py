@@ -14,7 +14,7 @@ from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.metrics import MetricReferee
 from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
-from bcipy.simulator.helpers.state_manager import StateManager, SimState
+from bcipy.simulator.helpers.state_manager import StateManager, SimState, format_sim_state_dump
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
 from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence
 from bcipy.simulator.helpers.model_handler import ModelHandler
@@ -147,7 +147,7 @@ class SimulatorCopyPhrase(Simulator):
 
         # creating result.json object with final state and metrics
         final_state = self.state_manager.get_state()
-        final_state_json: Dict = final_state.to_json()
+        final_state_json: Dict = format_sim_state_dump(final_state)
         metric_dict = dataclasses.asdict(self.referee.score(self))
         metric_dict.update(final_state_json)  # adding state data to metrics
 
