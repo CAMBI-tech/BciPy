@@ -1,4 +1,6 @@
 """ investigating inquiry position on model responses """
+from typing import List
+
 import numpy as np
 
 from bcipy.helpers import session
@@ -14,9 +16,17 @@ Parse the session.json object and group likelihood values based on stimuli posit
 """
 
 
+def normalize(vec: List):
+    """ sample normalizaiton of list """
+
+    summation = sum(vec)
+    new_vec = [val / summation for val in vec]
+    return new_vec
+
 # plotting target or nontarget
 def plot_groups(group, title="", clip=None, color='blue'):
     data = list(group.values())
+    normalized_data = map(normalize, data)
     # Create a figure and a 2x5 grid of subplots (2 rows, 5 columns)
     fig, axes = plt.subplots(nrows=2, ncols=5, figsize=(20, 10))
 
@@ -25,22 +35,21 @@ def plot_groups(group, title="", clip=None, color='blue'):
 
     # Iterate over the data and the flattened axes together using 'zip'
     count = 0
-    for ax, data_to_plot in zip(axes_flat, data):
+    for ax, data_to_plot in zip(axes_flat, normalized_data):
+        # clipping max bin for histogram
         clipped_vals = np.clip(data_to_plot, clip[0], clip[1]) if clip is not None else None
         ax.hist(clipped_vals if clipped_vals is not None else data_to_plot, bins=15, color=color,
                 alpha=0.7)
         ax.set_title(f'Position {count}')
-        ax.set_xlabel('Value')
+        ax.set_xlabel('EEG')
         count += 1
 
-    plt.savefig(f"bcipy/simulator/tests/resource/{title}.png")
+    fig.suptitle(title)
+    plt.savefig(f"bcipy/simulator/tests/resource/{title}_hist.png")
     plt.clf()
 
 
 if __name__ == "__main__":
-    experiment_path = "/Users/srikarananthoju/cambi/tab_test_dynamic/16sec_-0700"
-    # session_path = f"{experiment_path}/session.json"
-
     wrapper_path = f"/Users/srikarananthoju/cambi/tab_test_dynamic"
     session_paths = [f"{wrapper_path}/16sec_-0700/session.json",
                      f"{wrapper_path}/50sec_-0700/session.json",
