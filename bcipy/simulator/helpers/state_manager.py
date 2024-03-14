@@ -4,16 +4,18 @@ import logging
 import random
 from abc import ABC
 from dataclasses import dataclass
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 
 import numpy as np
 
 from bcipy.helpers.exceptions import FieldException
 from bcipy.helpers.language_model import histogram
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
-from bcipy.simulator.helpers.decision import SimDecisionCriteria, MaxIterationsSim, ProbThresholdSim
-from bcipy.simulator.helpers.evidence_fuser import MultiplyFuser, EvidenceFuser
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.simulator.helpers.decision import (MaxIterationsSim,
+                                              ProbThresholdSim,
+                                              SimDecisionCriteria)
+from bcipy.simulator.helpers.evidence_fuser import EvidenceFuser, MultiplyFuser
 from bcipy.simulator.helpers.log_utils import fmt_likelihoods_for_hist
 from bcipy.simulator.helpers.rsvp_utils import next_target_letter
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
@@ -79,7 +81,7 @@ class StateManager(ABC):
 class StateManagerImpl(StateManager):
 
     def __init__(self, parameters: Parameters, fuser_class=MultiplyFuser):
-        self.state: SimState = self.initial_state()
+        self.state: SimState = self.initial_state(parameters)
         self.parameters = parameters
         self.fuser_class: EvidenceFuser.__class__ = fuser_class
 
@@ -179,7 +181,7 @@ class StateManagerImpl(StateManager):
 
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:
-        sentence = "HELLO_WORLD"  # TODO abstract out with sim_parameters.json
+        sentence = parameters.get('task_text', "HELLO_WORLD")  # TODO abstract out with sim_parameters.json
         target_symbol = sentence[0]  # TODO use parameters.get('spelled_letters_count')
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
         init_stimuli = random.sample(alphabet(), 10)
