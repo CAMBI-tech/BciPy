@@ -56,8 +56,6 @@ class RawDataEngine(DataEngine):
     """
 
     def __init__(self, source_dirs: List[str], parameters: Parameters):
-        # TODO read parameters from source dirx
-        # TODO use os.walk() and take in single source_dir that has all data folders
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
         self.data: Optional[List[ExtractedExperimentData]] = None

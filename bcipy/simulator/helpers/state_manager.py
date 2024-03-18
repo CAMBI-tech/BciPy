@@ -61,7 +61,6 @@ class SimState:
 
 class StateManager(ABC):
 
-    # TODO change evidence type to dictionary or some dataclass
     def update(self, evidence: Dict[str, SimEvidence]):
         raise NotImplementedError()
 
@@ -88,8 +87,7 @@ class StateManagerImpl(StateManager):
         self.max_inq_len = self.parameters.get('max_inq_len', 100)
 
     def is_done(self) -> bool:
-        # TODO add stoppage criterion, Stoppage criterion is seperate from
-        # decision. Decision should we go on to next letter or not
+        # Determines if simulator should end (max inq or max series reached, typed target sentence)
         return self.state.total_inquiry_count(
         ) > self.max_inq_len or self.state.target_sentence == self.state.current_sentence or self.state.series_n > 50
 
@@ -110,7 +108,6 @@ class StateManagerImpl(StateManager):
         # finding out whether max iterations is hit or prob threshold is hit
         temp_inquiry_result = InquiryResult(target=self.state.target_symbol, time_spent=0,
                                             stimuli=self.state.display_alphabet,
-                                            # TODO change to use evidence_dict
                                             evidences=evidence,
                                             fused_likelihood=fused_likelihood,
                                             decision=None)
@@ -134,9 +131,8 @@ class StateManagerImpl(StateManager):
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
-            decision = alphabet()[
-                np.argmax(
-                    fused_likelihood)]  # deciding the maximum probability symbol TODO abstract
+            # Deciding max likelihood char
+            decision = alphabet()[np.argmax(fused_likelihood)]  # TODO abstract decision criterion
 
             # resetting series
             new_state['series_n'] += 1
@@ -181,8 +177,8 @@ class StateManagerImpl(StateManager):
 
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:
-        sentence = parameters.get('task_text', "HELLO_WORLD")  # TODO abstract out with sim_parameters.json
-        target_symbol = sentence[0]  # TODO use parameters.get('spelled_letters_count')
+        sentence = parameters.get('task_text', "HELLO_WORLD")
+        target_symbol = parameters.get('spelled_letters_count', 0)
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
         init_stimuli = random.sample(alphabet(), 10)
 

@@ -106,15 +106,23 @@ class SimulatorCopyPhrase(Simulator):
         self.save_run()
 
     def __make_stimuli(self, state: SimState):
-        # TODO abstract out
+        """
+        Creates next set of stimuli:
+            - uses current likelihoods while during a series
+            - uses language model for beginning of series
+            - random letters in case of no LM and beginning of series
+        """
         subset_length = 10
         val_func: Optional[np.ndarray] = state.get_current_likelihood()
         always_in_stimuli = [symbols.SPACE_CHAR, symbols.BACKSPACE_CHAR]
 
+        # during series
         if val_func is not None:
             return stimuli.best_selection(self.symbol_set, list(
                 val_func), subset_length, always_included=always_in_stimuli)
-        elif self.parameters.get('sim_lm_active', 0) == 1:  # use lang model for priors to make stim
+        # beginning of series
+        elif self.parameters.get('sim_lm_active', 0) == 1:
+            # use lang model for priors to make stim
             lm_model = self.model_handler.get_model('lm')
             lm_model_evidence = lm_model.predict(list(state.current_sentence))
             val_func = format_lm_output(lm_model_evidence, self.symbol_set)

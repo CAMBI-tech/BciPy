@@ -21,7 +21,7 @@ log = logger.getLogger(__name__)
 
 
 @dataclass()
-class ExtractedExperimentData:  # TODO clean up design
+class ExtractedExperimentData:
     source_dir: str
     inquiries: np.ndarray
     trials: np.ndarray
