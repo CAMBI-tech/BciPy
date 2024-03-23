@@ -1,15 +1,18 @@
 """Records LSL data streams to a data store."""
 import logging
 import time
+from multiprocessing import Queue
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.acquisition.protocols.lsl.connect import (device_from_metadata,
+                                                     resolve_device_stream)
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
-from bcipy.acquisition.util import StoppableThread
+from bcipy.acquisition.util import StoppableProcess
 from bcipy.helpers.raw_data import RawDataWriter
 
 log = logging.getLogger(__name__)
@@ -39,8 +42,9 @@ class LslRecorder:
             log.info("Recording data")
             # create a thread for each.
             self.streams = [
-                LslRecordingThread(stream, self.path,
-                                   self.filenames.get(stream.type(), None))
+                LslRecordingThread(device_spec=device_from_metadata(StreamInlet(stream).info()),
+                                   directory=self.path,
+                                   filename=self.filenames.get(stream.type(), None))
                 for stream in resolve_streams()
             ]
 
@@ -65,29 +69,30 @@ class LslRecorder:
         self.streams = None
 
 
-class LslRecordingThread(StoppableThread):
+class LslRecordingThread(StoppableProcess):
     """Records data for the given LabStreamingLayer (LSL) data stream.
 
     Parameters:
     ----------
-    - stream : information about the stream of interest
+    - device_spec : DeviceSpec ; specifies the device from which to record.
     - directory : location to store the recording
     - filename : optional, name of the data file.
-    - device_spec : optional DeviceSpec ; if provided channel labels will come
-        from here.
+    - queue : optional multiprocessing queue; if provided the first_sample_time
+        will be written here when available.
     """
 
     writer: RawDataWriter = None
 
     def __init__(self,
-                 stream_info: StreamInfo,
-                 directory: str,
+                 device_spec: DeviceSpec,
+                 directory: Optional[str] = '.',
                  filename: Optional[str] = None,
-                 device_spec: Optional[DeviceSpec] = None) -> None:
+                 queue: Optional[Queue] = None) -> None:
         super().__init__()
-        self.stream_info = stream_info
+
         self.directory = directory
         self.device_spec = device_spec
+        self.queue = queue
 
         self.sample_count = 0
         # see: https://labstreaminglayer.readthedocs.io/info/faqs.html#chunk-sizes
@@ -102,8 +107,8 @@ class LslRecordingThread(StoppableThread):
 
     def default_filename(self):
         """Default filename to use if a name is not provided."""
-        content_type = '_'.join(self.stream_info.type().split()).lower()
-        name = '_'.join(self.stream_info.name().split()).lower()
+        content_type = '_'.join(self.device_spec.content_type.split()).lower()
+        name = '_'.join(self.device_spec.name.split()).lower()
         return f"{content_type}_data_{name}.csv"
 
     @property
@@ -132,8 +137,8 @@ class LslRecordingThread(StoppableThread):
         log.info(f"Writing data to {path}")
         self.writer = RawDataWriter(
             path,
-            daq_type=self.stream_info.name(),
-            sample_rate=self.stream_info.nominal_srate(),
+            daq_type=stream_info.name(),
+            sample_rate=stream_info.nominal_srate(),
             columns=['timestamp'] + channels + ['lsl_timestamp'])
         self.writer.__enter__()
 
@@ -152,7 +157,6 @@ class LslRecordingThread(StoppableThread):
             timestamps : list of timestamps
         """
         assert self.writer, "Writer not initialized"
-
         chunk = []
         for i, sample in enumerate(data):
             self.sample_count += 1
@@ -178,6 +182,8 @@ class LslRecordingThread(StoppableThread):
         if timestamps and data:
             if not self.first_sample_time:
                 self.first_sample_time = timestamps[0]
+                if self.queue:
+                    self.queue.put(self.first_sample_time, timeout=2.0)
             self.last_sample_time = timestamps[-1]
             self._write_chunk(data, timestamps)
         return len(timestamps)
@@ -194,11 +200,12 @@ class LslRecordingThread(StoppableThread):
         given interval, and persists the results. This happens continuously
         until the `stop()` method is called.
         """
-        # Note that self.stream_info does not have the channel names.
-        inlet = StreamInlet(self.stream_info, max_chunklen=1)
+        # Note that stream_info does not have the channel names.
+        stream_info = resolve_device_stream(self.device_spec)
+        inlet = StreamInlet(stream_info, max_chunklen=1)
         full_metadata = inlet.info()
 
-        log.info("Acquiring data from data stream:")
+        log.info("Recording data from data stream:")
         log.info(full_metadata.as_xml())
 
         self._reset()
@@ -219,7 +226,7 @@ class LslRecordingThread(StoppableThread):
         while record_count == self.max_chunk_size:
             record_count = self._pull_chunk(inlet)
 
-        log.info(f"Ending data stream recording for {self.stream_info.name()}")
+        log.info(f"Ending data stream recording for {stream_info.name()}")
         log.info(f"Total recorded seconds: {self.recorded_seconds}")
         log.info(f"Total recorded samples: {self.sample_count}")
         inlet.close_stream()

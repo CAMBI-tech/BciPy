@@ -1,9 +1,8 @@
 import unittest
 
-from mockito import any, mock, unstub, verify, when
-from mock import mock_open, patch
-
 import psychopy
+from mock import mock_open, patch
+from mockito import any, mock, unstub, verify, when
 
 import bcipy.task.paradigm.rsvp.calibration.calibration
 from bcipy.acquisition import LslAcquisitionClient
@@ -11,7 +10,8 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerHandler, TriggerType
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
 
 
 class TestRSVPCalibration(unittest.TestCase):
@@ -111,7 +111,10 @@ class TestRSVPCalibration(unittest.TestCase):
         when(TriggerHandler).write().thenReturn()
         when(TriggerHandler).add_triggers(any()).thenReturn()
 
-        when(psychopy.event).getKeys(keyList=any()).thenReturn(['space'])
+        when(psychopy.event).getKeys(keyList=['space', 'escape'],
+                                     modifiers=False,
+                                     timeStamped=False).thenReturn(['space'])
+        when(psychopy.event).getKeys(keyList=['space', 'escape']).thenReturn(['space'])
         when(psychopy.core).wait(any()).thenReturn(None)
 
     def tearDown(self):
