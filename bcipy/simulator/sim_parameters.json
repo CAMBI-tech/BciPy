@@ -33,17 +33,6 @@
     ],
     "type": "float"
   },
-  "sim_lm_active": {
-    "value": "1",
-    "section": "sim_config",
-    "readableName": "is lm active or off",
-    "helpTip": "",
-    "recommended_values": [
-      "0",
-      "1"
-    ],
-    "type": "int"
-  },
   "sim_lm_parameters": {
     "value": "",
     "section": "sim_config",
@@ -51,6 +40,20 @@
     "helpTip": "",
     "recommended_values": [
       "/lm_parameters.json"
+    ],
+    "type": "str"
+  },
+  "sim_lm_type": {
+    "value": "UNIFORM",
+    "section": "sim_config",
+    "readableName": "Language Model Type",
+    "helpTip": "Specifies which language model to use. Default: UNIFORM",
+    "recommended_values": [
+      "UNIFORM",
+      "CAUSAL",
+      "KENLM",
+      "MIXTURE",
+      "ORACLE"
     ],
     "type": "str"
   },
