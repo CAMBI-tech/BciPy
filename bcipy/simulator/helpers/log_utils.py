@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict, List
 
 import pandas as pd
 
@@ -21,6 +21,12 @@ def format_sample_rows(sample_rows: List[pd.Series]) -> str:
     """Returns a tabular representation of the sample rows."""
     return pd.DataFrame(sample_rows).drop(columns=['eeg']).to_string(
         index=False, header=True)
+
+
+def format_sample_df(sample_rows: pd.DataFrame) -> str:
+    """Returns a tabular representation of the sample rows."""
+    return sample_rows.drop(columns=['eeg']).to_string(index=False,
+                                                       header=True)
 
 
 def fmt_reshaped_evidence(evidences: Dict[str, SimEvidence]):
