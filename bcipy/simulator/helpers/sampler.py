@@ -109,7 +109,7 @@ def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
 class InquirySampler(Sampler):
     """Samples an inquiry of data at a time."""
 
-    def __init__(self, data_engine: RawDataEngine, *args, **kwargs):
+    def __init__(self, data_engine: RawDataEngine):
         self.model_input_reshaper = default_reshaper
         self.data: pd.DataFrame = data_engine.transform().get_data()
 
@@ -159,10 +159,10 @@ class InquirySampler(Sampler):
 
         if target_letter in inquiry_letter_subset:
             source_inquiries = self.target_inquiries
-            target_pos = inquiry_letter_subset.index(target_letter) + 1
+            target_position = inquiry_letter_subset.index(target_letter) + 1
         else:
             source_inquiries = self.no_target_inquiries
-            target_pos = 0  # unused
+            target_position = 0  # unused
 
         # randomly select a valid data source and inquiry
         data_source = random.choice(list(source_inquiries.keys()))
@@ -174,26 +174,37 @@ class InquirySampler(Sampler):
         assert len(inquiry_df) == len(
             inquiry_letter_subset), f"Invalid data source {data_source}"
 
-        inq_target_pos = target_pos
+        # The inquiry may need to be re-ordered to ensure that the target is in
+        # the correct position. We do this by sorting the dataframe on a custom
+        # column that is the inquiry_pos for all non-targets, and the
+        # new_target_position for the target.
+        inquiry_target_position = target_position
         if target_letter in inquiry_letter_subset:
-            inq_target_index = inquiry_df[inquiry_df['target'] == 1].index[0]
-            inq_target_pos = inquiry_df.index.tolist().index(inq_target_index)
+            inquiry_target_index = inquiry_df[inquiry_df['target'] == 1].index[0]
+            inquiry_target_position = inquiry_df.index.tolist().index(inquiry_target_index)
 
-        if inq_target_pos == target_pos:
-            new_pos = inq_target_pos
-        elif inq_target_pos < target_pos:
-            new_pos = target_pos + 0.5
-        elif inq_target_pos > target_pos:
-            new_pos = target_pos - 0.5
+        if inquiry_target_position == target_position:
+            # target already in the correct location, no need to adjust
+            new_target_position = inquiry_target_position
+        elif inquiry_target_position < target_position:
+            # target in the inquiry needs to be pushed later in the inquiry; 
+            # There is another symbol currently at that position, so we need
+            # to ensure that the target is past that symbol (by adding 0.5).
+            new_target_position = target_position + 0.5
+        elif inquiry_target_position > target_position:
+            # the target in the inquiry needs to be moved earlier in the inquiry; 
+            # there is another non-target symbol currently at that position so
+            # the target needs to be moved before that symbol.
+            new_target_position = target_position - 0.5
 
         # define a sort column to move the target in the inquiry to the desired index
         sort_pos = inquiry_df['inquiry_pos'].where(inquiry_df['target'] == 0,
-                                                   new_pos)
+                                                   new_target_position)
 
         # select the inquiry items in sorted position
         sorted_inquiry_df = inquiry_df.loc[sort_pos.sort_values().index]
         log.debug(f"EEG Samples: \n {format_sample_df(sorted_inquiry_df)}")
-        # import pdb; pdb.set_trace()
+
         rows = [
             sorted_inquiry_df.iloc[i] for i in range(len(sorted_inquiry_df))
         ]
