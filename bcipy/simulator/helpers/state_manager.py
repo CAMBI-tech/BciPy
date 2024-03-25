@@ -178,7 +178,7 @@ class StateManagerImpl(StateManager):
     @staticmethod
     def initial_state(parameters: Parameters = None) -> SimState:
         sentence = parameters.get('task_text', "HELLO_WORLD")
-        target_symbol = parameters.get('spelled_letters_count', 0)
+        target_symbol = sentence[parameters.get('spelled_letters_count', 0)]
         default_criterion: List[SimDecisionCriteria] = [MaxIterationsSim(50), ProbThresholdSim(0.8)]
         init_stimuli = random.sample(alphabet(), 10)
 
