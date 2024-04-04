@@ -15,6 +15,7 @@ class SimMetrics1:
     total_series: int = 0
     total_inquiries: int = 0
     total_decisions: int = 0
+    total_incorrect_decisions: int = -1  # negative one if uncalculated
 
     total_time_spent: float = 0.0
     inquiries_per_selection: float = 0.0
@@ -50,10 +51,13 @@ class SimMetrics1Handler(RefereeHandler):
     def handle(self, sim) -> Dict[str, Any]:
         state: SimState = getattr(sim, "state_manager").get_state()
 
-        # calculating total decisions made
+        # calculating total decisions made and total incorrect decisions
         flattened_inquiries: List[InquiryResult] = reduce(lambda l1, l2: l1 + l2,
                                                           state.series_results, [])
-        total_decisions = len(list(filter(lambda inq: bool(inq.decision), flattened_inquiries)))
+        inqs_with_decisions = list(filter(lambda inq: bool(inq.decision), flattened_inquiries))
+        total_decisions = len(inqs_with_decisions)
+        total_incorrect_decisions = len([inq for inq in inqs_with_decisions if
+                                         inq.decision != inq.target])
 
         # average number of inqs before a decision
         inq_counts = []
@@ -73,7 +77,8 @@ class SimMetrics1Handler(RefereeHandler):
 
         ret = SimMetrics1(total_series=total_series, total_inquiries=total_inquiries,
                           total_decisions=total_decisions, total_time_spent=total_time_spent,
-                          inquiries_per_selection=inquiries_per_selection)
+                          inquiries_per_selection=inquiries_per_selection,
+                          total_incorrect_decisions=total_incorrect_decisions)
         return dataclasses.asdict(ret)
 
 
