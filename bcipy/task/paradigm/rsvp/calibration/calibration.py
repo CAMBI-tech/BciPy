@@ -10,7 +10,8 @@ from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import (InquirySchedule, StimuliOrder, TargetPositions,
+from bcipy.helpers.stimuli import (InquirySchedule, StimuliOrder,
+                                   TargetPositions,
                                    generate_calibration_inquiries)
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
@@ -18,7 +19,6 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
-
 from bcipy.task import Task
 
 
@@ -179,6 +179,7 @@ class RSVPCalibrationTask(Task):
                 timing = self.rsvp.do_inquiry(preview_calibration=self.show_preview_inquiry)
 
                 self.write_trigger_data(timing, (inquiry == 0))
+                self.show_feedback(timing)
                 core.wait(self.buffer_val)
 
             # Set run to False to stop looping
@@ -234,6 +235,14 @@ class RSVPCalibrationTask(Task):
 
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
+
+    def show_feedback(self, timing: List[Tuple[str, float]]) -> None:
+        """Display user feedback.
+
+        Parameters
+        ----------
+        - timing : latest trigger times
+        """
 
     def name(self) -> str:
         return 'RSVP Calibration Task'

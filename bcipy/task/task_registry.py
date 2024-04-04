@@ -33,6 +33,7 @@ class TaskType(AutoNumberEnum):
 
     RSVP_CALIBRATION = 'RSVP Calibration'
     RSVP_COPY_PHRASE = 'RSVP Copy Phrase'
+    RSVP_INTER_INQUIRY_FEEDBACK_CALIBRATION = 'RSVP Inter-Inquiry Feedback Calibration'
     RSVP_TIMING_VERIFICATION_CALIBRATION = 'RSVP Time Test Calibration'
     MATRIX_CALIBRATION = 'Matrix Calibration'
     MATRIX_TIMING_VERIFICATION_CALIBRATION = 'Matrix Time Test Calibration'

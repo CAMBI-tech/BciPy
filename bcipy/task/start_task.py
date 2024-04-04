@@ -1,8 +1,13 @@
 """Code for constructing and executing registered tasks"""
 # mypy: disable-error-code="arg-type, misc"
 from typing import List, Optional
+
 from psychopy import visual
 
+from bcipy.acquisition import ClientManager
+from bcipy.helpers.parameters import Parameters
+from bcipy.language import LanguageModel
+from bcipy.signal.model import SignalModel
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
@@ -11,16 +16,13 @@ from bcipy.task.paradigm.matrix.timing_verification import \
     MatrixTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.inter_inquiry_feedback_calibration import \
+    RSVPInterInquiryFeedbackCalibration
 from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
     RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
 from bcipy.task.task_registry import TaskType
-
-from bcipy.acquisition import ClientManager
-from bcipy.helpers.parameters import Parameters
-from bcipy.signal.model import SignalModel
-from bcipy.language import LanguageModel
 
 
 def make_task(
@@ -61,6 +63,9 @@ def make_task(
 
     if task is TaskType.RSVP_TIMING_VERIFICATION_CALIBRATION:
         return RSVPTimingVerificationCalibration(display_window, daq, parameters, file_save)
+
+    if task is TaskType.RSVP_INTER_INQUIRY_FEEDBACK_CALIBRATION:
+        return RSVPInterInquiryFeedbackCalibration(display_window, daq, parameters, file_save)
 
     if task is TaskType.MATRIX_CALIBRATION:
         return MatrixCalibrationTask(
