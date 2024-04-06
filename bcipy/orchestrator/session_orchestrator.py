@@ -49,12 +49,7 @@ class SessionOrchestrator:
         self.user = user
         self.experiment_id = experiment_id
         self.log = logging.getLogger(__name__)
-        self.parameters = load_json_parameters(
-            DEFAULT_PARAMETERS_PATH, value_cast=True
-        )  # Refactor this to work with the more modular approach
-        if not validate_bcipy_session(self.parameters, False):  # fake is false for now
-            raise TaskConfigurationException("Invalid session parameters")
-        self.parameters["parameter_location"] = parameters_path
+        
         if parameters_path != DEFAULT_PARAMETERS_PATH:
             self.parameters.save()
             default_params = load_json_parameters(
@@ -71,41 +66,67 @@ class SessionOrchestrator:
     def queue_task(self, task: TaskInfo) -> None:
         # Loading task specific parameters could happen here
         self.tasks.append(task)
-        if not self.save_folder:
-            self.save_folder = init_save_data_structure(
-                self.parameters["data_save_loc"],
-                self.user,
-                self.parameters_path,
-                task=task.task_type.label,
-                experiment_id=self.experiment_id,
-            )
-            configure_logger(self.save_folder, version=self.sys_info["bcipy_version"])
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
+        # parameters = load_json_parameters(
+        #     DEFAULT_PARAMETERS_PATH, value_cast=True
+        # )  # Refactor this to work with the more modular approach
+        # if not validate_bcipy_session(self.parameters, False):  # fake is false for now
+        #     raise TaskConfigurationException("Invalid session parameters")
+        # parameters["parameter_location"] = parameters_path
+        
+
+        # save_folder = init_save_data_structure(
+        #     self.parameters["data_save_loc"],
+        #     self.user,
+        #     self.parameters_path,
+        #     task=task.task_type.label,
+        #     experiment_id=self.experiment_id,
+        # )
         for task in self.tasks:
-            if execute_task(
-                task.task_type,
-                self.parameters,
-                self.save_folder,
-                task.alert,
-                fake=False,
-            ):
-                if task.visualize:
-                    try:
-                        visualize_session_data(self.save_folder, self.parameters)
-                    except Exception as e:
-                        self.log.info(f"Error visualizing session data: {e}")
+            self._execute_task(task)
             if task.pause_after:
-                # pause here and show ui
+                # pause here and show ui?
                 pass
+
+    def _execute_task(self, task: TaskInfo):
+        """Executes a single task"""
+        parameters = load_json_parameters(task.parameter_location, value_cast=True)
+        if not validate_bcipy_session(parameters, False): # fake is false for now
+            raise TaskConfigurationException('Invalid task parameters')
+        parameters['parameter_location'] = task.parameter_location
+
+        save_folder = init_save_data_structure(
+            parameters['data_save_loc'],
+            self.user,
+            task.parameter_location,
+            task=task.task_type.label,
+            experiment_id=self.experiment_id
+        )
+
+        if execute_task(
+            task.task_type,
+            parameters,
+            save_folder,
+            task.alert,
+            fake=False
+        ):
+            if task.visualize:
+                try:
+                    visualize_session_data(save_folder, parameters)
+                except Exception as e:
+                    self.log.info(f'Error visualizing session data: {e}')
+                return True
+            return False
+
 
 
 def demo_orchestrator():
     orchestrator = SessionOrchestrator()
     task = TaskInfo(TaskType.RSVP_CALIBRATION, DEFAULT_PARAMETERS_PATH)
     orchestrator.queue_task(task)
-    task = TaskInfo(TaskType.RSVP_COPY_PHRASE, DEFAULT_PARAMETERS_PATH)
+    task = TaskInfo(TaskType.MATRIX_CALIBRATION, DEFAULT_PARAMETERS_PATH)
     orchestrator.queue_task(task)
     orchestrator.execute()
 
