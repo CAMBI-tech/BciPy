@@ -49,7 +49,7 @@ class SessionOrchestrator:
         self.user = user
         self.experiment_id = experiment_id
         self.log = logging.getLogger(__name__)
-        
+
         if parameters_path != DEFAULT_PARAMETERS_PATH:
             self.parameters.save()
             default_params = load_json_parameters(
@@ -69,21 +69,6 @@ class SessionOrchestrator:
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
-        # parameters = load_json_parameters(
-        #     DEFAULT_PARAMETERS_PATH, value_cast=True
-        # )  # Refactor this to work with the more modular approach
-        # if not validate_bcipy_session(self.parameters, False):  # fake is false for now
-        #     raise TaskConfigurationException("Invalid session parameters")
-        # parameters["parameter_location"] = parameters_path
-        
-
-        # save_folder = init_save_data_structure(
-        #     self.parameters["data_save_loc"],
-        #     self.user,
-        #     self.parameters_path,
-        #     task=task.task_type.label,
-        #     experiment_id=self.experiment_id,
-        # )
         for task in self.tasks:
             self._execute_task(task)
             if task.pause_after:
@@ -93,7 +78,7 @@ class SessionOrchestrator:
     def _execute_task(self, task: TaskInfo):
         """Executes a single task"""
         parameters = load_json_parameters(task.parameter_location, value_cast=True)
-        if not validate_bcipy_session(parameters, False): # fake is false for now
+        if not validate_bcipy_session(parameters, False):  # fake is false for now
             raise TaskConfigurationException('Invalid task parameters')
         parameters['parameter_location'] = task.parameter_location
 
@@ -119,7 +104,6 @@ class SessionOrchestrator:
                     self.log.info(f'Error visualizing session data: {e}')
                 return True
             return False
-
 
 
 def demo_orchestrator():
