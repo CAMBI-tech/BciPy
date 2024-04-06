@@ -49,17 +49,6 @@ class SessionOrchestrator:
         self.user = user
         self.experiment_id = experiment_id
         self.log = logging.getLogger(__name__)
-
-        if parameters_path != DEFAULT_PARAMETERS_PATH:
-            self.parameters.save()
-            default_params = load_json_parameters(
-                DEFAULT_PARAMETERS_PATH, value_cast=True
-            )
-            if self.parameters.add_missing_items(default_params):
-                msg = "Parameters file out of date."
-                self.log.exception(msg)
-                raise Exception(msg)
-
         self.sys_info = get_system_info()
         self.tasks = []
 
@@ -77,10 +66,19 @@ class SessionOrchestrator:
 
     def _execute_task(self, task: TaskInfo):
         """Executes a single task"""
+
         parameters = load_json_parameters(task.parameter_location, value_cast=True)
         if not validate_bcipy_session(parameters, False):  # fake is false for now
             raise TaskConfigurationException('Invalid task parameters')
         parameters['parameter_location'] = task.parameter_location
+
+        if task.parameter_location != DEFAULT_PARAMETERS_PATH:
+            parameters.save()
+            default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+            if parameters.add_missing_items(default_params):
+                msg = 'Paramaters file out of date'
+                self.log.exception(msg)
+                raise Exception(msg)  # TODO: use a more descriptive exception
 
         save_folder = init_save_data_structure(
             parameters['data_save_loc'],
