@@ -27,9 +27,6 @@ class FeedbackConfig(NamedTuple):
     psd_method: PSD_TYPE = PSD_TYPE.WELCH
     # The channel used to calculate the PSD from an inquiry.
     # We want to use a posterior channel. If Oz available, use that!
-    # Note that the index is 0-based and should be the index in the list of analysis_channels.
-    # TODO: use channel name
-    psd_channel_index: int = 5
     psd_channel_name: str = 'Oz'
 
     psd_lower_limit = 8  # power spectral density band lower bound (in Hz)
@@ -140,11 +137,13 @@ class RSVPInterInquiryFeedbackCalibration(RSVPCalibrationTask):
         )
         self.reshaper = TrialReshaper()
         self.feedback_config = FeedbackConfig()
+        self.psd_channel_index = eeg_spec.analysis_channels.index(
+            self.feedback_config.psd_channel_name)
 
     def show_feedback(self, timing: List[Tuple[str, float]]) -> None:
         """Shows feedback after an inquiry. Called by the execute loop after
         writing triggers.
-        
+
         Parameters
         ----------
             timing - list of (trigger_label, timestamp) pairs
@@ -178,7 +177,7 @@ class RSVPInterInquiryFeedbackCalibration(RSVPCalibrationTask):
         # we always want the same data channel in the occipital region and the
         # first of it
         response = power_spectral_density(
-            data[self.feedback_config.psd_channel_index][0],
+            data[self.psd_channel_index][0],
             self.feedback_config.psd_export_band,
             sampling_rate=self.filtered_sampling_rate,
             # plot=True,  # uncomment to see the PSD plot in real time
@@ -199,7 +198,7 @@ class RSVPInterInquiryFeedbackCalibration(RSVPCalibrationTask):
     def _get_data_for_psd(
             self, inquiry_timing: List[Tuple[str, float]]) -> np.ndarray:
         """Get EEG data from the data acquisition and reshape.
-        
+
         Parameters
         ----------
             inquiry_timing - list of (trigger_label, timestamp) pairs for
@@ -248,7 +247,7 @@ class RSVPInterInquiryFeedbackCalibration(RSVPCalibrationTask):
             sample_rate=transform_sample_rate,
             channel_map=self.channel_map,
             poststimulus_length=trial_length)
-        
+
         return reshaped_data
 
     @classmethod
@@ -270,7 +269,7 @@ def letter_times(
     -----------
         triggers: triggers e.g. [['A', 0.5], ...]
             as letter and flash time for the letter
-       
+
     Returns:
     --------
         times
