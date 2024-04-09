@@ -12,6 +12,7 @@ from bcipy.config import LM_PATH
 
 from scipy.special import softmax
 
+import numpy as np
 
 class ClassifierLanguageModel(LanguageModel):
     """Character language model based on a transformer with a classification head"""
@@ -168,22 +169,23 @@ class ClassifierLanguageModel(LanguageModel):
         # Optionally, we condition on upper and lower case left context
         if not self.mixed_case_context:
             context = context.lower()
-        tokens.extend(self._encode(context))
 
+
+        tokens.extend(self._encode(context))
+        
         tensor = torch.tensor([tokens]).to(self.device)
         with torch.no_grad():
             logits = self.model(tensor).logits
             char_probs = torch.softmax(logits, dim=1).to("cpu").numpy()[0]
 
-            # Apostrophe is not in our symbol set, redistribute prob mass
-            char_probs[26] = 0.0
+        keys = [*"ABCDEFGHIJKLMNOPQRSTUVWXYZ' "]
+        next_char_pred = Counter(dict(zip(keys, char_probs)))
 
-        char_probs = softmax(char_probs)
 
-        next_char_pred = Counter()
+        next_char_pred[SPACE_CHAR] = next_char_pred[" "]
+        del next_char_pred[" "]
 
-        for i, ch in enumerate(self.symbol_set):
-            next_char_pred[ch] = char_probs[i]
+        next_char_pred[BACKSPACE_CHAR] = 0.0
 
         return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
 
@@ -196,7 +198,7 @@ class ClassifierLanguageModel(LanguageModel):
             Load the language model and tokenizer, initialize class variables
         """
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
+            self.tokenizer = AutoTokenizer.from_pretrained(self.model_dir, use_fast=False)
         except BaseException:
             raise InvalidLanguageModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
         self.vocab_size = self.tokenizer.vocab_size
@@ -206,7 +208,7 @@ class ClassifierLanguageModel(LanguageModel):
                 self.model = self.model.half()
         except:
             raise InvalidLanguageModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
-
+        
         self.model.eval()
 
         self.model.to(self.device)
