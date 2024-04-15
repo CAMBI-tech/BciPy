@@ -1,6 +1,7 @@
 # Orchestrator Parameters
 Adds parsing functions for action sequences required for the Session Orchestrator
 
+## Contributions
 - Adds function for parsing string of actions into a list of tasks (actions are not defined as anything beyond task types as of now)
 - Adds function for validating that string of actions is in the correct format
 - Adds function for converting a list of tasks into an action string
