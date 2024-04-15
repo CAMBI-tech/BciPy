@@ -21,3 +21,13 @@ class TestActions(unittest.TestCase):
         actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
         with self.assertRaises(ValueError):
             parse_actions(actions)
+
+    def test_serializes_one_task(self) -> None:
+        actions = [TaskType.RSVP_CALIBRATION]
+        serialized = serialize_actions(actions)
+        assert serialized == 'RSVP Calibration'
+    
+    def test_serializes_multiple_tasks(self) -> None:
+        actions = [TaskType.RSVP_CALIBRATION, TaskType.RSVP_COPY_PHRASE]
+        serialized = serialize_actions(actions)
+        assert serialized == 'RSVP Calibration -> RSVP Copy Phrase'
