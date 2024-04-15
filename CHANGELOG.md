@@ -1,3 +1,13 @@
+# Orchestrator Parameters
+Adds parsing functions for action sequences required for the Session Orchestrator
+
+- Adds function for parsing string of actions into a list of tasks (actions are not defined as anything beyond task types as of now)
+- Adds function for validating that string of actions is in the correct format
+- Adds function for converting a list of tasks into an action string
+- Adds unit test for parsing a single action, multiple actions, and invalid actions
+- Adds unit test for serializing a single action and multiple actions
+- Adds task for validating valid and invalid action strings
+
 # 2.0.0-rc.4
 
 Our last release candidate before the official 2.0 release!
