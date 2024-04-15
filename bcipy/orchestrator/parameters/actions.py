@@ -22,7 +22,34 @@ def parse_actions(action_sequence: str) -> List[TaskType]:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    return [taskname_dict[action.strip()] for action in action_sequence.split('->')]
+    try:
+        actions = [taskname_dict[action.strip()] for action in action_sequence.split('->')]
+    except KeyError as e:
+        raise ValueError('Invalid task name in action sequence') from e
+    return actions
+
+def validate_action_string(action_sequence: str) -> None:
+    """
+    Validates a string of actions.
+
+    Validates a string of actions. The string is expected to be in the format of 'Action1 -> Action2 -> ... -> ActionN'.
+
+    Parameters
+    ----------
+        action_sequence : str
+            A string of actions in the format of 'Action1 -> Action2 -> ... -> ActionN'.
+
+    Raises
+    ------
+        ValueError
+            If the string of actions is invalid.
+    """
+    try:
+        for action in action_sequence.split('->'):
+            if action.strip() not in taskname_dict:
+                raise ValueError('Invalid task name in action sequence')
+    except KeyError as e:
+        raise ValueError('Invalid task name in action sequence') from e
 
 def serialize_actions(action_sequence: List[TaskType]) -> str:
     """

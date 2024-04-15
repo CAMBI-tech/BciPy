@@ -1,5 +1,5 @@
 import unittest
-from bcipy.orchestrator.parameters.actions import parse_actions, serialize_actions
+from bcipy.orchestrator.parameters.actions import parse_actions, serialize_actions, validate_action_string
 from bcipy.task import TaskType
 
 class TestActions(unittest.TestCase):
@@ -21,6 +21,15 @@ class TestActions(unittest.TestCase):
         actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
         with self.assertRaises(ValueError):
             parse_actions(actions)
+    
+    def test_validates_valid_action_string(self) -> None:
+        actions = 'RSVP Calibration -> RSVP Copy Phrase'
+        validate_action_string(actions)
+
+    def test_throws_exception_on_invalid_action_string(self) -> None:
+        actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
+        with self.assertRaises(ValueError):
+            validate_action_string(actions)
 
     def test_serializes_one_task(self) -> None:
         actions = [TaskType.RSVP_CALIBRATION]
