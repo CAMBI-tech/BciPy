@@ -6,6 +6,7 @@ taskname_dict = {}
 for i, task in enumerate(TaskType.list()):
     taskname_dict[task] = TaskType(i + 1)
 
+
 def parse_actions(action_sequence: str) -> List[TaskType]:
     """
     Parses a string of actions into a list of TaskType objects.
@@ -27,6 +28,7 @@ def parse_actions(action_sequence: str) -> List[TaskType]:
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
     return actions
+
 
 def validate_action_string(action_sequence: str) -> None:
     """
@@ -51,6 +53,7 @@ def validate_action_string(action_sequence: str) -> None:
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
 
+
 def serialize_actions(action_sequence: List[TaskType]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
@@ -73,6 +76,7 @@ def serialize_actions(action_sequence: List[TaskType]) -> str:
         if i != len(action_sequence) - 1:
             action_str += ' -> '
     return action_str
+
 
 if __name__ == '__main__':
     actions = parse_actions("Matrix Calibration -> Matrix Copy Phrase")
