@@ -4,6 +4,7 @@ from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.seq2seq import Seq2SeqLanguageModel
 from bcipy.language.model.classifier import ClassifierLanguageModel
+from bcipy.language.model.prompt import PromptLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
@@ -21,7 +22,8 @@ MODEL_MAPPING = {
     "kenlm": KenLMLanguageModel,
     "causal": CausalLanguageModel,
     "seq2seq": Seq2SeqLanguageModel,
-    "classifier": ClassifierLanguageModel
+    "classifier": ClassifierLanguageModel,
+    "prompt": PromptLanguageModel
 }
 
 if __name__ == "__main__":
