@@ -1,5 +1,5 @@
 import unittest
-from bcipy.orchestrator.parameters.actions import parse_actions, serialize_actions, validate_action_string
+from bcipy.orchestrator.config import parse_actions, serialize_actions, validate_action_string
 from bcipy.task import TaskType
 
 
