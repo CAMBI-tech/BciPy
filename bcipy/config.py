@@ -51,6 +51,6 @@ STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
 
 # misc configuration
 WAIT_SCREEN_MESSAGE = 'Press Space to start or Esc to exit'
-MAX_PAUSE_SECONDS = 360
+MAX_PAUSE_SECONDS = 365
 SESSION_COMPLETE_MESSAGE = 'Complete! Saving data...'
 REMOTE_SERVER = "https://github.com/CAMBI-tech/BciPy/"

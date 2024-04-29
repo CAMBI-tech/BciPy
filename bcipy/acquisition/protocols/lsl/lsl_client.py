@@ -19,6 +19,8 @@ from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
 
+LSL_TIMEOUT = 5.0  # seconds
+
 
 def time_range(stamps: List[float],
                precision: int = 3,
@@ -108,7 +110,7 @@ class LslAcquisitionClient:
         stream_info = resolve_device_stream(self.device_spec)
         self.inlet = StreamInlet(
             stream_info,
-            max_buflen=MAX_PAUSE_SECONDS + 5,
+            max_buflen=MAX_PAUSE_SECONDS,
             max_chunklen=1)
         log.info("Acquiring data from data stream:")
         log.info(self.inlet.info().as_xml())
@@ -127,10 +129,11 @@ class LslAcquisitionClient:
                 queue=msg_queue)
             self.recorder.start()
             log.info("Waiting for first sample from lsl_recorder")
-            self._first_sample_time = msg_queue.get(block=True, timeout=5.0)
+            self._first_sample_time = msg_queue.get(block=True,
+                                                    timeout=LSL_TIMEOUT)
             log.info(f"First sample time: {self.first_sample_time}")
 
-        self.inlet.open_stream(timeout=5.0)
+        self.inlet.open_stream(timeout=LSL_TIMEOUT)
         if self.max_buffer_len and self.max_buffer_len > 0:
             self.buffer = RingBuffer(size_max=self.max_samples)
         if not self._first_sample_time:
@@ -369,7 +372,7 @@ def discover_device_spec(content_type: str) -> DeviceSpec:
     """Finds the first LSL stream with the given content type and creates a
     device spec from the stream's metadata."""
     log.info(f"Waiting for {content_type} data to be streamed over LSL.")
-    streams = resolve_byprop('type', content_type, timeout=5.0)
+    streams = resolve_byprop('type', content_type, timeout=LSL_TIMEOUT)
     if not streams:
         raise Exception(
             f'LSL Stream not found for content type {content_type}')

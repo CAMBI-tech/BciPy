@@ -350,7 +350,7 @@ def pause_on_wait_screen(window, message, color) -> bool:
 
     elapsed_seconds = time.time() - pause_start
     if elapsed_seconds >= MAX_PAUSE_SECONDS:
-        log.info("Pause exceeded the allowed time. Ending task.")
+        log.info(f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
         return False
     if keys[0] == 'escape':
         return False
