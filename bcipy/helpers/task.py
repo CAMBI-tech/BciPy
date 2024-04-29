@@ -1,13 +1,14 @@
 import logging
 import random
-from typing import Optional, Any, Dict, List, Tuple, Union
+import time
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 from psychopy import core, event, visual
 
 from bcipy.acquisition.multimodal import ClientManager, ContentType
 from bcipy.acquisition.record import Record
-from bcipy.config import SESSION_COMPLETE_MESSAGE
+from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
@@ -314,38 +315,45 @@ def get_user_input(window, message, color, first_run=False):
 
     Parameters
     ----------
-
         window[psychopy task window]: task window.  *assumes wait_screen method
+        message: message to display in the wait screen
+        color: wait screen color
+        first_run: the first_run will always pause.
 
     Returns
     -------
-        True/False: whether or not to stop a trial (based on escape key).
+        True to continue the task, False to stop and exit.
     """
-    if not first_run:
-        pause = False
-        # check user input to make sure we should be going
-        keys = event.getKeys(keyList=['space', 'escape'])
-
-        if keys:
-            # pause?
-            if keys[0] == 'space':
-                pause = True
-
-            # escape?
-            if keys[0] == 'escape':
-                return False
-
+    if first_run:
+        return pause_on_wait_screen(window, message, color)
     else:
-        pause = True
-
-    while pause:
-        window.wait_screen(message, color)
         keys = event.getKeys(keyList=['space', 'escape'])
-
         if keys:
+            if keys[0] == 'space':
+                return pause_on_wait_screen(window, message, color)
             if keys[0] == 'escape':
                 return False
-            pause = False
+    return True
+
+
+def pause_on_wait_screen(window, message, color) -> bool:
+    """Pause on the wait screen until the user presses the Space key to resume,
+    or the Escape key to exit.
+
+    Returns
+    -------
+        True to resume; False to exit.
+    """
+    pause_start = time.time()
+    window.wait_screen(message, color)
+    keys = event.waitKeys(keyList=['space', 'escape'])
+
+    elapsed_seconds = time.time() - pause_start
+    if elapsed_seconds >= MAX_PAUSE_SECONDS:
+        log.info(f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
+        return False
+    if keys[0] == 'escape':
+        return False
 
     return True
 
