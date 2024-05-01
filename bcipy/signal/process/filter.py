@@ -24,8 +24,12 @@ class Bandpass:
 
     def __init__(self, lo, hi, sample_rate_hz, order=5):
         nyq = 0.5 * sample_rate_hz
-        lo, hi = lo / nyq, hi / nyq
-        self.sos = butter(order, [lo, hi], analog=False, btype="band", output="sos")
+        lo = lo / nyq
+        if hi:
+            hi = hi / nyq
+            self.sos = butter(order, [lo, hi], analog=False, btype="bandpass", output="sos")
+        else:
+            self.sos = butter(order, lo, analog=False, btype="highpass", output="sos")
 
     def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         return sosfiltfilt(self.sos, data), fs

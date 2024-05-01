@@ -36,7 +36,7 @@ if __name__ == "__main__":
         python offline_analysis_process_dataset.py
     """
     data_path = load_experimental_data()
-    plot_joint_times = [-0.1, 0, 0.2, 0.3, 0.4, 0.45, 0.5, 0.55, 0.6]
+    plot_joint_times = [0.2, 0.3, 0.4, 0.45, 0.5, 0.55, 0.6]
 
     parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
 
@@ -164,11 +164,12 @@ if __name__ == "__main__":
     # data = [non_target_of, target_of]
     # visualize_evokeds(data, show=True)
 
-    evokeds = { 'Online Filter Target': target_of_evoked, 'Online Filter Non-Target': non_target_of_evoked, 'Conventional Filter Non-Target': target_cf_evoked, 'Conventional Filter Target': non_target_cf_evoked }
+    # evokeds = { 'Online Filter Target': target_of_evoked, 'Online Filter Non-Target': non_target_of_evoked, 'Conventional Filter Non-Target': target_cf_evoked, 'Conventional Filter Target': non_target_cf_evoked }
     
-    all_diff_no = mne.combine_evoked([evokeds['Conventional Filter Target'], evokeds['Online Filter Target']], weights=[1, -1])
-    all_diff_no.plot_joint(times=plot_joint_times, title='ERP Difference Between Online and Conventional Filtering')
-    all_diff_no.plot()
+    # Figure 1.
+    # all_diff_no = mne.combine_evoked([evokeds['Conventional Filter Target'], evokeds['Online Filter Target']], weights=[1, -1])
+    # all_diff_no.plot_joint(times=plot_joint_times, title='ERP Difference Between Online and Conventional Filtering')
+    # all_diff_no.plot()
     # plot the averages using grand_average
     # target_evoked, non_target_evoked = group_average(target, non_target)
     # breakpoint()
@@ -184,7 +185,7 @@ if __name__ == "__main__":
     fig = mne.viz.plot_compare_evokeds(evokeds_erp_compare, combine='mean', show=True, show_sensors='upper right')
     # Show a ERP of the two events using gfp by default and no CI?
     # visualize_evokeds([target_cf, target_of], show=True)
-    plot_compare_evokeds([target_cf.average(), target_of.average()], picks=roi, title='ERP Difference Between Online and Conventional Filtering', combine='mean', ci=0.95, show=True)
+    # plot_compare_evokeds([target_cf.average(), target_of.average()], picks=roi, title='ERP Difference Between Online and Conventional Filtering', combine='mean', ci=0.95, show=True)
     # eco = plot_compare_evokeds([cf_evokeds_diff, of_evokeds_diff], picks=roi, title='ERP Difference Between Online and Conventional Filtering')
     # plot_compare_evokeds(evokeds, picks=roi, title='ERP Difference Between Online and Conventional Filtering')
     # plt.show()

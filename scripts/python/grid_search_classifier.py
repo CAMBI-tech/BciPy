@@ -13,7 +13,8 @@ from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import balanced_accuracy_score, make_scorer, roc_auc_score, matthews_corrcoef
 from sklearn.svm import SVC
 
-from pyriemann.estimation import ERPCovariances, Covariances
+from pyriemann.estimation import ERPCovariances, Covariances, XdawnCovariances
+from pyriemann.classification import MDM
 from pyriemann.tangentspace import TangentSpace
 from pyriemann.spatialfilters import Xdawn
 from sklearn.dummy import DummyClassifier
@@ -33,12 +34,12 @@ k_folds = 10
 mcc = make_scorer(matthews_corrcoef)
 
 scores = {
-    'accuracy': 'accuracy',
+    # 'accuracy': 'accuracy',
     'precision': 'precision',
     'recall': 'recall',
-    'f1': 'f1',
+    # 'f1': 'f1',
     # 'roc_auc': make_scorer(roc_auc_score, needs_proba=True),
-    'roc_auc': 'roc_auc',
+    # 'roc_auc': 'roc_auc',
     'balanced_accuracy': 'balanced_accuracy',
     'mcc': mcc,
 }
@@ -59,12 +60,12 @@ clfs = {
         make_pipeline(Vectorizer(), SVC(kernel='rbf', random_state=40, gamma=0.00001, C=54.5982)),
         {},
     ),
-    'Xdawn LDA': (
-        make_pipeline(Xdawn(2), Vectorizer(), LDA(shrinkage='auto', solver='eigen')),
+    'TS-LDA': (
+        make_pipeline(XdawnCovariances(3), TangentSpace(metric="riemann"), LDA(shrinkage='auto', solver='eigen')),
         {},
     ),
-    'TS-SVM': (
-        make_pipeline(Covariances("oas"), TangentSpace(metric="riemann"), SVC(kernel="linear")),
+    'MDM': (
+        make_pipeline(XdawnCovariances(3), MDM()),
         {},
     ),
     'PCA_RDA_KDE': (
@@ -92,8 +93,8 @@ def crossvalidate_record(record, clfs=clfs, scores=scores, session_name=None):
             n_jobs=-1,
             refit='mcc',
             cv=k_folds,
-            return_train_score=True,
-            verbose=False
+            return_train_score=False,
+            verbose=1
         )
         cv.fit(record[0], record[1])
         headers = [

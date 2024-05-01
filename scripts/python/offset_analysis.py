@@ -104,6 +104,9 @@ def calculate_latency(raw_data: RawData,
             length = 0
 
     ax.plot(trg_box_x, trg_box_y, label='TRG (trigger box)')
+    plt.show()
+
+    breakpoint()
 
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
@@ -253,7 +256,7 @@ if __name__ == "__main__":
                         help=('RSVP Calibration Task. Default False. '
                               'Corrects for issue with fixation causing a false positive.'),
                         type=bool,
-                        default=True)
+                        default=False)
 
     args = parser.parse_args()
     path = args.path

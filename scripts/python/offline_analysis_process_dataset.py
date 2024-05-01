@@ -59,34 +59,34 @@ if __name__ == "__main__":
                 results[session.name] = {}
                 progress_bar.set_description(f"Processing {session.name}...")
 
-                # uncomment to use the inquiry based filtering
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl = load_data_inquiries(
-                #     data_folder=session_folder
-                #     )
+                # # uncomment to use the inquiry based filtering
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _ = load_data_inquiries(
+                    data_folder=session_folder
+                    )
 
                 # create epochs from inquiry data
                 # chanbel_type = 'eeg' * len(channels)
                 # info = mne.create_info(ch_names=channels, sfreq=fs)
-                epochs = mne.EpochsArray(data)
+                # epochs = mne.EpochsArray(data)
                 
-                # If using artifact labelled data, or whole dataset filtering, uncomment these lines
-                mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                all_annotations = mne_data.annotations
-                new_annotation_onset = []
-                new_annotation_duration = []
-                new_annotation_description = []
-                for t in all_annotations:
-                    if t['description'] in FILTER_NOISE:
-                        new_annotation_onset.append(t['onset'])
-                        new_annotation_duration.append(t['duration'])
-                        new_annotation_description.append('BAD_noise')
+                # # If using artifact labelled data, or whole dataset filtering, uncomment these lines
+                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
+                # all_annotations = mne_data.annotations
+                # new_annotation_onset = []
+                # new_annotation_duration = []
+                # new_annotation_description = []
+                # for t in all_annotations:
+                #     if t['description'] in FILTER_NOISE:
+                #         new_annotation_onset.append(t['onset'])
+                #         new_annotation_duration.append(t['duration'])
+                #         new_annotation_description.append('BAD_noise')
                 
-                filtered_annotations = mne.Annotations(
-                    new_annotation_onset,
-                    new_annotation_duration,
-                    new_annotation_description)
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _  = load_data_mne(
-                    data_folder=session_folder, mne_data_annotations=filtered_annotations, drop_artifacts=True, parameters=parameters)
+                # filtered_annotations = mne.Annotations(
+                #     new_annotation_onset,
+                #     new_annotation_duration,
+                #     new_annotation_description)
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _  = load_data_mne(
+                #     data_folder=session_folder, drop_artifacts=False, parameters=parameters)
 
                 # train the models and get the results. Provide a session name, to persist the models.
                 df = crossvalidate_record((data, labels))
@@ -101,7 +101,12 @@ if __name__ == "__main__":
                 raise e
     
     # export the results!
-    condition = 'WD_blinkeogeventemg_SAR_IIR'
+    # lp only = NAR_lponly_real_RetrainwithMDM (High pass of 1 Hz). Miss named!
+    # cf_real = NAR_CF_real_RetrainwithMDM (1-20 Hz)  CF
+    # of = NAR_OF_MDM_3_cov (1-20 Hz) OF
+    # of_no_buffer = OF but no transformation buffer to prove the edge effects hypothesis
+    # TODO: of hp only, check results for regular filter, try .1-75 Hz?
+    condition = 'NAR_OF_RetrainwithMDM_limited'
     file_name = f'{condition}_all_models.csv'
     
     export = pd.DataFrame.from_dict(results).transpose()
