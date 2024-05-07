@@ -1,10 +1,11 @@
 """VEP Calibration task-related code"""
-from typing import List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 from psychopy import core, visual  # type: ignore
 
 from bcipy.acquisition.multimodal import ClientManager
-from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
+from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
+                          WAIT_SCREEN_MESSAGE)
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -13,12 +14,14 @@ from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import get_user_input, trial_complete_message
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
 from bcipy.task import Task
+from bcipy.task.data import Inquiry, Session
 from bcipy.task.paradigm.vep.stim_generation import (
     InquirySchedule, generate_vep_calibration_inquiries)
 
@@ -32,6 +35,23 @@ def trigger_type(symbol: str, target: str, _index: int) -> TriggerType:
     if target == symbol:
         return TriggerType.TARGET
     return TriggerType.EVENT
+
+
+def target_index(inquiry: List[Union[List[str], str]]) -> Optional[int]:
+    """Given a VEP calibration inquiry, determine which box holds the target.
+
+    Parameters
+    ----------
+        inquiry - list of target, fixation, and sublists representing each
+            vep box and its content symbols.
+
+    Returns the box index (0-based).
+    """
+    target, _fixation, *boxes = inquiry
+    for i, box in enumerate(boxes):
+        if target in box:
+            return i
+    return None
 
 
 class VEPCalibrationTask(Task):
@@ -49,6 +69,7 @@ class VEPCalibrationTask(Task):
     parameters (Dictionary)
     file_save (String)
     """
+    MODE = 'VEP'
 
     def __init__(self, win: visual.Window, daq: ClientManager,
                  parameters: Parameters, file_save: str):
@@ -84,6 +105,25 @@ class VEPCalibrationTask(Task):
 
         self.is_txt_stim = parameters['is_txt_stim']
         self.display = self.init_display()
+
+        self.session = Session(save_location=self.file_save,
+                               task='Calibration',
+                               mode=self.MODE,
+                               symbol_set=self.symbol_set,
+                               task_data=self.session_task_data())
+        self.write_session_data()
+
+    def session_task_data(self) -> Dict[str, Any]:
+        """Task-specific session data"""
+        boxes = [{
+            "colors": box.colors,
+            "flicker_rate": self.display.flicker_rates[i],
+            "envelope": box.bounds
+        } for i, box in enumerate(self.display.vep)]
+        return {
+            "boxes": boxes,
+            "symbol_starting_positions": self.display.starting_positions
+        }
 
     def init_display(self) -> VEPDisplay:
         """Initialize the display"""
@@ -154,6 +194,8 @@ class VEPCalibrationTask(Task):
                 # Write triggers for the inquiry
                 self.write_trigger_data(timing, first_run=(inquiry == 0))
 
+                self.update_session_data(stimuli_labels[inquiry])
+
                 # Wait for a time
                 core.wait(self.buffer_val)
 
@@ -185,7 +227,8 @@ class VEPCalibrationTask(Task):
             assert self.display.first_stim_time, "First stim time not set"
             for content_type, client in self.daq.clients_by_type.items():
                 label = offset_label(content_type.name)
-                time = client.offset(self.display.first_stim_time) - self.display.first_stim_time
+                time = client.offset(self.display.first_stim_time
+                                     ) - self.display.first_stim_time
                 triggers.append(Trigger(label, TriggerType.OFFSET, time))
 
         target = timing[0][0]
@@ -204,14 +247,47 @@ class VEPCalibrationTask(Task):
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
+    def write_session_data(self) -> None:
+        """Save session data to disk."""
+        if self.session:
+            session_file = _save_session_related_data(
+                f"{self.file_save}/{SESSION_DATA_FILENAME}",
+                self.session.as_dict())
+            session_file.close()
+
+    def update_session_data(self, inquiry: List[Union[List[str],
+                                                      str]]) -> None:
+        """Adds the inquiry to the session data and writes to disk."""
+        target_box = target_index(inquiry)
+        has_target = target_box is not None
+        target_freq = self.display.flicker_rates[
+            target_box] if has_target else None
+
+        task_data = {
+            'target_box_index': target_box,
+            'target_frequency': target_freq
+        }
+
+        targetness = [TriggerType.NONTARGET for _ in range(self.num_boxes)]
+        if has_target:
+            targetness[target_box] = TriggerType.TARGET
+        trg_types = [TriggerType.PROMPT, TriggerType.FIXATION, *targetness]
+
+        data = Inquiry(stimuli=inquiry,
+                       timing=[],
+                       triggers=[],
+                       target_info=list(map(str, trg_types)),
+                       target_letter=inquiry[0],
+                       task_data=task_data)
+        self.session.add_sequence(data)
+        self.write_session_data()
+
     def name(self):
         return 'VEP Calibration Task'
 
 
-def init_calibration_display(parameters: Parameters,
-                             window: visual.Window,
-                             experiment_clock: Clock,
-                             symbol_set: List[str],
+def init_calibration_display(parameters: Parameters, window: visual.Window,
+                             experiment_clock: Clock, symbol_set: List[str],
                              timing: List[float],
                              colors: List[str]) -> VEPDisplay:
     """Initialize the display"""
@@ -226,14 +302,15 @@ def init_calibration_display(parameters: Parameters,
     layout = centered(width_pct=0.95, height_pct=0.80)
     box_config = BoxConfiguration(layout, height_pct=0.30)
 
-    stim_props = VEPStimuliProperties(stim_font=parameters['font'],
-                                      stim_pos=box_config.positions,
-                                      stim_height=0.1,
-                                      timing=timing,
-                                      stim_color=colors,
-                                      inquiry=[],
-                                      stim_length=1,
-                                      animation_seconds=parameters['time_vep_animation'])
+    stim_props = VEPStimuliProperties(
+        stim_font=parameters['font'],
+        stim_pos=box_config.positions,
+        stim_height=0.1,
+        timing=timing,
+        stim_color=colors,
+        inquiry=[],
+        stim_length=1,
+        animation_seconds=parameters['time_vep_animation'])
 
     task_bar = CalibrationTaskBar(window,
                                   inquiry_count=parameters['stim_number'],

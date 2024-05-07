@@ -31,12 +31,14 @@ class VEPStim:
                  num_squares: int = 4):
         self.window = win
         self.code = code
+        self.colors = colors
 
         squares = checkerboard(squares=num_squares,
                                colors=colors,
                                center=center,
                                board_size=size)
         board_boundary = envelope(pos=center, size=size)
+        self.bounds = board_boundary
 
         frame1_holes = []
         frame2_holes = []
