@@ -1,9 +1,9 @@
 import unittest
 
-from mockito import any, mock, unstub, verify, when
-from mock import mock_open, patch
-import psychopy
 import numpy as np
+import psychopy
+from mock import mock_open, patch
+from mockito import any, mock, unstub, verify, when
 
 import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
@@ -112,7 +112,10 @@ class TestMatrixCalibration(unittest.TestCase):
 
         when(TriggerHandler).add_triggers(any()).thenReturn()
 
-        when(psychopy.event).getKeys(keyList=any()).thenReturn(['space'])
+        when(psychopy.event).getKeys(keyList=['space', 'escape'],
+                                     modifiers=False,
+                                     timeStamped=False).thenReturn(['space'])
+        when(psychopy.event).getKeys(keyList=['space', 'escape']).thenReturn(['space'])
         when(psychopy.core).wait(any()).thenReturn(None)
 
     def tearDown(self):
