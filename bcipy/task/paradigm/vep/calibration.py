@@ -81,6 +81,7 @@ class VEPCalibrationTask(Task):
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
+        self.start_time = self.experiment_clock.getTime()
         self.buffer_val = parameters['task_buffer_length']
         self.symbol_set = alphabet(parameters)
 
@@ -280,6 +281,7 @@ class VEPCalibrationTask(Task):
                        target_letter=inquiry[0],
                        task_data=task_data)
         self.session.add_sequence(data)
+        self.session.total_time_spent = self.experiment_clock.getTime() - self.start_time
         self.write_session_data()
 
     def name(self):
