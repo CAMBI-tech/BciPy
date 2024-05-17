@@ -8,20 +8,20 @@ from abc import ABC, abstractmethod
 from collections import Counter
 from enum import Enum
 from os import path, sep
-from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple, Union
+from typing import (Any, Dict, Iterator, List, NamedTuple, Optional, Tuple,
+                    Union)
 
 import mne
 import numpy as np
 import sounddevice as sd
 import soundfile as sf
-
 from mne import Annotations, Epochs
 from mne.io import RawArray
 from pandas import Series
 from PIL import Image
 from psychopy import core
 
-from bcipy.config import DEFAULT_TEXT_FIXATION, DEFAULT_FIXATION_PATH
+from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
 
@@ -85,7 +85,7 @@ class InquirySchedule(NamedTuple):
     - durations: `List[List[float]]`
     - colors: `List[List[str]]`
     """
-    stimuli: Union[List[List[str]], List[str]]
+    stimuli: List[Any]
     durations: Union[List[List[float]], List[float]]
     colors: Union[List[List[str]], List[str]]
 
