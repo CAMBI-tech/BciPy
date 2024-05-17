@@ -1,5 +1,5 @@
 """VEP Calibration task-related code"""
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 from psychopy import core, visual  # type: ignore
 
@@ -35,23 +35,6 @@ def trigger_type(symbol: str, target: str, _index: int) -> TriggerType:
     if target == symbol:
         return TriggerType.TARGET
     return TriggerType.EVENT
-
-
-def target_index(inquiry: List[Union[List[str], str]]) -> Optional[int]:
-    """Given a VEP calibration inquiry, determine which box holds the target.
-
-    Parameters
-    ----------
-        inquiry - list of target, fixation, and sublists representing each
-            vep box and its content symbols.
-
-    Returns the box index (0-based).
-    """
-    target, _fixation, *boxes = inquiry
-    for i, box in enumerate(boxes):
-        if target in box:
-            return i
-    return None
 
 
 class VEPCalibrationTask(Task):
@@ -258,11 +241,23 @@ class VEPCalibrationTask(Task):
 
     def update_session_data(self, inquiry: List[Union[List[str],
                                                       str]]) -> None:
-        """Adds the inquiry to the session data and writes to disk."""
-        target_box = target_index(inquiry)
-        has_target = target_box is not None
+        """Adds the inquiry to the session data and writes to disk.
+
+        Parameters
+        ----------
+        inquiry - list of target, fixation, and sublists representing each
+            vep box and its content symbols.
+        """
+        target_letter, _fixation, *boxes = inquiry
+        assert isinstance(target_letter, str), "unexpected inquiry format"
+
+        target_box = None
+        for i, box in enumerate(boxes):
+            if target_letter in box:
+                target_box = i
+
         target_freq = self.display.flicker_rates[
-            target_box] if has_target else None
+            target_box] if target_box is not None else None
 
         task_data = {
             'target_box_index': target_box,
@@ -270,7 +265,7 @@ class VEPCalibrationTask(Task):
         }
 
         targetness = [TriggerType.NONTARGET for _ in range(self.num_boxes)]
-        if has_target:
+        if target_box is not None:
             targetness[target_box] = TriggerType.TARGET
         trg_types = [TriggerType.PROMPT, TriggerType.FIXATION, *targetness]
 
@@ -278,10 +273,11 @@ class VEPCalibrationTask(Task):
                        timing=[],
                        triggers=[],
                        target_info=list(map(str, trg_types)),
-                       target_letter=inquiry[0],
+                       target_letter=target_letter,
                        task_data=task_data)
         self.session.add_sequence(data)
-        self.session.total_time_spent = self.experiment_clock.getTime() - self.start_time
+        self.session.total_time_spent = self.experiment_clock.getTime(
+        ) - self.start_time
         self.write_session_data()
 
     def name(self):

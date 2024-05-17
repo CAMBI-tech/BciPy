@@ -70,7 +70,7 @@ class Inquiry:
     """
 
     def __init__(self,
-                 stimuli: List[str],
+                 stimuli: List[Any],
                  timing: List[float],
                  triggers: List[Tuple[str, float]],
                  target_info: List[str],
@@ -150,7 +150,7 @@ class Inquiry:
 
     def as_dict(self) -> Dict:
         """Dict representation"""
-        data = {
+        data: Dict = {
             'stimuli': self.stimuli,
             'timing': self.timing,
             'triggers': self.triggers,
@@ -312,7 +312,7 @@ class Session:
                         stim_dict = stim.as_dict()
                     series_dict[series_counter][str(series_index)] = stim_dict
 
-        task_info = {
+        task_info: Dict = {
             'session': self.save_location,
             'task': self.task,
             'mode': self.mode,
@@ -324,7 +324,7 @@ class Session:
 
         series_info = {'series': series_dict}
 
-        summary_info = {
+        summary_info: Dict = {
             'total_time_spent': round(self.total_time_spent, self.time_spent_precision),
             'total_minutes': round(self.total_time_spent / 60, self.time_spent_precision),
             'total_number_series': self.total_number_series,
