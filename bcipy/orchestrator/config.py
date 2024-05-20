@@ -72,12 +72,7 @@ def serialize_actions(action_sequence: List[TaskType]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    action_str = ''
-    for i, task in enumerate(action_sequence):
-        action_str += task.label
-        if i != len(action_sequence) - 1:
-            action_str += ' ' + ACTION_SEPARATOR + ' '
-    return action_str
+    return f" {ACTION_SEPARATOR} ".join([task.label for task in action_sequence])
 
 
 if __name__ == '__main__':
