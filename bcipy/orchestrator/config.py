@@ -1,6 +1,7 @@
 from typing import List
 from bcipy.task import TaskType
-"""This file can define actions that can happen in a session orchestrator visit. To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc."""
+"""This file can define actions that can happen in a session orchestrator visit.
+To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
 ACTION_SEPARATOR = '->'
 
@@ -13,8 +14,8 @@ def parse_actions(action_sequence: str) -> List[TaskType]:
     """
     Parses a string of actions into a list of TaskType objects.
 
-    Converts a string of actions into a list of TaskType objects. The string is expected to be in the format of 'Action1 -> Action2 -> ... -> ActionN'.
-
+    Converts a string of actions into a list of TaskType objects. The string is expected
+    to be in the format of 'Action1 -> Action2 -> ... -> ActionN'.
     Parameters
     ----------
         action_sequence : str
@@ -60,7 +61,8 @@ def serialize_actions(action_sequence: List[TaskType]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
 
-    Converts a list of TaskType objects into a string of actions. The string is in the format of 'Action1 -> Action2 -> ... -> ActionN'.
+    Converts a list of TaskType objects into a string of actions. The string is in the format of
+    'Action1 -> Action2 -> ... -> ActionN'.
 
     Parameters
     ----------
