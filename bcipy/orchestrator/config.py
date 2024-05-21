@@ -50,7 +50,7 @@ def validate_action_string(action_sequence: str) -> None:
             If the string of actions is invalid.
     """
     try:
-        for action in action_sequence.split('->'):
+        for action in action_sequence.split(ACTION_SEPARATOR):
             if action.strip() not in taskname_dict:
                 raise ValueError('Invalid task name in action sequence')
     except KeyError as e:
