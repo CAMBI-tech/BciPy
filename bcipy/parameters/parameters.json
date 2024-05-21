@@ -1,4 +1,12 @@
 {
+  "orchestrator_visit": {
+    "value": "Matrix Calibration -> Matrix Copy Phrase",
+    "section": "bci_config",
+    "readableName": "Orchestrator action sequence",
+    "helpTip": "Denotes a sequence of actions to be executed in order",
+    "recommended_values": "Matrix Calubration -> Matrix Copy Phrase",
+    "type": "str"
+  },
   "fake_data": {
     "value": "false",
     "section": "bci_config",

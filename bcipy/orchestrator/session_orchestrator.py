@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import logging
 from logging import Logger
-from typing import List
+from typing import List, Union
 
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
@@ -14,7 +14,7 @@ from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
-from bcipy.helpers.system_utils import configure_logger, get_system_info
+from bcipy.helpers.system_utils import get_system_info
 
 
 @dataclass
@@ -30,12 +30,12 @@ class TaskInfo:
 
 class SessionOrchestrator:
     tasks: List[TaskInfo]
-    signal_models: List[SignalModel] = None
+    signal_models: Union[List[SignalModel], None] = None
     language_model: LanguageModel = None
     parameters: Parameters
     sys_info: dict
     log: Logger
-    save_folder: str = None
+    save_folder: Union[str, None] = None
     # Session Orchestrator could contain global objects here (DAQ, models etc) to be shared between executed tasks.
 
     def __init__(
