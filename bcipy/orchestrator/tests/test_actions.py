@@ -1,5 +1,5 @@
 import unittest
-from bcipy.orchestrator.config import parse_sequence, serialize_actions, validate_action_string
+from bcipy.orchestrator.config import parse_sequence, serialize_sequence, validate_sequence_string
 from bcipy.task import TaskType
 
 
@@ -17,7 +17,7 @@ class TestActions(unittest.TestCase):
         assert len(parsed) == 2
         assert parsed[0] == TaskType.RSVP_CALIBRATION
         assert parsed[1] == TaskType.RSVP_COPY_PHRASE
-
+        
     def test_throws_exception_on_invalid_task(self) -> None:
         actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
         with self.assertRaises(ValueError):
@@ -25,19 +25,19 @@ class TestActions(unittest.TestCase):
 
     def test_validates_valid_action_string(self) -> None:
         actions = 'RSVP Calibration -> RSVP Copy Phrase'
-        validate_action_string(actions)
+        validate_sequence_string(actions)
 
     def test_throws_exception_on_invalid_action_string(self) -> None:
         actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
         with self.assertRaises(ValueError):
-            validate_action_string(actions)
+            validate_sequence_string(actions)
 
     def test_serializes_one_task(self) -> None:
         actions = [TaskType.RSVP_CALIBRATION]
-        serialized = serialize_actions(actions)
+        serialized = serialize_sequence(actions)
         assert serialized == 'RSVP Calibration'
 
     def test_serializes_multiple_tasks(self) -> None:
         actions = [TaskType.RSVP_CALIBRATION, TaskType.RSVP_COPY_PHRASE]
-        serialized = serialize_actions(actions)
+        serialized = serialize_sequence(actions)
         assert serialized == 'RSVP Calibration -> RSVP Copy Phrase'
