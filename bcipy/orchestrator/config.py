@@ -49,12 +49,9 @@ def validate_action_string(action_sequence: str) -> None:
         ValueError
             If the string of actions is invalid.
     """
-    try:
-        for action in action_sequence.split(ACTION_SEPARATOR):
-            if action.strip() not in taskname_dict:
-                raise ValueError('Invalid task name in action sequence')
-    except KeyError as e:
-        raise ValueError('Invalid task name in action sequence') from e
+    for action in action_sequence.split(ACTION_SEPARATOR):
+        if action.strip() not in taskname_dict:
+            raise ValueError('Invalid task name in action sequence')
 
 
 def serialize_actions(action_sequence: List[TaskType]) -> str:
