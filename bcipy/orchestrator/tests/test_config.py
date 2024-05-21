@@ -3,7 +3,7 @@ from bcipy.orchestrator.config import parse_sequence, serialize_sequence, valida
 from bcipy.task import TaskType
 
 
-class TestActions(unittest.TestCase):
+class TestConfig(unittest.TestCase):
 
     def test_parses_one_task(self) -> None:
         actions = 'RSVP Calibration'
