@@ -120,6 +120,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: update pip & install custom dependencies
       run: |
+        sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
         python -m pip install --upgrade pip
         pip install kenlm==0.1 --global-option="--max_order=12"
