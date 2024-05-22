@@ -57,6 +57,16 @@ class TestConfig(unittest.TestCase):
         serialized = serialize_sequence(actions)
         assert serialized == 'RSVP Calibration'
 
+    def test_serializes_one_action(self) -> None:
+        sequence = [OfflineAnalysisAction]
+        serialized = serialize_sequence(sequence)
+        assert serialized == 'Offline Analysis'
+    
+    def test_serializes_actions_and_tasks(self) -> None:
+        sequence = [TaskType.RSVP_CALIBRATION, OfflineAnalysisAction, TaskType.RSVP_COPY_PHRASE]
+        serialized = serialize_sequence(sequence)
+        assert serialized == 'RSVP Calibration -> Offline Analysis -> RSVP Copy Phrase'
+
     def test_serializes_multiple_tasks(self) -> None:
         actions = [TaskType.RSVP_CALIBRATION, TaskType.RSVP_COPY_PHRASE]
         serialized = serialize_sequence(actions)
