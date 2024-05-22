@@ -37,13 +37,10 @@ jobs:
         sudo apt-get install libsndfile*
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
-        pip install kenlm==0.1 --global-option="--max_order=12"
-        pip install psychopy==2023.2.1 --no-deps
         pip install attrdict3
     - name: Install dependencies
       run: |
-        pip install -r dev_requirements.txt
-        pip install -e .
+        make dev-install
     - name: Unit test
       if: always()
       run: |
@@ -61,10 +58,10 @@ jobs:
         fi
     - name: type-check
       run: |
-        mypy bcipy
+        make type
     - name: lint
       run: |
-        flake8 bcipy
+        make lint
 
   build-windows:
 
@@ -83,26 +80,23 @@ jobs:
     - name: update pip & install custom dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install kenlm==0.1 --global-option="--max_order=12"
-        pip install psychopy==2023.2.1 --no-deps
     - name: install manually downloaded pyWinhook wheel for Python 3.9
       if: matrix.python-version == 3.9
       run: |
         pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl
     - name: install dependencies
       run: |
-        pip install -r dev_requirements.txt
-        pip install -e .
+        make dev-install
     - name: unittest
       if: always()
       run: |
-        coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+        make coverage-report
     - name: type-check
       run: |
-        mypy bcipy
+        make type
     - name: lint
       run: |
-        flake8 bcipy
+        make lint
 
   build-macos:
 
@@ -122,20 +116,19 @@ jobs:
       run: |
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        python -m pip install --upgrade pip
+        python -m pip install --upgrade pip settuptools wheel
     - name: install dependencies
       run: |
         make dev-install
     - name: unittest
       if: always()
       run: |
-        coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
-        coverage report
+        make coverage-report
     - name: type-check
       run: |
-        mypy bcipy
+        make type
     - name: lint
       run: |
-        flake8 bcipy
+        make lint
 
     
