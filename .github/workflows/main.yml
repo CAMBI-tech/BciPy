@@ -123,12 +123,9 @@ jobs:
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
         python -m pip install --upgrade pip
-        pip install kenlm==0.1 --global-option="--max_order=12"
-        pip install psychopy==2023.2.1 --no-deps
     - name: install dependencies
       run: |
-        pip install -r dev_requirements.txt
-        pip install -e .
+        make dev-install
     - name: unittest
       if: always()
       run: |
