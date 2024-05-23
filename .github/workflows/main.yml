@@ -116,7 +116,7 @@ jobs:
       run: |
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        python -m pip install --upgrade pip settuptools wheel
+        python -m pip install --upgrade pip
     - name: install dependencies
       run: |
         make dev-install
