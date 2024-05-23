@@ -7,11 +7,6 @@ dev-install:
 	pip install kenlm==0.1 --global-option="--max_order=12"
 	make install
 
-make dev-install-mac:
-	sh scripts/shell/m2chip_install.sh
-    brew install labstreaminglayer/tap/lsl
-	make dev-install
-
 test-all:
 	make coverage-report
 	make type
