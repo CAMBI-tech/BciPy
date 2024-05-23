@@ -327,7 +327,7 @@ class GazeReshaper:
         return data_by_targets
 
     @staticmethod
-    def centralize_all_data(data, symbol_pos) -> np.ndarray:
+    def centralize_all_data(data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:

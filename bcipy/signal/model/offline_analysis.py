@@ -10,6 +10,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold, KFold
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT,
@@ -72,6 +73,18 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
             data, labels, test_size=test_size, random_state=random_state
         )
     return train_data, test_data, train_labels, test_labels
+
+
+def calculate_acc(predictions: int, counter: int):
+    '''
+    Compute performance characteristics on the provided test data and labels.
+
+    predictions: predicted labels for each test point per symbol
+    counter: true labels for each test point per symbol
+    '''
+    accuracy_per_symbol = np.sum(predictions == counter) / len(predictions) * 100
+
+    return accuracy_per_symbol
 
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
@@ -191,14 +204,35 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy
+    
     if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
+        # Implement cross-validation for balanced accuracy
+        scores = []
+
+        skf = KFold(n_splits=5, shuffle=True, random_state=0)
+        data = data.swapaxes(0, 1)
+        for train_index, test_index in skf.split(data, labels):
+            train_data, test_data = data[train_index], data[test_index]
+            train_labels, test_labels = np.array(labels)[train_index], np.array(labels)[test_index]
+            dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            dummy_model.fit(train_data, train_labels)
+            probs = dummy_model.predict_proba(test_data)
+            preds = probs.argmax(-1)
+            score = balanced_accuracy_score(test_labels, preds)
+            scores.append(score)
+        
+        # for i in range(5):
+        #     train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2, swap_axes=True, random_state=i)
+        #     dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+        #     dummy_model.fit(train_data, train_labels)
+        #     probs = dummy_model.predict_proba(test_data)
+        #     preds = probs.argmax(-1)
+        #     score = balanced_accuracy_score(test_labels, preds)
+        #     scores.append(score)
+
+        average_score = np.mean(scores)
+        log.info(f"Cross-validated balanced accuracy: {average_score}")
+
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
     # this should have uncorrected trigger timing for display purposes
@@ -251,6 +285,7 @@ def analyze_gaze(
         gaze_data,
         save_path=data_folder if save_figures else None,
         show=show_figures,
+        img_path=f"{data_folder}/matrix.png",
         raw_plot=True,
     )
     figures.append(figure_handles)
@@ -316,7 +351,7 @@ def analyze_gaze(
         if len(inquiries[i]) == 0:
             continue
 
-        left_eye, right_eye = extract_eye_info(inquiries[i])
+        left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i])
         preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
 
     centralized_data_train = []
@@ -329,18 +364,24 @@ def analyze_gaze(
     covs_all = []
     for sym in symbol_set:
         # Skip if there's no evidence for this symbol:
-        if len(inquiries[sym]) == 0:
-            test_dict[sym] = []
-            continue
-        le = preprocessed_data[sym][0]
-        re = preprocessed_data[sym][1]
+        try: 
+            if len(inquiries[sym]) == 0:
+                test_dict[sym] = []
+                continue
+            le = preprocessed_data[sym][0]
+            re = preprocessed_data[sym][1]
+            # breakpoint()
 
-        # Train test split:
-        labels = np.array([sym] * len(le))  # Labels are the same for both eyes
-        train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
-        train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-        train_dict[sym] = np.concatenate((train_le, train_re), axis=0)
-        test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
+            # Train test split:
+            labels = np.array([sym] * len(le))  # Labels are the same for both eyes
+            train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
+            train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
+            train_dict[sym] = np.concatenate((train_le, train_re), axis=0)
+            test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
+
+        except:
+            log.info(f"Error in symbol {sym}")
+            continue
 
         # Fit the model based on model type.
         if model_type == "Individual":
@@ -349,15 +390,6 @@ def analyze_gaze(
 
             means, covs = model.evaluate()
 
-            # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                means, covs,
-                save_path=None,
-                show=False,
-                raw_plot=True,
-            )
-            figures.append(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
@@ -380,11 +412,12 @@ def analyze_gaze(
             if len(test_dict[sym]) == 0:
                 acc_all_symbols[sym] = 0
                 continue
+            # TODO: likelihoods should be in predict_proba !!!
             likelihoods, predictions = model.predict(
                 test_dict[sym],
                 np.squeeze(np.array(means_all)),
                 np.squeeze(np.array(covs_all)))
-            acc_all_symbols[sym] = model.calculate_acc(predictions, counter)
+            acc_all_symbols[sym] = calculate_acc(predictions, counter)
             accuracy += acc_all_symbols[sym]
             counter += 1
         accuracy /= counter
@@ -405,6 +438,7 @@ def analyze_gaze(
             all_data,
             save_path=data_folder if save_figures else None,
             show=show_figures,
+            img_path=f"{data_folder}/matrix.png",
             raw_plot=True,
         )
         figures.append(figure_handles)
@@ -425,6 +459,7 @@ def analyze_gaze(
                 means, covs,
                 save_path=None,
                 show=False,
+                img_path=f"{data_folder}/matrix.png",
                 raw_plot=True,
             )
             figures.append(figure_handles)
@@ -446,7 +481,7 @@ def analyze_gaze(
                 test_dict[sym],
                 np.squeeze(np.array(means_all)),
                 np.squeeze(np.array(covs_all)))
-            acc_all_symbols[sym] = model.calculate_acc(predictions, counter)
+            acc_all_symbols[sym] = calculate_acc(predictions, counter)
             accuracy += acc_all_symbols[sym]
             counter += 1
         accuracy /= counter
@@ -466,6 +501,7 @@ def analyze_gaze(
         means_all, covs_all,
         save_path=data_folder if save_figures else None,
         show=show_figures,
+        img_path=f"{data_folder}/matrix.png",
         raw_plot=True,
     )
     figures.append(fig_handles)
@@ -484,7 +520,7 @@ def offline_analysis(
     data_folder: str = None,
     parameters: Parameters = None,
     alert_finished: bool = True,
-    estimate_balanced_acc: bool = False,
+    estimate_balanced_acc: bool = True,
     show_figures: bool = False,
     save_figures: bool = False,
 ) -> Tuple[SignalModel, Figure]:
@@ -565,7 +601,7 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=True)
+    parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=True)
     parser.set_defaults(show_figures=True)
     args = parser.parse_args()

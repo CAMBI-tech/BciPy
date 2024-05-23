@@ -111,6 +111,72 @@ class EEGEvaluator(EvidenceEvaluator):
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
         return self.signal_model.predict(data, symbols, self.symbol_set)
+    
+class GazeEvaluator(EvidenceEvaluator):
+    """EvidenceEvaluator that extracts symbol likelihoods from raw gaze data.
+
+    Parameters
+    ----------
+        symbol_set: set of possible symbols presented
+        gaze_model: trained gaze model
+    """
+    consumes = ContentType.EYETRACKER
+    produces = EvidenceType.EYE
+
+    def __init__(self, symbol_set: List[str], signal_model: SignalModel):
+        super().__init__(symbol_set, signal_model)
+
+        # TODO Update
+        self.channel_map = analysis_channels(self.device_spec.channels,
+                                             self.device_spec)
+        self.transform = signal_model.metadata.transform
+        self.reshape = TrialReshaper()
+
+    def preprocess(self, raw_data: np.ndarray, times: List[float],
+                   target_info: List[str], window_length: float) -> np.ndarray:
+        """Preprocess the inquiry data.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            symbols - symbols displayed in the inquiry
+            times - timestamps associated with each symbol
+            target_info - target information about the stimuli;
+                ex. ['nontarget', 'nontarget', ...]
+            window_length - The length of the time between stimuli presentation
+        """
+        transformed_data, transform_sample_rate = self.transform(
+            raw_data, self.device_spec.sample_rate)
+
+        # The data from DAQ is assumed to have offsets applied
+        reshaped_data, _lbls = self.reshape(trial_targetness_label=target_info,
+                                            timing_info=times,
+                                            eeg_data=transformed_data,
+                                            sample_rate=transform_sample_rate,
+                                            channel_map=self.channel_map,
+                                            poststimulus_length=window_length)
+        return reshaped_data
+
+    # pylint: disable=arguments-differ
+    def evaluate(self, raw_data: np.ndarray, symbols: List[str],
+                 times: List[float], target_info: List[str],
+                 window_length: float) -> np.ndarray:
+        """Evaluate the evidence.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            symbols - symbols displayed in the inquiry
+            times - timestamps associated with each symbol
+            target_info - target information about the stimuli;
+                ex. ['nontarget', 'nontarget', ...]
+            window_length - The length of the time between stimuli presentation
+        """
+        data = self.preprocess(raw_data, times, target_info, window_length)
+        return self.signal_model.predict(data, symbols, self.symbol_set)
+
 
 
 def get_evaluator(
