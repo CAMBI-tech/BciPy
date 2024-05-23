@@ -9,7 +9,7 @@ dev-install:
 
 make dev-install-mac:
 	sh scripts/shell/m2chip_install.sh
-	brew install labstreaminglayer/tap/lsl
+    brew install labstreaminglayer/tap/lsl
 	make dev-install
 
 test-all:
