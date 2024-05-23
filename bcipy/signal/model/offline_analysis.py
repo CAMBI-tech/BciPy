@@ -315,36 +315,31 @@ def analyze_gaze(
     elif model_type == "Centralized":
         model = GazeModelCombined()
 
+    window_length = model.window_length
+
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        remove_pre_fixation=False,
-        exclusion=[
-            TriggerType.PREVIEW,
-            TriggerType.EVENT,
-            TriggerType.FIXATION,
-            TriggerType.SYSTEM,
-            TriggerType.OFFSET],
+        remove_pre_fixation=True,
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         device_type='EYETRACKER',
         apply_starting_offset=False
     )
-    ''' Trigger_timing includes PROMPT and excludes FIXATION '''
-
-    target_symbols = trigger_symbols[0::11]  # target symbols are the PROMPT triggers
-    # Use trigger_timing to generate time windows for each letter flashing
-    # Take every 10th trigger as the start point of timing.
-    inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     symbol_set = alphabet()
-    inquiries = model.reshaper(
-        inq_start_times=inq_start,
-        target_symbols=target_symbols,
-        gaze_data=data,
+
+    # TODO use the inquiry reshaper signatures to extract the inquiries and then create a seperate method to construct other needed strucutres
+    inquiries, _, _ = model.reshaper(
+        trial_targetness_label=trigger_targetness,
+        timing_info=trigger_timing,
+        eeg_data=data,
         sample_rate=sample_rate,
-        stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=stim_size,
-        symbol_set=symbol_set
+        trials_per_inquiry=stim_size,
+        channel_map=channel_map,
+        poststimulus_length=window_length,
+        prestimulus_length=0,
+        transformation_buffer=0,
     )
 
     # Extract the data for each target label and each eye separately.
@@ -364,8 +359,7 @@ def analyze_gaze(
 
     left_eye_all = []
     right_eye_all = []
-    means_all = []
-    covs_all = []
+
     for sym in symbol_set:
         # Skip if there's no evidence for this symbol:
         try: 
@@ -392,12 +386,10 @@ def analyze_gaze(
             # Model 1: Fit Gaussian mixture on each symbol separately
             model.fit(train_dict[sym])
 
-            means, covs = model.evaluate()
 
             left_eye_all.append(le)
             right_eye_all.append(re)
-            means_all.append(means)
-            covs_all.append(covs)
+
 
         if model_type == "Centralized":
             # Centralize the data using symbol positions:
@@ -405,29 +397,28 @@ def analyze_gaze(
             with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
-            centralized_data_train.append(model.reshaper.centralize_all_data(train_dict[sym], symbol_positions[sym]))
+            centralized_data_train.append(model.centralize(train_dict[sym], symbol_positions[sym]))
 
     if model_type == "Individual":
         accuracy = 0
         acc_all_symbols = {}
         counter = 0
+
         for sym in symbol_set:
             # Continue if there is no test data for this symbol:
             if len(test_dict[sym]) == 0:
                 acc_all_symbols[sym] = 0
                 continue
             # TODO: likelihoods should be in predict_proba !!!
-            likelihoods, predictions = model.predict(
-                test_dict[sym],
-                np.squeeze(np.array(means_all)),
-                np.squeeze(np.array(covs_all)))
-            acc_all_symbols[sym] = calculate_acc(predictions, counter)
+            predictions = model.predict(
+                test_dict[sym])
+            acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
             accuracy += acc_all_symbols[sym]
             counter += 1
         accuracy /= counter
 
-        df = pd.DataFrame(acc_all_symbols, index=[0])
-        df.to_csv('my_data.csv', index=False)
+        # df = pd.DataFrame(acc_all_symbols, index=[0])
+        # df.to_csv('my_data.csv', index=False)
 
         # Plot all accuracies as bar plot:
         figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=data_folder, show=show_figures)
@@ -453,14 +444,13 @@ def analyze_gaze(
         for sym in symbol_set:
             if len(test_dict[sym]) == 0:
                 continue
-            means, covs = model.evaluate(symbol_positions[sym])
 
             # Visualize the results:
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             figure_handles = visualize_gaze_inquiries(
                 le, re,
-                means, covs,
+                model.means, model.covs,
                 save_path=None,
                 show=False,
                 img_path=f"{data_folder}/matrix.png",
@@ -469,8 +459,6 @@ def analyze_gaze(
             figures.append(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
-            means_all.append(means)
-            covs_all.append(covs)
 
         # Compute scores for the test set.
         accuracy = 0
@@ -481,11 +469,9 @@ def analyze_gaze(
                 # Continue if there is no test data for this symbol:
                 acc_all_symbols[sym] = 0
                 continue
-            likelihoods, predictions = model.predict(
-                test_dict[sym],
-                np.squeeze(np.array(means_all)),
-                np.squeeze(np.array(covs_all)))
-            acc_all_symbols[sym] = calculate_acc(predictions, counter)
+            predictions = model.predict(
+                test_dict[sym])
+            acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
             accuracy += acc_all_symbols[sym]
             counter += 1
         accuracy /= counter
@@ -494,15 +480,15 @@ def analyze_gaze(
         figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=data_folder, show=show_figures)
         
         # Save accuracies for later use as a csv file:
-        df = pd.DataFrame(acc_all_symbols, index=[0])
-        df.to_csv('my_data.csv', index=False)
+        # df = pd.DataFrame(acc_all_symbols, index=[0])
+        # df.to_csv('my_data.csv', index=False)
         # basak = pd.read_csv('my_data.csv')
         
         figures.append(figure_handles)
 
     fig_handles = visualize_results_all_symbols(
         left_eye_all, right_eye_all,
-        means_all, covs_all,
+        model.means, model.covs,
         save_path=data_folder if save_figures else None,
         show=show_figures,
         img_path=f"{data_folder}/matrix.png",
