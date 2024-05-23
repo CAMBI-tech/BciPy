@@ -40,7 +40,8 @@
             "P3", "P4",
             "F3", "F4",
             "C3", "C4"
-        ]
+        ],
+        "status": "active"
     },
     {
         "name": "DSI-VR300",
@@ -57,7 +58,26 @@
         ],
         "sample_rate": 300,
         "description": "Wearable Sensing DSI-VR300",
-        "excluded_from_analysis": ["TRG", "F7"]
+        "excluded_from_analysis": ["TRG", "F7"],
+        "status": "active"
+    },
+    {
+        "name": "DSI-Flex",
+        "content_type": "EEG",
+        "channels": [
+            { "name": "F3", "label": "Fz", "units": "microvolts", "type": "EEG" },
+            { "name": "S2", "label": "Oz", "units": "microvolts", "type": "EEG" },
+            { "name": "S3", "label": "P4", "units": "microvolts", "type": "EEG" },
+            { "name": "S4", "label": "P3", "units": "microvolts", "type": "EEG" },
+            { "name": "S5", "label": "PO8", "units": "microvolts", "type": "EEG" },
+            { "name": "S6", "label": "Pz", "units": "microvolts", "type": "EEG" },
+            { "name": "S7", "label": "PO7", "units": "microvolts", "type": "EEG" },
+            { "name": "TRG", "label": "TRG", "units": "microvolts", "type": "EEG" }
+        ],
+        "sample_rate": 300.0,
+        "description": "Wearable Sensing DSI-Flex",
+        "excluded_from_analysis": ["TRG"],
+        "status": "active"
     },
     {
         "name": "g.USBamp-1",
@@ -81,7 +101,8 @@
             { "name": "Ch16", "label": "Ch16", "units": "microvolts", "type": "EEG" }
         ],
         "sample_rate": 256,
-        "description": "GTec g.USBamp"
+        "description": "GTec g.USBamp",
+        "status": "active"
     },
     {
         "name": "Tobii Nano",
@@ -98,6 +119,7 @@
         ],
         "sample_rate": 60.0,
         "description": "Tobii Nano. For use with the Tobii Pro SDK.",
-        "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"]
+        "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"],
+        "status": "active"
     }
 ]

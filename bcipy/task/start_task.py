@@ -1,4 +1,5 @@
 """Code for constructing and executing registered tasks"""
+# mypy: disable-error-code="arg-type, misc"
 from typing import List, Optional
 from psychopy import visual
 
@@ -13,6 +14,7 @@ from bcipy.task.paradigm.rsvp.calibration.calibration import \
 from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
     RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
 from bcipy.task.task_registry import TaskType
 
 from bcipy.acquisition import ClientManager
@@ -72,6 +74,10 @@ def make_task(
         return MatrixCopyPhraseTask(
             display_window, daq, parameters, file_save, signal_models,
             language_model, fake=fake)
+
+    if task is TaskType.VEP_CALIBRATION:
+        return VEPCalibrationTask(display_window, daq, parameters, file_save)
+
     raise TaskRegistryException(
         'The provided experiment type is not registered.')
 

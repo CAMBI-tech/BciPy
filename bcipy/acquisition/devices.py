@@ -2,8 +2,9 @@
 devices."""
 import json
 import logging
+from enum import Enum, auto
 from pathlib import Path
-from typing import Optional, Dict, List, NamedTuple, Union
+from typing import Dict, List, NamedTuple, Optional, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
 
@@ -50,6 +51,22 @@ def channel_spec(channel: Union[str, dict, ChannelSpec]) -> ChannelSpec:
     raise Exception("Unexpected channel type")
 
 
+class DeviceStatus(Enum):
+    """Represents the recording status of a device during acquisition."""
+    ACTIVE = auto()
+    PASSIVE = auto()
+
+    def __str__(self) -> str:
+        """String representation"""
+        return self.name.lower()
+
+    @classmethod
+    def from_str(cls, name: str) -> 'DeviceStatus':
+        """Returns the DeviceStatus associated with the given string
+        representation."""
+        return cls[name.upper()]
+
+
 class DeviceSpec:
     """Specification for a hardware device used in data acquisition.
 
@@ -67,6 +84,7 @@ class DeviceSpec:
         data_type - data format of a channel; all channels must have the same type;
             see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
         excluded_from_analysis - list of channels (label) to exclude from analysis.
+        status - recording status
     """
 
     def __init__(self,
@@ -76,7 +94,8 @@ class DeviceSpec:
                  content_type: str = DEFAULT_DEVICE_TYPE,
                  description: Optional[str] = None,
                  excluded_from_analysis: Optional[List[str]] = None,
-                 data_type='float32'):
+                 data_type: str = 'float32',
+                 status: DeviceStatus = DeviceStatus.ACTIVE):
 
         assert sample_rate >= 0, "Sample rate can't be negative."
         assert data_type in SUPPORTED_DATA_TYPES
@@ -89,6 +108,7 @@ class DeviceSpec:
         self.data_type = data_type
         self.excluded_from_analysis = excluded_from_analysis or []
         self._validate_excluded_channels()
+        self.status = status
 
     @property
     def channel_count(self) -> int:
@@ -117,6 +137,12 @@ class DeviceSpec:
             filter(lambda channel: channel not in self.excluded_from_analysis,
                    self.channels))
 
+    @property
+    def is_active(self) -> bool:
+        """Returns a boolean indicating if the device is currently active
+        (recording status set to DeviceStatus.ACTIVE)."""
+        return self.status == DeviceStatus.ACTIVE
+
     def to_dict(self) -> dict:
         """Converts the DeviceSpec to a dict."""
         return {
@@ -125,7 +151,8 @@ class DeviceSpec:
             'channels': [ch._asdict() for ch in self.channel_specs],
             'sample_rate': self.sample_rate,
             'description': self.description,
-            'excluded_from_analysis': self.excluded_from_analysis
+            'excluded_from_analysis': self.excluded_from_analysis,
+            'status': str(self.status)
         }
 
     def __str__(self):
@@ -153,13 +180,15 @@ class DeviceSpec:
 def make_device_spec(config: dict) -> DeviceSpec:
     """Constructs a DeviceSpec from a dict. Throws a KeyError if any fields
     are missing."""
+    default_status = str(DeviceStatus.ACTIVE)
     return DeviceSpec(name=config['name'],
                       content_type=config['content_type'],
                       channels=config['channels'],
                       sample_rate=config['sample_rate'],
                       description=config['description'],
                       excluded_from_analysis=config.get(
-                          'excluded_from_analysis', []))
+                          'excluded_from_analysis', []),
+                      status=DeviceStatus.from_str(config.get('status', default_status)))
 
 
 def load(config_path: Path = Path(DEFAULT_CONFIG), replace: bool = False) -> Dict[str, DeviceSpec]:

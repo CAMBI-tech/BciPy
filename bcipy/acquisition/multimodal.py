@@ -85,6 +85,15 @@ class ClientManager():
         return list(self._clients.keys())
 
     @property
+    def active_device_content_types(self) -> List[ContentType]:
+        """Returns a list of ContentTypes provided by the active configured
+        devices."""
+        return [
+            content_type for content_type, client in self._clients.items()
+            if client.device_spec.is_active
+        ]
+
+    @property
     def default_client(self) -> Optional[LslAcquisitionClient]:
         """Returns the default client."""
         return self.get_client(self.default_content_type)

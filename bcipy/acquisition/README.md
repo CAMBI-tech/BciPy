@@ -17,6 +17,8 @@ Within BciPy users must specify the details of the device they wish to use by pr
 
 `DeviceSpec` channel data can be provided as a list of channel names or specified as a list of `ChannelSpec` entries. These will be validated against the metadata from the LSL data stream. If provided, `ChannelSpecs` allow users to customize the channel labels and override the values provided by the LSL metadata.
 
+Devices can also have a status of either 'active' or 'passive'. Active devices are used for training models (after calibration) and for interactive queries during Copy Phrase tasks. Passive devices are used for recording data in the background for possible later analysis. Device status can be set in the `devices.json` file or through the parameters.
+
 ## Client
 
 The `lsl_client` module provides the primary interface for interacting with device data and may be used to dynamically query streaming data in real-time. An instance of the `LslClient` class is parameterized with the `DeviceSpec` of interest, as well as the number of seconds of data that should be available for querying. If the `save_directory` and `filename` parameters are provided it also records the data to disk for later offline analysis. If no device is specified the client will attempt to connect to an EEG stream by default. A separate `LslClient` should be constructed for each device of interest.
@@ -70,3 +72,20 @@ Generators are Python functions that yield encoded data. They have a parameter f
 #### Producer
 
 A `Producer` is a class internal to a server that manages the generation of data at a specified frequency. It's purpose it to mimic the data rate that would be presented if an actual hardware device was used.
+
+## Acquisition Parameters
+
+The primary parameter for configuring the acquisition module for running an experiment is the `acq_mode` parameter. This parameter allows users to specify one or more devices from which to acquire data, as well as the status of each device. In its simplest form the parameter is a string specifying the content type of the LSL data stream of interest (for example. 'EEG'). The first detected device with this content type will be used. Alternatively, users can provide the device name ('EEG/DSI-24'), which specifies that we are interested in a specific device. The module will look for the corresponding data stream, and will use configuration for the device from the `devices.json` file. Finally, users can specify whether the provided device will be recording in active or passive mode ('EEG:passive/DSI-24'). One or more devices can be configured by delimiting the specs with a '+' ('EEG/DSI-24+Eyetracker:passive').
+
+### Use Cases
+
+- I want to Calibrate using EEG and Eyetracker and train models for both.
+    - set parameter `'acq_mode': 'EEG+Eyetracker'`
+- I want to Calibrate using EEG and Eyetracker and train models for EEG only.
+    - set parameter `'acq_mode': 'EEG+Eyetracker:passive'`
+- I want to Calibrate using EEG and Eyetracker and train models for Eyetracker only.
+    - set parameter `'acq_mode': 'EEG:passive+Eyetracker'`
+- I want to do a Copy Phrase task using EEG only. In my calibration directory I have trained models for both EEG and Eyetracker.
+    - set parameter `'acq_mode': 'EEG'`
+- I want to do a Copy Phrase task using EEG only, but I want to record gaze data. In my calibration directory I have trained models for both EEG and Eyetracker.
+    - set parameter `'acq_mode': 'EEG+Eyetracker:passive'`

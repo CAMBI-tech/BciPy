@@ -61,44 +61,10 @@ class TestVEPLayout(unittest.TestCase):
 
         self.assertEqual(square.inverse_color(colors), 'green')
 
-    def test_4_box_config_defaults(self):
-        """Test box configuration"""
-        full_window = Layout()
-        config = BoxConfiguration(layout=full_window,
-                                  num_boxes=4,
-                                  height_pct=0.25,
-                                  spacing_pct=0.1)
-        width, height = config.box_size
-        window_width, window_height = full_window.size
-
-        self.assertEqual(window_width, 2.0)
-        self.assertEqual(window_height, 2.0)
-        self.assertEqual(
-            width,
-            0.9,
-            msg="Box width should be half of the remaining width after accounting for the spacing."
-        )
-        self.assertEqual(
-            height,
-            0.5,
-            msg="Box height should be height_pct of the window height")
-
-        positions = config.positions
-        self.assertEqual(len(positions), 4)
-        self.assertTrue((-0.55, 0.75) in positions,
-                        msg="A box should be positioned at the top left")
-        self.assertTrue((0.55, 0.75) in positions,
-                        msg="A box should be positioned at the top right")
-        self.assertTrue((-0.55, -0.75) in positions,
-                        msg="A box should be positioned at the bottom left")
-        self.assertTrue((0.55, -0.75) in positions,
-                        msg="A box should be positioned at the bottom right")
-
     def test_6_box_config_defaults(self):
         """Test box configuration"""
         full_window = Layout()
         config = BoxConfiguration(layout=full_window,
-                                  num_boxes=6,
                                   height_pct=0.25,
                                   spacing_pct=0.05)
         self.assertEqual(
@@ -110,21 +76,3 @@ class TestVEPLayout(unittest.TestCase):
         self.assertEqual(len([box for box in positions if box[0] == 0.0]),
                          2,
                          msg="Two boxes should be positioned in the middle")
-
-    def test_other_box_config(self):
-        """Test supported number of boxes"""
-        full_window = Layout()
-        with self.assertRaises(AssertionError):
-            BoxConfiguration(layout=full_window,
-                             num_boxes=2,
-                             height_pct=0.25,
-                             spacing_pct=0.05)
-
-    def test_height_pct_validation(self):
-        """Test validations"""
-        full_window = Layout()
-        with self.assertRaises(AssertionError):
-            BoxConfiguration(layout=full_window,
-                             num_boxes=4,
-                             height_pct=0.6,
-                             spacing_pct=0.1)

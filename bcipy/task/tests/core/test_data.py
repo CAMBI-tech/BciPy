@@ -5,9 +5,8 @@ import unittest
 from bcipy.task.data import EvidenceType, Inquiry, Session
 
 SYMBOL_SET = [
-    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-    'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-    '<', '_'
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '<', '_'
 ]
 
 
@@ -288,6 +287,32 @@ class TestSessionData(unittest.TestCase):
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq(include_evidence=True))
         self.assertTrue(session.has_evidence())
+
+    def test_task_data(self):
+        """Test that task-specific data can be added to the session."""
+        session = Session(save_location=".",
+                          symbol_set=SYMBOL_SET,
+                          task_data={
+                              "greeting": "Hello",
+                              "count": 10
+                          })
+        serialized = session.as_dict()
+        self.assertTrue("task_data" in serialized)
+        self.assertEqual(serialized['task_data']['greeting'], "Hello")
+        self.assertEqual(serialized['task_data']['count'], 10)
+
+    def test_task_inquiry_data(self):
+        """Test that inquiries may have task-specific data."""
+        data = {"color": "blue", "flicker_rate": 10}
+        inq = Inquiry(stimuli=[],
+                      timing=[],
+                      triggers=[],
+                      target_info=[],
+                      task_data=data)
+        inq_dict = inq.as_dict()
+        self.assertTrue("task_data" in inq_dict)
+        self.assertEqual(inq_dict['task_data']['color'], 'blue')
+        self.assertEqual(inq_dict['task_data']['flicker_rate'], 10)
 
 
 if __name__ == '__main__':

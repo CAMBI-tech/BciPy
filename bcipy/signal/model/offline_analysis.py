@@ -1,9 +1,9 @@
 # mypy: disable-error-code="attr-defined"
 # needed for the ERPTransformParams
+import json
 import logging
 from pathlib import Path
 from typing import Tuple
-import json
 
 import numpy as np
 import pandas as pd
@@ -13,9 +13,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold, KFold
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT,
-                          DEFAULT_PARAMETERS_PATH, STATIC_AUDIO_PATH,
-                          TRIGGER_FILENAME)
+from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME,
+                          STATIC_AUDIO_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
@@ -25,14 +25,15 @@ from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import (visualize_erp, visualize_gaze,
+from bcipy.helpers.visualization import (visualize_centralized_data,
+                                         visualize_erp, visualize_gaze,
+                                         visualize_gaze_accuracies,
                                          visualize_gaze_inquiries,
-                                         visualize_centralized_data,
-                                         visualize_results_all_symbols,
-                                         visualize_gaze_accuracies)
+                                         visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import GazeModelIndividual, GazeModelCombined
+from bcipy.signal.model.gaussian_mixture import (GazeModelCombined,
+                                                 GazeModelIndividual)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
@@ -256,8 +257,9 @@ def analyze_gaze(
         parameters,
         device_spec,
         data_folder,
-        save_figures=False,
+        save_figures=None,
         show_figures=False,
+        plot_points=False,
         model_type="Individual"):
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
@@ -276,6 +278,7 @@ def analyze_gaze(
         data_folder (str): Path to the folder containing the data to be analyzed.
         save_figures (bool): If true, saves ERP figures after training to the data folder.
         show_figures (bool): If true, shows ERP figures after training.
+        plot_points (bool): If true, plots the gaze points on the matrix image.
         model_type (str): Type of gaze model to be used. Options are:
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
@@ -283,7 +286,8 @@ def analyze_gaze(
     figures = []
     figure_handles = visualize_gaze(
         gaze_data,
-        save_path=data_folder if save_figures else None,
+        save_path=save_figures,
+        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
         show=show_figures,
         img_path=f"{data_folder}/matrix.png",
         raw_plot=True,
@@ -528,6 +532,7 @@ def offline_analysis(
     pickle dumps the model into a .pkl folder
 
     How it Works:
+    For every active device that was used during calibration,
     - reads data and information from a .csv calibration file
     - reads trigger information from a .txt trigger file
     - filters data
@@ -561,11 +566,12 @@ def offline_analysis(
 
     devices_by_name = devices.load(
         Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
-    data_file_paths = [
-        path for path in (Path(data_folder, raw_data_filename(device_spec))
-                          for device_spec in devices_by_name.values())
-        if path.exists()
-    ]
+
+    active_devices = (spec for spec in devices_by_name.values()
+                      if spec.is_active)
+    active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
+                             for device_spec in active_devices)
+    data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
     models = []
     figure_handles = []

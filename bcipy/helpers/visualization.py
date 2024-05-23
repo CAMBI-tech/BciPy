@@ -17,7 +17,7 @@ from scipy import linalg
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
-                          STATIC_IMAGES_PATH, TRIGGER_FILENAME)
+                          DEFAULT_GAZE_IMAGE_PATH, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
@@ -157,8 +157,8 @@ def visualize_gaze(
         title += 'Raw Gaze '
 
     if img_path is None:
-        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
-        img_path = '/Users/basak/Downloads/matrix.png'
+        img_path = f'{DEFAULT_GAZE_IMAGE_PATH}'
+
     img = plt.imread(img_path)
     channels = data.channels
     left_eye_channel_map = [1 if channel in left_keys else 0 for channel in channels]
@@ -268,8 +268,7 @@ def visualize_gaze_inquiries(
     title = 'Raw Gaze Inquiries '
 
     if img_path is None:
-        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
-        img_path = '/Users/basak/Downloads/matrix.png'
+        img_path = f'{DEFAULT_GAZE_IMAGE_PATH}'
     img = plt.imread(img_path)
 
     # transform the eye data to fit the display. remove > 1 values < 0 values and flip the y axis
@@ -465,8 +464,7 @@ def visualize_centralized_data(
     title = 'Centralized Data for All Symbols '
 
     if img_path is None:
-        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
-        img_path = '/Users/basak/Downloads/matrix.png'
+        img_path = f'{DEFAULT_GAZE_IMAGE_PATH}'
     img = plt.imread(img_path)
 
     # scale the eye data to the image
@@ -539,8 +537,7 @@ def visualize_results_all_symbols(
     title = 'Map of Gaze Data and Contours '
 
     if img_path is None:
-        # img_path = f'{STATIC_IMAGES_PATH}/main/matrix.png'
-        img_path = '/Users/basak/Downloads/matrix.png'
+        img_path = f'{DEFAULT_GAZE_IMAGE_PATH}'
     img = plt.imread(img_path)
 
     # scale the eye data to the image

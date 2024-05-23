@@ -11,7 +11,7 @@ Our last release candidate before the official 2.0 release!
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
     - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
 - Stimuli
-    - Updates to ensure stimuli are presented at the same frequency #287
+    - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Parameters
@@ -59,6 +59,7 @@ Our last release candidate before the official 2.0 release!
     - added KenLM model `kenlm.py` #268
     - added mixture model `mixture.py` and script to tune weights `mixture_tuning.py` #268
     - added script to evaluate language model performance `lm_eval.py` #268
+    - added Oracle model #316
 - Signal Model
     - added `RdaKdeModel` and restructured to pull out common elements from the PcaRdaKdeModel #279
 - Bug Fixes

@@ -2,7 +2,6 @@ import json
 import shutil
 import tempfile
 import unittest
-import pytest
 from pathlib import Path
 
 import numpy as np
@@ -23,7 +22,6 @@ from bcipy.task.data import EvidenceType, Session
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
-@pytest.mark.slow
 class TestCopyPhrase(unittest.TestCase):
     """Tests for Copy Phrase task."""
 
@@ -104,6 +102,7 @@ class TestCopyPhrase(unittest.TestCase):
                 'is_calibrated': True,
                 'offset': lambda x: 0.0,
                 'device_content_types': [ContentType.EEG],
+                'active_device_content_types': [ContentType.EEG],
                 'clients_by_type': {
                     ContentType.EEG: self.eeg_client_mock
                 }
