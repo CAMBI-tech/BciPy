@@ -19,8 +19,8 @@ __pycache__/
 .cache/
 
 # BciPy files and directories
-calibration.csv
-rawdata.csv
+*.csv
+*.pdf
 buffer.db
 lmwrap.log
 env.txt
