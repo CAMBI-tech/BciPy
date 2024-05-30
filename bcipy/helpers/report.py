@@ -19,11 +19,11 @@ class ReportSection(ABC):
     """
 
     def compile(self) -> Flowable:
-        """Compile. 
-        
+        """Compile.
+
         This method must be implemented by the child class.
-        It is intented to be called on final Report build, 
-            as opposed to immediatley after class initiatlization, 
+        It is intented to be called on final Report build,
+            as opposed to immediatley after class initiatlization,
             to compile the section into a usuable flowable for a Report.
         """
         ...
