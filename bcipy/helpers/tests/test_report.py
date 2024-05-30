@@ -9,7 +9,7 @@ import numpy as np
 from reportlab.platypus import Paragraph, Image
 from reportlab.platypus import Flowable, KeepTogether
 
-from bcipy.helpers.report import Report, SessionSectionReport, ReportSection, SignalSectionReport
+from bcipy.helpers.report import Report, SessionReportSection, ReportSection, SignalReportSection
 
 
 class TestReport(unittest.TestCase):
@@ -30,7 +30,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.name, Report.DEFAULT_NAME)
 
     def test_init_sections(self):
-        report_section = SessionSectionReport()
+        report_section = SessionReportSection()
         section = [report_section]
         report = Report(self.temp_dir, sections=section)
         self.assertEqual(report.sections, section)
@@ -55,16 +55,16 @@ class TestReport(unittest.TestCase):
             'duration': 2,
             'participant': 'T01',
         }
-        report_section = SessionSectionReport(summary=summary)
+        report_section = SessionReportSection(summary=summary)
         report.add(report_section)
         self.assertEqual(report.sections, [report_section])
-        another_report_section = SessionSectionReport(summary=summary)
+        another_report_section = SessionReportSection(summary=summary)
         report.add(another_report_section)
         self.assertEqual(report.sections, [report_section, another_report_section])
 
     def test_save(self):
         report = Report(self.temp_dir)
-        report_section = SessionSectionReport()
+        report_section = SessionReportSection()
         report.add(report_section)
         report.save()
         self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
@@ -82,7 +82,7 @@ class TestReport(unittest.TestCase):
             'duration': 2,
             'participant': 'T01',
         }
-        report_section = SessionSectionReport(summary=summary)
+        report_section = SessionReportSection(summary=summary)
         report.add(report_section)
         report.compile()
         self.assertEqual(len(report.elements), 2)
@@ -96,13 +96,13 @@ class TestReport(unittest.TestCase):
                 'duration': 2,
                 'participant': 'T01',
             }
-            report_section = SessionSectionReport(summary=summary)
+            report_section = SessionReportSection(summary=summary)
             report.add(report_section)
             report.compile()
             mock_construct_header.assert_called_once()
 
 
-class TestSessionSectionReport(unittest.TestCase):
+class TestSessionReportSection(unittest.TestCase):
 
     def setUp(self) -> None:
         self.session_data = {
@@ -113,28 +113,28 @@ class TestSessionSectionReport(unittest.TestCase):
         }
 
     def test_init(self):
-        report_section = SessionSectionReport()
+        report_section = SessionReportSection()
         self.assertIsInstance(report_section, ReportSection)
         self.assertIsNotNone(report_section.style)
 
     def test_create_summary_text(self):
-        report_section = SessionSectionReport(summary=self.session_data)
+        report_section = SessionReportSection(summary=self.session_data)
 
         table = report_section._create_summary_flowable()
         self.assertIsInstance(table, Flowable)
 
     def test_create_header(self):
-        report_section = SessionSectionReport()
+        report_section = SessionReportSection()
         header = report_section._create_header()
         self.assertIsInstance(header, Paragraph)
 
     def test_compile(self):
-        report_section = SessionSectionReport(self.session_data)
+        report_section = SessionReportSection(self.session_data)
         compiled = report_section.compile()
         self.assertIsInstance(compiled, KeepTogether)
 
 
-class TestSignalSectionReportSection(unittest.TestCase):
+class TestSignalReportSectionSection(unittest.TestCase):
 
     def setUp(self) -> None:
         # create matplotlib figure
@@ -144,29 +144,29 @@ class TestSignalSectionReportSection(unittest.TestCase):
         self.figures = [self.fig]
 
     def test_init(self):
-        report_section = SignalSectionReport(self.figures)
+        report_section = SignalReportSection(self.figures)
         self.assertIsInstance(report_section, ReportSection)
         self.assertIsNotNone(report_section.style)
         self.assertEqual(report_section.figures, self.figures)
 
     def test_create_header(self):
-        report_section = SignalSectionReport(self.figures)
+        report_section = SignalReportSection(self.figures)
         header = report_section._create_header()
         self.assertIsInstance(header, Paragraph)
 
     def test_create_epochs_section(self):
-        report_section = SignalSectionReport(self.figures)
+        report_section = SignalReportSection(self.figures)
         epochs = report_section._create_epochs_section()
         self.assertIsInstance(epochs, list)
         self.assertIsInstance(epochs[0], Image)
 
     def test_convert_figure_to_image(self):
-        report_section = SignalSectionReport(self.figures)
+        report_section = SignalReportSection(self.figures)
         image = report_section.convert_figure_to_image(self.fig)
         self.assertIsInstance(image, Image)
 
     def test_compile(self):
-        report_section = SignalSectionReport(self.figures)
+        report_section = SignalReportSection(self.figures)
         compiled = report_section.compile()
         self.assertIsInstance(compiled, KeepTogether)
 

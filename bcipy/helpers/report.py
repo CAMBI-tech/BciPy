@@ -32,8 +32,8 @@ class ReportSection(ABC):
         ...
 
 
-class SignalSectionReport(ReportSection):
-    """Signal Section Report.
+class SignalReportSection(ReportSection):
+    """Signal Report Section.
 
     A class to handle the creation of a Signal Report section in a BciPy Report.
     """
@@ -84,8 +84,8 @@ class SignalSectionReport(ReportSection):
         return header
 
 
-class SessionSectionReport(ReportSection):
-    """Session Section Report.
+class SessionReportSection(ReportSection):
+    """Session Report Section.
 
     A class to handle the creation of a Session Report section in a BciPy Report using a summary dictionary.
     """
@@ -217,10 +217,10 @@ class Report:
 
 if __name__ == '__main__':
     # use the demo_visualization.py to generate figure handles
-    # sr = SignalSectionReport(figure_handles)
+    # sr = SignalReportSection(figure_handles)
     report = Report('.')
     session = {'session': 1, 'date': '2021-10-01'}
-    session_text = SessionSectionReport(session)
+    session_text = SessionReportSection(session)
     report.add(session_text)
     # report.add(sr)
     report.compile()
