@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
     # extract all relevant parameters
-    trial_window = parameters.get("trial_window")
+    trial_window = parameters.get("trial_window", (0, 0.5))
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
