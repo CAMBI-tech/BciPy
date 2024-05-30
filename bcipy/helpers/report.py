@@ -18,15 +18,22 @@ class ReportSection(ABC):
     An abstract class to handle the creation of a section in a BciPy Report.
     """
 
-    def _compile(self) -> Flowable:
+    def compile(self) -> Flowable:
+        """Compile. 
+        
+        This method must be implemented by the child class.
+        It is intented to be called on final Report build, 
+            as opposed to immediatley after class initiatlization, 
+            to compile the section into a usuable flowable for a Report.
+        """
         ...
 
     def _create_header(self) -> Flowable:
         ...
 
 
-class SignalReport(ReportSection):
-    """Signal Report.
+class SignalSectionReport(ReportSection):
+    """Signal Section Report.
 
     A class to handle the creation of a Signal Report section in a BciPy Report.
     """
@@ -38,7 +45,7 @@ class SignalReport(ReportSection):
         self.report_flowables: List[Flowable] = []
         self.style = getSampleStyleSheet()
 
-    def _compile(self) -> Flowable:
+    def compile(self) -> Flowable:
         """Compile.
 
         Compiles the Signal Report sections into a flowable that can be used to generate a Report.
@@ -77,8 +84,8 @@ class SignalReport(ReportSection):
         return header
 
 
-class SessionReport(ReportSection):
-    """Session Report.
+class SessionSectionReport(ReportSection):
+    """Session Section Report.
 
     A class to handle the creation of a Session Report section in a BciPy Report using a summary dictionary.
     """
@@ -88,7 +95,7 @@ class SessionReport(ReportSection):
         self.style = getSampleStyleSheet()
         self.summary_table = None
 
-    def _compile(self) -> Flowable:
+    def compile(self) -> Flowable:
         """Compile.
 
         Compiles the Session Report sections into a flowable that can be used to generate a Report.
@@ -146,7 +153,7 @@ class Report:
                  save_path: str,
                  name: Optional[str] = None,
                  sections: Optional[List[ReportSection]] = None,
-                 auto_compile: bool = False):
+                 autocompile: bool = False):
         if sections:
             assert isinstance(sections, list), "Sections should be a list."
             assert all(isinstance(section, ReportSection)
@@ -164,7 +171,7 @@ class Report:
         self.styles = getSampleStyleSheet()
         self.header: Optional[Flowable] = None
 
-        if sections is not None and auto_compile:
+        if sections is not None and autocompile:
             self.compile()
 
     def add(self, section: ReportSection) -> None:
@@ -180,11 +187,11 @@ class Report:
         Compiles the Report by adding the header and all sections to the elements list.
         """
         if self.header is None:
-            self._construct_header()
+            self._construct_report_header()
             header_group = KeepTogether(self.header)
             self.elements.append(header_group)
         for section in self.sections:
-            self.elements.append(section._compile())
+            self.elements.append(section.compile())
 
     def save(self) -> None:
         """Save.
@@ -193,8 +200,8 @@ class Report:
         """
         self.document.build(self.elements)
 
-    def _construct_header(self) -> None:
-        """Construct Header.
+    def _construct_report_header(self) -> None:
+        """Construct Report Header.
 
         Constructs the header for the Report. This should be called before adding any other elements.
         The header should consist of the CAMBI logo and a report title.
@@ -210,10 +217,10 @@ class Report:
 
 if __name__ == '__main__':
     # use the demo_visualization.py to generate figure handles
-    # sr = SignalReport(figure_handles)
+    # sr = SignalSectionReport(figure_handles)
     report = Report('.')
     session = {'session': 1, 'date': '2021-10-01'}
-    session_text = SessionReport(session)
+    session_text = SessionSectionReport(session)
     report.add(session_text)
     # report.add(sr)
     report.compile()
