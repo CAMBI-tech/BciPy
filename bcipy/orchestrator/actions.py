@@ -1,6 +1,7 @@
-from task import Task
+from bcipy.task import Task
 from typing import Optional
 import subprocess
+
 
 class CallbackAction(Task):
     """
@@ -18,10 +19,11 @@ class CallbackAction(Task):
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
         return self.name
-    
+
     @property
     def name(self):
         return 'CallbackAction'
+
 
 class CodeHookAction(Task):
     """
@@ -36,16 +38,16 @@ class CodeHookAction(Task):
     def execute(self):
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
-    
+
         else:
             subprocess.run(self.code_hook, shell=True)
 
         return self.code_hook
-    
+
     @property
     def name(self):
         return 'CodeHookAction'
-    
+
 
 class OfflineAnalysisAction(Task):
     """
@@ -62,7 +64,7 @@ class OfflineAnalysisAction(Task):
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
         return self.data_directory
-    
+
     def construct_command(self):
         command = 'python -m bcipy.signal.model.offline_analysis'
         command += ' --data_directory ' + self.data_directory
