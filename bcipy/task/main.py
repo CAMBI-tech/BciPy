@@ -20,3 +20,9 @@ class Task(ABC):
     @abstractmethod
     def name(self) -> str:
         ...
+    
+    def initialize(self, parameters, data_save_location):
+        ...
+
+    def cleanup(self):
+        ...
