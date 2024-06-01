@@ -36,6 +36,7 @@ class CodeHookAction(Task):
         self.subprocess = subprocess
 
     def execute(self):
+        super(CodeHookAction, self).execute()
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
 
@@ -61,6 +62,7 @@ class OfflineAnalysisAction(Task):
         self.data_directory = data_directory
 
     def execute(self):
+        super(OfflineAnalysisAction, self).execute()
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
         return self.data_directory
