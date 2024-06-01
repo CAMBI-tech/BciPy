@@ -73,6 +73,6 @@ class OfflineAnalysisAction(Task):
         if self.alert:
             command += ' --alert'
         return command
-
+    @property
     def name(self):
         return 'OfflineAnalysisAction'
