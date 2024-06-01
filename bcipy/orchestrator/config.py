@@ -1,6 +1,5 @@
 from typing import List, Union
-from bcipy.task import TaskType
-from bcipy.orchestrator.actions import Action
+from bcipy.task import Task, TaskType
 """This file can define actions that can happen in a session orchestrator visit.
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
@@ -11,11 +10,11 @@ for i, task in enumerate(TaskType.list()):
     assert task not in action_task_label_dict
     action_task_label_dict[task] = TaskType(i + 1)
 
-for action in Action.get_all_actions():
-    assert action.label not in action_task_label_dict, f"Conflicting definitions for action {action.label}"
-    action_task_label_dict[action.label] = action
+# for action in Action.get_all_actions():
+#     assert action.label not in action_task_label_dict, f"Conflicting definitions for action {action.label}"
+#     action_task_label_dict[action.label] = action
 
-def parse_sequence(sequence: str) -> List[Union[TaskType, Action]]:
+def parse_sequence(sequence: str) -> List[Task]:
     """
     Parses a string of actions into a list of TaskType objects.
 
@@ -59,7 +58,7 @@ def validate_sequence_string(action_sequence: str) -> None:
             raise ValueError('Invalid task name in action sequence')
 
 
-def serialize_sequence(sequence: List[Union[TaskType, Action]]) -> str:
+def serialize_sequence(sequence: List[Task]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
 
