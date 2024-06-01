@@ -62,7 +62,7 @@ class SessionOrchestrator:
         for task in self.tasks:
             data_save_location = init_save_data_structure(self.experiment_id, self.user, self.parameters_path, task.name)
             self.session_data.append(data_save_location)
-            task.initialize(self.parameters, data_save_location)
+            task.setup(self.parameters, data_save_location)
             task.execute()
             task.cleanup()
 
