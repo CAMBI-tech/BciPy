@@ -41,6 +41,7 @@ class SessionOrchestrator:
     ) -> None:
         validate_experiment(experiment_id)
         self.parameters_path = parameters_path # TODO: load parameters and cast them to the correct values
+        self.parameters = load_json_parameters(parameters_path, True)
         self.user = user
         self.experiment_id = experiment_id
         self.log = logging.getLogger(__name__)
@@ -59,10 +60,11 @@ class SessionOrchestrator:
     def execute(self) -> None:
         """Executes queued tasks in order"""
         for task in self.tasks:
-            data_save_location = init_save_data_structure(self.experiment_id, self.user, self.parameters_path, task)
+            data_save_location = init_save_data_structure(self.experiment_id, self.user, self.parameters_path, task.name)
             self.session_data.append(data_save_location)
-            with task.initialize(self.parameters, data_save_location) as task:
-                task.execute() # TODO: add an __exit__ could be used to cleanup the session and would be called automatically in case of an exception
+            task.initialize(self.parameters, data_save_location)
+            task.execute()
+            task.cleanup()
 
     def save(self) -> None:
         # Save the session data
@@ -70,9 +72,9 @@ class SessionOrchestrator:
 
 
 def demo_orchestrator():
-    action1 = CodeHookAction("echo 'Hello World'")
+    test_action = CodeHookAction("say 'Hello World'")
     orchestrator = SessionOrchestrator()
-
+    orchestrator.add_task(test_action)
     orchestrator.execute()
 
 
