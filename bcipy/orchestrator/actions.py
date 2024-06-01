@@ -15,6 +15,7 @@ class CallbackAction(Task):
         self.kwargs = kwargs
 
     def execute(self):
+        super(CallbackAction, self).execute()
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
