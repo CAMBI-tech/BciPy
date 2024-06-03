@@ -70,13 +70,3 @@ class SessionOrchestrator:
         # Save the session data
         ...
 
-
-def demo_orchestrator():
-    test_action = CodeHookAction("say 'Hello World'")
-    orchestrator = SessionOrchestrator()
-    orchestrator.add_task(test_action)
-    orchestrator.execute()
-
-
-if __name__ == "__main__":
-    demo_orchestrator()
