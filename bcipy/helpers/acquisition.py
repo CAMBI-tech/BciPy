@@ -2,15 +2,15 @@
 import logging
 import subprocess
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
 from bcipy.acquisition import (ClientManager, LslAcquisitionClient,
                                LslDataServer, await_start,
                                discover_device_spec)
-from bcipy.acquisition.devices import (DeviceSpec, preconfigured_device,
-                                       with_content_type)
+from bcipy.acquisition.devices import (DeviceSpec, DeviceStatus,
+                                       preconfigured_device, with_content_type)
 from bcipy.config import BCIPY_ROOT
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 from bcipy.config import RAW_DATA_FILENAME
@@ -52,7 +52,7 @@ def init_eeg_acquisition(
     manager = ClientManager()
 
     for stream_type in stream_types(parameters['acq_mode']):
-        content_type, device_name = parse_stream_type(stream_type)
+        content_type, device_name, status = parse_stream_type(stream_type)
 
         if server:
             server_device_spec = server_spec(content_type, device_name)
@@ -64,6 +64,8 @@ def init_eeg_acquisition(
             await_start(dataserver)
 
         device_spec = init_device(content_type, device_name)
+        if status:
+            device_spec.status = status
         raw_data_name = raw_data_filename(device_spec)
 
         client = init_lsl_client(parameters, device_spec, save_folder,
@@ -138,24 +140,44 @@ def server_spec(content_type: str,
     return devices[0]
 
 
+class StreamType(NamedTuple):
+    """Specifies a stream."""
+    content_type: str
+    device_name: Optional[str] = None
+    status: Optional[DeviceStatus] = None
+
+
 def parse_stream_type(stream_type: str,
-                      delimiter: str = "/") -> Tuple[str, Optional[str]]:
-    """Parses the stream type into a tuple of (content_type, device_name).
+                      name_delim: str = "/",
+                      status_delim: str = ":") -> StreamType:
+    """Parses the stream type into a tuple of (content_type, device_name, status).
 
     Parameters
     ----------
         stream_type - LSL content type (EEG, Gaze, etc). If you know the name
             of the preconfigured device it can be added 'EEG/DSI-24'
-
+        name_delim - optionally used after the content_type (and status)
+            for specifying the device name.
+        status_delim - optionally used after the content_type to specify the
+            status for the device ('active' or 'passive')
     >>> parse_stream_type('EEG/DSI-24')
     ('EEG', 'DSI-24')
     >>> parse_stream_type('Gaze')
     ('Gaze', None)
+    >>> parse_stream_type('Gaze:passive')
+    ('Gaze', None, DeviceStatus.PASSIVE)
     """
-    if delimiter in stream_type:
-        content_type, device_name = stream_type.split(delimiter)[0:2]
-        return (content_type, device_name)
-    return (stream_type, None)
+    device_name = None
+    status = None
+
+    if name_delim in stream_type:
+        content_type, device_name = stream_type.split(name_delim)[0:2]
+    else:
+        content_type = stream_type
+    if status_delim in content_type:
+        content_type, status_str = content_type.split(status_delim)[0:2]
+        status = DeviceStatus.from_str(status_str)
+    return StreamType(content_type, device_name, status)
 
 
 def init_lsl_client(parameters: dict,
@@ -165,7 +187,9 @@ def init_lsl_client(parameters: dict,
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
-
+    log.info(
+        f"Setting an acquisition buffer for {device_spec.name} of {data_buffer_seconds} seconds"
+    )
     return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,

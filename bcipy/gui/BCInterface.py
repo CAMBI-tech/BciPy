@@ -1,20 +1,15 @@
 import subprocess
 import sys
-
 from typing import List
 
-from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_IMAGES_PATH
-from bcipy.gui.main import (
-    AlertMessageResponse,
-    AlertMessageType,
-    AlertResponse,
-    app,
-    BCIGui,
-    contains_special_characters,
-    contains_whitespaces,
-    invalid_length,
-)
-from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
+from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
+                          STATIC_IMAGES_PATH)
+from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
+                            AlertResponse, BCIGui, app,
+                            contains_special_characters, contains_whitespaces,
+                            invalid_length)
+from bcipy.helpers.load import (copy_parameters, load_experiments,
+                                load_json_parameters, load_users)
 from bcipy.task import TaskType
 
 
@@ -317,9 +312,11 @@ class BCInterface(BCIGui):
                 else:
                     return None
 
-            subprocess.call(
+            output = subprocess.check_output(
                 f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
                 shell=True)
+            if output:
+                self.parameter_location = output.decode().strip()
 
     def check_input(self) -> bool:
         """Check Input.

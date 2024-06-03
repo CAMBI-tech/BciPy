@@ -1,6 +1,6 @@
 """Functions for calculating matrix layouts"""
 import logging
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
 from bcipy.display.components.layout import (Layout, above, below, left_of,
                                              right_of, scaled_height,
@@ -30,19 +30,33 @@ def symbol_positions(container: Layout, rows: int,
     assert rows >= 1 and columns >= 1, "There must be at least one row and one column"
 
     # compute the spacing (in container units) from the container width and height
+    win_size = container.parent.size
+    win_width, win_height = win_size
+
     horizontal_spacing = container.width / (columns + 1)
     vertical_spacing = container.height / (rows + 1)
 
+    # determine which is smaller after scaling to the window aspect ratio
+    if (win_width > win_height):
+        # wider than tall
+        scaled_horizontal_spacing = scaled_height(horizontal_spacing, win_size)
+        scaled_vertical_spacing = vertical_spacing
+    elif (win_height > win_width):
+        # taller than wide
+        scaled_horizontal_spacing = horizontal_spacing
+        scaled_vertical_spacing = scaled_width(vertical_spacing, win_size)
+    else:
+        # square window
+        scaled_horizontal_spacing = horizontal_spacing
+        scaled_vertical_spacing = vertical_spacing
+
     if max_spacing and vertical_spacing > max_spacing:
         vertical_spacing = max_spacing
-
     # Use the minimum spacing
-    if horizontal_spacing < vertical_spacing:
-        vertical_spacing = scaled_height(horizontal_spacing,
-                                         container.parent.size)
+    if scaled_horizontal_spacing < scaled_vertical_spacing:
+        vertical_spacing = scaled_height(horizontal_spacing, win_size)
     else:
-        horizontal_spacing = scaled_width(vertical_spacing,
-                                          container.parent.size)
+        horizontal_spacing = scaled_width(vertical_spacing, win_size)
 
     # Work back from center to compute the starting position
     center_x, center_y = container.center

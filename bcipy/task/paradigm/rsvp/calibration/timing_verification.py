@@ -1,7 +1,14 @@
-# mypy: disable-error-code="method-assign"
+# mypy: disable-error-code="assignment"
 from itertools import cycle
+
+from typing import Tuple
+
+from psychopy import visual
+
+from bcipy.acquisition import ClientManager
 from bcipy.task import Task
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import PhotoDiodeStimuli, get_fixation, jittered_timing
 
 
@@ -12,17 +19,22 @@ class RSVPTimingVerificationCalibration(Task):
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
-        parameters (Dictionary)
-        file_save (String)
+        win (PsychoPy Window)
+        daq (ClientManager)
+        parameters (Parameters)
+        file_save (str)
 
     Output:
-        file_save (String)
+        file_save (str)
     """
     TASK_NAME = 'RSVP Timing Verification Task'
 
-    def __init__(self, win, daq, parameters, file_save):
+    def __init__(
+            self,
+            win: visual.Window,
+            daq: ClientManager,
+            parameters: Parameters,
+            file_save: str) -> None:
         super(RSVPTimingVerificationCalibration, self).__init__()
         parameters['stim_height'] = 0.8
         parameters['stim_pos_y'] = 0.0
@@ -30,7 +42,7 @@ class RSVPTimingVerificationCalibration(Task):
         self._task = RSVPCalibrationTask(win, daq, parameters, file_save)
         self._task.generate_stimuli = self.generate_stimuli
 
-    def generate_stimuli(self):
+    def generate_stimuli(self) -> Tuple[list, list, list]:
         """Generates the inquiries to be presented.
         Returns:
         --------
@@ -62,13 +74,13 @@ class RSVPTimingVerificationCalibration(Task):
 
         return (samples, times, colors)
 
-    def execute(self):
+    def execute(self) -> str:
         self.logger.info(f'Starting {self.name()}!')
-        self._task.execute()
+        return self._task.execute()
 
     @classmethod
-    def label(cls):
+    def label(cls) -> str:
         return RSVPTimingVerificationCalibration.TASK_NAME
 
-    def name(self):
+    def name(self) -> str:
         return RSVPTimingVerificationCalibration.TASK_NAME

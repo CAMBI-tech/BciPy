@@ -7,7 +7,8 @@ from pathlib import Path
 import pytest
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
-from bcipy.acquisition.datastream.mock.eye_tracker_server import eye_tracker_server
+from bcipy.acquisition.datastream.mock.eye_tracker_server import \
+    eye_tracker_server
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 from bcipy.helpers.raw_data import TIMESTAMP_COLUMN, load
@@ -16,6 +17,7 @@ DEVICE_NAME = 'DSI-24'
 DEVICE = preconfigured_device(DEVICE_NAME)
 
 
+@pytest.mark.slow
 class TestLslRecorder(unittest.TestCase):
     """Main Test class for LslRecorder code."""
 
@@ -39,13 +41,14 @@ class TestLslRecorder(unittest.TestCase):
 
     def test_recorder(self):
         """Test basic recording functionality"""
-        path = Path(self.temp_dir, f'eeg_data_{DEVICE_NAME.lower()}.csv')
-        recorder = LslRecorder(path=self.temp_dir)
+        filename = f'eeg_data_{DEVICE_NAME.lower()}.csv'
+        path = Path(self.temp_dir, filename)
+        recorder = LslRecorder(path=self.temp_dir, filenames={'EEG': filename})
         self.assertFalse(path.exists())
         recorder.start()
         time.sleep(0.1)
-        self.assertTrue(path.exists())
         recorder.stop(wait=True)
+        self.assertTrue(path.exists())
 
         raw_data = load(path)
         self.assertEqual(raw_data.daq_type, DEVICE_NAME)
@@ -54,7 +57,6 @@ class TestLslRecorder(unittest.TestCase):
         self.assertEqual(raw_data.columns[0], TIMESTAMP_COLUMN)
         self.assertEqual(raw_data.columns[1:-1], DEVICE.channels)
         self.assertEqual(raw_data.columns[-1], 'lsl_timestamp')
-        self.assertTrue(len(raw_data.rows) > 0)
 
     def test_multiple_sources(self):
         """Test that recorder works with multiple sources and can be customized

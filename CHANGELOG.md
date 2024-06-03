@@ -10,15 +10,18 @@ Our last release candidate before the official 2.0 release!
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
 - Stimuli
-    - Updates to ensure stimuli are presented at the same frequency #287
+    - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
+- Report
+  - Functionality to generate a report in the form of a PDF #325
 - Parameters
     - Add a Range type parameter #285
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
+    - Fix GitHub actions build issues with macOS
 
 
 # 2.0.0-rc.3
@@ -58,6 +61,7 @@ Our last release candidate before the official 2.0 release!
     - added KenLM model `kenlm.py` #268
     - added mixture model `mixture.py` and script to tune weights `mixture_tuning.py` #268
     - added script to evaluate language model performance `lm_eval.py` #268
+    - added Oracle model #316
 - Signal Model
     - added `RdaKdeModel` and restructured to pull out common elements from the PcaRdaKdeModel #279
 - Bug Fixes
