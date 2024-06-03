@@ -70,9 +70,9 @@ class OfflineAnalysisAction(Task):
 
     def construct_command(self):
         command = 'python -m bcipy.signal.model.offline_analysis'
-        command += ' --data_directory ' + self.data_directory
+        command += ' --data_folder ' + self.data_directory
         if self.parameters_path:
-            command += ' --parameters_path ' + self.parameters_path
+            command += ' --parameters_file ' + self.parameters_path
         if self.alert:
             command += ' --alert'
         return command
