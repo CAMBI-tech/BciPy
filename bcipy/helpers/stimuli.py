@@ -89,6 +89,19 @@ class InquirySchedule(NamedTuple):
     durations: Union[List[List[float]], List[float]]
     colors: Union[List[List[str]], List[str]]
 
+    @property
+    def count(self) -> int:
+        """Number of stimuli"""
+        return len(self.stimuli)
+
+    def __iter__(self):
+        count = self.count
+        index = 0
+        while index < count:
+            yield (self.stimuli[index], self.durations[index],
+                   self.colors[index])
+            index += 1
+
 
 class Reshaper(ABC):
 
