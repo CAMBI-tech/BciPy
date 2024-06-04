@@ -4,13 +4,14 @@ from typing import Iterator, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
+import bcipy.task.data as session_data
 from bcipy.acquisition import ClientManager
-from bcipy.config import TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE
-from bcipy.display import InformationProperties, StimuliProperties
-from bcipy.display.components.task_bar import CalibrationTaskBar
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
+                          WAIT_SCREEN_MESSAGE)
+from bcipy.display import Display
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
                                    TargetPositions,
                                    generate_calibration_inquiries)
@@ -30,6 +31,17 @@ class Inquiry(NamedTuple):
     durations: List[float]
     colors: List[str]
 
+    @property
+    def labels(self) -> List[str]:
+        """labels for each stimuli"""
+        [target, _fixation, *symbols] = self.stimuli
+        return ['target' if sym == target else 'nontarget' for sym in symbols]
+
+    @property
+    def target(self) -> str:
+        """target symbol"""
+        return self.stimuli[0]
+
 
 class BaseCalibrationTask(Task):
     """Base Calibration Task.
@@ -46,6 +58,8 @@ class BaseCalibrationTask(Task):
     file_save (str)
     """
 
+    MODE = 'Undefined'
+
     def __init__(self, win: visual.Window, daq: ClientManager,
                  parameters: Parameters, file_save: str) -> None:
         super().__init__()
@@ -56,6 +70,7 @@ class BaseCalibrationTask(Task):
         self.daq = daq
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
+        self.start_time = self.experiment_clock.getTime()
         self.symbol_set = alphabet(parameters)
 
         self.file_save = file_save
@@ -68,10 +83,17 @@ class BaseCalibrationTask(Task):
         self.inquiry_generator = self.init_inquiry_generator()
         self.display = self.init_display()
 
+        self.session = self.init_session()
+        self.write_session_data()
+
     @property
     def enable_breaks(self) -> bool:
         """Whether to allow breaks"""
         return self.parameters['enable_breaks']
+
+    def name(self) -> str:
+        """Task name"""
+        return 'Calibration Task'
 
     def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
@@ -84,11 +106,9 @@ class BaseCalibrationTask(Task):
         seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
-    def init_display(self) -> MatrixDisplay:
+    def init_display(self) -> Display:
         """Initialize the display"""
-        return init_calibration_display_task(self.parameters, self.window,
-                                             self.experiment_clock,
-                                             self.symbol_set)
+        raise NotImplementedError
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
@@ -110,6 +130,18 @@ class BaseCalibrationTask(Task):
                 parameters['stim_color']
             ])
         return (Inquiry(*inq) for inq in schedule)
+
+    def init_session(self) -> session_data.Session:
+        """Initialize the session data."""
+        return session_data.Session(save_location=self.file_save,
+                                    task='Calibration',
+                                    mode=self.MODE,
+                                    symbol_set=self.symbol_set,
+                                    task_data=self.session_task_data())
+
+    def session_task_data(self):
+        """"Task-specific session data"""
+        return None
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:
@@ -186,6 +218,7 @@ class BaseCalibrationTask(Task):
 
             # Write triggers for the inquiry
             self.write_trigger_data(timing, first_run=inq_index == 0)
+            self.add_session_data(inquiry)
 
             # Wait for a time
             self.wait()
@@ -193,10 +226,7 @@ class BaseCalibrationTask(Task):
 
         self.exit_display()
         self.cleanup()
-
         self.write_offset_trigger()
-        # TODO: write session data?
-        # self.write_stimuli_positions()
 
         return self.file_save
 
@@ -253,46 +283,28 @@ class BaseCalibrationTask(Task):
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
-    def name(self) -> str:
-        return 'Matrix Calibration Task'
+    def write_session_data(self) -> None:
+        """Save session data to disk."""
+        if self.session:
+            session_file = _save_session_related_data(
+                f"{self.file_save}/{SESSION_DATA_FILENAME}",
+                self.session.as_dict())
+            session_file.close()
 
+    def add_session_data(self, inquiry: Inquiry) -> None:
+        """Adds the latest inquiry to the session data."""
+        data = session_data.Inquiry(
+            stimuli=inquiry,
+            timing=inquiry.durations,
+            triggers=[],
+            target_info=inquiry.labels,
+            target_letter=inquiry.target,
+            task_data=self.session_inquiry_data(inquiry))
+        self.session.add_sequence(data)
+        self.session.total_time_spent = self.experiment_clock.getTime(
+        ) - self.start_time
+        self.write_session_data()
 
-def init_calibration_display_task(
-        parameters: Parameters, window: visual.Window, experiment_clock: Clock,
-        symbol_set: core.StaticPeriod) -> MatrixDisplay:
-    info = InformationProperties(
-        info_color=[parameters['info_color']],
-        info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],
-        info_height=[parameters['info_height']],
-        info_font=[parameters['font']],
-        info_text=[parameters['info_text']],
-    )
-    stimuli = StimuliProperties(stim_font=parameters['font'],
-                                stim_pos=(-0.6, 0.4),
-                                stim_height=0.1,
-                                stim_inquiry=[''] * parameters['stim_length'],
-                                stim_colors=[parameters['stim_color']] *
-                                parameters['stim_length'],
-                                stim_timing=[10] * parameters['stim_length'],
-                                is_txt_stim=parameters['is_txt_stim'],
-                                prompt_time=parameters["time_prompt"])
-
-    task_bar = CalibrationTaskBar(window,
-                                  inquiry_count=parameters['stim_number'],
-                                  current_index=0,
-                                  colors=[parameters['task_color']],
-                                  font=parameters['font'],
-                                  height=parameters['task_height'],
-                                  padding=parameters['task_padding'])
-
-    return MatrixDisplay(window,
-                         experiment_clock,
-                         stimuli,
-                         task_bar,
-                         info,
-                         rows=parameters['matrix_rows'],
-                         columns=parameters['matrix_columns'],
-                         width_pct=parameters['matrix_width'],
-                         height_pct=1 - (2 * task_bar.height_pct),
-                         trigger_type=parameters['trigger_type'],
-                         symbol_set=symbol_set)
+    def session_inquiry_data(self, inquiry: Inquiry) -> Optional[dict]:
+        """Defines task-specific session data for each inquiry."""
+        return None
