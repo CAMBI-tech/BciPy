@@ -20,6 +20,7 @@ Our last release candidate before the official 2.0 release!
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
     - Fix GitHub actions build issues with macOS
+    - Fix occasionally failing test in `test_stimuli`
 
 
 # 2.0.0-rc.3
