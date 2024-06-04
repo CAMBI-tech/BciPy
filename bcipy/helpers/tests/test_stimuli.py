@@ -762,7 +762,24 @@ class TestStimuliGeneration(unittest.TestCase):
 
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
-
+    
+    def test_best_case_inq_gen_is_random(self):
+        """Test that best_case_inq_gen produces random results. While this test can technically fail, 
+        the odds are incredibly low, around 1 in 1 million"""
+        samps = []
+        for i in range(25):
+            alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g', '<']
+            samples, _, _ = best_case_rsvp_inq_gen(
+                alp=alp,
+                session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2, 0.0],
+                stim_number=1,
+                stim_length=8,
+                is_txt=True,
+                inq_constants=['<'])
+            samps.append(tuple(samples[0]))
+        set(samps)
+        self.assertTrue(len(set(samps)) > 1, 'Should produce random results')
+        
 
 class TestJitteredTiming(unittest.TestCase):
 
