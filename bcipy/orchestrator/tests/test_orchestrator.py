@@ -1,5 +1,5 @@
 import unittest
-from bcipy.orchestrator.session_orchestrator import SessionOrchestrator, TaskInfo
+from bcipy.orchestrator.orchestrator import SessionOrchestrator, TaskInfo
 from bcipy.task import TaskType
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.exceptions import UnregisteredExperimentException

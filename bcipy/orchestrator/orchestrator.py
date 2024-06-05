@@ -20,6 +20,12 @@ from bcipy.helpers.system_utils import get_system_info
 from bcipy.orchestrator.actions import CodeHookAction
 
 
+# Session Orchestrator Needs:
+# - A way to initialize the session (user, experiment, tasks, parameters, models, system info, log, save folder)
+#   - save folder is not used in execute method and could be from a provided argument or from the parameters?
+# - A way to save the session data
+
+
 # Test SessionOrchestrator using Actions
 # Should execute return a status code or a boolean?
 
@@ -32,7 +38,7 @@ class SessionOrchestrator:
     sys_info: dict
     log: Logger
     save_folder: Optional[str] = None
-    # Session Orchestrator could contain global objects here (DAQ, models etc) to be shared between executed tasks.
+    # Session Orchestrator will contain global objects here (DAQ, models etc) to be shared between executed tasks.
 
     def __init__(
         self,
@@ -51,20 +57,24 @@ class SessionOrchestrator:
         self.sys_info = get_system_info()
         self.tasks = []
         self.session_data = []
-        # TODO create datasave structure and provide it to the tasks
+        # TODO create datasave structure and provide it to the tasks. This may take a new method
+        #  init_save_data_structure requires a user and experiment_id currently.
 
         self.ready_to_execute = False
 
     def add_task(self, task) -> None:
         # Loading task specific parameters could happen here
+        # TODO validate it is a Valid Task
         self.tasks.append(task)
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
+
+        # TODO add error handling for exceptions (like TaskConfigurationException), allowing the orchestrator to continue and log the errors.
         for task in self.tasks:
             data_save_location = init_save_data_structure(
                 self.parameters["data_save_loc"],
-                'test_user', #TODO: Perhaps this should be a constant
+                'test_user', #TODO: Perhaps this should be a constant. This should be self.user
                 self.parameters_path,
                 task=task.name,
                 experiment_id=self.experiment_id,
@@ -76,5 +86,7 @@ class SessionOrchestrator:
 
     def save(self) -> None:
         # Save the session data
+        # TODO create a top level folder for the session data and put the task data in subfolders. It could be timestamp based.
+        # TODO save the session data to a file. This should be a data structure per task with a top level info. 
         ...
     
