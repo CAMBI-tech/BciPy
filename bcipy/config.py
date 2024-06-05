@@ -8,6 +8,8 @@ from pathlib import Path
 DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EVIDENCE_PRECISION = 5  # number of decimal places to round evidence to by default
 MARKER_STREAM_NAME = 'TRG_device_stream'
+DEFAULT_TRIGGER_CHANNEL_NAME = 'TRG'
+DIODE_TRIGGER = '\u25A0'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
