@@ -18,6 +18,7 @@ BCIPY_ROOT = Path(__file__).resolve().parent
 ROOT = BCIPY_ROOT.parent
 DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'
 DEFAULT_FIELD_PATH = f'{BCIPY_ROOT}/parameters/field'
+DEFAULT_USER_ID = 'test_user'
 
 DEFAULT_PARAMETER_FILENAME = 'parameters.json'
 DEFAULT_PARAMETERS_PATH = f'{BCIPY_ROOT}/parameters/{DEFAULT_PARAMETER_FILENAME}'
