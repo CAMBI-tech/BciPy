@@ -38,6 +38,29 @@ from bcipy.gui.file_dialog import ask_directory
 from bcipy.helpers.raw_data import RawData, load
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
 
+# TODO: visualize the lsl timestamp differences in the csv file
+def lsl_timestamp_diffs(raw_data: RawData, plot: bool = False):
+    # using the lsl timestamps, calculate the difference between each timestamp
+    # and plot the differences
+    lsl_time_stamps = raw_data.dataframe['lsl_timestamp']
+    diffs = np.diff(lsl_time_stamps)
+    if plot:
+        plt.plot(diffs)
+        plt.show()
+
+    return diffs
+
+def lsl_timestamp_sample_diffs(raw_data: RawData, plot: bool = False):
+    # using the lsl timestamps, calculate the difference between each timestamp
+    # and plot the differences
+    lsl_time_stamps = raw_data.dataframe['lsl_timestamp'].values
+    first_sample = lsl_time_stamps[0]
+    last_sample = lsl_time_stamps[-1]
+    lsl_sample_diff = last_sample - first_sample
+    # get the count of all the samples
+    sample_time = raw_data.dataframe.shape[0] / raw_data.sample_rate
+    print(f'LSL Timestamp Sample Count: {lsl_sample_diff} EEG Sample Count: {sample_time}')
+    return lsl_sample_diff, sample_time
 
 def clock_seconds(sample_rate: float, sample: int) -> float:
     """Convert the given raw_data sample number to acquisition clock
@@ -120,30 +143,29 @@ def calculate_latency(raw_data: RawData,
     errors = []
     diffs = []
     x = 0
-    if (len(starts) > len(trigger_diodes_timestamps)):
-        len_diff = len(starts) - len(trigger_diodes_timestamps)
-        starts = starts[len_diff:]
+
+    # In the case of ending the session before the triggers are finished or the photo diode is detected at the end, 
+    # we balance the timestamps
+    if (len(starts) != len(trigger_diodes_timestamps)):
+        if len(starts) > len(trigger_diodes_timestamps):
+            starts = starts[:len(trigger_diodes_timestamps)]
+        else:
+            trigger_diodes_timestamps = trigger_diodes_timestamps[:len(starts)]
 
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
 
-        # rsvp bug with fixation
-        if rsvp:
-            if x > 0:
-                if abs(diff) > tolerance:
-                    errors.append(
-                        f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}'
-                    )
-                diffs.append(diff)
-            if x == 4:
-                x = 0
-            else:
-                x += 1
-        else:
+        # RSVP and Matrix Calibration Task: Correct for fixation causing a false positive
+        if x > 0:
             if abs(diff) > tolerance:
                 errors.append(
-                    f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}')
+                    f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}'
+                )
             diffs.append(diff)
+        if x == 4:
+            x = 0
+        else:
+            x += 1
 
     if recommend_static:
         # test for normality
@@ -170,17 +192,21 @@ def calculate_latency(raw_data: RawData,
                 f'RESULTS: Triggers and photodiode timestamps within limit of [{tolerance}s]!'
             )
 
-    # Add labels for TRGs
-    first_trg = trigger_diodes_timestamps[0]
-
-    # Set initial zoom to +-5 seconds around the calibration_trigger
-    if first_trg:
-        ax.set_xlim(left=first_trg - 5, right=first_trg + 5)
-
-    ax.grid(axis='x', linestyle='--', color="0.5", linewidth=0.4)
-    plt.legend(loc='lower left', fontsize='small')
     # display the plot
     if plot:
+         # Add labels for TRGs
+        first_trg = trigger_diodes_timestamps[0]
+
+        # Set initial zoom to +-5 seconds around the calibration_trigger
+        if first_trg:
+            ax.set_xlim(left=first_trg - 5, right=first_trg + 5)
+
+        ax.grid(axis='x', linestyle='--', color="0.5", linewidth=0.4)
+        plt.legend(loc='lower left', fontsize='small')
+        plt.show()
+
+        # plot a scatter of the differences
+        plt.scatter(range(len(diffs)), diffs)
         plt.show()
 
 
@@ -191,6 +217,7 @@ def read_triggers(triggers_file: str, static_offset: float):
     --------
         list of (symbol, targetness, stamp) tuples."""
 
+    
     with open(triggers_file, encoding='utf-8') as trgfile:
         records = [line.split(' ') for line in trgfile.readlines()]
         (_cname, _ctype, cstamp) = records[0]
@@ -221,6 +248,10 @@ def main(data_dir: str, recommend: bool = False, static_offset: float = 0.105,
     raw_data = load(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
     triggers = read_triggers(Path(data_dir, f'{TRIGGER_FILENAME}'), static_offset)
 
+    # breakpoint()
+    lsl_timestamp_diffs(raw_data, plot=True)
+    lsl_timestamp_sample_diffs(raw_data, plot=False)
+
     calculate_latency(raw_data,
                       triggers,
                       title=Path(data_dir).name,
@@ -245,19 +276,15 @@ if __name__ == "__main__":
                         action='store_true')
     parser.add_argument('--offset',
                         help='static offset applied to triggers for plotting and analysis',
-                        default=0.114)
+                        default=0.088)
     parser.add_argument('-t', '--tolerance',
                         help='Allowable tolerance between triggers and photodiode. Deafult 10 ms',
-                        default=0.01)
-    parser.add_argument('--rsvp',
-                        help=('RSVP Calibration Task. Default False. '
-                              'Corrects for issue with fixation causing a false positive.'),
-                        type=bool,
-                        default=True)
+                        default=0.015)
+
 
     args = parser.parse_args()
     path = args.path
     if not path:
         path = ask_directory()
 
-    main(path, bool(args.recommend), float(args.offset), float(args.tolerance), bool(args.rsvp))
+    main(path, bool(args.recommend), float(args.offset), float(args.tolerance))
