@@ -9,7 +9,7 @@ from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.main import execute_task
 from bcipy.task import Task
-from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
+from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
@@ -43,7 +43,7 @@ class SessionOrchestrator:
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
-        user: str = "test_user",
+        user: str = DEFAULT_USER_ID,
         parameters_path: str = DEFAULT_PARAMETERS_PATH,
     ) -> None:
         validate_experiment(experiment_id)
@@ -74,7 +74,7 @@ class SessionOrchestrator:
         for task in self.tasks:
             data_save_location = init_save_data_structure(
                 self.parameters["data_save_loc"],
-                'test_user', #TODO: Perhaps this should be a constant. This should be self.user
+                self.user,
                 self.parameters_path,
                 task=task.name,
                 experiment_id=self.experiment_id,
