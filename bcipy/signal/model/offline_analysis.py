@@ -37,7 +37,7 @@ from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.WARNING, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
@@ -97,9 +97,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         show_figures (bool): If true, shows ERP figures after training.
     """
     # Extract relevant session information from parameters file
-    trial_window = parameters.get("trial_window")
+    trial_window = None
     if trial_window is None:
-        trial_window = (0.0, 0.5)
+        trial_window = (0.2, 0.8)
     window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
@@ -125,15 +125,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     sample_rate = erp_data.sample_rate
 
     # setup filtering
-    # default_transform = get_default_transform(
-    #     sample_rate_hz=sample_rate,
-    #     notch_freq_hz=notch_filter,
-    #     bandpass_low=filter_low,
-    #     bandpass_high=filter_high,
-    #     bandpass_order=filter_order,
-    #     downsample_factor=downsample_rate,
-    # )
-    default_transform = get_fir_transform(
+    default_transform = get_default_transform(
         sample_rate_hz=sample_rate,
         notch_freq_hz=transform_params.notch_filter_frequency,
         bandpass_low=transform_params.filter_low,
@@ -141,6 +133,14 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         bandpass_order=transform_params.filter_order,
         downsample_factor=transform_params.down_sampling_rate,
     )
+    # default_transform = get_fir_transform(
+    #     sample_rate_hz=sample_rate,
+    #     notch_freq_hz=transform_params.notch_filter_frequency,
+    #     bandpass_low=transform_params.filter_low,
+    #     bandpass_high=transform_params.filter_high,
+    #     bandpass_order=transform_params.filter_order,
+    #     downsample_factor=transform_params.down_sampling_rate,
+    # )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -557,7 +557,7 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=True)
+    parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=False)
     parser.set_defaults(show_figures=True)
     args = parser.parse_args()
