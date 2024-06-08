@@ -1,7 +1,10 @@
+import errno
+import os
+from datetime import datetime
 from dataclasses import dataclass
 import logging
 from logging import Logger
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
@@ -13,7 +16,6 @@ from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT
 from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.system_utils import get_system_info
 
 
@@ -27,13 +29,11 @@ from bcipy.orchestrator.actions import CodeHookAction
 
 
 # Test SessionOrchestrator using Actions
-# Should execute return a status code or a boolean?
 
 
 class SessionOrchestrator:
     tasks: List[Task]
-    signal_models: Optional[List[SignalModel]] = None
-    language_model: LanguageModel = None
+    models: List[Union[SignalModel, LanguageModel]]
     parameters: Parameters
     sys_info: dict
     log: Logger
@@ -57,8 +57,7 @@ class SessionOrchestrator:
         self.sys_info = get_system_info()
         self.tasks = []
         self.session_data = []
-        # TODO create datasave structure and provide it to the tasks. This may take a new method
-        #  init_save_data_structure requires a user and experiment_id currently.
+        self.init_orchestrator_save_folder(self.parameters["data_save_loc"])
 
         self.ready_to_execute = False
 
@@ -72,17 +71,31 @@ class SessionOrchestrator:
 
         # TODO add error handling for exceptions (like TaskConfigurationException), allowing the orchestrator to continue and log the errors.
         for task in self.tasks:
-            data_save_location = init_save_data_structure(
-                self.parameters["data_save_loc"],
-                self.user,
-                self.parameters_path,
-                task=task.name,
-                experiment_id=self.experiment_id,
-            )
+            data_save_location = self.init_task_save_folder(task)
             self.session_data.append(data_save_location)
             task.setup(self.parameters, data_save_location)
             task.execute()
             task.cleanup()
+
+    # TODO: 'Runs' need a name like session or sequence.
+    def init_orchestrator_save_folder(self, save_path: str) -> None:
+        timestamp = str(datetime.now())
+        #* No '/' after `save_folder` since it is included in
+        #* `data_save_location` in parameters
+        path = f'{save_path}{self.experiment_id}/{self.user}/orchestrator-run-{timestamp}/'
+        os.makedirs(path)
+        self.save_folder = path
+
+    def init_task_save_folder(self, task: Task) -> str:
+        save_directory = self.save_folder + f'{self.user}_{task.name}/'
+        try:
+            # make a directory to save task data to
+            os.makedirs(save_directory)
+            os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
+        except OSError as error:
+            # If the error is anything other than file existing, raise an error
+            if error.errno != errno.EEXIST:
+                raise error
 
     def save(self) -> None:
         # Save the session data
