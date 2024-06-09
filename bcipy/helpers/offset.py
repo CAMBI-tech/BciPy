@@ -7,11 +7,11 @@ import numpy as np
 
 from scipy.stats import normaltest, describe
 
-from bcipy.helpers.load import load_raw_data, ask_directory
+from bcipy.helpers.load import load_raw_data, ask_directory, load_json_parameters
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.triggers import trigger_decoder, TriggerType
 
-from bcipy.config import TRIGGER_FILENAME, DIODE_TRIGGER, RAW_DATA_FILENAME, DEFAULT_TRIGGER_CHANNEL_NAME
+from bcipy.config import TRIGGER_FILENAME, DIODE_TRIGGER, RAW_DATA_FILENAME, DEFAULT_TRIGGER_CHANNEL_NAME, DEFAULT_PARAMETER_FILENAME
 
 
 def sample_to_seconds(sample_rate: float, sample: int) -> float:
@@ -24,10 +24,12 @@ def sample_to_seconds(sample_rate: float, sample: int) -> float:
 def calculate_latency(raw_data: RawData,
                       diode_channel: str,
                       triggers: List[Tuple[Any, Any, Any]],
+                      stim_length: int,
                       plot_title: str = "",
                       recommend_static: bool = False,
                       plot: bool = False,
-                      tolerance: float = 0.01) -> Tuple[List[float], List[str]]:
+                      tolerance: float = 0.01,
+                      correct_diode_false_positive: int = 0) -> Tuple[List[float], List[str]]:
     """Calculate the latency between the photodiode and the trigger timestamps.
 
     This method uses collected photodiode information and trigger timestamps from
@@ -109,6 +111,10 @@ def calculate_latency(raw_data: RawData,
             stamp for (_name, _trgtype, stamp) in triggers if _name == DIODE_TRIGGER
         ]
 
+    # If the photodiode is falsing detected at the beginning of the session, we remove the first timestamp
+    if correct_diode_false_positive > 0:
+        starts = starts[correct_diode_false_positive:]
+
     # In the case of ending the session before the triggers are finished or the photo diode is detected at the end,
     # we balance the timestamps
     if (len(starts) != len(trigger_diodes_timestamps)):
@@ -126,26 +132,28 @@ def calculate_latency(raw_data: RawData,
     for trigger_stamp, diode_stamp in zip(trigger_diodes_timestamps, starts):
         diff = trigger_stamp - diode_stamp
 
-        # TODO: RSVP and Matrix Calibration Task: Correct for fixation causing a false positive
+        # TODO: RSVP and Matrix Calibration Task: Correct for prompt/fixation causing a false positive
         if x > 0:
             if abs(diff) > tolerance and not recommend_static:
                 errors.append(
                     f'trigger={trigger_stamp} diode={diode_stamp} diff={diff}'
                 )
             diffs.append(diff)
-        if x == 4:
+
+        # Reset x to 0 if we are at the end of the inquiry.
+        if x == (stim_length / 2) - 1:
             x = 0
+
         else:
             x += 1
 
     if recommend_static:
         # test for normality
         _, p_value = normaltest(diffs)
-        print(f'{describe(diffs)}')
 
         # if it's not normal, take the median
         if p_value < 0.05:
-            print('Non-normal distribution')
+            print(f'Non-normal distribution of diffs. p-value=[{p_value}] Consider using median for static offset.')
         recommended_static = abs(np.median(diffs))
         print(
             f'System recommended static offset median=[{recommended_static}]')
@@ -277,6 +285,7 @@ def extract_data_latency_calculation(
     raw_data = load_raw_data(str(Path(data_dir, f'{RAW_DATA_FILENAME}.csv')))
     trigger_targetness, trigger_timing, trigger_label = trigger_decoder(
         trigger_path=str(Path(data_dir, f'{TRIGGER_FILENAME}')),
+        exclusion=[TriggerType.FIXATION],
         remove_pre_fixation=False,
         offset=static_offset,
         device_type='EEG'
@@ -313,15 +322,22 @@ if __name__ == '__main__':
                         dest='trigger_name')
     parser.add_argument('--offset',
                         help='The static offset applied to triggers for plotting and analysis',
-                        default=0.088)
+                        default=0.09)
     parser.add_argument('-t', '--tolerance',
                         help='Allowable tolerance between triggers and photodiode. Deafult 10 ms',
                         default=0.015)
+    parser.add_argument('-f', '--false_positive',
+                        help='Allows to correct the false positive of the photodiode at the beginning of the session. Default 0',
+                        default=0,
+                        type=int)
 
     args = parser.parse_args()
     data_path = args.data_path
     if not data_path:
         data_path = ask_directory()
+
+    # grab the stim length from the data directory parameters
+    stim_length = load_json_parameters(f'{data_path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)['stim_length']
 
     raw_data, triggers, static_offset = extract_data_latency_calculation(
         data_path,
@@ -331,6 +347,8 @@ if __name__ == '__main__':
         raw_data,
         args.trigger_name,
         triggers,
+        stim_length,
         recommend_static=args.recommend,
         plot=args.plot,
-        tolerance=float(args.tolerance))
+        tolerance=float(args.tolerance),
+        correct_diode_false_positive=args.false_positive)

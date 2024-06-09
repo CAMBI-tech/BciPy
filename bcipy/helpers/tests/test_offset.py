@@ -17,7 +17,7 @@ from bcipy.helpers.offset import (
 )
 from bcipy.helpers.load import load_raw_data
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder
+from bcipy.helpers.triggers import trigger_decoder, TriggerType
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
 
 pwd = Path(__file__).absolute().parent
@@ -38,9 +38,11 @@ class TestOffset(unittest.TestCase):
         trigger_targetness, trigger_time, trigger_label = trigger_decoder(
             self.triggers_path,
             remove_pre_fixation=False,
+            exclusion=[TriggerType.FIXATION],
             device_type='EEG')
         self.triggers = list(zip(trigger_label, trigger_targetness, trigger_time))
         self.diode_channel = 'TRG'
+        self.stim_number = 10
 
     def tearDown(self) -> None:
         shutil.rmtree(self.tmp_dir)
@@ -89,7 +91,8 @@ class TestOffset(unittest.TestCase):
         response = calculate_latency(
             self.raw_data,
             self.diode_channel,
-            self.triggers)
+            self.triggers,
+            self.stim_number)
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0], list)
         self.assertIsInstance(response[1], list)
@@ -101,6 +104,7 @@ class TestOffset(unittest.TestCase):
             self.raw_data,
             self.diode_channel,
             self.triggers,
+            self.stim_number,
             tolerance=0.5)
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0], list)
@@ -114,6 +118,7 @@ class TestOffset(unittest.TestCase):
             self.raw_data,
             self.diode_channel,
             self.triggers,
+            self.stim_number,
             recommend_static=recommend)
         self.assertIsInstance(response, tuple)
         self.assertIsInstance(response[0], list)
@@ -128,10 +133,34 @@ class TestOffset(unittest.TestCase):
             self.raw_data,
             self.diode_channel,
             self.triggers,
+            self.stim_number,
             plot=True)
 
         # verify that the plot show function was called 3 times as expected
         verify(plt, times=3).show()
+
+    def test_calculate_latency_ploting_with_false_positive_correction(self):
+        """Test calculate_latency with false positive correction."""
+        corrections = 2
+
+        response1 = calculate_latency(
+            self.raw_data,
+            self.diode_channel,
+            self.triggers,
+            self.stim_number)
+
+
+        response2 = calculate_latency(
+            self.raw_data,
+            self.diode_channel,
+            self.triggers,
+            self.stim_number,
+            correct_diode_false_positive=corrections)
+        
+        # verify two responses are different in the expected way
+        self.assertNotEqual(response1[0], response2[0])
+        self.assertEqual(len(response2[0]), len(response1[0]) - corrections)
+        self.assertNotEqual(response1[1][0], response2[1][0])
 
 
 if __name__ == "__main__":
