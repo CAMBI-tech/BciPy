@@ -149,14 +149,13 @@ class TestOffset(unittest.TestCase):
             self.triggers,
             self.stim_number)
 
-
         response2 = calculate_latency(
             self.raw_data,
             self.diode_channel,
             self.triggers,
             self.stim_number,
             correct_diode_false_positive=corrections)
-        
+
         # verify two responses are different in the expected way
         self.assertNotEqual(response1[0], response2[0])
         self.assertEqual(len(response2[0]), len(response1[0]) - corrections)

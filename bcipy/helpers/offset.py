@@ -5,13 +5,19 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
-from scipy.stats import normaltest, describe
+from scipy.stats import normaltest
 
 from bcipy.helpers.load import load_raw_data, ask_directory, load_json_parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.triggers import trigger_decoder, TriggerType
 
-from bcipy.config import TRIGGER_FILENAME, DIODE_TRIGGER, RAW_DATA_FILENAME, DEFAULT_TRIGGER_CHANNEL_NAME, DEFAULT_PARAMETER_FILENAME
+from bcipy.config import (
+    TRIGGER_FILENAME,
+    DIODE_TRIGGER,
+    RAW_DATA_FILENAME,
+    DEFAULT_TRIGGER_CHANNEL_NAME,
+    DEFAULT_PARAMETER_FILENAME
+)
 
 
 def sample_to_seconds(sample_rate: float, sample: int) -> float:
@@ -327,7 +333,7 @@ if __name__ == '__main__':
                         help='Allowable tolerance between triggers and photodiode. Deafult 10 ms',
                         default=0.015)
     parser.add_argument('-f', '--false_positive',
-                        help='Allows to correct the false positive of the photodiode at the beginning of the session. Default 0',
+                        help='Allows to correct the false positive of the photodiode at the beginning of the session.',
                         default=0,
                         type=int)
 
