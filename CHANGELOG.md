@@ -15,6 +15,8 @@ Our last release candidate before the official 2.0 release!
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Report
   - Functionality to generate a report in the form of a PDF #325
+- Offset Support
+  - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
 - Parameters
     - Add a Range type parameter #285
 - Housekeeping
