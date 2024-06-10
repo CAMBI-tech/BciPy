@@ -39,6 +39,7 @@ from bcipy.orchestrator.actions import CallbackAction
 # string references would align withe the class's name property.
 # for now, this makes it easier to initialize tasks and actions from
 # the orchestrator.
+# TODO: add validation for tasks added to this registry (probably through a class)
 task_registry_dict = {
     # Tasks 
     'RSVP Calibration': RSVPCalibrationTask,
