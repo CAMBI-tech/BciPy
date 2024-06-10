@@ -1,7 +1,7 @@
 import unittest
 from bcipy.orchestrator.config import parse_sequence, serialize_sequence, validate_sequence_string
 from bcipy.task import TaskType
-from bcipy.orchestrator.actions import Action, OfflineAnalysisAction
+from bcipy.orchestrator.actions import OfflineAnalysisAction
 
 
 class TestConfig(unittest.TestCase):
@@ -24,7 +24,7 @@ class TestConfig(unittest.TestCase):
         assert len(parsed) == 2
         assert parsed[0] == TaskType.RSVP_CALIBRATION
         assert parsed[1] == TaskType.RSVP_COPY_PHRASE
-    
+
     def test_parses_actions_and_tasks(self) -> None:
         sequence = 'RSVP Calibration -> Offline Analysis -> RSVP Copy Phrase'
         parsed = parse_sequence(sequence)
@@ -32,7 +32,7 @@ class TestConfig(unittest.TestCase):
         assert parsed[0] == TaskType.RSVP_CALIBRATION
         assert parsed[1] is OfflineAnalysisAction
         assert parsed[2] == TaskType.RSVP_COPY_PHRASE
-    
+
     def test_throws_exception_on_invalid_action(self) -> None:
         actions = 'RSVP Calibration -> does not exist'
         with self.assertRaises(ValueError):
@@ -61,7 +61,7 @@ class TestConfig(unittest.TestCase):
         sequence = [OfflineAnalysisAction]
         serialized = serialize_sequence(sequence)
         assert serialized == 'Offline Analysis'
-    
+
     def test_serializes_actions_and_tasks(self) -> None:
         sequence = [TaskType.RSVP_CALIBRATION, OfflineAnalysisAction, TaskType.RSVP_COPY_PHRASE]
         serialized = serialize_sequence(sequence)

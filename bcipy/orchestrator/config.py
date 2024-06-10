@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List
 from bcipy.task import Task, TaskType
 """This file can define actions that can happen in a session orchestrator visit.
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
@@ -13,6 +13,7 @@ for i, task in enumerate(TaskType.list()):
 # for action in Action.get_all_actions():
 #     assert action.label not in action_task_label_dict, f"Conflicting definitions for action {action.label}"
 #     action_task_label_dict[action.label] = action
+
 
 def parse_sequence(sequence: str) -> List[Task]:
     """

@@ -1,4 +1,3 @@
-import os
 from bcipy.orchestrator.orchestrator import SessionOrchestrator
 from bcipy.orchestrator.actions import OfflineAnalysisAction
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
@@ -8,7 +7,7 @@ from bcipy.helpers.load import load_experimental_data
 
 def demo_orchestrator(data_path: str, parameters_path: str) -> None:
     """Demo the SessionOrchestrator.
-    
+
     This function demonstrates how to use the SessionOrchestrator to execute actions.
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
@@ -18,6 +17,7 @@ def demo_orchestrator(data_path: str, parameters_path: str) -> None:
 
     orchestrator.add_task(action)
     orchestrator.execute()
+
 
 if __name__ == '__main__':
 

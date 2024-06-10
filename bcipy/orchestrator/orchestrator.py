@@ -2,26 +2,18 @@ import errno
 import os
 import json
 from datetime import datetime
-from dataclasses import dataclass
 import logging
 from logging import Logger
 from typing import List, Optional, Union
 
-from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
-from bcipy.helpers.visualization import visualize_session_data
+from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.system_utils import get_system_info
 from bcipy.task import Task
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.system_utils import get_system_info
-
-
-from bcipy.orchestrator.actions import CodeHookAction
-
 
 # Session Orchestrator Needs:
 # - A way to initialize the session (user, experiment, tasks, parameters, models, system info, log, save folder)
@@ -70,7 +62,9 @@ class SessionOrchestrator:
     def execute(self) -> None:
         """Executes queued tasks in order"""
 
-        # TODO add error handling for exceptions (like TaskConfigurationException), allowing the orchestrator to continue and log the errors.
+        # TODO add error handling for exceptions (like
+        # TaskConfigurationException), allowing the orchestrator to continue and
+        # log the errors.
         for task in self.tasks:
             data_save_location = self.init_task_save_folder(task)
             self.session_data.append(data_save_location)
@@ -82,8 +76,8 @@ class SessionOrchestrator:
     # TODO: 'Runs' need a name like session or sequence.
     def init_orchestrator_save_folder(self, save_path: str) -> None:
         timestamp = str(datetime.now())
-        #* No '/' after `save_folder` since it is included in
-        #* `data_save_location` in parameters
+        # * No '/' after `save_folder` since it is included in
+        # * `data_save_location` in parameters
         path = f'{save_path}{self.experiment_id}/{self.user}/orchestrator-run-{timestamp}/'
         os.makedirs(path)
         self.save_folder = path
@@ -101,11 +95,8 @@ class SessionOrchestrator:
 
     def save(self) -> None:
         # Save the session data
-        # TODO create a top level folder for the session data and put the task data in subfolders. It could be timestamp based.
-        # TODO save the session data to a file. This should be a data structure per task with a top level info. 
         system_info = get_system_info()
         with open(f'{self.save_folder}/session_data.json', 'w') as f:
             f.write(json.dumps({
-                'system_info': system_info,
+                'system_info': self.sys_info,
             }))
-    

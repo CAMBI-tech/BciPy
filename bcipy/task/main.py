@@ -11,6 +11,7 @@ class Task(ABC):
 
     parameters: Parameters
     data_save_location: str
+
     def __init__(self) -> None:
         super(Task, self).__init__()
         self.logger = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class Task(ABC):
     @abstractmethod
     def name(self) -> str:
         ...
-    
+
     def setup(self, parameters, data_save_location):
         self.parameters = parameters
         self.data_save_location = data_save_location
