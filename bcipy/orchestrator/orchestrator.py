@@ -1,5 +1,6 @@
 import errno
 import os
+import json
 from datetime import datetime
 from dataclasses import dataclass
 import logging
@@ -10,7 +11,7 @@ from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
-from bcipy.main import execute_task
+from bcipy.helpers.system_utils import get_system_info
 from bcipy.task import Task
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
@@ -76,6 +77,7 @@ class SessionOrchestrator:
             task.setup(self.parameters, data_save_location)
             task.execute()
             task.cleanup()
+        self.save()
 
     # TODO: 'Runs' need a name like session or sequence.
     def init_orchestrator_save_folder(self, save_path: str) -> None:
@@ -101,5 +103,9 @@ class SessionOrchestrator:
         # Save the session data
         # TODO create a top level folder for the session data and put the task data in subfolders. It could be timestamp based.
         # TODO save the session data to a file. This should be a data structure per task with a top level info. 
-        ...
+        system_info = get_system_info()
+        with open(f'{self.save_folder}/session_data.json', 'w') as f:
+            f.write(json.dumps({
+                'system_info': system_info,
+            }))
     
