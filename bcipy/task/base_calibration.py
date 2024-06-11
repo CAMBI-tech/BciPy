@@ -1,6 +1,6 @@
 """Base calibration task."""
 
-from typing import Iterator, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -147,7 +147,7 @@ class BaseCalibrationTask(Task):
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 
-    def session_task_data(self):
+    def session_task_data(self) -> Optional[Dict[str, Any]]:
         """"Task-specific session data"""
         return None
 
@@ -320,6 +320,6 @@ class BaseCalibrationTask(Task):
         ) - self.start_time
         self.write_session_data()
 
-    def session_inquiry_data(self, inquiry: Inquiry) -> Optional[dict]:
+    def session_inquiry_data(self, inquiry: Inquiry) -> Optional[Dict[str, Any]]:
         """Defines task-specific session data for each inquiry."""
         return None
