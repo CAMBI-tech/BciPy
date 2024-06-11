@@ -80,3 +80,45 @@ class OfflineAnalysisAction(Task):
     @property
     def name(self):
         return 'OfflineAnalysisAction'
+
+
+# Import actual task classes to be mapped to strings
+#TODO: This should probably be in `task_registry.py` but it causes a circular import
+# A refactor for the TaskType system is probably needed
+from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
+from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from bcipy.task.paradigm.matrix.timing_verification import \
+    MatrixTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
+    RSVPTimingVerificationCalibration
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
+from bcipy.orchestrator.actions import OfflineAnalysisAction
+from bcipy.orchestrator.actions import CodeHookAction
+from bcipy.orchestrator.actions import CallbackAction
+
+# TODO: Refactor this, and TaskInfo. This is currently redundant.
+# While this makes it easier to get the actual task class,
+# it is yet another source of truth for the string representation of the
+# task. Ideally this would work with fetching subclasses of Task, and 
+# string references would align withe the class's name property.
+# for now, this makes it easier to initialize tasks and actions from
+# the orchestrator.
+# TODO: add validation for tasks added to this registry (probably through a class)
+task_registry_dict = {
+    # Tasks 
+    'RSVP Calibration': RSVPCalibrationTask,
+    'RSVP Copy Phrase': RSVPCopyPhraseTask,
+    'RSVP Time Test Calibration': RSVPTimingVerificationCalibration,
+    'Matrix Calibration': MatrixCalibrationTask,
+    'Matrix Time Test Calibration': MatrixTimingVerificationCalibration,
+    'Matrix Copy Phrase': MatrixCopyPhraseTask,
+    'VEP Calibration': VEPCalibrationTask,
+
+    # Actions
+    'Offline Analysis Action': OfflineAnalysisAction,
+    'Code Hook Action': CodeHookAction,
+    'Callback Action': CallbackAction
+}

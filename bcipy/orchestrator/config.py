@@ -1,18 +1,20 @@
-from typing import List
-from bcipy.task import Task, TaskType
 """This file can define actions that can happen in a session orchestrator visit.
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
+from typing import List
+from bcipy.task import Task, TaskType
+from bcipy.orchestrator.actions import task_registry_dict
+
 ACTION_SEPARATOR = '->'
 
-action_task_label_dict = {}
-for i, task in enumerate(TaskType.list()):
-    assert task not in action_task_label_dict
-    action_task_label_dict[task] = TaskType(i + 1)
+# task_registry_dict = {}
+# for i, task in enumerate(TaskType.list()):
+#     assert task not in task_registry_dict
+#     task_registry_dict[task] = TaskType(i + 1)
 
 # for action in Action.get_all_actions():
-#     assert action.label not in action_task_label_dict, f"Conflicting definitions for action {action.label}"
-#     action_task_label_dict[action.label] = action
+#     assert action.label not in task_registry_dict, f"Conflicting definitions for action {action.label}"
+#     task_registry_dict[action.label] = action
 
 
 def parse_sequence(sequence: str) -> List[Task]:
@@ -32,7 +34,7 @@ def parse_sequence(sequence: str) -> List[Task]:
             A list of TaskType objects that represent the actions in the input string.
     """
     try:
-        sequence = [action_task_label_dict[action.strip()] for action in sequence.split(ACTION_SEPARATOR)]
+        sequence = [task_registry_dict[action.strip()] for action in sequence.split(ACTION_SEPARATOR)]
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
     return sequence
@@ -55,7 +57,7 @@ def validate_sequence_string(action_sequence: str) -> None:
             If the string of actions is invalid.
     """
     for sequence_item in action_sequence.split(ACTION_SEPARATOR):
-        if sequence_item.strip() not in action_task_label_dict:
+        if sequence_item.strip() not in task_registry_dict:
             raise ValueError('Invalid task name in action sequence')
 
 
