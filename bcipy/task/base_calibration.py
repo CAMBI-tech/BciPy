@@ -32,12 +32,6 @@ class Inquiry(NamedTuple):
     colors: List[str]
 
     @property
-    def labels(self) -> List[str]:
-        """labels for each stimuli"""
-        [target, _fixation, *symbols] = self.stimuli
-        return ['target' if sym == target else 'nontarget' for sym in symbols]
-
-    @property
     def target(self) -> str:
         """target symbol"""
         return self.stimuli[0]
@@ -56,6 +50,15 @@ class BaseCalibrationTask(Task):
     daq (Data Acquisition Client)
     parameters (dict)
     file_save (str)
+
+    Subclasses should override the provided MODE and can specialize behavior by overriding
+    the following methods:
+        - init_display ; initializes the stimulus display
+        - init_inquiry_generator ; creates a generator that returns inquiries to be presented
+        - trigger_type ; used for assigning trigger types to the timing data
+        - session_task_data ; provide task-specific session data
+        - session_inquiry_data ; provide task-specific inquiry data to the session
+        - cleanup ; perform any necessary cleanup (closing connections, etc.)
     """
 
     MODE = 'Undefined'
@@ -71,7 +74,7 @@ class BaseCalibrationTask(Task):
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
-        self.symbol_set = alphabet(parameters)
+        self._symbol_set = alphabet(parameters)
 
         self.file_save = file_save
         self.trigger_handler = TriggerHandler(self.file_save, TRIGGER_FILENAME,
@@ -91,9 +94,14 @@ class BaseCalibrationTask(Task):
         """Whether to allow breaks"""
         return self.parameters['enable_breaks']
 
+    @property
+    def symbol_set(self) -> List[str]:
+        """Symbols used in the calibration"""
+        return self._symbol_set
+
     def name(self) -> str:
         """Task name"""
-        return 'Calibration Task'
+        return f"{self.MODE} Calibration Task"
 
     def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
@@ -225,8 +233,8 @@ class BaseCalibrationTask(Task):
             inq_index += 1
 
         self.exit_display()
-        self.cleanup()
         self.write_offset_trigger()
+        self.cleanup()
 
         return self.file_save
 
@@ -291,13 +299,20 @@ class BaseCalibrationTask(Task):
                 self.session.as_dict())
             session_file.close()
 
+    def stim_labels(self, inquiry: Inquiry) -> List[str]:
+        """labels for each stimuli"""
+        return [
+            str(self.trigger_type(symbol, inquiry.target, index))
+            for index, symbol in enumerate(inquiry.stimuli)
+        ]
+
     def add_session_data(self, inquiry: Inquiry) -> None:
         """Adds the latest inquiry to the session data."""
         data = session_data.Inquiry(
-            stimuli=inquiry,
+            stimuli=inquiry.stimuli,
             timing=inquiry.durations,
             triggers=[],
-            target_info=inquiry.labels,
+            target_info=self.stim_labels(inquiry),
             target_letter=inquiry.target,
             task_data=self.session_inquiry_data(inquiry))
         self.session.add_sequence(data)
