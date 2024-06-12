@@ -174,7 +174,7 @@ class BaseCalibrationTask(Task):
         ----------
         - index : current index
         - inquiry : next sequence of stimuli to present.
-    
+
         Returns
         -------
         List of stim_times (tuples representing the stimulus and time that

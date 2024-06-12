@@ -44,7 +44,6 @@ class RSVPCalibrationTask(BaseCalibrationTask):
             return TriggerType.TARGET
         return TriggerType.NONTARGET
 
-
     def init_display(self) -> Display:
         return init_calibration_display_task(self.parameters, self.window,
                                              self.static_clock,
