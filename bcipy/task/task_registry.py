@@ -1,6 +1,7 @@
 """Task Registry ; used to provide task options to the GUI and command line
 tools. User defined tasks can be added to the Registry."""
-
+from typing import Dict
+from bcipy.task import Task
 # NOTE:
 # In the future we may want to consider dynamically retrieving all subclasses
 # of Task and use these to populate a registry. We could also provide
@@ -16,6 +17,24 @@ from typing import List
 
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.system_utils import AutoNumberEnum
+
+class TaskRegistry:
+    registry_dict: Dict[str, Task]
+    
+    def __init__(self):
+        self.registry_dict = {task.name: task for task in Task.__subclasses__()}
+        print(self.registry_dict)
+    
+    def get_task_from_string(self, task_name: str) -> Task:
+        if task_name in self.registry_dict:
+            return self.registry_dict[task_name]
+        raise BciPyCoreException(f'{task_name} not a registered task')
+    
+    def get_all_tasks(self) -> List[Task]:
+        return list(self.registry_dict.values())
+
+    def register_task(self, task: Task) -> None:
+        self.registry_dict[task.name] = task
 
 class TaskType(AutoNumberEnum):
     """Enum of the registered experiment types (Tasks), along with the label
