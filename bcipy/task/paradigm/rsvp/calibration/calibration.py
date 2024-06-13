@@ -42,7 +42,7 @@ class RSVPCalibrationTask(Task):
     parameters (dict)
     file_save (str)
     """
-
+    name = 'RSVP Calibration'
     def __init__(
             self,
             win: visual.Window,
@@ -234,9 +234,6 @@ class RSVPCalibrationTask(Task):
 
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
-
-    def name(self) -> str:
-        return 'RSVP Calibration Task'
 
 
 def init_calibration_display_task(

@@ -7,6 +7,7 @@ class CallbackAction(Task):
     """
     Action for running a callback.
     """
+    name = 'CallbackAction'
 
     def __init__(self, callback: callable, *args, **kwargs) -> None:
         super(CallbackAction, self).__init__()
@@ -21,15 +22,13 @@ class CallbackAction(Task):
         self.logger.info(f'Callback action {self.callback} executed')
         return self.name
 
-    @property
-    def name(self):
-        return 'CallbackAction'
 
 
 class CodeHookAction(Task):
     """
     Action for running generic code hooks.
     """
+    name = 'CodeHookAction'
 
     def __init__(self, code_hook: str, subprocess=True) -> None:
         super(CodeHookAction, self).__init__()
@@ -46,15 +45,11 @@ class CodeHookAction(Task):
 
         return self.code_hook
 
-    @property
-    def name(self):
-        return 'CodeHookAction'
-
-
 class OfflineAnalysisAction(Task):
     """
     Action for running offline analysis.
     """
+    name = 'OfflineAnalysisAction'
 
     def __init__(self, data_directory: str, parameters_path: Optional[str] = None, alert=True) -> None:
         super(OfflineAnalysisAction, self).__init__()
@@ -76,10 +71,6 @@ class OfflineAnalysisAction(Task):
         if self.alert:
             command += ' --alert'
         return command
-
-    @property
-    def name(self):
-        return 'OfflineAnalysisAction'
 
 
 # Import actual task classes to be mapped to strings

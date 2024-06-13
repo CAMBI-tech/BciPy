@@ -49,6 +49,7 @@ class VEPCalibrationTask(Task):
     parameters (Dictionary)
     file_save (String)
     """
+    name = 'VEP Calibration Task'
 
     def __init__(self, win: visual.Window, daq: ClientManager,
                  parameters: Parameters, file_save: str):
@@ -203,9 +204,6 @@ class VEPCalibrationTask(Task):
 
         self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
-
-    def name(self):
-        return 'VEP Calibration Task'
 
 
 def init_calibration_display(parameters: Parameters,

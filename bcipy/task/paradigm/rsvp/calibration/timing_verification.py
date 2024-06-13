@@ -27,7 +27,7 @@ class RSVPTimingVerificationCalibration(Task):
     Output:
         file_save (str)
     """
-    TASK_NAME = 'RSVP Timing Verification Task'
+    name = 'RSVP Timing Verification Task'
 
     def __init__(
             self,
@@ -77,10 +77,3 @@ class RSVPTimingVerificationCalibration(Task):
     def execute(self) -> str:
         self.logger.info(f'Starting {self.name()}!')
         return self._task.execute()
-
-    @classmethod
-    def label(cls) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME
-
-    def name(self) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME

@@ -86,7 +86,7 @@ class RSVPCopyPhraseTask(Task):
             path location of where to save data from the session
     """
 
-    TASK_NAME = 'RSVP Copy Phrase Task'
+    name = 'RSVP Copy Phrase Task'
     MODE = 'RSVP'
 
     PARAMETERS_USED = [
@@ -779,9 +779,6 @@ class RSVPCopyPhraseTask(Task):
         if target == symbol:
             return TriggerType.TARGET
         return TriggerType.NONTARGET
-
-    def name(self) -> str:
-        return self.TASK_NAME
 
     @property
     def first_run(self) -> bool:

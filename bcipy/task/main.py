@@ -8,7 +8,7 @@ class Task(ABC):
 
     Base class for BciPy tasks.
     """
-
+    name: str
     parameters: Parameters
     data_save_location: str
 
@@ -19,11 +19,6 @@ class Task(ABC):
     @abstractmethod
     def execute(self) -> str:
         assert self.parameters is not None, "Task parameters not set"
-        ...
-
-    @property
-    @abstractmethod
-    def name(self) -> str:
         ...
 
     def setup(self, parameters, data_save_location):

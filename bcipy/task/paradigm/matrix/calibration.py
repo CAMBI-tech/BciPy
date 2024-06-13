@@ -43,7 +43,7 @@ class MatrixCalibrationTask(Task):
     parameters (Parameters Object)
     file_save (String)
     """
-
+    name = 'MatrixCalibrationTask'
     def __init__(
             self,
             win: visual.Window,
@@ -265,9 +265,6 @@ class MatrixCalibrationTask(Task):
             self.matrix._stim_positions,
             self.file_save,
             self.screen_info)
-
-    def name(self) -> str:
-        return 'Matrix Calibration Task'
 
 
 def init_calibration_display_task(
