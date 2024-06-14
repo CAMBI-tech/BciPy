@@ -5,7 +5,7 @@ from typing import List
 from bcipy.task import Task, TaskType
 from bcipy.orchestrator.actions import task_registry_dict
 
-ACTION_SEPARATOR = '->'
+TASK_SEPERATOR = '->'
 
 # task_registry_dict = {}
 # for i, task in enumerate(TaskType.list()):
@@ -34,7 +34,7 @@ def parse_sequence(sequence: str) -> List[Task]:
             A list of TaskType objects that represent the actions in the input string.
     """
     try:
-        sequence = [task_registry_dict[action.strip()] for action in sequence.split(ACTION_SEPARATOR)]
+        sequence = [task_registry_dict[task.strip()] for task in sequence.split(TASK_SEPERATOR)]
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
     return sequence
@@ -56,7 +56,7 @@ def validate_sequence_string(action_sequence: str) -> None:
         ValueError
             If the string of actions is invalid.
     """
-    for sequence_item in action_sequence.split(ACTION_SEPARATOR):
+    for sequence_item in action_sequence.split(TASK_SEPERATOR):
         if sequence_item.strip() not in task_registry_dict:
             raise ValueError('Invalid task name in action sequence')
 
@@ -78,7 +78,7 @@ def serialize_sequence(sequence: List[Task]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    return f" {ACTION_SEPARATOR} ".join([item.label for item in sequence])
+    return f" {TASK_SEPERATOR} ".join([item.label for item in sequence])
 
 
 if __name__ == '__main__':
