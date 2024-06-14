@@ -54,7 +54,7 @@ class SessionOrchestrator:
 
         self.ready_to_execute = False
 
-    def add_task(self, task) -> None:
+    def add_task(self, task: Task) -> None:
         # Loading task specific parameters could happen here
         # TODO validate it is a Valid Task
         self.tasks.append(task)
