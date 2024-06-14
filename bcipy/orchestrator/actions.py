@@ -9,13 +9,13 @@ class CallbackAction(Task):
     """
 
     def __init__(self, callback: callable, *args, **kwargs) -> None:
-        super(CallbackAction, self).__init__()
+        super().__init__()
         self.callback = callback
         self.args = args
         self.kwargs = kwargs
 
     def execute(self):
-        super(CallbackAction, self).execute()
+        super().execute()
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
@@ -32,7 +32,7 @@ class CodeHookAction(Task):
     """
 
     def __init__(self, code_hook: str, subprocess=True) -> None:
-        super(CodeHookAction, self).__init__()
+        super().__init__()
         self.code_hook = code_hook
         self.subprocess = subprocess
 
@@ -57,13 +57,13 @@ class OfflineAnalysisAction(Task):
     """
 
     def __init__(self, data_directory: str, parameters_path: Optional[str] = None, alert=True) -> None:
-        super(OfflineAnalysisAction, self).__init__()
+        super().__init__()
         self.parameters_path = parameters_path
         self.alert = alert
         self.data_directory = data_directory
 
     def execute(self):
-        super(OfflineAnalysisAction, self).execute()
+        super().execute()
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
         return self.data_directory
