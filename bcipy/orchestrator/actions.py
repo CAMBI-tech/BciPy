@@ -97,11 +97,11 @@ class OfflineAnalysisAction(Task):
         self.parameters_path = parameters_path
         self.alert = alert
         self.data_directory = data_directory
+        self.command = self.construct_command()
 
     def execute(self):
         super().execute()
-        cmd = self.construct_command()
-        subprocess.Popen(cmd, shell=True)
+        subprocess.Popen(self.command, shell=True)
         return self.data_directory
 
     def construct_command(self):
