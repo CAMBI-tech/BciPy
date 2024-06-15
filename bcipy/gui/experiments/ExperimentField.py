@@ -1,4 +1,5 @@
 """GUI form for collecting experimental field data."""
+
 # pylint: disable=E0611
 
 import sys
@@ -26,8 +27,10 @@ from bcipy.gui.main import (
     FloatInput,
     FormInput,
     IntegerInput,
-    TextInput
+    TextInput,
 )
+from bcipy.config import EXPERIMENT_DATA_FILENAME
+from bcipy.helpers.validate import validate_experiment, validate_field_data_written
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_field_data
 
@@ -38,20 +41,29 @@ class ExperimentFieldCollection(QWidget):
     Given an experiment with fields to be collected, this UI can be used to collect data in the correct format
         and require fields which are noted as such in the experiment.
     """
+
     field_data: List[tuple] = []
     field_inputs: List[FormInput] = []
     type_inputs = {
-        'int': (IntegerInput, 0),
-        'float': (FloatInput, 0.0),
-        'bool': (BoolInput, False),
-        'filepath': (FileInput, ''),
-        'directorypath': (DirectoryInput, ''),
+        "int": (IntegerInput, 0),
+        "float": (FloatInput, 0.0),
+        "bool": (BoolInput, False),
+        "filepath": (FileInput, ""),
+        "directorypath": (DirectoryInput, ""),
     }
-    require_mark = '*'
+    require_mark = "*"
     alert_timeout = 10
     save_data = {}
 
-    def __init__(self, title: str, width: int, height: int, experiment_name: str, save_path: str, file_name: str):
+    def __init__(
+        self,
+        title: str,
+        width: int,
+        height: int,
+        experiment_name: str,
+        save_path: str,
+        file_name: str,
+    ):
         super().__init__()
 
         self.experiment_name = experiment_name
@@ -59,7 +71,7 @@ class ExperimentFieldCollection(QWidget):
         self.save_path = save_path
         self.file_name = file_name
         self.help_size = 12
-        self.help_color = 'darkgray'
+        self.help_color = "darkgray"
         self.width = width
         self.height = height
         self.title = title
@@ -87,9 +99,13 @@ class ExperimentFieldCollection(QWidget):
         Loop over the field data and create UI field inputs for data collection.
         """
         for field_name, field_type, required, help_text in self.field_data:
-            self.field_inputs.append(self.field_input(field_name, field_type, help_text, required))
+            self.field_inputs.append(
+                self.field_input(field_name, field_type, help_text, required)
+            )
 
-    def field_input(self, field_name: str, field_type: str, help_tip: str, required: bool) -> FormInput:
+    def field_input(
+        self, field_name: str, field_type: str, help_tip: str, required: bool
+    ) -> FormInput:
         """Field Input.
 
         Construct a FormInput for the given field based on its python type and other
@@ -105,7 +121,8 @@ class ExperimentFieldCollection(QWidget):
             value=init_value,
             help_tip=help_tip,
             help_size=self.help_size,
-            help_color=self.help_color)
+            help_color=self.help_color,
+        )
 
     def build_assets(self) -> None:
         """Build Assets.
@@ -124,11 +141,12 @@ class ExperimentFieldCollection(QWidget):
             name = field.label
             if self.require_mark in field.label and not _input:
                 self.throw_alert_message(
-                    title='BciPy Alert',
-                    message=f'Required field {name.strip(self.require_mark)} must be filled out!',
+                    title="BciPy Alert",
+                    message=f"Required field {name.strip(self.require_mark)} must be filled out!",
                     message_type=AlertMessageType.CRIT,
                     message_response=AlertMessageResponse.OCE,
-                    message_timeout=self.alert_timeout)
+                    message_timeout=self.alert_timeout,
+                )
                 return False
         return True
 
@@ -138,13 +156,18 @@ class ExperimentFieldCollection(QWidget):
         Using the fields defined in the experiment, fetch the other attributes of the field. It will be stored in
             self.field_data as a list of tuples (name, field type, required, help text).
         """
-        for field in self.experiment['fields']:
+        for field in self.experiment["fields"]:
             # the field name and requirement
             for name, required in field.items():
                 # help text and type
                 field_data = self.fields[name]
                 self.field_data.append(
-                    (name.title(), field_data['type'], self.map_to_bool(required['required']), field_data['help_text'])
+                    (
+                        name.title(),
+                        field_data["type"],
+                        self.map_to_bool(required["required"]),
+                        field_data["help_text"],
+                    )
                 )
 
     def map_to_bool(self, string_boolean: str) -> bool:
@@ -152,11 +175,11 @@ class ExperimentFieldCollection(QWidget):
 
         All data is loaded from json ("true"/"false"). This method will return a python boolean (True/False).
         """
-        if string_boolean == 'true':
+        if string_boolean == "true":
             return True
-        elif string_boolean == 'false':
+        elif string_boolean == "false":
             return False
-        raise Exception(f'Unsupported boolean value {string_boolean}')
+        raise Exception(f"Unsupported boolean value {string_boolean}")
 
     def save(self) -> None:
         if self.check_input():
@@ -172,31 +195,34 @@ class ExperimentFieldCollection(QWidget):
                 self.save_data[name] = _input
         except ValueError as e:
             self.throw_alert_message(
-                title='Error',
-                message=f'Error saving data. Invalid value provided. \n {e}',
+                title="Error",
+                message=f"Error saving data. Invalid value provided. \n {e}",
                 message_type=AlertMessageType.WARN,
                 message_response=AlertMessageResponse.OCE,
-                message_timeout=self.alert_timeout
+                message_timeout=self.alert_timeout,
             )
 
     def write_save_data(self) -> None:
         save_experiment_field_data(self.save_data, self.save_path, self.file_name)
         self.throw_alert_message(
-            title='Success',
+            title="Success",
             message=(
-                f'Data successfully written to: \n\n{self.save_path}/{self.file_name} \n\n\n'
-                'Please wait or close this window to start the task!'),
+                f"Data successfully written to: \n\n{self.save_path}/{self.file_name} \n\n\n"
+                "Please wait or close this window to start the task!"
+            ),
             message_type=AlertMessageType.INFO,
             message_response=AlertMessageResponse.OCE,
             message_timeout=self.alert_timeout,
         )
 
-    def throw_alert_message(self,
-                            title: str,
-                            message: str,
-                            message_type: AlertMessageType = AlertMessageType.INFO,
-                            message_response: AlertMessageResponse = AlertMessageResponse.OTE,
-                            message_timeout: float = 0) -> MessageBox:
+    def throw_alert_message(
+        self,
+        title: str,
+        message: str,
+        message_type: AlertMessageType = AlertMessageType.INFO,
+        message_response: AlertMessageResponse = AlertMessageResponse.OTE,
+        message_timeout: float = 0,
+    ) -> MessageBox:
         """Throw Alert Message."""
 
         msg = MessageBox()
@@ -226,13 +252,23 @@ class MainPanel(QWidget):
       file_name: name of the file to write with collected field_data
     """
 
-    def __init__(self, title: str, width: int, height: int, experiment_name: str, save_path: str, file_name: str):
+    def __init__(
+        self,
+        title: str,
+        width: int,
+        height: int,
+        experiment_name: str,
+        save_path: str,
+        file_name: str,
+    ):
         super().__init__()
         self.title = title
         self.width = width
         self.height = height
 
-        self.form = ExperimentFieldCollection(title, width, height, experiment_name, save_path, file_name)
+        self.form = ExperimentFieldCollection(
+            title, width, height, experiment_name, save_path, file_name
+        )
         self.initUI()
 
     def initUI(self):
@@ -241,7 +277,9 @@ class MainPanel(QWidget):
 
         self.form_panel = QScrollArea()
         self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.form_panel.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff
+        )
         self.form_panel.setWidgetResizable(True)
         self.form_panel.setFixedWidth(self.width)
         self.form_panel.setWidget(self.form)
@@ -255,7 +293,7 @@ class MainPanel(QWidget):
 
         control_box = QHBoxLayout()
         control_box.addStretch()
-        save_button = QPushButton('Save')
+        save_button = QPushButton("Save")
         save_button.setFixedWidth(80)
         save_button.clicked.connect(self.save)
         control_box.addWidget(save_button)
@@ -267,6 +305,30 @@ class MainPanel(QWidget):
         self.close()
 
 
+def start_experiment_field_collection_gui(
+    experiment_name: str,
+    save_path: str,
+    file_name: str = EXPERIMENT_DATA_FILENAME,
+    validate: bool = True,
+) -> None:
+    if validate:
+        validate_experiment(experiment_name)
+
+    bcipy_gui = app(sys.argv)
+    _ = MainPanel(
+        title="Experiment Field Collection",
+        height=250,
+        width=600,
+        experiment_name=experiment_name,
+        save_path=save_path,
+        file_name=file_name,
+    )
+
+    bcipy_gui.exec()
+    if validate and not validate_field_data_written(save_path, file_name):
+        raise Exception(f"Field data not written to {save_path}/{file_name}")
+
+
 def start_app() -> None:
     """Start Experiment Field Collection."""
     import argparse
@@ -276,14 +338,30 @@ def start_app() -> None:
     parser = argparse.ArgumentParser()
 
     # experiment_name
-    parser.add_argument('-p', '--path', default='.',
-                        help='Path to save collected field data to in json format')
-    parser.add_argument('-e', '--experiment', default=DEFAULT_EXPERIMENT_ID,
-                        help='Select a valid experiment to run the task for this user')
-    parser.add_argument('-f', '--filename', default=EXPERIMENT_DATA_FILENAME,
-                        help='Provide a json filename to write the field data to. Ex, experiment_data.json')
-    parser.add_argument('-v', '--validate', default=False,
-                        help='Whether or not to validate the experiment before proceeding to data collection.')
+    parser.add_argument(
+        "-p",
+        "--path",
+        default=".",
+        help="Path to save collected field data to in json format",
+    )
+    parser.add_argument(
+        "-e",
+        "--experiment",
+        default=DEFAULT_EXPERIMENT_ID,
+        help="Select a valid experiment to run the task for this user",
+    )
+    parser.add_argument(
+        "-f",
+        "--filename",
+        default=EXPERIMENT_DATA_FILENAME,
+        help="Provide a json filename to write the field data to. Ex, experiment_data.json",
+    )
+    parser.add_argument(
+        "-v",
+        "--validate",
+        default=False,
+        help="Whether or not to validate the experiment before proceeding to data collection.",
+    )
 
     args = parser.parse_args()
 
@@ -292,7 +370,7 @@ def start_app() -> None:
 
     if validate:
         validate_experiment(experiment_name)
-        print('Experiment valid!')
+        print("Experiment valid!")
 
     save_path = args.path
     file_name = args.filename
@@ -300,23 +378,23 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
 
     ex = MainPanel(
-        title='Experiment Field Collection',
+        title="Experiment Field Collection",
         height=250,
         width=600,
         experiment_name=experiment_name,
         save_path=save_path,
-        file_name=file_name
+        file_name=file_name,
     )
     bcipy_gui.exec()
 
     if validate:
         if validate_field_data_written(save_path, file_name):
-            print('Field data successfully written!')
+            print("Field data successfully written!")
         else:
-            raise Exception(f'Field data not written to {save_path}/{file_name}')
+            raise Exception(f"Field data not written to {save_path}/{file_name}")
 
     sys.exit()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     start_app()
