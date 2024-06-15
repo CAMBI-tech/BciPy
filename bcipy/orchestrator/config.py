@@ -2,7 +2,6 @@
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
 from typing import List
-from bcipy.task import Task, TaskType
 from bcipy.orchestrator.actions import task_registry_dict
 
 TASK_SEPERATOR = '->'
