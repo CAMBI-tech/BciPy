@@ -17,6 +17,7 @@ from typing import List
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.system_utils import AutoNumberEnum
 
+
 class TaskType(AutoNumberEnum):
     """Enum of the registered experiment types (Tasks), along with the label
     used for display in the GUI and command line tools. Values are looked up
