@@ -11,33 +11,8 @@ from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
     RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
-from bcipy.orchestrator.actions import OfflineAnalysisAction
-from bcipy.orchestrator.actions import CodeHookAction
-from bcipy.orchestrator.actions import CallbackAction
+from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 
-# TODO: Refactor this, and TaskInfo. This is currently redundant.
-# While this makes it easier to get the actual task class,
-# it is yet another source of truth for the string representation of the
-# task. Ideally this would work with fetching subclasses of Task, and 
-# string references would align withe the class's name property.
-# for now, this makes it easier to initialize tasks and actions from
-# the orchestrator.
-# TODO: add validation for tasks added to this registry (probably through a class)
-task_registry_dict = {
-    # Tasks 
-    'RSVP Calibration': RSVPCalibrationTask,
-    'RSVP Copy Phrase': RSVPCopyPhraseTask,
-    'RSVP Time Test Calibration': RSVPTimingVerificationCalibration,
-    'Matrix Calibration': MatrixCalibrationTask,
-    'Matrix Time Test Calibration': MatrixTimingVerificationCalibration,
-    'Matrix Copy Phrase': MatrixCopyPhraseTask,
-    'VEP Calibration': VEPCalibrationTask,
-
-    # Actions
-    'Offline Analysis Action': OfflineAnalysisAction,
-    'Code Hook Action': CodeHookAction,
-    'Callback Action': CallbackAction
-}
 
 class CallbackAction(Task):
     """
@@ -118,3 +93,50 @@ class OfflineAnalysisAction(Task):
         return 'OfflineAnalysisAction'
 
 
+class ExperimentFieldCollectionAction(Task):
+    """
+    Action for collecting experiment field data.
+    """
+
+    def __init__(self, experiment_id: str, save_path: str) -> None:
+        super().__init__()
+        self.experiment_id = experiment_id
+        self.save_folder = save_path
+
+    def execute(self):
+        super().execute()
+        self.logger.info(
+            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}')
+        # collect_experiment_field_data(self.experiment, self.save_folder)
+        # start_app()
+        start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
+
+    @property
+    def name(self):
+        return 'ExperimentFieldCollectionAction'
+
+
+# # TODO: Refactor this, and TaskType. This is currently redundant.
+# # While this makes it easier to get the actual task class,
+# # it is yet another source of truth for the string representation of the
+# # task. Ideally this would work with fetching subclasses of Task, and
+# # string references would align withe the class's name property.
+# # for now, this makes it easier to initialize tasks and actions from
+# # the orchestrator.
+# # TODO: add validation for tasks added to this registry (probably through a class)
+task_registry_dict = {
+    # Tasks
+    'RSVP Calibration': RSVPCalibrationTask,
+    'RSVP Copy Phrase': RSVPCopyPhraseTask,
+    'RSVP Time Test Calibration': RSVPTimingVerificationCalibration,
+    'Matrix Calibration': MatrixCalibrationTask,
+    'Matrix Time Test Calibration': MatrixTimingVerificationCalibration,
+    'Matrix Copy Phrase': MatrixCopyPhraseTask,
+    'VEP Calibration': VEPCalibrationTask,
+
+    # Actions
+    'Offline Analysis Action': OfflineAnalysisAction,
+    'Code Hook Action': CodeHookAction,
+    'Callback Action': CallbackAction,
+    'Experiment Field Collection Action': ExperimentFieldCollectionAction
+}
