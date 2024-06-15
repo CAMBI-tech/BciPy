@@ -1,5 +1,6 @@
 from bcipy.orchestrator.orchestrator import SessionOrchestrator
-from bcipy.orchestrator.actions import OfflineAnalysisAction
+from bcipy.orchestrator.actions import OfflineAnalysisAction, ExperimentFieldCollectionAction
+from bcipy.config import DEFAULT_EXPERIMENT_ID
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 
 from bcipy.helpers.load import load_experimental_data
@@ -12,10 +13,11 @@ def demo_orchestrator(data_path: str, parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
-    action = OfflineAnalysisAction(data_path, parameters_path)
+    field_collection = ExperimentFieldCollectionAction(DEFAULT_EXPERIMENT_ID, data_path)
+    offline_analysis = OfflineAnalysisAction(data_path, parameters_path)
     orchestrator = SessionOrchestrator()
-
-    orchestrator.add_task(action)
+    orchestrator.add_task(field_collection)
+    orchestrator.add_task(offline_analysis)
     orchestrator.execute()
 
 
