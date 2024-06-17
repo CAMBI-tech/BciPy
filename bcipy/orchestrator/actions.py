@@ -7,7 +7,7 @@ class CallbackAction(Task):
     """
     Action for running a callback.
     """
-    name = 'CallbackAction'
+    name = 'Callback Action'
 
     def __init__(self, callback: callable, *args, **kwargs) -> None:
         super(CallbackAction, self).__init__()
@@ -28,7 +28,7 @@ class CodeHookAction(Task):
     """
     Action for running generic code hooks.
     """
-    name = 'CodeHookAction'
+    name = 'Code Hook Action'
 
     def __init__(self, code_hook: str, subprocess=True) -> None:
         super(CodeHookAction, self).__init__()
@@ -49,7 +49,7 @@ class OfflineAnalysisAction(Task):
     """
     Action for running offline analysis.
     """
-    name = 'OfflineAnalysisAction'
+    name = 'Offline Analysis Action'
 
     def __init__(self, data_directory: str, parameters_path: Optional[str] = None, alert=True) -> None:
         super(OfflineAnalysisAction, self).__init__()
