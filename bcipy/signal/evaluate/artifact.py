@@ -11,15 +11,15 @@ from bcipy.helpers.load import (
     load_json_parameters,
     load_raw_data,
 )
-from bcipy.helpers.system_utils import report_execution_time
 from mne import Annotations
+from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.load import load_raw_data
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
-from bcipy.acquisition.devices import DeviceSpec, ChannelSpec
+from bcipy.acquisition.devices import DeviceSpec
 
 
 class DefaultArtifactParameters(Enum):
@@ -41,7 +41,7 @@ class DefaultArtifactParameters(Enum):
     EOG_MIN_DURATION = 0.5
 
     # I/O
-    ARTIFACT_LABELLED_FILENAME = 'auto_artifacts_raw.fif'
+    ARTIFACT_LABELLED_FILENAME = 'artifacts.fif'
 
     def __str__(self) -> str:
         """Return the value of the artifact type."""
@@ -134,19 +134,25 @@ class ArtifactDetection:
             device_spec: DeviceSpec,
             save_path: Optional[str]= None,
             semi_automatic: bool = False,
-            session_triggers: list=None,
+            session_triggers: Tuple[list]=None,
             percent_bad: float=50.0,
             detect_eog: bool=True,
             eye_channels: Optional[List[str]]=None,
             detect_voltage: bool= True) -> None:
         self.raw_data = raw_data
         self.device_spec = device_spec
-        assert self.device_spec.content_type not in self.support_device_types, \
+        breakpoint()
+        assert self.device_spec.content_type in self.support_device_types, \
             f'BciPy Artifact Analysis only supports {self.support_device_types} data at this time.'
         self.eye_channels = eye_channels
         self.percent_bad = percent_bad
         self.parameters = parameters
-        self.triggers = session_triggers
+
+        if session_triggers:
+            self.triggers = session_triggers
+            self.trigger_time = session_triggers[0]
+            self.trigger_label = session_triggers[1]
+
         self.log = None
         assert len(device_spec.channel_specs) > 1, 'DeviceSpec used must have channels. None found.'
         self.units = device_spec.channel_specs[0].units
@@ -168,11 +174,33 @@ class ArtifactDetection:
         
         labels = self.label_artifacts()
 
-        # If session relevant triggers are provided, we calculate how many would be dropped due to artifacts.
-        if self.session_triggers:
-            pass
+         # calculate the impact of artifacts on the session triggers by creating epochs around the triggers
+         # and dropping artifacts using MNE
+        if self.triggers:
+            print('Calculating the impact of artifacts on session triggers.')
+            start_trial, end_trial = self.parameters.get('trial_window')
+            trial_duration = end_trial - start_trial
+            epochs = mne_epochs(
+                self.mne_data,
+                trial_duration,
+                self.trigger_time,
+                self.trigger_label,
+                reject_by_annotation=True,
+                preload=True)
+            
+            # calculate the percentage of dropped epochs
+            dropped_epochs = len(epochs.drop_log)
+            total_epochs = len(self.trigger_label)
+            percent_dropped = (dropped_epochs / total_epochs) * 100
 
-        return labels
+
+        if self.save_path:
+            self.save_artifacts(overwrite=True)
+            print(f'Artifact labelled data saved to {self.save_path}')
+
+        self.analysis_done = True
+
+        return labels, percent_dropped
         
 
     def label_artifacts(
@@ -188,8 +216,7 @@ class ArtifactDetection:
 
         if detect_voltage:
             voltage = self.label_voltage_events(
-                self.mne_data,
-                bad_percent_per_channel=self.percent_bad)
+                self.mne_data)
             if voltage:
                 voltage_annotations, bad_channels = voltage
                 print(f'Voltage violation events found: {len(voltage_annotations)}')
@@ -399,6 +426,7 @@ class ArtifactDetection:
 
 
     def concat_annotations(
+            self,
             annotations: mne.Annotations,
             pre: Union[float, int],
             post: Union[float, int],
@@ -498,16 +526,6 @@ if __name__ == "__main__":
     if not path:
         path = load_experimental_data()
 
-    # load the parameters from the data directory
-    parameters = load_json_parameters(
-        f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
-
-    # load the raw data from the data directory
-    raw_data = load_raw_data(Path(path, f'{RAW_DATA_FILENAME}.csv'))
-    type_amp = raw_data.daq_type
-
-    devices.load(Path(BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
 
     # TODO if colabel, load the triggers.
 
@@ -518,13 +536,22 @@ if __name__ == "__main__":
             print(f'Processing {session}')
             prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
+                # load the parameters from the data directory
+                parameters = load_json_parameters(
+                    f'{session}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
+
+                # load the raw data from the data directory
+                raw_data = load_raw_data(Path(session, f'{RAW_DATA_FILENAME}.csv'))
+                type_amp = raw_data.daq_type
+
+                devices.load(Path(BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME))
+                device_spec = devices.preconfigured_device(raw_data.daq_type)
                 artifact_detector = ArtifactDetection(
                         raw_data,
                         parameters,
                         device_spec,
                         save_path=session,
-                        semi_automatic=args.semi,
-                        overwrite=True)
+                        semi_automatic=args.semi)
                 
                 detected = artifact_detector.detect_artifacts()
                 write_mne_annotations(detected, session, 'artifacts.txt')
