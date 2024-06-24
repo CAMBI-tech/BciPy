@@ -49,7 +49,7 @@ class SessionOrchestrator:
     ) -> None:
         validate_experiment(experiment_id)
         self.parameters_path = (
-            parameters_path  # TODO: load parameters and cast them to the correct values
+            parameters_path
         )
         self.parameters = load_json_parameters(parameters_path, True)
         self.user = user
