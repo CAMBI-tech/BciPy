@@ -29,9 +29,6 @@ experiment ID, user ID, and parameters file. Tasks are added to the orchestrator
 # - A way to save the session data
 
 
-# Test SessionOrchestrator using Actions
-
-
 class SessionOrchestrator:
     tasks: List[Task]
     models: List[Union[SignalModel, LanguageModel]]
