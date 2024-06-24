@@ -4,9 +4,7 @@ To start these will be 1:1 with tasks, but later this can be extended to represe
 from typing import List
 from bcipy.task import Task, TaskType
 from bcipy.orchestrator.actions import task_registry_dict
-
-TASK_SEPERATOR = '->'
-
+from bcipy.config import TASK_SEPERATOR
 
 def parse_sequence(sequence: str) -> List[Task]:
     """
