@@ -7,15 +7,6 @@ from bcipy.orchestrator.actions import task_registry_dict
 
 TASK_SEPERATOR = '->'
 
-# task_registry_dict = {}
-# for i, task in enumerate(TaskType.list()):
-#     assert task not in task_registry_dict
-#     task_registry_dict[task] = TaskType(i + 1)
-
-# for action in Action.get_all_actions():
-#     assert action.label not in task_registry_dict, f"Conflicting definitions for action {action.label}"
-#     task_registry_dict[action.label] = action
-
 
 def parse_sequence(sequence: str) -> List[Task]:
     """
