@@ -16,7 +16,7 @@ from bcipy.orchestrator.actions import CodeHookAction
 from bcipy.orchestrator.actions import CallbackAction
 
 task_registry_dict = {
-    # Tasks 
+    # Tasks
     'RSVP Calibration': RSVPCalibrationTask,
     'RSVP Copy Phrase': RSVPCopyPhraseTask,
     'RSVP Time Test Calibration': RSVPTimingVerificationCalibration,
@@ -30,6 +30,7 @@ task_registry_dict = {
     'Code Hook Action': CodeHookAction,
     'Callback Action': CallbackAction
 }
+
 
 class CallbackAction(Task):
     """
@@ -108,5 +109,3 @@ class OfflineAnalysisAction(Task):
     @property
     def name(self):
         return 'OfflineAnalysisAction'
-
-
