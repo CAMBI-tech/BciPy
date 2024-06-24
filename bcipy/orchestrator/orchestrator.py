@@ -15,6 +15,14 @@ from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
 
+"""
+Session Orchestrator
+--------------------
+
+The Session Orchestrator is responsible for managing the execution of a protocol of tasks. It is initialized with an
+experiment ID, user ID, and parameters file. Tasks are added to the orchestrator, which are then executed in order.
+"""
+
 # Session Orchestrator Needs:
 # - A way to initialize the session (user, experiment, tasks, parameters, models, system info, log, save folder)
 #   - save folder is not used in execute method and could be from a provided argument or from the parameters?
