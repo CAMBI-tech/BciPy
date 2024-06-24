@@ -4,7 +4,7 @@ from bcipy.task import TaskType
 from bcipy.orchestrator.actions import OfflineAnalysisAction
 
 
-class TestConfig(unittest.TestCase):
+class TestTaskProtocolProcessing(unittest.TestCase):
 
     def test_parses_one_task(self) -> None:
         sequence = 'RSVP Calibration'
