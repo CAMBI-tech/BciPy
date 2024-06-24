@@ -15,14 +15,6 @@ from bcipy.orchestrator.actions import OfflineAnalysisAction
 from bcipy.orchestrator.actions import CodeHookAction
 from bcipy.orchestrator.actions import CallbackAction
 
-# TODO: Refactor this, and TaskInfo. This is currently redundant.
-# While this makes it easier to get the actual task class,
-# it is yet another source of truth for the string representation of the
-# task. Ideally this would work with fetching subclasses of Task, and 
-# string references would align withe the class's name property.
-# for now, this makes it easier to initialize tasks and actions from
-# the orchestrator.
-# TODO: add validation for tasks added to this registry (probably through a class)
 task_registry_dict = {
     # Tasks 
     'RSVP Calibration': RSVPCalibrationTask,
