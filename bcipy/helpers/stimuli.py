@@ -94,7 +94,9 @@ class InquirySchedule(NamedTuple):
         """Number of stimuli"""
         return len(self.stimuli)
 
-    def __iter__(self):
+    def inquiries(self) -> Iterator[Tuple]:
+        """Generator that iterates through each Inquiry. Yields tuples of
+        (stim, duration, color)."""
         count = self.count
         index = 0
         while index < count:

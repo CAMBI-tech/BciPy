@@ -64,7 +64,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
             ],
             inquiry_count=parameters['stim_number'],
             num_boxes=self.num_boxes)
-        return (Inquiry(*inq) for inq in schedule)
+        return (Inquiry(*inq) for inq in schedule.inquiries())
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:

@@ -137,7 +137,7 @@ class BaseCalibrationTask(Task):
                 parameters['target_color'], parameters['fixation_color'],
                 parameters['stim_color']
             ])
-        return (Inquiry(*inq) for inq in schedule)
+        return (Inquiry(*inq) for inq in schedule.inquiries())
 
     def init_session(self) -> session_data.Session:
         """Initialize the session data."""
@@ -225,7 +225,7 @@ class BaseCalibrationTask(Task):
             timing = self.present_inquiry(inq_index, inquiry)
 
             # Write triggers for the inquiry
-            self.write_trigger_data(timing, first_run=inq_index == 0)
+            self.write_trigger_data(timing, inq_index == 0)
             self.add_session_data(inquiry)
 
             # Wait for a time
