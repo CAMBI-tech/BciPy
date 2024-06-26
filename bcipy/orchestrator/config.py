@@ -1,16 +1,16 @@
-from typing import List
-from bcipy.task import TaskType
 """This file can define actions that can happen in a session orchestrator visit.
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
-ACTION_SEPARATOR = '->'
+from typing import List, Type
+from bcipy.task import Task
+from bcipy.orchestrator.actions import task_registry_dict
+from bcipy.config import TASK_SEPERATOR
 
-taskname_dict = {}
-for i, task in enumerate(TaskType.list()):
-    taskname_dict[task] = TaskType(i + 1)
+# This is a temporary solution and will be improved in the refactored `TaskRegistry` class.
+task_name_dict = {v: k for k, v in task_registry_dict.items()}
 
 
-def parse_sequence(sequence: str) -> List[TaskType]:
+def parse_sequence(sequence: str) -> List[Type[Task]]:
     """
     Parses a string of actions into a list of TaskType objects.
 
@@ -27,13 +27,13 @@ def parse_sequence(sequence: str) -> List[TaskType]:
             A list of TaskType objects that represent the actions in the input string.
     """
     try:
-        actions = [taskname_dict[action.strip()] for action in sequence.split(ACTION_SEPARATOR)]
+        task_sequence = [task_registry_dict[task.strip()] for task in sequence.split(TASK_SEPERATOR)]
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
-    return actions
+    return task_sequence
 
 
-def validate_action_string(action_sequence: str) -> None:
+def validate_sequence_string(action_sequence: str) -> None:
     """
     Validates a string of actions.
 
@@ -49,12 +49,12 @@ def validate_action_string(action_sequence: str) -> None:
         ValueError
             If the string of actions is invalid.
     """
-    for action in action_sequence.split(ACTION_SEPARATOR):
-        if action.strip() not in taskname_dict:
+    for sequence_item in action_sequence.split(TASK_SEPERATOR):
+        if sequence_item.strip() not in task_registry_dict:
             raise ValueError('Invalid task name in action sequence')
 
 
-def serialize_actions(action_sequence: List[TaskType]) -> str:
+def serialize_sequence(sequence: List[Type[Task]]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
 
@@ -71,11 +71,11 @@ def serialize_actions(action_sequence: List[TaskType]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    return f" {ACTION_SEPARATOR} ".join([task.label for task in action_sequence])
+    return f" {TASK_SEPERATOR} ".join([task_name_dict[item] for item in sequence])
 
 
 if __name__ == '__main__':
     actions = parse_sequence("Matrix Calibration -> Matrix Copy Phrase")
-    string = serialize_actions(actions)
+    string = serialize_sequence(actions)
     print(actions)
     print(string)
