@@ -18,10 +18,8 @@ class Task(ABC):
 
     @abstractmethod
     def execute(self) -> str:
-        assert self.parameters is not None, "Task parameters not set"
         ...
 
-    @property
     @abstractmethod
     def name(self) -> str:
         ...

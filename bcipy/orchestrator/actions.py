@@ -1,5 +1,5 @@
 from bcipy.task import Task
-from typing import Optional
+from typing import Optional, Callable, Dict
 import subprocess
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
 from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
@@ -19,14 +19,13 @@ class CallbackAction(Task):
     Action for running a callback.
     """
 
-    def __init__(self, callback: callable, *args, **kwargs) -> None:
+    def __init__(self, callback: Callable, *args, **kwargs) -> None:
         super().__init__()
         self.callback = callback
         self.args = args
         self.kwargs = kwargs
 
     def execute(self):
-        super().execute()
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
@@ -48,7 +47,6 @@ class CodeHookAction(Task):
         self.subprocess = subprocess
 
     def execute(self):
-        super(CodeHookAction, self).execute()
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
 
@@ -75,7 +73,6 @@ class OfflineAnalysisAction(Task):
         self.command = self.construct_command()
 
     def execute(self):
-        super().execute()
         subprocess.Popen(self.command, shell=True)
         return self.data_directory
 
@@ -104,7 +101,6 @@ class ExperimentFieldCollectionAction(Task):
         self.save_folder = save_path
 
     def execute(self):
-        super().execute()
         self.logger.info(
             f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}')
         # collect_experiment_field_data(self.experiment, self.save_folder)
@@ -116,15 +112,7 @@ class ExperimentFieldCollectionAction(Task):
         return 'ExperimentFieldCollectionAction'
 
 
-# # TODO: Refactor this, and TaskType. This is currently redundant.
-# # While this makes it easier to get the actual task class,
-# # it is yet another source of truth for the string representation of the
-# # task. Ideally this would work with fetching subclasses of Task, and
-# # string references would align withe the class's name property.
-# # for now, this makes it easier to initialize tasks and actions from
-# # the orchestrator.
-# # TODO: add validation for tasks added to this registry (probably through a class)
-task_registry_dict = {
+task_registry_dict: Dict[str, type] = {
     # Tasks
     'RSVP Calibration': RSVPCalibrationTask,
     'RSVP Copy Phrase': RSVPCopyPhraseTask,
@@ -138,5 +126,5 @@ task_registry_dict = {
     'Offline Analysis Action': OfflineAnalysisAction,
     'Code Hook Action': CodeHookAction,
     'Callback Action': CallbackAction,
-    'Experiment Field Collection Action': ExperimentFieldCollectionAction
+    'ExperimentFieldCollectionAction': ExperimentFieldCollectionAction
 }

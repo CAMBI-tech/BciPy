@@ -15,13 +15,18 @@ from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
 
+"""
+Session Orchestrator
+--------------------
+
+The Session Orchestrator is responsible for managing the execution of a protocol of tasks. It is initialized with an
+experiment ID, user ID, and parameters file. Tasks are added to the orchestrator, which are then executed in order.
+"""
+
 # Session Orchestrator Needs:
 # - A way to initialize the session (user, experiment, tasks, parameters, models, system info, log, save folder)
 #   - save folder is not used in execute method and could be from a provided argument or from the parameters?
 # - A way to save the session data
-
-
-# Test SessionOrchestrator using Actions
 
 
 class SessionOrchestrator:
@@ -31,6 +36,7 @@ class SessionOrchestrator:
     sys_info: dict
     log: Logger
     save_folder: Optional[str] = None
+    session_data: List[str]  # This may need to be a list of dictionaries or objects here in the future
     # Session Orchestrator will contain global objects here (DAQ, models etc) to be shared between executed tasks.
 
     def __init__(
@@ -41,7 +47,7 @@ class SessionOrchestrator:
     ) -> None:
         validate_experiment(experiment_id)
         self.parameters_path = (
-            parameters_path  # TODO: load parameters and cast them to the correct values
+            parameters_path
         )
         self.parameters = load_json_parameters(parameters_path, True)
         self.user = user
@@ -83,6 +89,7 @@ class SessionOrchestrator:
         self.save_folder = path
 
     def init_task_save_folder(self, task: Task) -> str:
+        assert self.save_folder is not None, "Orchestrator save folder not initialized"
         save_directory = self.save_folder + f'{self.user}_{task.name}/'
         try:
             # make a directory to save task data to
@@ -92,6 +99,7 @@ class SessionOrchestrator:
             # If the error is anything other than file existing, raise an error
             if error.errno != errno.EEXIST:
                 raise error
+        return save_directory
 
     def save(self) -> None:
         # Save the session data
