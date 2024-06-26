@@ -9,6 +9,7 @@ from bcipy.config import TASK_SEPERATOR
 # This is a temporary solution and will be improved in the refactored `TaskRegistry` class.
 task_name_dict = {v: k for k, v in task_registry_dict.items()}
 
+
 def parse_sequence(sequence: str) -> List[Type[Task]]:
     """
     Parses a string of actions into a list of TaskType objects.

@@ -202,7 +202,7 @@ class RSVPCopyPhraseTask(Task):
                     f"SignalModel not used: there is no active device of type: {content_type}"
                 )
         return evaluators
-    
+
     def setup_copyphrase(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 

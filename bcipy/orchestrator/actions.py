@@ -12,6 +12,7 @@ from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
 
+
 class CallbackAction(Task):
     """
     Action for running a callback.
@@ -86,6 +87,7 @@ class OfflineAnalysisAction(Task):
     @property
     def name(self):
         return 'OfflineAnalysisAction'
+
 
 task_registry_dict: Dict[str, type] = {
     # Tasks

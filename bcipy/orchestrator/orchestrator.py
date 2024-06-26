@@ -36,7 +36,7 @@ class SessionOrchestrator:
     sys_info: dict
     log: Logger
     save_folder: Optional[str] = None
-    session_data: List[str] # This may need to be a list of dictionaries or objects here in the future
+    session_data: List[str]  # This may need to be a list of dictionaries or objects here in the future
     # Session Orchestrator will contain global objects here (DAQ, models etc) to be shared between executed tasks.
 
     def __init__(
@@ -100,6 +100,7 @@ class SessionOrchestrator:
             if error.errno != errno.EEXIST:
                 raise error
         return save_directory
+
     def save(self) -> None:
         # Save the session data
         system_info = get_system_info()
