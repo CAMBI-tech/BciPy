@@ -160,7 +160,7 @@ class RSVPCopyPhraseTask(Task):
              'feedback_duration': self.parameters['feedback_duration']},
             self.experiment_clock)
 
-        self.setup()
+        self.setup_copyphrase()
 
         # set a preview_only parameter
         self.parameters.add_entry(
@@ -202,8 +202,8 @@ class RSVPCopyPhraseTask(Task):
                     f"SignalModel not used: there is no active device of type: {content_type}"
                 )
         return evaluators
-
-    def setup(self) -> None:
+    
+    def setup_copyphrase(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 
         self.spelled_text = str(

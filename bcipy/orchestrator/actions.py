@@ -1,5 +1,5 @@
 from bcipy.task import Task
-from typing import Optional
+from typing import Optional, Callable, Dict
 import subprocess
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
 from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
@@ -17,14 +17,13 @@ class CallbackAction(Task):
     Action for running a callback.
     """
 
-    def __init__(self, callback: callable, *args, **kwargs) -> None:
+    def __init__(self, callback: Callable, *args, **kwargs) -> None:
         super().__init__()
         self.callback = callback
         self.args = args
         self.kwargs = kwargs
 
     def execute(self):
-        super().execute()
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
@@ -46,7 +45,6 @@ class CodeHookAction(Task):
         self.subprocess = subprocess
 
     def execute(self):
-        super(CodeHookAction, self).execute()
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
 
@@ -73,7 +71,6 @@ class OfflineAnalysisAction(Task):
         self.command = self.construct_command()
 
     def execute(self):
-        super().execute()
         subprocess.Popen(self.command, shell=True)
         return self.data_directory
 
@@ -90,7 +87,7 @@ class OfflineAnalysisAction(Task):
     def name(self):
         return 'OfflineAnalysisAction'
 
-task_registry_dict = {
+task_registry_dict: Dict[str, type] = {
     # Tasks
     'RSVP Calibration': RSVPCalibrationTask,
     'RSVP Copy Phrase': RSVPCopyPhraseTask,
