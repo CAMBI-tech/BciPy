@@ -79,7 +79,6 @@ class SessionOrchestrator:
             task.cleanup()
         self.save()
 
-    # TODO: 'Runs' need a name like session or sequence.
     def init_orchestrator_save_folder(self, save_path: str) -> None:
         timestamp = str(datetime.now())
         # * No '/' after `save_folder` since it is included in

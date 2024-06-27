@@ -103,8 +103,6 @@ class ExperimentFieldCollectionAction(Task):
     def execute(self):
         self.logger.info(
             f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}')
-        # collect_experiment_field_data(self.experiment, self.save_folder)
-        # start_app()
         start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
 
     @property
