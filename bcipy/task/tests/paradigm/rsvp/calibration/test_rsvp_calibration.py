@@ -104,7 +104,7 @@ class TestRSVPCalibration(unittest.TestCase):
                                          ('c', 0.3), ('a', 0.4)]
         when(self.display).do_inquiry(preview_calibration=False).thenReturn(
             self.mock_do_inquiry_response)
-        when(self.display).wait_screen().thenReturn(None)
+        when(self.display).wait_screen(any, any).thenReturn(None)
 
         when(bcipy.task.paradigm.rsvp.calibration.calibration
              ).init_calibration_display_task(self.parameters, self.win, any(),

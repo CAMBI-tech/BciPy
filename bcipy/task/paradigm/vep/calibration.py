@@ -74,6 +74,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     def session_task_data(self) -> Dict[str, Any]:
         """Task-specific session data"""
+        assert isinstance(self.display, VEPDisplay)
         boxes = [{
             "colors": box.colors,
             "flicker_rate": self.display.flicker_rates[i],
@@ -87,6 +88,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
     def session_inquiry_data(self,
                              inquiry: Inquiry) -> Optional[Dict[str, Any]]:
         """Defines task-specific session data for each inquiry."""
+        assert isinstance(self.display, VEPDisplay)
         target_box = target_box_index(inquiry)
         target_freq = self.display.flicker_rates[
             target_box] if target_box is not None else None

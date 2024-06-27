@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 
 from psychopy import core, visual
 
-from bcipy.display import Display, InformationProperties, StimuliProperties
+from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
@@ -43,22 +43,25 @@ class MatrixCalibrationTask(BaseCalibrationTask):
             'screen_units': 'norm',
         }
 
-    def init_display(self) -> Display:
+    def init_display(self) -> MatrixDisplay:
         """Initialize the display"""
         return init_matrix_display(self.parameters, self.window,
                                    self.experiment_clock, self.symbol_set)
 
     def exit_display(self) -> None:
+        assert isinstance(self.display, MatrixDisplay)
         self.display.capture_grid_screenshot(self.file_save)
         return super().exit_display()
 
     def cleanup(self) -> None:
+        assert isinstance(self.display, MatrixDisplay)
         # TODO: refactor offline_analysis to use session data and and remove this.
         save_stimuli_position_info(self.display.stim_positions, self.file_save,
                                    self.screen_info)
         return super().cleanup()
 
     def session_task_data(self) -> Optional[Dict[str, Any]]:
+        assert isinstance(self.display, MatrixDisplay)
         return {**self.display.stim_positions, **self.screen_info}
 
 

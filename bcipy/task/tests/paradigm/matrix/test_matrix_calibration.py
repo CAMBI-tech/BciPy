@@ -10,6 +10,7 @@ import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
+from bcipy.display.paradigm.matrix import MatrixDisplay
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerHandler, TriggerType
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
@@ -100,14 +101,18 @@ class TestMatrixCalibration(unittest.TestCase):
             'evidence_type': 'ERP'
         })
 
-        self.display = mock()
+        self.display = mock(spec=MatrixDisplay)
         self.display.first_stim_time = 0.0
         self.display.stim_positions = {'a': (0, 0), 'b': (0, 1)}
         self.mock_do_inquiry_response = [('a', 0.0), ('+', 0.1), ('b', 0.2),
                                          ('c', 0.3), ('a', 0.4)]
         when(self.display).do_inquiry().thenReturn(
             self.mock_do_inquiry_response)
-        when(self.display).wait_screen().thenReturn(None)
+        # Shouldn't have to mock all these, but otherwise throws an AttributeError.
+        when(self.display).wait_screen(any, any).thenReturn(None)
+        when(self.display).update_task_bar(any).thenReturn(None)
+        when(self.display).draw_static().thenReturn(None)
+        when(self.display).schedule_to(any, any, any).thenReturn(None)
 
         when(bcipy.task.paradigm.matrix.calibration).init_matrix_display(
             self.parameters, self.win, any(), any()).thenReturn(self.display)

@@ -89,15 +89,10 @@ class InquirySchedule(NamedTuple):
     durations: Union[List[List[float]], List[float]]
     colors: Union[List[List[str]], List[str]]
 
-    @property
-    def count(self) -> int:
-        """Number of stimuli"""
-        return len(self.stimuli)
-
     def inquiries(self) -> Iterator[Tuple]:
         """Generator that iterates through each Inquiry. Yields tuples of
         (stim, duration, color)."""
-        count = self.count
+        count = len(self.stimuli)
         index = 0
         while index < count:
             yield (self.stimuli[index], self.durations[index],
