@@ -26,7 +26,6 @@ from bcipy.task import Task
 
 class Inquiry(NamedTuple):
     """Represents a single Inquiry"""
-    # TODO: types should also work for VEP
     stimuli: List[str]
     durations: List[float]
     colors: List[str]
