@@ -1,3 +1,7 @@
+# Experiment Action
+
+- Refactors the Experiment Field Collection GUI to be an action
+
 # Orchestrator Parameters
 Adds parsing functions for action sequences required for the Session Orchestrator
 
