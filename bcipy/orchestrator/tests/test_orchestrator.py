@@ -2,7 +2,6 @@ import unittest
 from unittest.mock import Mock
 from bcipy.orchestrator.orchestrator import SessionOrchestrator
 from bcipy.task import Task
-from bcipy.task import TaskType
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.exceptions import UnregisteredExperimentException
 

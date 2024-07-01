@@ -15,13 +15,18 @@ from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
 
+"""
+Session Orchestrator
+--------------------
+
+The Session Orchestrator is responsible for managing the execution of a protocol of tasks. It is initialized with an
+experiment ID, user ID, and parameters file. Tasks are added to the orchestrator, which are then executed in order.
+"""
+
 # Session Orchestrator Needs:
 # - A way to initialize the session (user, experiment, tasks, parameters, models, system info, log, save folder)
 #   - save folder is not used in execute method and could be from a provided argument or from the parameters?
 # - A way to save the session data
-
-
-# Test SessionOrchestrator using Actions
 
 
 class SessionOrchestrator:
@@ -42,7 +47,7 @@ class SessionOrchestrator:
     ) -> None:
         validate_experiment(experiment_id)
         self.parameters_path = (
-            parameters_path  # TODO: load parameters and cast them to the correct values
+            parameters_path
         )
         self.parameters = load_json_parameters(parameters_path, True)
         self.user = user
@@ -55,7 +60,7 @@ class SessionOrchestrator:
 
         self.ready_to_execute = False
 
-    def add_task(self, task) -> None:
+    def add_task(self, task: Task) -> None:
         # Loading task specific parameters could happen here
         # TODO validate it is a Valid Task
         self.tasks.append(task)

@@ -1,23 +1,16 @@
 """This file can define actions that can happen in a session orchestrator visit.
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
-from typing import List
-from bcipy.task import Task, TaskType
+from typing import List, Type
+from bcipy.task import Task
 from bcipy.orchestrator.actions import task_registry_dict
+from bcipy.config import TASK_SEPERATOR
 
-ACTION_SEPARATOR = '->'
-
-# task_registry_dict = {}
-# for i, task in enumerate(TaskType.list()):
-#     assert task not in task_registry_dict
-#     task_registry_dict[task] = TaskType(i + 1)
-
-# for action in Action.get_all_actions():
-#     assert action.label not in task_registry_dict, f"Conflicting definitions for action {action.label}"
-#     task_registry_dict[action.label] = action
+# This is a temporary solution and will be improved in the refactored `TaskRegistry` class.
+task_name_dict = {v: k for k, v in task_registry_dict.items()}
 
 
-def parse_sequence(sequence: str) -> List[Task]:
+def parse_sequence(sequence: str) -> List[Type[Task]]:
     """
     Parses a string of actions into a list of TaskType objects.
 
@@ -34,10 +27,10 @@ def parse_sequence(sequence: str) -> List[Task]:
             A list of TaskType objects that represent the actions in the input string.
     """
     try:
-        sequence = [task_registry_dict[action.strip()] for action in sequence.split(ACTION_SEPARATOR)]
+        task_sequence = [task_registry_dict[task.strip()] for task in sequence.split(TASK_SEPERATOR)]
     except KeyError as e:
         raise ValueError('Invalid task name in action sequence') from e
-    return sequence
+    return task_sequence
 
 
 def validate_sequence_string(action_sequence: str) -> None:
@@ -56,12 +49,12 @@ def validate_sequence_string(action_sequence: str) -> None:
         ValueError
             If the string of actions is invalid.
     """
-    for sequence_item in action_sequence.split(ACTION_SEPARATOR):
+    for sequence_item in action_sequence.split(TASK_SEPERATOR):
         if sequence_item.strip() not in task_registry_dict:
             raise ValueError('Invalid task name in action sequence')
 
 
-def serialize_sequence(sequence: List[Task]) -> str:
+def serialize_sequence(sequence: List[Type[Task]]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
 
@@ -78,7 +71,7 @@ def serialize_sequence(sequence: List[Task]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    return f" {ACTION_SEPARATOR} ".join([item.label for item in sequence])
+    return f" {TASK_SEPERATOR} ".join([task_name_dict[item] for item in sequence])
 
 
 if __name__ == '__main__':
