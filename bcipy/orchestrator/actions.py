@@ -1,5 +1,5 @@
 from bcipy.task import Task
-from typing import Optional
+from typing import Optional, Callable
 import subprocess
 
 
@@ -9,7 +9,7 @@ class CallbackAction(Task):
     """
     name = 'Callback Action'
 
-    def __init__(self, callback: callable, *args, **kwargs) -> None:
+    def __init__(self, callback: Callable, *args, **kwargs) -> None:
         super(CallbackAction, self).__init__()
         self.callback = callback
         self.args = args

@@ -111,7 +111,7 @@ class VEPCalibrationTask(Task):
 
     def execute(self):
         """Main task loop"""
-        self.logger.info(f'Starting {self.name()}!')
+        self.logger.info(f'Starting {self.name}!')
         run = True
 
         # Check user input to make sure we should be going

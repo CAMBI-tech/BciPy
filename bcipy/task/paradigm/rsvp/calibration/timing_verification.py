@@ -75,5 +75,5 @@ class RSVPTimingVerificationCalibration(Task):
         return (samples, times, colors)
 
     def execute(self) -> str:
-        self.logger.info(f'Starting {self.name()}!')
+        self.logger.info(f'Starting {self.name}!')
         return self._task.execute()

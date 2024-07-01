@@ -39,8 +39,7 @@ class TaskRegistry:
     def __init__(self):
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
         # https://github.com/python/mypy/issues/3115
-        self.registry_dict = {task.name: task for task in Task.__subclasses__() 
-                              if not getattr(task, '__abstractmethods__', False)} # type: ignore[type-abstract]
+        self.registry_dict = {task.name: task for task in Task.__subclasses__() if not getattr(task, '__abstractmethods__', False)} # type: ignore[type-abstract]
     
     def get_task_from_string(self, task_name: str) -> Type[Task]:
         """Returns a task type based on its name property."""
