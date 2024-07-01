@@ -3,20 +3,6 @@ tools. User defined tasks can be added to the Registry."""
 from typing import Dict
 from bcipy.task import Task
 
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-from bcipy.task.paradigm.matrix.timing_verification import \
-    MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.calibration.calibration import \
-    RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
-    RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
-from bcipy.orchestrator.actions import OfflineAnalysisAction
-from bcipy.orchestrator.actions import CodeHookAction
-from bcipy.orchestrator.actions import CallbackAction
-
 # NOTE:
 # In the future we may want to consider dynamically retrieving all subclasses
 # of Task and use these to populate a registry. We could also provide
