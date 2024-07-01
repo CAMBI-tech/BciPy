@@ -34,7 +34,7 @@ from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.system_utils import AutoNumberEnum
 
 class TaskRegistry:
-    registry_dict: Dict[str, Type[Task]] = {}
+    registry_dict: Dict[str, Type[Task]]
     
     def __init__(self):
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
