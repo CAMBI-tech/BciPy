@@ -18,7 +18,6 @@ class Task(ABC):
 
     @abstractmethod
     def execute(self) -> str:
-        assert self.parameters is not None, "Task parameters not set"
         ...
 
     def setup(self, parameters, data_save_location):

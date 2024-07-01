@@ -16,7 +16,6 @@ class CallbackAction(Task):
         self.kwargs = kwargs
 
     def execute(self):
-        super(CallbackAction, self).execute()
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
@@ -36,7 +35,6 @@ class CodeHookAction(Task):
         self.subprocess = subprocess
 
     def execute(self):
-        super(CodeHookAction, self).execute()
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
 
@@ -58,7 +56,6 @@ class OfflineAnalysisAction(Task):
         self.data_directory = data_directory
 
     def execute(self):
-        super(OfflineAnalysisAction, self).execute()
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
         return self.data_directory
