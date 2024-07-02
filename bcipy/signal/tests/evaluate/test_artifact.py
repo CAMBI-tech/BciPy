@@ -48,4 +48,6 @@ class TestArtifactDetection(unittest.TestCase):
         self.assertEqual(DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value, 0.5)
         self.assertEqual(DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME, 'artifacts.fif')
 
-    
+
+if __name__ == '__main__':
+    unittest.main()
