@@ -31,11 +31,15 @@ class TaskRegistry:
         """Returns a task type based on its name property."""
         if task_name in self.registry_dict:
             return self.registry_dict[task_name]
-        raise BciPyCoreException(f'{task_name} not a registered task')
+        raise ValueError(f'{task_name} not a registered task')
     
-    def get_all_tasks(self) -> List[Type[Task]]:
+    def get_all_task_types(self) -> List[Type[Task]]:
         """Returns a list of all registered tasks."""
         return list(self.registry_dict.values())
+    
+    def get_all_task_names(self) -> List[str]:
+        """Returns a list of all registered task names."""
+        return list(self.registry_dict.keys())
 
     def register_task(self, task: Type[Task]) -> None:
         """Registers a task with the TaskRegistry."""

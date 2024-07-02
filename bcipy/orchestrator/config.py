@@ -3,12 +3,8 @@ To start these will be 1:1 with tasks, but later this can be extended to represe
 
 from typing import List, Type
 from bcipy.task import Task
-from bcipy.orchestrator.actions import task_registry_dict
 from bcipy.config import TASK_SEPERATOR
-
-# This is a temporary solution and will be improved in the refactored `TaskRegistry` class.
-task_name_dict = {v: k for k, v in task_registry_dict.items()}
-
+from bcipy.task.task_registry import TaskRegistry
 
 def parse_sequence(sequence: str) -> List[Type[Task]]:
     """
@@ -26,11 +22,8 @@ def parse_sequence(sequence: str) -> List[Type[Task]]:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    try:
-        task_sequence = [task_registry_dict[task.strip()] for task in sequence.split(TASK_SEPERATOR)]
-    except KeyError as e:
-        raise ValueError('Invalid task name in action sequence') from e
-    return task_sequence
+    task_registry = TaskRegistry()
+    return [task_registry.get_task_from_string(item.strip()) for item in sequence.split(TASK_SEPERATOR)]
 
 
 def validate_sequence_string(action_sequence: str) -> None:
@@ -50,8 +43,8 @@ def validate_sequence_string(action_sequence: str) -> None:
             If the string of actions is invalid.
     """
     for sequence_item in action_sequence.split(TASK_SEPERATOR):
-        if sequence_item.strip() not in task_registry_dict:
-            raise ValueError('Invalid task name in action sequence')
+        if sequence_item.strip() not in TaskRegistry().get_all_task_names():
+            raise ValueError(f"Invalid task '{sequence_item}' name in action sequence")
 
 
 def serialize_sequence(sequence: List[Type[Task]]) -> str:
@@ -71,7 +64,8 @@ def serialize_sequence(sequence: List[Type[Task]]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    return f" {TASK_SEPERATOR} ".join([task_name_dict[item] for item in sequence])
+    
+    return f" {TASK_SEPERATOR} ".join([item.name for item in sequence])
 
 
 if __name__ == '__main__':
