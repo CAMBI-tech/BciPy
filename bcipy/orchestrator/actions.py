@@ -1,16 +1,6 @@
 from bcipy.task import Task
-from typing import Optional, Callable, Dict
+from typing import Optional, Callable
 import subprocess
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-from bcipy.task.paradigm.matrix.timing_verification import \
-    MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.calibration.calibration import \
-    RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
-    RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
 
 
 class CallbackAction(Task):
@@ -32,7 +22,6 @@ class CallbackAction(Task):
         return self.name
 
 
-
 class CodeHookAction(Task):
     """
     Action for running generic code hooks.
@@ -52,6 +41,7 @@ class CodeHookAction(Task):
             subprocess.run(self.code_hook, shell=True)
 
         return self.code_hook
+
 
 class OfflineAnalysisAction(Task):
     """
@@ -79,4 +69,3 @@ class OfflineAnalysisAction(Task):
         if self.alert:
             command += ' --alert'
         return command
-
