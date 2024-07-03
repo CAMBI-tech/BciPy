@@ -1,5 +1,6 @@
 """Base calibration task."""
 
+from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
@@ -103,12 +104,6 @@ class BaseCalibrationTask(Task):
         """Symbols used in the calibration"""
         return self._symbol_set
 
-    def name(self) -> str:
-        """Task name"""
-        if self.MODE == 'Undefined':
-            raise NotImplementedError
-        return f"{self.MODE} Calibration Task"
-
     def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
 
@@ -120,9 +115,10 @@ class BaseCalibrationTask(Task):
         seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
+    @abstractmethod
     def init_display(self) -> Display:
         """Initialize the display"""
-        raise NotImplementedError
+        ...
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
