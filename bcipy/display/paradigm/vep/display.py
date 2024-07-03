@@ -113,6 +113,7 @@ class VEPDisplay(Display):
         self.info_text = info.build_info_text(window)
 
         # build the VEP stimuli
+        self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
         codes = [

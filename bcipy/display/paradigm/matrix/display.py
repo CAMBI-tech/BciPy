@@ -115,12 +115,12 @@ class MatrixDisplay(Display):
         self.should_prompt_target = should_prompt_target
 
         self.logger.info(
-            f"Symbol positions ({display_container.units} units):\n{self._stim_positions}"
+            f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
         )
         self.logger.info(f"Matrix center position: {display_container.center}")
 
     @property
-    def _stim_positions(self) -> Dict[str, Tuple[float, float]]:
+    def stim_positions(self) -> Dict[str, Tuple[float, float]]:
         """Returns a dict with the position for each stim"""
         assert self.stim_registry, "stim_registry not yet initialized"
         return {

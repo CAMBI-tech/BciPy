@@ -418,11 +418,14 @@ class MainPanel(QWidget):
                 self.repaint()
 
 
-def main(json_file, title='BCI Parameters', size=(450, 550)):
+def main(json_file, title='BCI Parameters', size=(450, 550)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)
-    _panel = MainPanel(json_file, title, size)
-    sys.exit(app.exec())
+    panel = MainPanel(json_file, title, size)
+    app.exec()
+    json_file = panel.json_file
+    app.quit()
+    return json_file
 
 
 if __name__ == '__main__':
@@ -439,4 +442,6 @@ if __name__ == '__main__':
                         default=DEFAULT_PARAMETERS_PATH,
                         help='Path to parameters.json configuration file.')
     args = parser.parse_args()
-    main(args.parameters)
+    # Note that this write to stdout is important for the interaction with
+    # the BCInterface main GUI.
+    print(main(args.parameters), file=sys.stdout)
