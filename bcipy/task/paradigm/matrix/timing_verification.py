@@ -1,9 +1,11 @@
-from itertools import cycle
-from typing import List
-from bcipy.task.paradigm.matrix.calibration import (
-    MatrixCalibrationTask, InquirySchedule, DEFAULT_TEXT_FIXATION, MatrixDisplay,
-    init_calibration_display_task)
-from bcipy.helpers.stimuli import PhotoDiodeStimuli, jittered_timing
+from itertools import cycle, islice, repeat
+from typing import Iterator, List
+
+from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
+                                   jittered_timing)
+from bcipy.task.base_calibration import Inquiry
+from bcipy.task.paradigm.matrix.calibration import (MatrixCalibrationTask,
+                                                    MatrixDisplay)
 
 
 class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
@@ -25,36 +27,39 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
 
     def init_display(self) -> MatrixDisplay:
         """Initialize the display"""
-        display = init_calibration_display_task(
-            self.parameters, self.window, self.experiment_clock,
-            symbols_with_photodiode_stim(self.symbol_set))
+        display = super().init_display()
         display.start_opacity = 0.0
         return display
 
-    def generate_stimuli(self) -> InquirySchedule:
-        """Generates the inquiries to be presented.
-        """
-        samples, times, colors = [], [], []
-        [time_target, time_fixation, time_stim] = self.timing
-        stimuli = cycle(PhotoDiodeStimuli.list())
-        stim_timing = jittered_timing(time_stim, self.jitter, self.stim_length)
+    @property
+    def symbol_set(self) -> List[str]:
+        """Symbols used in the calibration"""
+        return symbols_with_photodiode_stim(super().symbol_set)
 
-        # advance iterator to start on the solid stim.
-        next(stimuli)
+    def init_inquiry_generator(self) -> Iterator[Inquiry]:
+        params = self.parameters
 
         # alternate between solid and empty boxes
-        inq_stim = [PhotoDiodeStimuli.SOLID.value, DEFAULT_TEXT_FIXATION
-                    ] + [next(stimuli) for _ in range(self.stim_length)]
-        inq_times = [time_target, time_fixation
-                     ] + stim_timing
-        inq_colors = [self.color[0]] * (self.stim_length + 2)
+        letters = cycle(PhotoDiodeStimuli.list())
+        # advance to solid
+        next(letters)
+        fixation = get_fixation(is_txt=True)
 
-        for _ in range(self.stim_number):
-            samples.append(inq_stim)
-            times.append(inq_times)
-            colors.append(inq_colors)
+        inq_len = params['stim_length']
+        stimuli = [
+            PhotoDiodeStimuli.SOLID.value, fixation, *islice(letters, inq_len)
+        ]
+        durations = [
+            params['time_prompt'], params['time_fixation'], *jittered_timing(
+                params['time_flash'], params['stim_jitter'], inq_len)
+        ]
+        colors = [
+            params['target_color'], params['fixation_color'],
+            *repeat(params['stim_color'], inq_len)
+        ]
 
-        return InquirySchedule(samples, times, colors)
+        return repeat(Inquiry(stimuli, durations, colors),
+                      params['stim_number'])
 
 
 def symbols_with_photodiode_stim(symbols: List[str]) -> List[str]:
