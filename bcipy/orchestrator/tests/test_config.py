@@ -1,10 +1,7 @@
 import unittest
 from bcipy.orchestrator.config import parse_sequence, serialize_sequence, validate_sequence_string
-from bcipy.task import TaskType
 from bcipy.orchestrator.actions import OfflineAnalysisAction
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
-
-from bcipy.orchestrator.actions import OfflineAnalysisAction
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
@@ -72,4 +69,4 @@ class TestTaskProtocolProcessing(unittest.TestCase):
     def test_serializes_multiple_tasks(self) -> None:
         sequence = [RSVPCalibrationTask, OfflineAnalysisAction, RSVPCopyPhraseTask]
         serialized = serialize_sequence(sequence)
-        assert serialized == f'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
+        assert serialized == 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
