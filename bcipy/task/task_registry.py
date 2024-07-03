@@ -27,7 +27,7 @@ class TaskRegistry:
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
         # https://github.com/python/mypy/issues/3115
         self.registry_dict = {}
-        self.collect_subclasses(Task)
+        self.collect_subclasses(Task)  # type: ignore[type-abstract]
         
     def collect_subclasses(self, cls: Type[Task]):
         """Recursively collects all non-abstract subclasses of the given class and adds them to the registry."""
