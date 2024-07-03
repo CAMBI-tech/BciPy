@@ -86,7 +86,7 @@ class RSVPCopyPhraseTask(Task):
             path location of where to save data from the session
     """
 
-    name = 'RSVP Copy Phrase Task'
+    name = 'RSVP Copy Phrase'
     MODE = 'RSVP'
 
     PARAMETERS_USED = [

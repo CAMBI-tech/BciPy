@@ -27,7 +27,7 @@ class RSVPTimingVerificationCalibration(Task):
     Output:
         file_save (str)
     """
-    name = 'RSVP Timing Verification Task'
+    name = 'RSVP Timing Verification'
 
     def __init__(
             self,

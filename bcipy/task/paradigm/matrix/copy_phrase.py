@@ -33,7 +33,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
         file_save : str,
             path location of where to save data from the session
     """
-    TASK_NAME = 'Matrix Copy Phrase Task'
+    name = 'Matrix Copy Phrase'
     MODE = 'Matrix'
 
     def init_display(self) -> MatrixDisplay:
