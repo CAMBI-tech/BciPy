@@ -25,7 +25,12 @@ from bcipy.task import Task
 
 
 class Inquiry(NamedTuple):
-    """Represents a single Inquiry"""
+    """Represents a single Inquiry.
+
+    stimuli - list of [target, fixation, *inquiry_symbols]
+    durations - duration in seconds to display each symbol
+    colors - color for each symbol
+    """
     stimuli: List[str]
     durations: List[float]
     colors: List[str]
@@ -100,6 +105,8 @@ class BaseCalibrationTask(Task):
 
     def name(self) -> str:
         """Task name"""
+        if self.MODE == 'Undefined':
+            raise NotImplementedError
         return f"{self.MODE} Calibration Task"
 
     def wait(self, seconds: Optional[float] = None) -> None:
@@ -155,7 +162,8 @@ class BaseCalibrationTask(Task):
         """Trigger Type.
 
         This method is passed to convert_timing_triggers to properly assign TriggerTypes
-            to the timing of stimuli presented.
+            to the timing of stimuli presented. The default implementation assumes an
+            inquiry with the shape [prompt, fixation, *symbols].
         """
         if index == 0:
             return TriggerType.PROMPT
