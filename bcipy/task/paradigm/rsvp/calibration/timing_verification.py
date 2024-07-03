@@ -63,10 +63,3 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
 
         return repeat(Inquiry(stimuli, durations, colors),
                       params['stim_number'])
-
-    @classmethod
-    def label(cls) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME
-
-    def name(self) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME
