@@ -23,15 +23,23 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         assert parsed[0] is OfflineAnalysisAction
 
     def test_parses_multiple_tasks(self) -> None:
-        actions = 'RSVP Calibration -> RSVP Copy Phrase Task'
+        actions = 'RSVP Calibration -> RSVP Copy Phrase'
         parsed = parse_sequence(actions)
         assert len(parsed) == 2
         assert parsed[0] is RSVPCalibrationTask
         assert parsed[1] is RSVPCopyPhraseTask
 
     def test_parses_actions_and_tasks(self) -> None:
-        sequence = 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase Task'
+        sequence = 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
         parsed = parse_sequence(sequence)
+        assert len(parsed) == 3
+        assert parsed[0] is RSVPCalibrationTask
+        assert parsed[1] is OfflineAnalysisAction
+        assert parsed[2] is RSVPCopyPhraseTask
+    
+    def test_parses_sequence_with_extra_spaces(self) -> None:
+        actions = ' RSVP Calibration ->  Offline Analysis Action    -> RSVP Copy Phrase  '
+        parsed = parse_sequence(actions)
         assert len(parsed) == 3
         assert parsed[0] is RSVPCalibrationTask
         assert parsed[1] is OfflineAnalysisAction
@@ -48,7 +56,7 @@ class TestTaskProtocolProcessing(unittest.TestCase):
             parse_sequence(actions)
 
     def test_validates_valid_action_string(self) -> None:
-        actions = 'RSVP Calibration -> RSVP Copy Phrase Task'
+        actions = 'RSVP Calibration -> RSVP Copy Phrase'
         validate_sequence_string(actions)
 
     def test_throws_exception_on_invalid_action_string(self) -> None:
@@ -64,4 +72,4 @@ class TestTaskProtocolProcessing(unittest.TestCase):
     def test_serializes_multiple_tasks(self) -> None:
         sequence = [RSVPCalibrationTask, OfflineAnalysisAction, RSVPCopyPhraseTask]
         serialized = serialize_sequence(sequence)
-        assert serialized == f'{RSVPCalibrationTask.name} -> {OfflineAnalysisAction.name} -> {RSVPCopyPhraseTask.name}'
+        assert serialized == f'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
