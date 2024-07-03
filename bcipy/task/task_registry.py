@@ -28,7 +28,7 @@ class TaskRegistry:
         # https://github.com/python/mypy/issues/3115
         self.registry_dict = {}
         self.collect_subclasses(Task)  # type: ignore[type-abstract]
-        
+
     def collect_subclasses(self, cls: Type[Task]):
         """Recursively collects all non-abstract subclasses of the given class and adds them to the registry."""
         for sub_class in cls.__subclasses__():
