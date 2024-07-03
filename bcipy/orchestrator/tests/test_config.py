@@ -36,7 +36,7 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         assert parsed[0] is RSVPCalibrationTask
         assert parsed[1] is OfflineAnalysisAction
         assert parsed[2] is RSVPCopyPhraseTask
-    
+
     def test_parses_sequence_with_extra_spaces(self) -> None:
         actions = ' RSVP Calibration ->  Offline Analysis Action    -> RSVP Copy Phrase  '
         parsed = parse_sequence(actions)

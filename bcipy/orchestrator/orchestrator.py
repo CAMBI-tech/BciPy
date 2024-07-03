@@ -36,7 +36,8 @@ class SessionOrchestrator:
     sys_info: dict
     log: Logger
     save_folder: Optional[str] = None
-    session_data: List[str] # This will need to be refactored to a more complex data structure to store data from each task
+    # This will need to be refactored to a more complex data structure to store data from each task
+    session_data: List[str]
     # Session Orchestrator will contain global objects here (DAQ, models etc) to be shared between executed tasks.
 
     def __init__(

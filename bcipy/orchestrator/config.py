@@ -6,6 +6,7 @@ from bcipy.task import Task
 from bcipy.config import TASK_SEPERATOR
 from bcipy.task.task_registry import TaskRegistry
 
+
 def parse_sequence(sequence: str) -> List[Type[Task]]:
     """
     Parses a string of actions into a list of TaskType objects.
@@ -64,7 +65,7 @@ def serialize_sequence(sequence: List[Type[Task]]) -> str:
         List[TaskType]
             A list of TaskType objects that represent the actions in the input string.
     """
-    
+
     return f" {TASK_SEPERATOR} ".join([item.name for item in sequence])
 
 

@@ -43,6 +43,7 @@ class RSVPCalibrationTask(Task):
     file_save (str)
     """
     name = 'RSVP Calibration'
+
     def __init__(
             self,
             win: visual.Window,

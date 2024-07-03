@@ -19,24 +19,26 @@ from typing import List, Type
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.system_utils import AutoNumberEnum
 
+
 class TaskRegistry:
     registry_dict: Dict[str, Type[Task]]
-    
+
     def __init__(self):
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
         # https://github.com/python/mypy/issues/3115
-        self.registry_dict = {task.name: task for task in Task.__subclasses__() if not getattr(task, '__abstractmethods__', False)} # type: ignore[type-abstract]
-    
+        self.registry_dict = {task.name: task for task in Task.__subclasses__() if not getattr(
+            task, '__abstractmethods__', False)}  # type: ignore[type-abstract]
+
     def get_task_from_string(self, task_name: str) -> Type[Task]:
         """Returns a task type based on its name property."""
         if task_name in self.registry_dict:
             return self.registry_dict[task_name]
         raise ValueError(f'{task_name} not a registered task')
-    
+
     def get_all_task_types(self) -> List[Type[Task]]:
         """Returns a list of all registered tasks."""
         return list(self.registry_dict.values())
-    
+
     def get_all_task_names(self) -> List[str]:
         """Returns a list of all registered task names."""
         return list(self.registry_dict.keys())
@@ -46,6 +48,7 @@ class TaskRegistry:
         # Note that all imported tasks are automatically registered when the TaskRegistry is initialized. This
         # method allows for the registration of additional tasks after initialization.
         self.registry_dict[task.name] = task
+
 
 class TaskType(AutoNumberEnum):
     """Enum of the registered experiment types (Tasks), along with the label

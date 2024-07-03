@@ -44,6 +44,7 @@ class MatrixCalibrationTask(Task):
     file_save (String)
     """
     name = 'MatrixCalibrationTask'
+
     def __init__(
             self,
             win: visual.Window,
