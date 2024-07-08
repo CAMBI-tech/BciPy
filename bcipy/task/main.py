@@ -14,7 +14,7 @@ class Task(ABC):
 
     def __init__(self) -> None:
         super(Task, self).__init__()
-        assert getattr(self, 'name', None) is not None, f"Task must have a `name` attribute defined"
+        assert getattr(self, 'name', None) is not None, "Task must have a `name` attribute defined"
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
