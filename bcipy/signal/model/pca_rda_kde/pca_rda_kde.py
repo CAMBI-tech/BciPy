@@ -113,7 +113,7 @@ class PcaRdaKdeModel(SignalModel):
         auc = -tmp
         return ModelEvaluationReport(auc)
 
-    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
         """
         For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
         Rather than just computing an update p(e|l=+) for the seen symbol and p(e|l=-) for all unseen symbols,
@@ -147,7 +147,7 @@ class PcaRdaKdeModel(SignalModel):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
 
-    def predict_proba(self, data: np.ndarray) -> np.ndarray:
+    def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities.
 
         Returns:
@@ -168,8 +168,35 @@ class PcaRdaKdeModel(SignalModel):
         denom = np.logaddexp(log_post_0, log_post_1)
         log_post_0 -= denom
         log_post_1 -= denom
-        posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
-        return posterior
+        log_posterior = np.stack([log_post_0, log_post_1], axis=-1)
+        return log_posterior  # TODO: This is the normalized posterior! You need to unnormalize
+    
+
+    
+    def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
+        """
+        Calculates log(p(e | l)) for each trial in the data.
+        p(e | l=1), p(e | l=0)
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
+
+        log_scores_class_0 = self.model.transform(data)[:, 0]
+        log_scores_class_1 = self.model.transform(data)[:, 1]
+        return np.stack([log_scores_class_0, log_scores_class_1], axis=-1)
+    
+    def predict(self, data: np.ndarray) -> np.ndarray:
+        """Predict the most likely label for each trial in the data.
+
+        Returns:
+            predictions (np.ndarray): shape (num_items,) - the predicted label for each item.
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict()")
+
+        posterior = self.predict_proba(data)
+        predictions = np.argmax(posterior, axis=1)
+        return predictions
 
     def save(self, path: Path) -> None:
         """Save model weights (e.g. after training) to `path`"""

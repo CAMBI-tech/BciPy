@@ -21,7 +21,7 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp
+from bcipy.helpers.visualization import visualize_gaze
 from bcipy.signal.process import get_default_transform
 
 if __name__ == '__main__':
@@ -88,15 +88,12 @@ if __name__ == '__main__':
 
     save_path = None if not args.save else path
 
-    figure_handles = visualize_erp(
+    figure_handles = visualize_gaze(
         raw_data,
         channel_map,
         trigger_timing,
         labels,
         trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
         save_path=save_path,
         show=args.show
     )

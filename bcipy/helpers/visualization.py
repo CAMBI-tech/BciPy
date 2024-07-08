@@ -207,6 +207,7 @@ def visualize_gaze(
             colorbar=True)
 
     if raw_plot:
+        # ax.scatter(lx, range(len(lx)), c='r', s=1)
         ax.scatter(lx, ly, c='r', s=1)
         ax.scatter(rx, ry, c='b', s=1)
 

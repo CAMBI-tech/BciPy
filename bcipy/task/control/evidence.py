@@ -110,7 +110,7 @@ class EEGEvaluator(EvidenceEvaluator):
             window_length - The length of the time between stimuli presentation
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
-        return self.signal_model.predict(data, symbols, self.symbol_set)
+        return self.signal_model.compute_likelihood_ratio(data, symbols, self.symbol_set)
     
 class GazeEvaluator(EvidenceEvaluator):
     """EvidenceEvaluator that extracts symbol likelihoods from raw gaze data.
@@ -126,7 +126,6 @@ class GazeEvaluator(EvidenceEvaluator):
     def __init__(self, symbol_set: List[str], signal_model: SignalModel):
         super().__init__(symbol_set, signal_model)
 
-        # TODO Update
         self.channel_map = analysis_channels(self.device_spec.channels,
                                              self.device_spec)
         self.transform = signal_model.metadata.transform
@@ -175,9 +174,9 @@ class GazeEvaluator(EvidenceEvaluator):
             window_length - The length of the time between stimuli presentation
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
-        return self.signal_model.predict(data, symbols, self.symbol_set)
-
-
+        # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
+        # Therefore we need predict_proba method to get the likelihoods.
+        return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
 
 def get_evaluator(
         data_source: ContentType,

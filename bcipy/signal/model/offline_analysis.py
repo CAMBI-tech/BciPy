@@ -33,10 +33,13 @@ from bcipy.helpers.visualization import (visualize_centralized_data,
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import (GazeModelCombined,
-                                                 GazeModelIndividual)
+                                                 GazeModelIndividual,
+                                                 GazeModelKernelGaussianProcess,
+                                                 GazeModelKernelGaussianProcessSampleAverage)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
+from matplotlib import pyplot as plt
 
 log = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -286,10 +289,9 @@ def analyze_gaze(
     figures = []
     figure_handles = visualize_gaze(
         gaze_data,
-        save_path=save_figures,
+        save_path=data_folder if save_figures else None,
         img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
         show=show_figures,
-        img_path=f"{data_folder}/matrix.png",
         raw_plot=True,
     )
     figures.append(figure_handles)
@@ -312,35 +314,68 @@ def analyze_gaze(
 
     if model_type == "Individual":
         model = GazeModelIndividual()
+    # elif model_type == "Centralized":
+    #     model = GazeModelCombined()
     elif model_type == "Centralized":
-        model = GazeModelCombined()
+        model = GazeModelKernelGaussianProcessSampleAverage()
 
     window_length = model.window_length
+
+    # # Extract all Triggers info
+    # trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    #     trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+    #     remove_pre_fixation=True,
+    #     exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+    #     device_type='EYETRACKER',
+    #     apply_starting_offset=False
+    # )
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        remove_pre_fixation=True,
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        remove_pre_fixation=False,
+        exclusion=[
+            TriggerType.PREVIEW,
+            TriggerType.EVENT,
+            TriggerType.FIXATION,
+            TriggerType.SYSTEM,
+            TriggerType.OFFSET],
         device_type='EYETRACKER',
         apply_starting_offset=False
     )
+    ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     symbol_set = alphabet()
 
-    # TODO use the inquiry reshaper signatures to extract the inquiries and then create a seperate method to construct other needed strucutres
-    inquiries, _, _ = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        timing_info=trigger_timing,
-        eeg_data=data,
+    target_symbols = trigger_symbols[0::11]  # target symbols are the PROMPT triggers
+    # Use trigger_timing to generate time windows for each letter flashing
+    # Take every 10th trigger as the start point of timing.
+    inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
+
+    # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
+    inquiries = model.reshaper(
+        inq_start_times=inq_start,
+        target_symbols=target_symbols,
+        gaze_data=data,
         sample_rate=sample_rate,
-        trials_per_inquiry=stim_size,
-        channel_map=channel_map,
-        poststimulus_length=window_length,
-        prestimulus_length=0,
-        transformation_buffer=0,
+        stimulus_duration=flash_time,
+        num_stimuli_per_inquiry=10,
+        symbol_set=symbol_set
     )
+
+    # TODO use the inquiry reshaper signatures to extract the inquiries and then create a seperate method to construct other needed structures
+    # inquiries, _, _ = model.reshaper(
+    #     trial_targetness_label=trigger_targetness,
+    #     timing_info=trigger_timing,
+    #     eeg_data=data,
+    #     sample_rate=sample_rate,
+    #     trials_per_inquiry=stim_size,
+    #     channel_map=channel_map,
+    #     poststimulus_length=window_length,
+    #     prestimulus_length=0,
+    #     transformation_buffer=0,
+    # )
 
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
@@ -350,12 +385,17 @@ def analyze_gaze(
         if len(inquiries[i]) == 0:
             continue
 
-        left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i])
-        preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
+        for j in range(len(inquiries[i])):
+            left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i][j])
+            # preprocessed_data[i].append(np.array([left_eye, right_eye]))    # Channels x Sample Size x Dimensions(x,y)
+            preprocessed_data[i].append(left_eye)    # Inquiries x Sample Size x Dimensions(x,y)
 
-    centralized_data_train = []
+    centralized_data_left = []
+    centralized_data_right = []
+    centralized_data_train = {i: [] for i in symbol_set}
+    centralized_data = {i: [] for i in symbol_set}
     train_dict = {}
-    test_dict = {}
+    test_dict = {i: [] for i in symbol_set}
 
     left_eye_all = []
     right_eye_all = []
@@ -364,18 +404,17 @@ def analyze_gaze(
         # Skip if there's no evidence for this symbol:
         try: 
             if len(inquiries[sym]) == 0:
-                test_dict[sym] = []
                 continue
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             # breakpoint()
 
-            # Train test split:
-            labels = np.array([sym] * len(le))  # Labels are the same for both eyes
-            train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
-            train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-            train_dict[sym] = np.concatenate((train_le, train_re), axis=0)
-            test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
+        #     # Train test split:
+        #     labels = np.array([sym] * len(le))  # Labels are the same for both eyes
+        #     train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
+        #     train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
+        #     train_dict[sym] = np.concatenate((train_le, train_re), axis=0)  # Note that here both eyes are concatenated
+        #     test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
 
         except:
             log.info(f"Error in symbol {sym}")
@@ -397,7 +436,11 @@ def analyze_gaze(
             with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             # Subtract the symbol positions from the data:
-            centralized_data_train.append(model.centralize(train_dict[sym], symbol_positions[sym]))
+            # centralized_data_left.append(model.centralize(train_le, symbol_positions[sym]))
+            # centralized_data_right.append(model.centralize(train_re, symbol_positions[sym]))
+            # centralized_data_train.append(model.centralize(train_dict[sym], symbol_positions[sym]))
+            for j in range(len(preprocessed_data[sym])):
+                centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
 
     if model_type == "Individual":
         accuracy = 0
@@ -410,7 +453,7 @@ def analyze_gaze(
                 acc_all_symbols[sym] = 0
                 continue
             # TODO: likelihoods should be in predict_proba !!!
-            predictions = model.predict(
+            predictions = model.predict(  # inference!
                 test_dict[sym])
             acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
             accuracy += acc_all_symbols[sym]
@@ -421,80 +464,190 @@ def analyze_gaze(
         # df.to_csv('my_data.csv', index=False)
 
         # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=data_folder, show=show_figures)
+        figure_handles = visualize_gaze_accuracies(acc_all_symbols, 
+                                                   accuracy, 
+                                                   save_path=data_folder if save_figures else None, 
+                                                   show=show_figures)
         figures.append(figure_handles)
 
     if model_type == "Centralized":
         # Model 2: Fit Gaussian mixture on a centralized data
-        all_data = np.concatenate(centralized_data_train, axis=0)
 
-        # Visualize the results:
-        figure_handles = visualize_centralized_data(
-            all_data,
-            save_path=data_folder if save_figures else None,
-            show=show_figures,
-            img_path=f"{data_folder}/matrix.png",
-            raw_plot=True,
-        )
-        figures.append(figure_handles)
-
-        model.fit(all_data)
-
-        # Calculate means, covariances for each symbol.
+        # all_data = np.concatenate(centralized_data_train, axis=0)
+        # Visualize different inquiries from the same target letter:
+        colors = ['r', 'g', 'b', 'y', 'm', 'c', 'k', 'w', 'orange', 'purple']
         for sym in symbol_set:
-            if len(test_dict[sym]) == 0:
+            if len(centralized_data[sym]) == 0:
                 continue
+            # for j in range(len(centralized_data[sym])):
+            #     plt.scatter(range(len(centralized_data[sym][j][:, 0])), centralized_data[sym][j][:, 0], label=f'{sym} Inquiry {j}', c=colors[j])
+            # plt.legend()
+            # plt.show()
+            # breakpoint()
+    
 
-            # Visualize the results:
-            le = preprocessed_data[sym][0]
-            re = preprocessed_data[sym][1]
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                model.means, model.covs,
-                save_path=None,
-                show=False,
-                img_path=f"{data_folder}/matrix.png",
-                raw_plot=True,
-            )
-            figures.append(figure_handles)
-            left_eye_all.append(le)
-            right_eye_all.append(re)
+        # # Visualize the results:
+        # figure_handles = visualize_centralized_data(
+        #     all_data,
+        #     save_path=data_folder if save_figures else None,
+        #     show=show_figures,
+        #     img_path=f"{data_folder}/matrix.png",
+        #     raw_plot=True,
+        # )
+        # figures.append(figure_handles)
 
-        # Compute scores for the test set.
-        accuracy = 0
-        acc_all_symbols = {}
-        counter = 0
+        # Save the dictionary as a csv file:
+        df = pd.DataFrame.from_dict(centralized_data, orient='index')
+        df.to_csv('centralized_data.csv', header=False)
+
+        # Also save preprocessed data:
+        df_2 = pd.DataFrame.from_dict(preprocessed_data, orient='index')
+        df_2.to_csv('preprocessed_data.csv', header=False)
+
+        # Split the data into train and test sets & fit the model:
+        centralized_data_training_set = []
         for sym in symbol_set:
-            if len(test_dict[sym]) == 0:
-                # Continue if there is no test data for this symbol:
-                acc_all_symbols[sym] = 0
+            if len(centralized_data[sym]) <= 1:
+                if len(centralized_data[sym]) == 1:
+                    test_dict[sym] = preprocessed_data[sym][-1]
                 continue
-            predictions = model.predict(
-                test_dict[sym])
-            acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
-            accuracy += acc_all_symbols[sym]
-            counter += 1
-        accuracy /= counter
+            # Leave one out and add the rest to the training set:
+            for j in range(len(centralized_data[sym])-1):
+                centralized_data_training_set.append(centralized_data[sym][j])
+            # Add the last inquiry to the test set:
+            test_dict[sym] = preprocessed_data[sym][-1]
 
-        # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=data_folder, show=show_figures)
+        # Save the test dict as well:
+        import pickle 
+        with open('test_dict.pkl', 'wb') as f:
+            pickle.dump(test_dict, f)
         
-        # Save accuracies for later use as a csv file:
-        # df = pd.DataFrame(acc_all_symbols, index=[0])
-        # df.to_csv('my_data.csv', index=False)
-        # basak = pd.read_csv('my_data.csv')
+        # Save the list as well:
+        with open('centralized_data_training_set.pkl', 'wb') as f:
+            pickle.dump(centralized_data_training_set, f)
         
-        figures.append(figure_handles)
+        # model.fit(centralized_data_training_set)
 
-    fig_handles = visualize_results_all_symbols(
-        left_eye_all, right_eye_all,
-        model.means, model.covs,
-        save_path=data_folder if save_figures else None,
-        show=show_figures,
-        img_path=f"{data_folder}/matrix.png",
-        raw_plot=True,
-    )
-    figures.append(fig_handles)
+        # GPflow:
+
+        import warnings
+
+        warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
+
+        import matplotlib.pyplot as plt
+        import numpy as np
+        import tensorflow as tf
+
+        import gpflow
+        from gpflow.ci_utils import reduce_in_tests
+        from gpflow.utilities import print_summary, set_trainable
+
+        # Number of functions and number of data points
+        C = 3
+        N = 180
+        
+        # Lengthscale of the SquaredExponential kernel (isotropic -- change to `[0.1] * C` for ARD)
+        lengthscales = 0.1
+
+        jitter_eye = np.eye(N) * 1e-6
+
+        X = (centralized_data_training_set[0][:,0]).reshape(-1, 1)
+
+        # SquaredExponential kernel matrix
+        kernel_se = gpflow.kernels.SquaredExponential(lengthscales=lengthscales)
+        K = kernel_se(X) + jitter_eye
+
+        # Latents prior sample
+        f = np.random.multivariate_normal(mean=np.zeros(N), cov=K, size=(C)).T
+
+        # Hard max observation
+        Y = np.argmax(f, 1).flatten().astype(int)
+
+        # One-hot encoding
+        Y_hot = np.zeros((N, C), dtype=bool)
+        Y_hot[np.arange(N), Y] = 1
+
+        data = (X, Y)
+
+        plt.figure(figsize=(12, 6))
+        order = np.argsort(X.flatten())
+
+        for c in range(C):
+            plt.plot(X[order], f[order, c], ".", color=colors[c], label=str(c))
+            plt.plot(X[order], Y_hot[order, c], "-", color=colors[c])
+
+        plt.legend()
+        plt.xlabel("$X$")
+        plt.ylabel("Latent (dots) and one-hot labels (lines)")
+        plt.title("Sample from the joint $p(Y, \mathbf{f})$")
+        plt.grid()
+        plt.show()
+
+        breakpoint()
+
+        # Inference:
+
+
+
+
+    #     # Calculate means, covariances for each symbol.
+    #     for sym in symbol_set:
+    #         if len(test_dict[sym]) == 0:
+    #             continue
+
+    #         # Visualize the results:
+    #         le = preprocessed_data[sym][0]
+    #         re = preprocessed_data[sym][1]
+    #         figure_handles = visualize_gaze_inquiries(
+    #             le, re,
+    #             model.means, model.covs,
+    #             save_path=None,
+    #             show=False,
+    #             img_path=f"{data_folder}/matrix.png",
+    #             raw_plot=True,
+    #         )
+    #         figures.append(figure_handles)
+    #         left_eye_all.append(le)
+    #         right_eye_all.append(re)
+
+    #     # Compute scores for the test set.
+    #     accuracy = 0
+    #     acc_all_symbols = {}
+    #     counter = 0
+    #     for sym in symbol_set:
+    #         if len(test_dict[sym]) == 0:
+    #             # Continue if there is no test data for this symbol:
+    #             acc_all_symbols[sym] = 0
+    #             continue
+    #         predictions = model.predict(
+    #             test_dict[sym])
+    #         acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
+    #         accuracy += acc_all_symbols[sym]
+    #         counter += 1
+    #     accuracy /= counter
+
+    #     # Plot all accuracies as bar plot:
+    #     figure_handles = visualize_gaze_accuracies(acc_all_symbols, 
+    #                                                accuracy, 
+    #                                                save_path=data_folder if save_figures else None, 
+    #                                                show=show_figures)
+        
+    #     # Save accuracies for later use as a csv file:
+    #     # df = pd.DataFrame(acc_all_symbols, index=[0])
+    #     # df.to_csv('my_data.csv', index=False)
+    #     # basak = pd.read_csv('my_data.csv')
+        
+    #     figures.append(figure_handles)
+
+    # fig_handles = visualize_results_all_symbols(
+    #     left_eye_all, right_eye_all,
+    #     model.means, model.covs,
+    #     save_path=data_folder if save_figures else None,
+    #     show=show_figures,
+    #     img_path=f"{data_folder}/matrix.png",
+    #     raw_plot=True,
+    # )
+    # figures.append(fig_handles)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -573,7 +726,7 @@ def offline_analysis(
 
         if device_spec.content_type == "Eyetracker":
             et_model, et_figure_handles = analyze_gaze(
-                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
+                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Centralized")
             models.append(et_model)
             figure_handles.append(et_figure_handles)
 
