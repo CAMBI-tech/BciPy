@@ -5,17 +5,6 @@ from psychopy import visual
 
 from bcipy.task import Task
 from bcipy.task.exceptions import TaskRegistryException
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-from bcipy.task.paradigm.matrix.timing_verification import \
-    MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.calibration.calibration import \
-    RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
-    RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
-from bcipy.task.task_registry import TaskType
 
 from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
@@ -26,7 +15,7 @@ from bcipy.language import LanguageModel
 def make_task(
         display_window: visual.Window,
         daq: ClientManager,
-        task: TaskType,
+        task: Task,
         parameters: Parameters,
         file_save: str,
         signal_models: Optional[List[SignalModel]] = None,
@@ -38,7 +27,7 @@ def make_task(
     -----------
         display_window: psychopy Window
         daq: ClientManager - manages one or more acquisition clients
-        task: TaskType
+        task: Task - instance of a Task subclass that will be initialized
         parameters: dict
         file_save: str - path to file in which to save data
         signal_models - list of trained models
@@ -49,43 +38,25 @@ def make_task(
         Task instance
     """
 
-    # NORMAL RSVP MODES
-    if task is TaskType.RSVP_CALIBRATION:
-        return RSVPCalibrationTask(
-            display_window, daq, parameters, file_save)
-
-    if task is TaskType.RSVP_COPY_PHRASE:
-        return RSVPCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_models,
-            language_model, fake=fake)
-
-    if task is TaskType.RSVP_TIMING_VERIFICATION_CALIBRATION:
-        return RSVPTimingVerificationCalibration(display_window, daq, parameters, file_save)
-
-    if task is TaskType.MATRIX_CALIBRATION:
-        return MatrixCalibrationTask(
-            display_window, daq, parameters, file_save
-        )
-
-    if task is TaskType.MATRIX_TIMING_VERIFICATION_CALIBRATION:
-        return MatrixTimingVerificationCalibration(display_window, daq, parameters, file_save)
-
-    if task is TaskType.MATRIX_COPY_PHRASE:
-        return MatrixCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_models,
-            language_model, fake=fake)
-
-    if task is TaskType.VEP_CALIBRATION:
-        return VEPCalibrationTask(display_window, daq, parameters, file_save)
-
-    raise TaskRegistryException(
-        'The provided experiment type is not registered.')
+    # TODO: Either standardize the task creation process or add awareness of calibration vs. non-calibration tasks
+    try:
+        return task(
+            display_window,
+            daq,
+            parameters,
+            file_save,
+            signal_models,
+            language_model,
+            fake)
+    except Exception as e:
+        raise TaskRegistryException(
+            f'The task could not be created. Please check the task name and try again. Error: {e}')
 
 
 def start_task(
         display_window: visual.Window,
         daq: ClientManager,
-        task: TaskType,
+        task: Task,
         parameters: Parameters,
         file_save: str,
         signal_models: Optional[List[SignalModel]] = None,

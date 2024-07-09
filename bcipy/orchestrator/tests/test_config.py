@@ -1,6 +1,6 @@
 import unittest
 from bcipy.orchestrator.config import parse_sequence, serialize_sequence, validate_sequence_string
-from bcipy.orchestrator.actions import OfflineAnalysisAction
+from bcipy.task.actions import OfflineAnalysisAction
 from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 

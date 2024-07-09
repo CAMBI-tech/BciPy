@@ -1,5 +1,5 @@
 from bcipy.orchestrator.orchestrator import SessionOrchestrator
-from bcipy.orchestrator.actions import OfflineAnalysisAction
+from bcipy.task.actions import OfflineAnalysisAction
 from bcipy.config import DEFAULT_PARAMETER_FILENAME
 
 from bcipy.helpers.load import load_experimental_data
