@@ -1,7 +1,7 @@
 import argparse
 import logging
 import multiprocessing
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from psychopy import visual
 
@@ -24,12 +24,12 @@ from bcipy.task import TaskRegistry, Task
 from bcipy.task.start_task import start_task
 
 log = logging.getLogger(__name__)
-
+task_registry = TaskRegistry()
 
 def bci_main(
         parameter_location: str,
         user: str,
-        task: Task,
+        task: Type[Task],
         experiment: str = DEFAULT_EXPERIMENT_ID,
         alert: bool = False,
         visualize: bool = True,
@@ -110,7 +110,7 @@ def bci_main(
 
 
 def execute_task(
-        task: Task,
+        task: Type[Task],
         parameters: dict,
         save_folder: str,
         alert: bool,
@@ -136,7 +136,7 @@ def execute_task(
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if task not in Task.calibration_tasks():
+    if task not in task_registry.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         if not fake:
             try:
@@ -259,7 +259,8 @@ def bcipy_main() -> None:
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), tr.get(str(args.task)),
+    task = task_registry.get(args.task)
+    bci_main(args.parameters, str(args.user), task,
              str(args.experiment), args.alert, args.noviz, args.fake)
 
 
