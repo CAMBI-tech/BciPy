@@ -19,7 +19,6 @@ from typing import List, Type
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.system_utils import AutoNumberEnum
 
-
 class TaskRegistry:
     registry_dict: Dict[str, Type[Task]]
 
@@ -52,6 +51,11 @@ class TaskRegistry:
     def list(self) -> List[str]:
         """Returns a list of all registered task names."""
         return list(self.registry_dict.keys())
+    
+    def calibration_tasks(self) -> List[Type[Task]]:
+        """Returns a list of all registered calibration tasks."""
+        from bcipy.task.base_calibration import BaseCalibrationTask
+        return [task for task in self.get_all_task_types() if issubclass(task, BaseCalibrationTask)]
 
     def register_task(self, task: Type[Task]) -> None:
         """Registers a task with the TaskRegistry."""
