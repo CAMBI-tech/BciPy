@@ -9,7 +9,8 @@ from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
                           STATIC_AUDIO_PATH)
 from bcipy.helpers.exceptions import UnregisteredExperimentException
 from bcipy.main import _clean_up_session, bci_main, execute_task
-from bcipy.task import TaskType
+from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 logging.disable(logging.CRITICAL)
 
@@ -32,7 +33,7 @@ class TestBciMain(unittest.TestCase):
     }
     user = 'test_user'
     task = mock()
-    task.label = 'RSVP Calibration'
+    task.name = 'RSVP Calibration'
     experiment = DEFAULT_EXPERIMENT_ID
     alert = False
     fake = parameters['fake_data']
@@ -42,7 +43,6 @@ class TestBciMain(unittest.TestCase):
         verifyNoUnwantedInteractions()
         unstub()
 
-    def test_bci_main_default_experiment(self) -> None:
         when(main).validate_experiment(self.experiment).thenReturn(True)
         when(main).validate_bcipy_session(self.parameters, self.fake).thenReturn(True)
         when(main).load_json_parameters(self.parameter_location, value_cast=True).thenReturn(
@@ -54,7 +54,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment,
         ).thenReturn(self.save_location)
         when(main).configure_logger(
@@ -82,7 +82,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment)
         verify(main, times=1).configure_logger(
             self.save_location,
@@ -117,7 +117,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment,
         ).thenReturn(self.save_location)
         when(main).configure_logger(
@@ -145,7 +145,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment)
         verify(main, times=1).configure_logger(
             self.save_location,
@@ -165,7 +165,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment,
         ).thenReturn(self.save_location)
         when(main).configure_logger(
@@ -192,7 +192,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment)
         verify(main, times=1).configure_logger(
             self.save_location,
@@ -214,7 +214,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment,
         ).thenReturn(self.save_location)
         when(main).configure_logger(
@@ -242,7 +242,7 @@ class TestBciMain(unittest.TestCase):
             self.data_save_location,
             self.user,
             self.parameter_location,
-            task=self.task.label,
+            task=self.task.name,
             experiment_id=self.experiment)
         verify(main, times=1).configure_logger(
             self.save_location,
@@ -301,7 +301,7 @@ class TestCleanUpSession(unittest.TestCase):
 
 
 class TestExecuteTask(unittest.TestCase):
-
+    
     def setUp(self) -> None:
         self.parameters = {
             'k_folds': 10,
@@ -311,7 +311,7 @@ class TestExecuteTask(unittest.TestCase):
         }
         self.save_folder = '/'
         self.alert = False
-        self.task = TaskType(1)
+        self.task = RSVPCalibrationTask
         self.fake = True
         self.display_mock = mock()
         self.daq = mock()
@@ -409,7 +409,7 @@ class TestExecuteTask(unittest.TestCase):
         self.fake = False
         model_path = "data/mycalib/"
         self.parameters['signal_model_path'] = model_path
-        self.task = TaskType(2)
+        self.task = RSVPCopyPhraseTask
         signal_model = mock()
         language_model = mock()
         file_name = 'test'
@@ -458,7 +458,7 @@ class TestExecuteTask(unittest.TestCase):
 
     def test_execute_language_model_enabled(self) -> None:
         self.fake = False
-        self.task = TaskType(2)  # set to a noncalibration task
+        self.task = RSVPCopyPhraseTask  # set to a noncalibration task
 
         # mock the signal and language models
         signal_model = mock()
