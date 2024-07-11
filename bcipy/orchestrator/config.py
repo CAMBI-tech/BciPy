@@ -24,7 +24,7 @@ def parse_sequence(sequence: str) -> List[Type[Task]]:
             A list of TaskType objects that represent the actions in the input string.
     """
     task_registry = TaskRegistry()
-    return [task_registry.get_task_from_string(item.strip()) for item in sequence.split(TASK_SEPERATOR)]
+    return [task_registry.get(item.strip()) for item in sequence.split(TASK_SEPERATOR)]
 
 
 def validate_sequence_string(action_sequence: str) -> None:
@@ -44,7 +44,7 @@ def validate_sequence_string(action_sequence: str) -> None:
             If the string of actions is invalid.
     """
     for sequence_item in action_sequence.split(TASK_SEPERATOR):
-        if sequence_item.strip() not in TaskRegistry().get_all_task_names():
+        if sequence_item.strip() not in TaskRegistry().list():
             raise ValueError(f"Invalid task '{sequence_item}' name in action sequence")
 
 
