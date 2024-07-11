@@ -1,8 +1,8 @@
 # mypy: disable-error-code="attr-defined,union-attr,arg-type"
 # needed for the ERPTransformParams
 import logging
-from typing import List, Dict, Optional, Tuple, Union
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mne
@@ -16,12 +16,13 @@ from mne.io import read_raw_edf
 from scipy import linalg
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
-                          DEFAULT_GAZE_IMAGE_PATH, TRIGGER_FILENAME)
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_GAZE_IMAGE_PATH, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
@@ -684,7 +685,6 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     """
     # extract all relevant parameters
     trial_window = parameters.get("trial_window")
-    static_offset = parameters.get("static_trigger_offset")
 
     raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
@@ -707,7 +707,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     )
     # Process triggers.txt files
     trigger_targetness, trigger_timing, _ = trigger_decoder(
-        offset=static_offset,
+        offset=device_spec.static_offset,
         trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         device_type='EEG',

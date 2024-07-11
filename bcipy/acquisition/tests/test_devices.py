@@ -57,6 +57,7 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(channels, spec.channels)
         self.assertEqual(devices.DeviceStatus.ACTIVE, spec.status)
         self.assertTrue(spec.is_active)
+        self.assertEqual(spec.static_offset, devices.DEFAULT_STATIC_OFFSET)
 
         self.assertEqual(spec, devices.preconfigured_device('DSI-VR300'))
         shutil.rmtree(temp_dir)
@@ -222,9 +223,22 @@ class TestDeviceSpecs(unittest.TestCase):
         """DeviceSpec should be able to be converted to a dictionary."""
         device_name = 'TestDevice'
         channels = ['C1', 'C2', 'C3']
-        expected_channel_output = [{'label': 'C1', 'name': 'C1', 'type': None, 'units': None},
-                                   {'label': 'C2', 'name': 'C2', 'type': None, 'units': None},
-                                   {'label': 'C3', 'name': 'C3', 'type': None, 'units': None}]
+        expected_channel_output = [{
+            'label': 'C1',
+            'name': 'C1',
+            'type': None,
+            'units': None
+        }, {
+            'label': 'C2',
+            'name': 'C2',
+            'type': None,
+            'units': None
+        }, {
+            'label': 'C3',
+            'name': 'C3',
+            'type': None,
+            'units': None
+        }]
         sample_rate = 256.0
         content_type = 'EEG'
         spec = devices.DeviceSpec(name=device_name,
@@ -238,6 +252,8 @@ class TestDeviceSpecs(unittest.TestCase):
         self.assertEqual(expected_channel_output, spec_dict['channels'])
         self.assertEqual(sample_rate, spec_dict['sample_rate'])
         self.assertEqual('passive', spec_dict['status'])
+        self.assertEqual(spec_dict['static_offset'],
+                         devices.DEFAULT_STATIC_OFFSET)
 
     def test_load_status(self):
         """Should be able to load a list of supported devices from a
@@ -259,7 +275,32 @@ class TestDeviceSpecs(unittest.TestCase):
 
         devices.load(config_path, replace=True)
         supported = devices.preconfigured_devices()
-        self.assertEqual(devices.DeviceStatus.PASSIVE, supported['MyDevice'].status)
+        self.assertEqual(devices.DeviceStatus.PASSIVE,
+                         supported['MyDevice'].status)
+        shutil.rmtree(temp_dir)
+
+    def test_load_static_offset(self):
+        """Loaded device should support using a custom static offset."""
+
+        # create a config file in a temp location.
+        temp_dir = tempfile.mkdtemp()
+        offset = 0.2
+        my_devices = [
+            dict(name="MyDevice",
+                 content_type="EEG",
+                 description="My Device",
+                 channels=["a", "b", "c"],
+                 sample_rate=100.0,
+                 status=str(devices.DeviceStatus.PASSIVE),
+                 static_offset=offset)
+        ]
+        config_path = Path(temp_dir, 'my_devices.json')
+        with open(config_path, 'w', encoding=DEFAULT_ENCODING) as config_file:
+            json.dump(my_devices, config_file)
+
+        devices.load(config_path, replace=True)
+        supported = devices.preconfigured_devices()
+        self.assertEqual(supported['MyDevice'].static_offset, offset)
         shutil.rmtree(temp_dir)
 
     def test_device_status(self):
