@@ -11,6 +11,7 @@ from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
     RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
+from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 
 
 class CallbackAction(Task):
@@ -89,6 +90,26 @@ class OfflineAnalysisAction(Task):
         return 'OfflineAnalysisAction'
 
 
+class ExperimentFieldCollectionAction(Task):
+    """
+    Action for collecting experiment field data.
+    """
+
+    def __init__(self, experiment_id: str, save_path: str) -> None:
+        super().__init__()
+        self.experiment_id = experiment_id
+        self.save_folder = save_path
+
+    def execute(self):
+        self.logger.info(
+            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}')
+        start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
+
+    @property
+    def name(self):
+        return 'ExperimentFieldCollectionAction'
+
+
 task_registry_dict: Dict[str, type] = {
     # Tasks
     'RSVP Calibration': RSVPCalibrationTask,
@@ -102,5 +123,6 @@ task_registry_dict: Dict[str, type] = {
     # Actions
     'Offline Analysis Action': OfflineAnalysisAction,
     'Code Hook Action': CodeHookAction,
-    'Callback Action': CallbackAction
+    'Callback Action': CallbackAction,
+    'ExperimentFieldCollectionAction': ExperimentFieldCollectionAction
 }

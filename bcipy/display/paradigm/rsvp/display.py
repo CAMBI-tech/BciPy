@@ -1,22 +1,17 @@
 import logging
 import os.path as path
-from typing import Optional, List, Tuple
+from typing import List, Optional, Tuple
 
-from psychopy import core, visual, event
+from psychopy import core, event, visual
 
-from bcipy.helpers.clock import Clock
-from bcipy.helpers.task import get_key_press
-from bcipy.helpers.symbols import SPACE_CHAR
-from bcipy.display import (
-    BCIPY_LOGO_PATH,
-    Display,
-    InformationProperties,
-    PreviewInquiryProperties,
-    StimuliProperties
-)
+from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
+                           PreviewInquiryProperties, StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.helpers.system_utils import get_screen_info
+from bcipy.helpers.task import get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -131,7 +126,7 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing or []
         self.stimuli_colors = colors or []
 
-    def do_inquiry(self, preview_calibration: bool = False) -> List[float]:
+    def do_inquiry(self, preview_calibration: bool = False) -> List[Tuple[str, float]]:
         """Do inquiry.
 
         Animates an inquiry of flashing letters to achieve RSVP.
