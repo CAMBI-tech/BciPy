@@ -43,6 +43,8 @@ class TestBciMain(unittest.TestCase):
         verifyNoUnwantedInteractions()
         unstub()
 
+    def test_bci_main_default_experiment(self) -> None:
+
         when(main).validate_experiment(self.experiment).thenReturn(True)
         when(main).validate_bcipy_session(self.parameters, self.fake).thenReturn(True)
         when(main).load_json_parameters(self.parameter_location, value_cast=True).thenReturn(
