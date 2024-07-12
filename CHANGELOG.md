@@ -28,12 +28,18 @@ Our last release candidate before the official 2.0 release!
     - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
+- Report
+  - Functionality to generate a report in the form of a PDF #325
+- Offset Support
+  - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
 - Parameters
     - Add a Range type parameter #285
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
+    - Fix GitHub actions build issues with macOS
+    - Fix occasionally failing test in `test_stimuli` #326
 
 
 # 2.0.0-rc.3
