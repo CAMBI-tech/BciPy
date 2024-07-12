@@ -26,6 +26,7 @@ from bcipy.task.start_task import start_task
 log = logging.getLogger(__name__)
 task_registry = TaskRegistry()
 
+
 def bci_main(
         parameter_location: str,
         user: str,

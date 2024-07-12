@@ -16,8 +16,6 @@ from bcipy.task import Task
 
 from typing import List, Type
 
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.system_utils import AutoNumberEnum
 
 class TaskRegistry:
     registry_dict: Dict[str, Type[Task]]
@@ -25,8 +23,8 @@ class TaskRegistry:
     def __init__(self):
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
         # https://github.com/python/mypy/issues/3115
-        from bcipy.task.paradigm import vep, rsvp, matrix # noqa
-        from bcipy.task import actions # noqa
+        from bcipy.task.paradigm import vep, rsvp, matrix  # noqa
+        from bcipy.task import actions  # noqa
 
         self.registry_dict = {}
         self.collect_subclasses(Task)  # type: ignore[type-abstract]
@@ -51,7 +49,7 @@ class TaskRegistry:
     def list(self) -> List[str]:
         """Returns a list of all registered task names."""
         return list(self.registry_dict.keys())
-    
+
     def calibration_tasks(self) -> List[Type[Task]]:
         """Returns a list of all registered calibration tasks."""
         from bcipy.task.base_calibration import BaseCalibrationTask

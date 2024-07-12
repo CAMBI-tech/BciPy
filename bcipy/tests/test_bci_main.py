@@ -303,7 +303,7 @@ class TestCleanUpSession(unittest.TestCase):
 
 
 class TestExecuteTask(unittest.TestCase):
-    
+
     def setUp(self) -> None:
         self.parameters = {
             'k_folds': 10,
