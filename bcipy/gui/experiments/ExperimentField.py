@@ -364,35 +364,7 @@ def start_app() -> None:
     )
 
     args = parser.parse_args()
-
-    experiment_name = args.experiment
-    validate = args.validate
-
-    if validate:
-        validate_experiment(experiment_name)
-        print("Experiment valid!")
-
-    save_path = args.path
-    file_name = args.filename
-
-    bcipy_gui = app(sys.argv)
-
-    ex = MainPanel(
-        title="Experiment Field Collection",
-        height=250,
-        width=600,
-        experiment_name=experiment_name,
-        save_path=save_path,
-        file_name=file_name,
-    )
-    bcipy_gui.exec()
-
-    if validate:
-        if validate_field_data_written(save_path, file_name):
-            print("Field data successfully written!")
-        else:
-            raise Exception(f"Field data not written to {save_path}/{file_name}")
-
+    start_experiment_field_collection_gui(args.experiment, args.path, args.filename, args.validate)
     sys.exit()
 
 
