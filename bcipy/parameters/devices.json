@@ -125,6 +125,6 @@
         "description": "Tobii Nano. For use with the Tobii Pro SDK.",
         "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"],
         "status": "active",
-        "static_offset": 0.0
+        "static_offset": 0.1
     }
 ]
