@@ -66,10 +66,11 @@ class Inquiry:
         lm_evidence - language model evidence for each stimulus
         eeg_evidence - eeg evidence for each stimulus
         likelihood - combined likelihood for each stimulus
+        task_data - task-specific information about the inquiry that may be useful in training a model
     """
 
     def __init__(self,
-                 stimuli: List[str],
+                 stimuli: List[Any],
                  timing: List[float],
                  triggers: List[Tuple[str, float]],
                  target_info: List[str],
@@ -78,7 +79,8 @@ class Inquiry:
                  target_text: Optional[str] = None,
                  selection: Optional[str] = None,
                  next_display_state: Optional[str] = None,
-                 likelihood: Optional[List[float]] = None) -> None:
+                 likelihood: Optional[List[float]] = None,
+                 task_data: Optional[Dict] = None) -> None:
         super().__init__()
         self.stimuli = stimuli
         self.timing = timing
@@ -92,6 +94,7 @@ class Inquiry:
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
+        self.task_data = task_data or {}
         # Precision used for serialization of evidence values. By default, no precision.
         self.precision: int = 0
 
@@ -147,7 +150,7 @@ class Inquiry:
 
     def as_dict(self) -> Dict:
         """Dict representation"""
-        data = {
+        data: Dict = {
             'stimuli': self.stimuli,
             'timing': self.timing,
             'triggers': self.triggers,
@@ -164,6 +167,8 @@ class Inquiry:
 
         if self.likelihood:
             data['likelihood'] = self.format(self.likelihood)
+        if self.task_data:
+            data['task_data'] = self.task_data
         return data
 
     def stim_evidence(self,
@@ -211,7 +216,8 @@ class Session:
                  symbol_set: List[str],
                  task: str = 'Copy Phrase',
                  mode: str = 'RSVP',
-                 decision_threshold: Optional[float] = None) -> None:
+                 decision_threshold: Optional[float] = None,
+                 task_data: Optional[Dict[str, Any]] = None) -> None:
         super().__init__()
         self.save_location = save_location
         self.task = task
@@ -222,6 +228,7 @@ class Session:
         self.task_summary: Dict[str, Any] = {}
         self.symbol_set = symbol_set
         self.decision_threshold = decision_threshold
+        self.task_data = task_data or {}
 
     @property
     def total_number_series(self) -> int:
@@ -305,24 +312,30 @@ class Session:
                         stim_dict = stim.as_dict()
                     series_dict[series_counter][str(series_index)] = stim_dict
 
-        info = {
+        task_info: Dict = {
             'session': self.save_location,
             'task': self.task,
             'mode': self.mode,
             'symbol_set': self.symbol_set,
-            'decision_threshold': self.decision_threshold,
-            'series': series_dict,
-            'total_time_spent': round(self.total_time_spent,
-                                      self.time_spent_precision),
+            'decision_threshold': self.decision_threshold
+        }
+        if self.task_data:
+            task_info['task_data'] = self.task_data
+
+        series_info = {'series': series_dict}
+
+        summary_info: Dict = {
+            'total_time_spent': round(self.total_time_spent, self.time_spent_precision),
             'total_minutes': round(self.total_time_spent / 60, self.time_spent_precision),
             'total_number_series': self.total_number_series,
             'total_inquiries': self.total_inquiries,
             'total_selections': self.total_number_decisions,
             'inquiries_per_selection': self.inquiries_per_selection
         }
-
         if self.task_summary:
-            info['task_summary'] = self.task_summary
+            summary_info['task_summary'] = self.task_summary
+
+        info = {**task_info, **series_info, **summary_info}
         return info
 
     @classmethod

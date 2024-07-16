@@ -23,9 +23,11 @@ class Display(ABC):
     stimuli_colors: List[str] = None
     stimuli_timing: List[float] = None
     task = None
+    info_text: List[Any] = None
+    first_stim_time: float = None
 
     @abstractmethod
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self) -> List[Tuple[str, float]]:
         """Do inquiry.
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.

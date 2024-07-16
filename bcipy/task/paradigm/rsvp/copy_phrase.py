@@ -98,7 +98,7 @@ class RSVPCopyPhraseTask(Task):
         'show_feedback', 'feedback_duration',
         'show_preview_inquiry', 'preview_inquiry_isi',
         'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
-        'spelled_letters_count', 'static_trigger_offset',
+        'spelled_letters_count',
         'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
         'stim_order', 'stim_pos_x', 'stim_pos_y', 'stim_space_char', 'target_color',
         'task_buffer_length', 'task_color', 'task_height', 'task_text',
@@ -599,7 +599,6 @@ class RSVPCopyPhraseTask(Task):
         device_data = get_device_data_for_decision(
             inquiry_timing=inquiry_timing,
             daq=self.daq,
-            offset=self.parameters['static_trigger_offset'],
             prestim=prestim_buffer,
             poststim=post_stim_buffer + window_length)
 

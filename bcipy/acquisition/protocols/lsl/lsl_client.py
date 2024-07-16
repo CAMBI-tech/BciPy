@@ -1,22 +1,45 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
+from multiprocessing import Queue
 from typing import Dict, List, Optional
 
 import pandas as pd
-from pylsl import (StreamInfo, StreamInlet, local_clock, resolve_byprop,
-                   resolve_stream)
+from pylsl import StreamInlet, local_clock, resolve_byprop
 
-from bcipy.acquisition.devices import (DEFAULT_DEVICE_TYPE, IRREGULAR_RATE,
-                                       DeviceSpec)
+from bcipy.acquisition.devices import IRREGULAR_RATE, DeviceSpec
 from bcipy.acquisition.exceptions import InvalidClockError
-from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
-                                                           check_device)
+from bcipy.acquisition.protocols.lsl.connect import (device_from_metadata,
+                                                     resolve_device_stream)
+from bcipy.acquisition.protocols.lsl.lsl_connector import check_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
+from bcipy.config import MAX_PAUSE_SECONDS
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
+
+LSL_TIMEOUT = 5.0  # seconds
+
+
+def time_range(stamps: List[float],
+               precision: int = 3,
+               sep: str = " to ") -> str:
+    """Utility for printing a range of timestamps"""
+    if stamps:
+        return "".join([
+            str(round(stamps[0], precision)), sep,
+            str(round(stamps[-1], precision))
+        ])
+    return ""
+
+
+def request_desc(start: Optional[float], end: Optional[float],
+                 limit: Optional[int]):
+    """Returns a description of the request which can be logged."""
+    start_str = round(start, 3) if start else "None"
+    end_str = round(end, 3) if end else "None"
+    return f"Requesting data from: {start_str} to: {end_str} limit: {limit}"
 
 
 class LslAcquisitionClient:
@@ -61,8 +84,6 @@ class LslAcquisitionClient:
     def first_sample_time(self) -> float:
         """Timestamp returned by the first sample. If the data is being
         recorded this value reflects the timestamp of the first recorded sample"""
-        if self.recorder:
-            return self.recorder.first_sample_time
         return self._first_sample_time
 
     @property
@@ -86,17 +107,13 @@ class LslAcquisitionClient:
         if self.inlet:
             return False
 
-        content_type = self.device_spec.content_type if self.device_spec else DEFAULT_DEVICE_TYPE
-        streams = resolve_stream('type', content_type)
-        if not streams:
-            raise Exception(
-                f'LSL Stream not found for content type {content_type}')
-        stream_info = streams[0]
-
+        stream_info = resolve_device_stream(self.device_spec)
         self.inlet = StreamInlet(
             stream_info,
-            max_buflen=4 * self.max_buffer_len,  # TODO: revisit this value
+            max_buflen=MAX_PAUSE_SECONDS,
             max_chunklen=1)
+        log.info("Acquiring data from data stream:")
+        log.info(self.inlet.info().as_xml())
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -104,16 +121,23 @@ class LslAcquisitionClient:
             self.device_spec = device_from_metadata(self.inlet.info())
 
         if self.save_directory:
+            msg_queue = Queue()
             self.recorder = LslRecordingThread(
-                stream_info,
-                self.save_directory,
-                self.raw_data_file_name,
-                self.device_spec)
+                directory=self.save_directory,
+                filename=self.raw_data_file_name,
+                device_spec=self.device_spec,
+                queue=msg_queue)
             self.recorder.start()
+            log.info("Waiting for first sample from lsl_recorder")
+            self._first_sample_time = msg_queue.get(block=True,
+                                                    timeout=LSL_TIMEOUT)
+            log.info(f"First sample time: {self.first_sample_time}")
 
+        self.inlet.open_stream(timeout=LSL_TIMEOUT)
         if self.max_buffer_len and self.max_buffer_len > 0:
             self.buffer = RingBuffer(size_max=self.max_samples)
-        _, self._first_sample_time = self.inlet.pull_sample()
+        if not self._first_sample_time:
+            _, self._first_sample_time = self.inlet.pull_sample()
         return True
 
     def stop_acquisition(self) -> None:
@@ -178,7 +202,7 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.info(f"Requesting data from: {start} to: {end} limit: {limit}")
+        log.info(request_desc(start, end, limit))
 
         data = self.get_latest_data()
         if not data:
@@ -223,12 +247,12 @@ class LslAcquisitionClient:
         """Pull a chunk of samples from LSL and record in the buffer.
         Returns the count of samples pulled.
         """
-        log.debug(f"Pulling from LSL (max_samples: {self.max_samples})")
+        log.debug(f"\tPulling chunk (max_samples: {self.max_samples})")
         # A timeout of 0.0 gets currently available samples without blocking.
         samples, timestamps = self.inlet.pull_chunk(
             timeout=0.0, max_samples=self.max_samples)
         count = len(samples)
-        log.debug(f"\tReceived {count} samples")
+        log.debug(f"\t-> received {count} samples: {time_range(timestamps)}")
         for sample, stamp in zip(samples, timestamps):
             self.buffer.append(Record(sample, stamp))
         return count
@@ -348,7 +372,7 @@ def discover_device_spec(content_type: str) -> DeviceSpec:
     """Finds the first LSL stream with the given content type and creates a
     device spec from the stream's metadata."""
     log.info(f"Waiting for {content_type} data to be streamed over LSL.")
-    streams = resolve_byprop('type', content_type, timeout=5.0)
+    streams = resolve_byprop('type', content_type, timeout=LSL_TIMEOUT)
     if not streams:
         raise Exception(
             f'LSL Stream not found for content type {content_type}')
@@ -357,11 +381,3 @@ def discover_device_spec(content_type: str) -> DeviceSpec:
     spec = device_from_metadata(inlet.info())
     inlet.close_stream()
     return spec
-
-
-def device_from_metadata(metadata: StreamInfo) -> DeviceSpec:
-    """Create a device_spec from the data stream metadata."""
-    return DeviceSpec(name=metadata.name(),
-                      channels=channel_names(metadata),
-                      sample_rate=metadata.nominal_srate(),
-                      content_type=metadata.type())
