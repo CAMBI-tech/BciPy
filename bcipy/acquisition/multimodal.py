@@ -131,7 +131,9 @@ class ClientManager():
 
         Parameters
         ----------
-            start - start time (acquisition clock) of data window
+            start - start time (acquisition clock) of data window; NOTE: the
+                actual start time will be adjusted to by the static_offset
+                configured for each device.
             seconds - duration of data to return for each device
             content_types - specifies which devices to include; if not
                 unspecified, data for all types is returned.
@@ -144,10 +146,12 @@ class ClientManager():
         for content_type in content_types:
             name = content_type.name
             client = self.get_client(content_type)
+
+            adjusted_start = start + client.device_spec.static_offset
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
                 log.info(f'Need {count} records for processing {name} data')
-                output[content_type] = client.get_data(start=start,
+                output[content_type] = client.get_data(start=adjusted_start,
                                                        limit=count)
                 data_count = len(output[content_type])
                 if strict and data_count < count:
@@ -155,8 +159,8 @@ class ClientManager():
                     raise InsufficientDataException(msg)
             else:
                 # Markers have an IRREGULAR_RATE.
-                output[content_type] = client.get_data(start=start,
-                                                       end=start + seconds)
+                output[content_type] = client.get_data(start=adjusted_start,
+                                                       end=adjusted_start + seconds)
         return output
 
     def cleanup(self):
