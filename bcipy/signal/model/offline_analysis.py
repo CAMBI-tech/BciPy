@@ -111,7 +111,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
-    static_offset = parameters.get("static_trigger_offset")
+    static_offset = device_spec.static_offset
 
     log.info(
         f"\nData processing settings: \n"

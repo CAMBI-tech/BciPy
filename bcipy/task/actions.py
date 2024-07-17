@@ -1,6 +1,9 @@
-from bcipy.task import Task
-from typing import Optional, Callable
 import subprocess
+from typing import Callable, Optional
+
+from bcipy.gui.experiments.ExperimentField import \
+    start_experiment_field_collection_gui
+from bcipy.task import Task
 
 
 class CallbackAction(Task):
@@ -69,3 +72,23 @@ class OfflineAnalysisAction(Task):
         if self.alert:
             command += ' --alert'
         return command
+
+
+class ExperimentFieldCollectionAction(Task):
+    """
+    Action for collecting experiment field data.
+    """
+
+    name = 'ExperimentFieldCollectionAction'
+
+    def __init__(self, experiment_id: str, save_path: str) -> None:
+        super().__init__()
+        self.experiment_id = experiment_id
+        self.save_folder = save_path
+
+    def execute(self):
+        self.logger.info(
+            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}'
+        )
+        start_experiment_field_collection_gui(self.experiment_id,
+                                              self.save_folder)

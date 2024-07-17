@@ -180,7 +180,6 @@ def get_data_for_decision(inquiry_timing: List[Tuple[str, float]],
 def get_device_data_for_decision(
         inquiry_timing: List[Tuple[str, float]],
         daq: ClientManager,
-        offset: float = 0.0,
         prestim: float = 0.0,
         poststim: float = 0.0) -> Dict[ContentType, List[Record]]:
     """Queries the acquisition client manager for a slice of data from each
@@ -206,13 +205,13 @@ def get_device_data_for_decision(
     _, last_stim_time = inquiry_timing[-1]
 
     # adjust for offsets
-    time1 = first_stim_time + offset - prestim
-    time2 = last_stim_time + offset
+    time1 = first_stim_time - prestim
+    time2 = last_stim_time
 
     if time2 < time1:
         raise InsufficientDataException(
             f'Invalid data query [{time1}-{time2}] with parameters:'
-            f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]'
+            f'[inquiry={inquiry_timing}, prestim={prestim}, poststim={poststim}]'
         )
 
     data = daq.get_data_by_device(start=time1,

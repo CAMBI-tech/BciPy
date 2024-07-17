@@ -58,7 +58,6 @@ class TestCopyPhrase(unittest.TestCase):
             'show_feedback': False,
             'show_preview_inquiry': False,
             'spelled_letters_count': 0,
-            'static_trigger_offset': 0.1,
             'stim_color': 'white',
             'stim_height': 0.6,
             'stim_length': 10,

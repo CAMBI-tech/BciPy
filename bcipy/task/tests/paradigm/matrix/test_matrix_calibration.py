@@ -47,7 +47,6 @@ class TestMatrixCalibration(unittest.TestCase):
             'preview_inquiry_length': 5.0,
             'show_feedback': False,
             'show_preview_inquiry': False,
-            'static_trigger_offset': 0.1,
             'stim_color': 'white',
             'stim_height': 0.6,
             'stim_jitter': 0.0,
