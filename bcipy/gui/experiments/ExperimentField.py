@@ -333,7 +333,6 @@ def start_app() -> None:
     """Start Experiment Field Collection."""
     import argparse
     from bcipy.config import DEFAULT_EXPERIMENT_ID, EXPERIMENT_DATA_FILENAME
-    from bcipy.helpers.validate import validate_experiment, validate_field_data_written
 
     parser = argparse.ArgumentParser()
 
