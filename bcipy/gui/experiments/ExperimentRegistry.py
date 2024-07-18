@@ -6,6 +6,7 @@ from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, 
 from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
+from bcipy.task.task_registry import TaskRegistry
 
 
 class ExperimentRegistry(BCIGui):
@@ -32,11 +33,13 @@ class ExperimentRegistry(BCIGui):
         self.name_input = None
         self.summary_input = None
         self.field_input = None
+        self.protocol_input = None
         self.panel = None
         self.line_items = None
 
         # fields is for display of registered fields
         self.fields = []
+        self.tasks = TaskRegistry().list()
         self.registered_fields = load_fields()
         self.name = None
         self.summary = None
@@ -214,6 +217,14 @@ class ExperimentRegistry(BCIGui):
             font_size=font_size)
         text_y += self.padding
         self.add_static_textbox(
+            text='Protocol',
+            position=[text_x, text_y],
+            size=[300, 50],
+            background_color='black',
+            text_color='white',
+            font_size=font_size)
+        text_y += self.padding
+        self.add_static_textbox(
             text='Fields',
             position=[text_x, text_y],
             size=[300, 50],
@@ -254,6 +265,15 @@ class ExperimentRegistry(BCIGui):
             background_color='white',
             text_color='black')
 
+        input_y += self.padding
+        self.protocol_input = self.add_combobox(
+            position=[input_x, input_y],
+            size=input_size,
+            editable=True,
+            items=self.tasks,
+            background_color='white',
+            text_color='black')
+        
         input_y += self.padding
         self.field_input = self.add_combobox(
             position=[input_x, input_y],
