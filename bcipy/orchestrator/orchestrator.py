@@ -81,7 +81,7 @@ class SessionOrchestrator:
         self.save()
 
     def init_orchestrator_save_folder(self, save_path: str) -> None:
-        timestamp = str(datetime.now())
+        timestamp = datetime.now().strftime("%Y-%m-%d %H-%M")
         # * No '/' after `save_folder` since it is included in
         # * `data_save_location` in parameters
         path = f'{save_path}{self.experiment_id}/{self.user}/orchestrator-run-{timestamp}/'
