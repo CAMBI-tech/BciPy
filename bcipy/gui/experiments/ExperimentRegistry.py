@@ -7,6 +7,7 @@ from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAM
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
 from bcipy.task.task_registry import TaskRegistry
+from bcipy.orchestrator.config import serialize_protocol
 
 
 class ExperimentRegistry(BCIGui):
@@ -41,7 +42,7 @@ class ExperimentRegistry(BCIGui):
 
         # fields is for display of registered fields
         self.fields = []
-        self.available_tasks = TaskRegistry().list()
+        self.task_registry = TaskRegistry()
         self.protocol_tasks = []
         self.registered_fields = load_fields()
         self.name = None
@@ -320,7 +321,7 @@ class ExperimentRegistry(BCIGui):
             position=[input_x, input_y],
             size=input_size,
             editable=False,
-            items=self.available_tasks,
+            items=self.task_registry.list(),
             background_color='white',
             text_color='black')
         
@@ -339,8 +340,8 @@ class ExperimentRegistry(BCIGui):
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
         btn_create_x = self.width - self.padding - 10
-        # btn_create_y = self.height - self.padding - 200
-        btn_create_y = self.height - self.padding - 100
+        btn_create_y = self.height - self.padding - 500
+        # btn_create_y = self.height - self.padding - 100
         size = 150
         self.add_button(
             message='Create Experiment', position=[btn_create_x - (size / 2), btn_create_y],
@@ -414,9 +415,11 @@ class ExperimentRegistry(BCIGui):
         Add a new experiment to the dict of experiments. It follows the format:
              { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
         """
+        task_objects = [self.task_registry.get(task_name) for task_name in self.protocol_tasks]
         self.experiments[self.name] = {
             'fields': self.experiment_fields,
-            'summary': self.summary
+            'summary': self.summary,
+            'protocol': serialize_protocol(task_objects)
         }
 
     def save_experiments(self) -> None:
