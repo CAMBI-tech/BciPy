@@ -1,23 +1,16 @@
-from bcipy.task import Task
-from typing import Optional, Callable, Dict
 import subprocess
-from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-from bcipy.task.paradigm.matrix.timing_verification import \
-    MatrixTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.calibration.calibration import \
-    RSVPCalibrationTask
-from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
-    RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
-from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
+from typing import Callable, Optional
+
+from bcipy.gui.experiments.ExperimentField import \
+    start_experiment_field_collection_gui
+from bcipy.task import Task
 
 
 class CallbackAction(Task):
     """
     Action for running a callback.
     """
+    name = 'Callback Action'
 
     def __init__(self, callback: Callable, *args, **kwargs) -> None:
         super().__init__()
@@ -31,15 +24,12 @@ class CallbackAction(Task):
         self.logger.info(f'Callback action {self.callback} executed')
         return self.name
 
-    @property
-    def name(self):
-        return 'CallbackAction'
-
 
 class CodeHookAction(Task):
     """
     Action for running generic code hooks.
     """
+    name = 'Code Hook Action'
 
     def __init__(self, code_hook: str, subprocess=True) -> None:
         super().__init__()
@@ -55,15 +45,12 @@ class CodeHookAction(Task):
 
         return self.code_hook
 
-    @property
-    def name(self):
-        return 'CodeHookAction'
-
 
 class OfflineAnalysisAction(Task):
     """
     Action for running offline analysis.
     """
+    name = 'Offline Analysis Action'
 
     def __init__(self, data_directory: str, parameters_path: Optional[str] = None, alert=True) -> None:
         super().__init__()
@@ -73,7 +60,8 @@ class OfflineAnalysisAction(Task):
         self.command = self.construct_command()
 
     def execute(self):
-        subprocess.Popen(self.command, shell=True)
+        cmd = self.construct_command()
+        subprocess.Popen(cmd, shell=True)
         return self.data_directory
 
     def construct_command(self):
@@ -85,15 +73,13 @@ class OfflineAnalysisAction(Task):
             command += ' --alert'
         return command
 
-    @property
-    def name(self):
-        return 'OfflineAnalysisAction'
-
 
 class ExperimentFieldCollectionAction(Task):
     """
     Action for collecting experiment field data.
     """
+
+    name = 'ExperimentFieldCollectionAction'
 
     def __init__(self, experiment_id: str, save_path: str) -> None:
         super().__init__()
@@ -102,27 +88,7 @@ class ExperimentFieldCollectionAction(Task):
 
     def execute(self):
         self.logger.info(
-            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}')
-        start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
-
-    @property
-    def name(self):
-        return 'ExperimentFieldCollectionAction'
-
-
-task_registry_dict: Dict[str, type] = {
-    # Tasks
-    'RSVP Calibration': RSVPCalibrationTask,
-    'RSVP Copy Phrase': RSVPCopyPhraseTask,
-    'RSVP Time Test Calibration': RSVPTimingVerificationCalibration,
-    'Matrix Calibration': MatrixCalibrationTask,
-    'Matrix Time Test Calibration': MatrixTimingVerificationCalibration,
-    'Matrix Copy Phrase': MatrixCopyPhraseTask,
-    'VEP Calibration': VEPCalibrationTask,
-
-    # Actions
-    'Offline Analysis Action': OfflineAnalysisAction,
-    'Code Hook Action': CodeHookAction,
-    'Callback Action': CallbackAction,
-    'ExperimentFieldCollectionAction': ExperimentFieldCollectionAction
-}
+            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}'
+        )
+        start_experiment_field_collection_gui(self.experiment_id,
+                                              self.save_folder)

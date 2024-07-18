@@ -1,5 +1,7 @@
 """Task Registry ; used to provide task options to the GUI and command line
 tools. User defined tasks can be added to the Registry."""
+from typing import Dict
+from bcipy.task import Task
 
 # NOTE:
 # In the future we may want to consider dynamically retrieving all subclasses
@@ -12,52 +14,49 @@ tools. User defined tasks can be added to the Registry."""
 # the Task subclasses causes pygame (a psychopy dependency) to create a GUI,
 # which seems to prevent our other GUI code from working.
 
-from typing import List
-
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.system_utils import AutoNumberEnum
+from typing import List, Type
 
 
-class TaskType(AutoNumberEnum):
-    """Enum of the registered experiment types (Tasks), along with the label
-    used for display in the GUI and command line tools. Values are looked up
-    by their (1-based) index.
+class TaskRegistry:
+    registry_dict: Dict[str, Type[Task]]
 
-    Examples:
-    >>> TaskType(1)
-    <TaskType.RSVP_CALIBRATION: 1>
+    def __init__(self):
+        # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
+        # https://github.com/python/mypy/issues/3115
+        from bcipy.task.paradigm import vep, rsvp, matrix  # noqa
+        from bcipy.task import actions  # noqa
 
-    >>> TaskType(1).label
-    'RSVP Calibration'
-    """
+        self.registry_dict = {}
+        self.collect_subclasses(Task)  # type: ignore[type-abstract]
 
-    RSVP_CALIBRATION = 'RSVP Calibration'
-    RSVP_COPY_PHRASE = 'RSVP Copy Phrase'
-    RSVP_TIMING_VERIFICATION_CALIBRATION = 'RSVP Time Test Calibration'
-    MATRIX_CALIBRATION = 'Matrix Calibration'
-    MATRIX_TIMING_VERIFICATION_CALIBRATION = 'Matrix Time Test Calibration'
-    MATRIX_COPY_PHRASE = 'Matrix Copy Phrase'
-    VEP_CALIBRATION = 'VEP Calibration'
+    def collect_subclasses(self, cls: Type[Task]):
+        """Recursively collects all non-abstract subclasses of the given class and adds them to the registry."""
+        for sub_class in cls.__subclasses__():
+            if not getattr(sub_class, '__abstractmethods__', False):
+                self.registry_dict[sub_class.name] = sub_class
+            self.collect_subclasses(sub_class)
 
-    def __init__(self, label):
-        self.label = label
+    def get(self, task_name: str) -> Type[Task]:
+        """Returns a task type based on its name property."""
+        if task_name in self.registry_dict:
+            return self.registry_dict[task_name]
+        raise ValueError(f'{task_name} not a registered task')
 
-    @classmethod
-    def by_value(cls, item):
-        tasks = cls.list()
-        # The cls.list method returns a sorted list of enum tasks
-        # check if item present and return the index + 1 (which is the ENUM value for the task)
-        if item in tasks:
-            return cls(tasks.index(item) + 1)
-        raise BciPyCoreException(f'{item} not a registered TaskType={tasks}')
+    def get_all_types(self) -> List[Type[Task]]:
+        """Returns a list of all registered tasks."""
+        return list(self.registry_dict.values())
 
-    @classmethod
-    def calibration_tasks(cls) -> List['TaskType']:
-        return [
-            task for task in cls if task.name.endswith('CALIBRATION') and
-            'COPY_PHRASE' not in task.name
-        ]
+    def list(self) -> List[str]:
+        """Returns a list of all registered task names."""
+        return list(self.registry_dict.keys())
 
-    @classmethod
-    def list(cls) -> List[str]:
-        return list(map(lambda c: c.label, cls))
+    def calibration_tasks(self) -> List[Type[Task]]:
+        """Returns a list of all registered calibration tasks."""
+        from bcipy.task.base_calibration import BaseCalibrationTask
+        return [task for task in self.get_all_types() if issubclass(task, BaseCalibrationTask)]
+
+    def register_task(self, task: Type[Task]) -> None:
+        """Registers a task with the TaskRegistry."""
+        # Note that all imported tasks are automatically registered when the TaskRegistry is initialized. This
+        # method allows for the registration of additional tasks after initialization.
+        self.registry_dict[task.name] = task

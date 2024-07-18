@@ -23,7 +23,7 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
     Output:
         file_save (String)
     """
-    TASK_NAME = 'Matrix Timing Verification Task'
+    name = 'Matrix Timing Verification Task'
 
     def init_display(self) -> MatrixDisplay:
         """Initialize the display"""

@@ -30,6 +30,7 @@ class RSVPCalibrationTask(BaseCalibrationTask):
     parameters (dict)
     file_save (str)
     """
+    name = 'RSVP Calibration'
     MODE = 'RSVP'
 
     def trigger_type(self, symbol: str, target: str,

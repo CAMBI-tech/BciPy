@@ -32,6 +32,7 @@ class MatrixCalibrationTask(BaseCalibrationTask):
     parameters (Parameters Object)
     file_save (String)
     """
+    name = 'MatrixCalibrationTask'
     MODE = 'Matrix'
 
     @property

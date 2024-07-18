@@ -1,9 +1,8 @@
-from bcipy.orchestrator.orchestrator import SessionOrchestrator
-from bcipy.orchestrator.actions import OfflineAnalysisAction, ExperimentFieldCollectionAction
-from bcipy.config import DEFAULT_EXPERIMENT_ID
-from bcipy.config import DEFAULT_PARAMETER_FILENAME
-
+from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETER_FILENAME
 from bcipy.helpers.load import load_experimental_data
+from bcipy.orchestrator.orchestrator import SessionOrchestrator
+from bcipy.task.actions import (ExperimentFieldCollectionAction,
+                                OfflineAnalysisAction)
 
 
 def demo_orchestrator(data_path: str, parameters_path: str) -> None:

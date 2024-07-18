@@ -1,7 +1,8 @@
 import unittest
 from bcipy.orchestrator.config import parse_sequence, serialize_sequence, validate_sequence_string
-from bcipy.task import TaskType
-from bcipy.orchestrator.actions import OfflineAnalysisAction
+from bcipy.task.actions import OfflineAnalysisAction
+from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
 class TestTaskProtocolProcessing(unittest.TestCase):
@@ -10,10 +11,10 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         sequence = 'RSVP Calibration'
         parsed = parse_sequence(sequence)
         assert len(parsed) == 1
-        assert parsed[0] == TaskType.RSVP_CALIBRATION
+        assert parsed[0] is RSVPCalibrationTask
 
-    def test_parses_one_action(self) -> None:
-        actions = 'Offline Analysis'
+    def test_parses_with_task_name(self) -> None:
+        actions = OfflineAnalysisAction.name
         parsed = parse_sequence(actions)
         assert len(parsed) == 1
         assert parsed[0] is OfflineAnalysisAction
@@ -22,24 +23,32 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         actions = 'RSVP Calibration -> RSVP Copy Phrase'
         parsed = parse_sequence(actions)
         assert len(parsed) == 2
-        assert parsed[0] == TaskType.RSVP_CALIBRATION
-        assert parsed[1] == TaskType.RSVP_COPY_PHRASE
+        assert parsed[0] is RSVPCalibrationTask
+        assert parsed[1] is RSVPCopyPhraseTask
 
     def test_parses_actions_and_tasks(self) -> None:
-        sequence = 'RSVP Calibration -> Offline Analysis -> RSVP Copy Phrase'
+        sequence = 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
         parsed = parse_sequence(sequence)
         assert len(parsed) == 3
-        assert parsed[0] == TaskType.RSVP_CALIBRATION
+        assert parsed[0] is RSVPCalibrationTask
         assert parsed[1] is OfflineAnalysisAction
-        assert parsed[2] == TaskType.RSVP_COPY_PHRASE
+        assert parsed[2] is RSVPCopyPhraseTask
 
-    def test_throws_exception_on_invalid_action(self) -> None:
+    def test_parses_sequence_with_extra_spaces(self) -> None:
+        actions = ' RSVP Calibration ->  Offline Analysis Action    -> RSVP Copy Phrase  '
+        parsed = parse_sequence(actions)
+        assert len(parsed) == 3
+        assert parsed[0] is RSVPCalibrationTask
+        assert parsed[1] is OfflineAnalysisAction
+        assert parsed[2] is RSVPCopyPhraseTask
+
+    def test_throws_exception_on_invalid_task(self) -> None:
         actions = 'RSVP Calibration -> does not exist'
         with self.assertRaises(ValueError):
             parse_sequence(actions)
 
-    def test_throws_exception_on_invalid_task(self) -> None:
-        actions = 'RSVP Calibration -> RSVP Copy Phrase -> does not exist'
+    def test_throws_exception_on_invalid_string(self) -> None:
+        actions = 'thisstringisbad'
         with self.assertRaises(ValueError):
             parse_sequence(actions)
 
@@ -53,21 +62,11 @@ class TestTaskProtocolProcessing(unittest.TestCase):
             validate_sequence_string(actions)
 
     def test_serializes_one_task(self) -> None:
-        actions = [TaskType.RSVP_CALIBRATION]
+        actions = [RSVPCalibrationTask]
         serialized = serialize_sequence(actions)
-        assert serialized == 'RSVP Calibration'
-
-    def test_serializes_one_action(self) -> None:
-        sequence = [OfflineAnalysisAction]
-        serialized = serialize_sequence(sequence)
-        assert serialized == 'Offline Analysis'
-
-    def test_serializes_actions_and_tasks(self) -> None:
-        sequence = [TaskType.RSVP_CALIBRATION, OfflineAnalysisAction, TaskType.RSVP_COPY_PHRASE]
-        serialized = serialize_sequence(sequence)
-        assert serialized == 'RSVP Calibration -> Offline Analysis -> RSVP Copy Phrase'
+        assert serialized == RSVPCalibrationTask.name
 
     def test_serializes_multiple_tasks(self) -> None:
-        actions = [TaskType.RSVP_CALIBRATION, TaskType.RSVP_COPY_PHRASE]
-        serialized = serialize_sequence(actions)
-        assert serialized == 'RSVP Calibration -> RSVP Copy Phrase'
+        sequence = [RSVPCalibrationTask, OfflineAnalysisAction, RSVPCopyPhraseTask]
+        serialized = serialize_sequence(sequence)
+        assert serialized == 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'

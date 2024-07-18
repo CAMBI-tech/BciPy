@@ -33,6 +33,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
     parameters (Dictionary)
     file_save (String)
     """
+    name = 'VEP Calibration'
     MODE = 'VEP'
 
     def __init__(self, win: visual.Window, daq: ClientManager,

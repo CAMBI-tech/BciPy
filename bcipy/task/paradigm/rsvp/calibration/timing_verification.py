@@ -28,7 +28,7 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     Output:
         file_save (str)
     """
-    TASK_NAME = 'RSVP Timing Verification Task'
+    name = 'RSVP Timing Verification'
 
     def __init__(self, win: visual.Window, daq: ClientManager,
                  parameters: Parameters, file_save: str) -> None:
@@ -63,10 +63,3 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
 
         return repeat(Inquiry(stimuli, durations, colors),
                       params['stim_number'])
-
-    @classmethod
-    def label(cls) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME
-
-    def name(self) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME

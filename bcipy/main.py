@@ -1,7 +1,7 @@
 import argparse
 import logging
 import multiprocessing
-from typing import List, Optional
+from typing import List, Optional, Type
 
 from psychopy import visual
 
@@ -20,16 +20,17 @@ from bcipy.helpers.system_utils import configure_logger, get_system_info
 from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
-from bcipy.task import TaskType
+from bcipy.task import TaskRegistry, Task
 from bcipy.task.start_task import start_task
 
 log = logging.getLogger(__name__)
+task_registry = TaskRegistry()
 
 
 def bci_main(
         parameter_location: str,
         user: str,
-        task: TaskType,
+        task: Type[Task],
         experiment: str = DEFAULT_EXPERIMENT_ID,
         alert: bool = False,
         visualize: bool = True,
@@ -49,7 +50,7 @@ def bci_main(
     Input:
         parameter_location (str): location of parameters file to use
         user (str): name of the user
-        task (TaskType): registered bcipy TaskType
+        task (Task): registered bcipy Task
         experiment_id (str): Name of the experiment. Default name is DEFAULT_EXPERIMENT_ID.
         alert (bool): whether to alert the user when the task is complete
         visualize (bool): whether to visualize data at the end of a task
@@ -84,7 +85,7 @@ def bci_main(
         parameters['data_save_loc'],
         user,
         parameter_location,
-        task=task.label,
+        task=task.name,
         experiment_id=experiment)
 
     # configure bcipy session logging
@@ -110,7 +111,7 @@ def bci_main(
 
 
 def execute_task(
-        task: TaskType,
+        task: Type[Task],
         parameters: dict,
         save_folder: str,
         alert: bool,
@@ -122,7 +123,7 @@ def execute_task(
         which will initialize experiment.
 
     Input:
-        task(TaskType): Task that should be registered in TaskType
+        task(Task): Task that should be registered in TaskRegistry
         parameters (dict): parameter dictionary
         save_folder (str): path to save folder
         alert (bool): whether to alert the user when the task is complete
@@ -136,7 +137,7 @@ def execute_task(
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
     # modules to be loaded.
-    if task not in TaskType.calibration_tasks():
+    if task not in task_registry.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         if not fake:
             try:
@@ -222,9 +223,9 @@ def bcipy_main() -> None:
     """
     # Needed for windows machines
     multiprocessing.freeze_support()
-
+    tr = TaskRegistry()
     experiment_options = list(load_experiments().keys())
-    task_options = TaskType.list()
+    task_options = tr.list()
     parser = argparse.ArgumentParser()
 
     # Command line utility for adding arguments/ paths via command line
@@ -259,7 +260,8 @@ def bcipy_main() -> None:
     args = parser.parse_args()
 
     # Start BCI Main
-    bci_main(args.parameters, str(args.user), TaskType.by_value(str(args.task)),
+    task = task_registry.get(args.task)
+    bci_main(args.parameters, str(args.user), task,
              str(args.experiment), args.alert, args.noviz, args.fake)
 
 
