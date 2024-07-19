@@ -80,7 +80,7 @@ class ExperimentRegistry(BCIGui):
 
         Reconstruct the line items from the registered fields and refresh the scrollable panel of registered fields.
         """
-        self.build_protocol_line_items_from_fields()
+        self.build_protocol_line_items()
         self.protocol_panel.refresh(self.protocol_line_items)
 
     def toggle_required_field(self) -> None:
@@ -130,6 +130,34 @@ class ExperimentRegistry(BCIGui):
         task_name = self.window.sender().get_id()
         self.protocol_tasks.remove(task_name)
         self.refresh_protocol_panel()
+
+    def move_task_up(self) -> None:
+        """Move Task Up.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        task_name = self.window.sender().get_id()
+        index = self.protocol_tasks.index(task_name)
+        if index > 0:
+            self.protocol_tasks[index], self.protocol_tasks[index - 1] = self.protocol_tasks[index - 1], self.protocol_tasks[index]
+            self.refresh_protocol_panel()
+
+    def move_task_down(self) -> None:
+        """Move Task Down.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        task_name = self.window.sender().get_id()
+        index = self.protocol_tasks.index(task_name)
+        if index < len(self.protocol_tasks) - 1:
+            self.protocol_tasks[index], self.protocol_tasks[index + 1] = self.protocol_tasks[index + 1], self.protocol_tasks[index]
+            self.refresh_protocol_panel()
 
     def remove_field(self) -> None:
         """Remove Field.
@@ -211,7 +239,7 @@ class ExperimentRegistry(BCIGui):
         # finally, set the new line items for rendering
         self.field_line_items = LineItems(items, self.width)
 
-    def build_protocol_line_items_from_fields(self) -> None:
+    def build_protocol_line_items(self) -> None:
         """Build Line Items From Fields.
 
         Loop over the registered experiment fields and create LineItems, which can by used to toggle the required
@@ -224,6 +252,18 @@ class ExperimentRegistry(BCIGui):
                     'Remove': {
                         'action': self.remove_task,
                         'color': 'red',
+                        'textColor': 'white',
+                        'id': task
+                    },
+                    '▲': {
+                        'action': self.move_task_up,
+                        'color': 'grey',
+                        'textColor': 'white',
+                        'id': task
+                    },
+                    '▼': {
+                        'action': self.move_task_down,
+                        'color': 'grey',
                         'textColor': 'white',
                         'id': task
                     }
@@ -484,7 +524,6 @@ class ExperimentRegistry(BCIGui):
 
     def add_task(self) -> None:
         task = self.protocol_input.currentText()
-        print(task)
         self.protocol_tasks.append(task)
         self.refresh_protocol_panel()
 
