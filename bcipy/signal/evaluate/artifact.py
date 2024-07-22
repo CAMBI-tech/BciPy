@@ -29,15 +29,15 @@ class DefaultArtifactParameters(Enum):
     """
 
     # Voltage
-    PEAK_THRESHOLD = .000007
-    PEAK_MIN_DURATION = 0.001
+    PEAK_THRESHOLD = 100e-7
+    PEAK_MIN_DURATION = 0.005
     FLAT_THRESHOLD = 0.5e-6
     FLAT_MIN_DURATION = 0.1
     VOlTAGE_LABEL_DURATION = 0.25
 
     # Eye
     EOG_LABEL_DURATION = 0.2
-    EOG_THRESHOLD = 80e-6
+    EOG_THRESHOLD = 75e-6
     EOG_MIN_DURATION = 0.5
 
     # I/O
@@ -552,10 +552,20 @@ if __name__ == "__main__":
 
                 devices.load(Path(BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME))
                 device_spec = devices.preconfigured_device(raw_data.daq_type)
+
+                # check the device spec for any frontal channels to use for EOG detection
+                eye_channels = []
+                for channel in device_spec.channels:
+                    if 'F' in channel:
+                        eye_channels.append(channel)
+                if len(eye_channels) == 0:
+                    eye_channels = None
+    
                 artifact_detector = ArtifactDetection(
                         raw_data,
                         parameters,
                         device_spec,
+                        eye_channels=eye_channels,
                         session_triggers=triggers,
                         save_path=None if not args.save else session,
                         semi_automatic=args.semi)
