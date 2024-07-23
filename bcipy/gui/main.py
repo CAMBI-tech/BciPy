@@ -971,7 +971,8 @@ class ScrollableFrame(QWidget):
                  height: int,
                  width: int,
                  background_color: str = 'black',
-                 widget: Optional[QWidget] = None):
+                 widget: Optional[QWidget] = None,
+                 title: Optional[str] = None):
         super().__init__()
 
         self.height = height
@@ -994,6 +995,15 @@ class ScrollableFrame(QWidget):
         if widget:
             self.widget = widget
             self.frame.setWidget(widget)
+
+        # If there is a title, add it to the top of the frame
+        if title:
+            title_label = QLabel(title)
+            title_label.setStyleSheet(
+                f'background-color: black; color: white;')
+            title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            title_label.setFont(font(16))
+            self.vbox.addWidget(title_label)
 
         # add the frame and set the layout
         self.vbox.addWidget(self.frame)

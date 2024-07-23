@@ -2,7 +2,6 @@ import sys
 import subprocess
 
 from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
-
 from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
@@ -62,9 +61,9 @@ class ExperimentRegistry(BCIGui):
         
         protocol_line_widget = LineItems([], self.width)
         line_widget = LineItems([], self.width)
-        self.protocol_panel = ScrollableFrame(100, self.width, background_color='white', widget=protocol_line_widget)
+        self.protocol_panel = ScrollableFrame(200, self.width, background_color='white', widget=protocol_line_widget, title='Task Protocol')
         self.add_widget(self.protocol_panel)
-        self.field_panel = ScrollableFrame(100, self.width, background_color='white', widget=line_widget)
+        self.field_panel = ScrollableFrame(200, self.width, background_color='white', widget=line_widget, title='Registered fields *click to toggle required field*')
         self.add_widget(self.field_panel)
 
     def refresh_field_panel(self) -> None:
@@ -323,13 +322,13 @@ class ExperimentRegistry(BCIGui):
             text_color='white',
             font_size=font_size)
         text_y += self.padding + 45
-        self.add_static_textbox(
-            text='Registered fields *click to toggle required field*',
-            position=[text_x, text_y],
-            size=[300, 50],
-            background_color='black',
-            text_color='white',
-            font_size=14)
+        # self.add_static_textbox(
+        #     text='Registered fields *click to toggle required field*',
+        #     position=[text_x, text_y],
+        #     size=[300, 50],
+        #     background_color='black',
+        #     text_color='white',
+        #     font_size=14)
 
     def build_inputs(self) -> None:
         """Build Inputs.
@@ -588,8 +587,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = ExperimentRegistry(
         title='Experiment Registry',
-        height=700,
-        width=600,
+        height=950,
+        width=700,
         background_color='black')
 
     sys.exit(bcipy_gui.exec())
