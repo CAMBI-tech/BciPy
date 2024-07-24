@@ -3,7 +3,7 @@
 from typing import List, Optional, Type
 from psychopy import visual
 
-from bcipy.task import Task
+from bcipy.task import Task, TaskData
 from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
 from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
@@ -65,7 +65,7 @@ def start_task(
         file_save: str,
         signal_models: Optional[List[SignalModel]] = None,
         language_model: Optional[LanguageModel] = None,
-        fake: bool = True) -> str:
+        fake: bool = True) -> TaskData:
     """Creates a Task and starts execution."""
     bcipy_task = make_task(
         display_window,

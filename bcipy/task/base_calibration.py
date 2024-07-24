@@ -22,7 +22,7 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
-from bcipy.task import Task
+from bcipy.task import Task, TaskData
 
 
 class Inquiry(NamedTuple):
@@ -209,7 +209,7 @@ class BaseCalibrationTask(Task):
             self.logger.info('User wants to exit.')
         return should_continue
 
-    def execute(self) -> str:
+    def execute(self) -> TaskData:
         """Task run loop."""
         self.logger.info(f'Starting {self.name}!')
         self.wait()
@@ -239,7 +239,7 @@ class BaseCalibrationTask(Task):
         self.write_offset_trigger()
         self.cleanup()
 
-        return self.file_save
+        return TaskData(task_save=self.file_save)
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""

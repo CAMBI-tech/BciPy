@@ -4,6 +4,7 @@ from typing import Callable, Optional
 from bcipy.gui.experiments.ExperimentField import \
     start_experiment_field_collection_gui
 from bcipy.task import Task
+from bcipy.task.main import TaskData
 
 
 class CallbackAction(Task):
@@ -18,11 +19,11 @@ class CallbackAction(Task):
         self.args = args
         self.kwargs = kwargs
 
-    def execute(self):
+    def execute(self) -> TaskData:
         self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
         self.callback(*self.args, **self.kwargs)
         self.logger.info(f'Callback action {self.callback} executed')
-        return self.name
+        return TaskData()
 
 
 class CodeHookAction(Task):
@@ -36,14 +37,13 @@ class CodeHookAction(Task):
         self.code_hook = code_hook
         self.subprocess = subprocess
 
-    def execute(self):
+    def execute(self) -> TaskData:
         if self.subprocess:
             subprocess.Popen(self.code_hook, shell=True)
 
         else:
             subprocess.run(self.code_hook, shell=True)
-
-        return self.code_hook
+        return TaskData()
 
 
 class OfflineAnalysisAction(Task):
@@ -59,10 +59,10 @@ class OfflineAnalysisAction(Task):
         self.data_directory = data_directory
         self.command = self.construct_command()
 
-    def execute(self):
+    def execute(self) -> TaskData:
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
-        return self.data_directory
+        return TaskData(task_save=self.data_directory)
 
     def construct_command(self):
         command = 'python -m bcipy.signal.model.offline_analysis'
@@ -71,7 +71,6 @@ class OfflineAnalysisAction(Task):
             command += ' --parameters_file ' + self.parameters_path
         if self.alert:
             command += ' --alert'
-        return command
 
 
 class ExperimentFieldCollectionAction(Task):
@@ -86,9 +85,10 @@ class ExperimentFieldCollectionAction(Task):
         self.experiment_id = experiment_id
         self.save_folder = save_path
 
-    def execute(self):
+    def execute(self) -> TaskData:
         self.logger.info(
             f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}'
         )
         start_experiment_field_collection_gui(self.experiment_id,
                                               self.save_folder)
+        return TaskData(task_save=self.save_folder)

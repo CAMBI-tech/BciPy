@@ -32,7 +32,7 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.task import Task
+from bcipy.task import Task, TaskData
 from bcipy.task.control.evidence import (EvidenceEvaluator,
                                          init_evidence_evaluator)
 from bcipy.task.data import EvidenceType, Inquiry, Session
@@ -410,7 +410,7 @@ class RSVPCopyPhraseTask(Task):
             return self.copy_phrase[len(self.spelled_text)]
         return BACKSPACE_CHAR
 
-    def execute(self) -> str:
+    def execute(self) -> TaskData:
         """Executes the task.
 
         Returns
@@ -470,7 +470,7 @@ class RSVPCopyPhraseTask(Task):
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait()
 
-        return self.file_save
+        return TaskData(task_save=self.file_save)
 
     def evaluate_evidence(self) -> Decision:
         """Uses the `copy_phrase_task` parameter to evaluate the provided
