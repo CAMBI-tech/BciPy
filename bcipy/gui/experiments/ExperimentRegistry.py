@@ -1,11 +1,13 @@
 import sys
 import subprocess
 
-from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
-
+from PyQt6.QtWidgets import QHBoxLayout
+from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems, PushButton
 from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
+from bcipy.task.task_registry import TaskRegistry
+from bcipy.orchestrator.config import serialize_protocol
 
 
 class ExperimentRegistry(BCIGui):
@@ -32,37 +34,81 @@ class ExperimentRegistry(BCIGui):
         self.name_input = None
         self.summary_input = None
         self.field_input = None
-        self.panel = None
-        self.line_items = None
+        self.protocol_input = None
+        self.field_panel = None
+        self.protocol_panel = None
+        self.field_line_items = None
+        self.protocol_line_items = None
 
         # fields is for display of registered fields
         self.fields = []
+        self.task_registry = TaskRegistry()
+        self.protocol_tasks = []
         self.registered_fields = load_fields()
         self.name = None
         self.summary = None
 
         # for registered fields
         self.build_scroll_area()
+        self.build_create_experiment_button()
 
         self.show_gui()
         self.update_field_list()
+
+    def build_create_experiment_button(self) -> None:
+        """Build Create Experiment Button.
+
+        Create a button to create the experiment. This is it's own function to allow it to be inserted
+        below the scroll areas.
+        """
+        create_experiment_layout = QHBoxLayout()
+        create_experiment_layout.addStretch(1)
+        create_experiment = PushButton('Create Experiment', self.window)
+        create_experiment.clicked.connect(self.create_experiment)
+        create_experiment.setStyleSheet(
+            'background-color: green; color: white; padding: 10px;')
+        create_experiment_layout.addWidget(create_experiment)
+        create_experiment_layout.addStretch(1)
+        self.vbox.addLayout(create_experiment_layout)
 
     def build_scroll_area(self) -> None:
         """Build Scroll Area.
 
         Appends a scrollable area at the bottom of the UI for management of registered fields via LineItems.
         """
+
+        protocol_line_widget = LineItems([], self.width)
         line_widget = LineItems([], self.width)
-        self.panel = ScrollableFrame(200, self.width, background_color='white', widget=line_widget)
-        self.add_widget(self.panel)
+        self.protocol_panel = ScrollableFrame(
+            150,
+            self.width,
+            background_color='white',
+            widget=protocol_line_widget,
+            title='Task Protocol')
+        self.add_widget(self.protocol_panel)
+        self.field_panel = ScrollableFrame(
+            150,
+            self.width,
+            background_color='white',
+            widget=line_widget,
+            title='Registered fields *click to toggle required field*')
+        self.add_widget(self.field_panel)
 
     def refresh_field_panel(self) -> None:
         """Refresh Field Panel.
 
         Reconstruct the line items from the registered fields and refresh the scrollable panel of registered fields.
         """
-        self.build_line_items_from_fields()
-        self.panel.refresh(self.line_items)
+        self.build_field_line_items_from_fields()
+        self.field_panel.refresh(self.field_line_items)
+
+    def refresh_protocol_panel(self) -> None:
+        """Refresh Protocol Panel.
+
+        Reconstruct the line items from the registered fields and refresh the scrollable panel of registered fields.
+        """
+        self.build_protocol_line_items()
+        self.protocol_panel.refresh(self.protocol_line_items)
 
     def toggle_required_field(self) -> None:
         """Toggle Required Field.
@@ -100,6 +146,48 @@ class ExperimentRegistry(BCIGui):
                     field[field_name]['anonymize'] = 'false'
         self.refresh_field_panel()
 
+    def remove_task(self) -> None:
+        """Remove Task.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        task_name = self.window.sender().get_id()
+        self.protocol_tasks.remove(task_name)
+        self.refresh_protocol_panel()
+
+    def move_task_up(self) -> None:
+        """Move Task Up.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        task_name = self.window.sender().get_id()
+        index = self.protocol_tasks.index(task_name)
+        if index > 0:
+            self.protocol_tasks[index], self.protocol_tasks[index - 1] = \
+                self.protocol_tasks[index - 1], self.protocol_tasks[index]
+            self.refresh_protocol_panel()
+
+    def move_task_down(self) -> None:
+        """Move Task Down.
+
+        *Button Action*
+
+        Using the field_name retrieved from the button (get_id), find the field in self.experiment_fields and remove it
+            from the list.
+        """
+        task_name = self.window.sender().get_id()
+        index = self.protocol_tasks.index(task_name)
+        if index < len(self.protocol_tasks) - 1:
+            self.protocol_tasks[index], self.protocol_tasks[index + 1] = \
+                self.protocol_tasks[index + 1], self.protocol_tasks[index]
+            self.refresh_protocol_panel()
+
     def remove_field(self) -> None:
         """Remove Field.
 
@@ -121,7 +209,7 @@ class ExperimentRegistry(BCIGui):
         self.experiment_fields.pop(remove)
         self.refresh_field_panel()
 
-    def build_line_items_from_fields(self) -> None:
+    def build_field_line_items_from_fields(self) -> None:
         """Build Line Items From Fields.
 
         Loop over the registered experiment fields and create LineItems, which can by used to toggle the required
@@ -178,7 +266,42 @@ class ExperimentRegistry(BCIGui):
                 items.append(item)
 
         # finally, set the new line items for rendering
-        self.line_items = LineItems(items, self.width)
+        self.field_line_items = LineItems(items, self.width)
+
+    def build_protocol_line_items(self) -> None:
+        """Build Line Items From Fields.
+
+        Loop over the registered experiment fields and create LineItems, which can by used to toggle the required
+            field, anonymization, or remove as a registered experiment field.
+        """
+        items = []
+        for task in self.protocol_tasks:
+            item = {
+                task: {
+                    'Remove': {
+                        'action': self.remove_task,
+                        'color': 'red',
+                        'textColor': 'white',
+                        'id': task
+                    },
+                    '▲': {
+                        'action': self.move_task_up,
+                        'color': 'grey',
+                        'textColor': 'white',
+                        'id': task
+                    },
+                    '▼': {
+                        'action': self.move_task_down,
+                        'color': 'grey',
+                        'textColor': 'white',
+                        'id': task
+                    }
+                }
+            }
+            items.append(item)
+
+        # finally, set the new line items for rendering
+        self.protocol_line_items = LineItems(items, self.width)
 
     def build_text(self) -> None:
         """Build Text.
@@ -214,6 +337,14 @@ class ExperimentRegistry(BCIGui):
             font_size=font_size)
         text_y += self.padding
         self.add_static_textbox(
+            text='Protocol',
+            position=[text_x, text_y],
+            size=[300, 50],
+            background_color='black',
+            text_color='white',
+            font_size=font_size)
+        text_y += self.padding
+        self.add_static_textbox(
             text='Fields',
             position=[text_x, text_y],
             size=[300, 50],
@@ -221,13 +352,6 @@ class ExperimentRegistry(BCIGui):
             text_color='white',
             font_size=font_size)
         text_y += self.padding + 45
-        self.add_static_textbox(
-            text='Registered fields *click to toggle required field*',
-            position=[text_x, text_y],
-            size=[300, 50],
-            background_color='black',
-            text_color='white',
-            font_size=14)
 
     def build_inputs(self) -> None:
         """Build Inputs.
@@ -255,6 +379,15 @@ class ExperimentRegistry(BCIGui):
             text_color='black')
 
         input_y += self.padding
+        self.protocol_input = self.add_combobox(
+            position=[input_x, input_y],
+            size=input_size,
+            editable=False,
+            items=self.task_registry.list(),
+            background_color='white',
+            text_color='black')
+
+        input_y += self.padding
         self.field_input = self.add_combobox(
             position=[input_x, input_y],
             size=input_size,
@@ -269,17 +402,12 @@ class ExperimentRegistry(BCIGui):
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
         btn_create_x = self.width - self.padding - 10
-        btn_create_y = self.height - self.padding - 200
+        btn_create_y = self.height - self.padding - 500
         size = 150
-        self.add_button(
-            message='Create Experiment', position=[btn_create_x - (size / 2), btn_create_y],
-            size=[size, self.btn_height],
-            background_color='green',
-            action=self.create_experiment,
-            text_color='white')
 
         btn_field_x = (self.width / 2) + 150
-        btn_field_y = 310
+        # btn_field_y = 310
+        btn_field_y = 410
         # create field
         self.add_button(
             message='+',
@@ -297,6 +425,17 @@ class ExperimentRegistry(BCIGui):
             size=[60, self.btn_height - 10],
             background_color='grey',
             action=self.add_field,
+            text_color='white'
+        )
+
+        btn_field_y = 310
+        # add field
+        self.add_button(
+            message='Add Task',
+            position=[btn_field_x - 75, btn_field_y],
+            size=[60, self.btn_height - 10],
+            background_color='green',
+            action=self.add_task,
             text_color='white'
         )
 
@@ -331,9 +470,11 @@ class ExperimentRegistry(BCIGui):
         Add a new experiment to the dict of experiments. It follows the format:
              { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
         """
+        task_objects = [self.task_registry.get(task_name) for task_name in self.protocol_tasks]
         self.experiments[self.name] = {
             'fields': self.experiment_fields,
-            'summary': self.summary
+            'summary': self.summary,
+            'protocol': serialize_protocol(task_objects)
         }
 
     def save_experiments(self) -> None:
@@ -396,6 +537,11 @@ class ExperimentRegistry(BCIGui):
         self.fields = [item for item in self.registered_fields]
         self.field_input.addItems(self.fields)
 
+    def add_task(self) -> None:
+        task = self.protocol_input.currentText()
+        self.protocol_tasks.append(task)
+        self.refresh_protocol_panel()
+
     def build_assets(self) -> None:
         """Build Assets.
 
@@ -457,8 +603,8 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = ExperimentRegistry(
         title='Experiment Registry',
-        height=700,
-        width=600,
+        height=880,
+        width=700,
         background_color='black')
 
     sys.exit(bcipy_gui.exec())

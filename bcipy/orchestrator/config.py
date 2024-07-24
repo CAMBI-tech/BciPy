@@ -7,7 +7,7 @@ from bcipy.config import TASK_SEPERATOR
 from bcipy.task.task_registry import TaskRegistry
 
 
-def parse_sequence(sequence: str) -> List[Type[Task]]:
+def parse_protocol(protocol: str) -> List[Type[Task]]:
     """
     Parses a string of actions into a list of TaskType objects.
 
@@ -15,7 +15,7 @@ def parse_sequence(sequence: str) -> List[Type[Task]]:
     to be in the format of 'Action1 -> Action2 -> ... -> ActionN'.
     Parameters
     ----------
-        action_sequence : str
+        protocol : str
             A string of actions in the format of 'Action1 -> Action2 -> ... -> ActionN'.
 
     Returns
@@ -24,10 +24,10 @@ def parse_sequence(sequence: str) -> List[Type[Task]]:
             A list of TaskType objects that represent the actions in the input string.
     """
     task_registry = TaskRegistry()
-    return [task_registry.get(item.strip()) for item in sequence.split(TASK_SEPERATOR)]
+    return [task_registry.get(item.strip()) for item in protocol.split(TASK_SEPERATOR)]
 
 
-def validate_sequence_string(action_sequence: str) -> None:
+def validate_protocol_string(protocol: str) -> None:
     """
     Validates a string of actions.
 
@@ -35,7 +35,7 @@ def validate_sequence_string(action_sequence: str) -> None:
 
     Parameters
     ----------
-        action_sequence : str
+        protocol : str
             A string of actions in the format of 'Action1 -> Action2 -> ... -> ActionN'.
 
     Raises
@@ -43,12 +43,12 @@ def validate_sequence_string(action_sequence: str) -> None:
         ValueError
             If the string of actions is invalid.
     """
-    for sequence_item in action_sequence.split(TASK_SEPERATOR):
-        if sequence_item.strip() not in TaskRegistry().list():
-            raise ValueError(f"Invalid task '{sequence_item}' name in action sequence")
+    for protocol_item in protocol.split(TASK_SEPERATOR):
+        if protocol_item.strip() not in TaskRegistry().list():
+            raise ValueError(f"Invalid task '{protocol_item}' name in protocol string.")
 
 
-def serialize_sequence(sequence: List[Type[Task]]) -> str:
+def serialize_protocol(protocol: List[Type[Task]]) -> str:
     """
     Converts a list of TaskType objects into a string of actions.
 
@@ -57,7 +57,7 @@ def serialize_sequence(sequence: List[Type[Task]]) -> str:
 
     Parameters
     ----------
-        action_sequence : str
+        protocol : str
             A string of actions in the format of 'Action1 -> Action2 -> ... -> ActionN'.
 
     Returns
@@ -66,11 +66,11 @@ def serialize_sequence(sequence: List[Type[Task]]) -> str:
             A list of TaskType objects that represent the actions in the input string.
     """
 
-    return f" {TASK_SEPERATOR} ".join([item.name for item in sequence])
+    return f" {TASK_SEPERATOR} ".join([item.name for item in protocol])
 
 
 if __name__ == '__main__':
-    actions = parse_sequence("Matrix Calibration -> Matrix Copy Phrase")
-    string = serialize_sequence(actions)
+    actions = parse_protocol("Matrix Calibration -> Matrix Copy Phrase")
+    string = serialize_protocol(actions)
     print(actions)
     print(string)
