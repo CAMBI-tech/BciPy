@@ -1,7 +1,8 @@
 import sys
 import subprocess
 
-from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems
+from PyQt6.QtWidgets import QHBoxLayout
+from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, ScrollableFrame, LineItems, PushButton
 from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
@@ -49,9 +50,26 @@ class ExperimentRegistry(BCIGui):
 
         # for registered fields
         self.build_scroll_area()
+        self.build_create_experiment_button()
 
         self.show_gui()
         self.update_field_list()
+
+    def build_create_experiment_button(self) -> None:
+        """Build Create Experiment Button.
+        
+        Create a button to create the experiment. This is it's own function to allow it to be inserted
+        below the scroll areas.
+        """
+        create_experiment_layout = QHBoxLayout()
+        create_experiment_layout.addStretch(1)
+        create_experiment = PushButton('Create Experiment', self.window)
+        create_experiment.clicked.connect(self.create_experiment)
+        create_experiment.setStyleSheet(
+            'background-color: green; color: white; padding: 10px;')
+        create_experiment_layout.addWidget(create_experiment)
+        create_experiment_layout.addStretch(1)
+        self.vbox.addLayout(create_experiment_layout)
 
     def build_scroll_area(self) -> None:
         """Build Scroll Area.
@@ -61,9 +79,9 @@ class ExperimentRegistry(BCIGui):
         
         protocol_line_widget = LineItems([], self.width)
         line_widget = LineItems([], self.width)
-        self.protocol_panel = ScrollableFrame(200, self.width, background_color='white', widget=protocol_line_widget, title='Task Protocol')
+        self.protocol_panel = ScrollableFrame(150, self.width, background_color='white', widget=protocol_line_widget, title='Task Protocol')
         self.add_widget(self.protocol_panel)
-        self.field_panel = ScrollableFrame(200, self.width, background_color='white', widget=line_widget, title='Registered fields *click to toggle required field*')
+        self.field_panel = ScrollableFrame(150, self.width, background_color='white', widget=line_widget, title='Registered fields *click to toggle required field*')
         self.add_widget(self.field_panel)
 
     def refresh_field_panel(self) -> None:
@@ -382,12 +400,6 @@ class ExperimentRegistry(BCIGui):
         btn_create_y = self.height - self.padding - 500
         # btn_create_y = self.height - self.padding - 100
         size = 150
-        self.add_button(
-            message='Create Experiment', position=[btn_create_x - (size / 2), btn_create_y],
-            size=[size, self.btn_height],
-            background_color='green',
-            action=self.create_experiment,
-            text_color='white')
 
         btn_field_x = (self.width / 2) + 150
         # btn_field_y = 310
@@ -587,7 +599,7 @@ def start_app() -> None:
     bcipy_gui = app(sys.argv)
     ex = ExperimentRegistry(
         title='Experiment Registry',
-        height=950,
+        height=880,
         width=700,
         background_color='black')
 
