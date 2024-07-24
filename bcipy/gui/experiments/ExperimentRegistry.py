@@ -57,7 +57,7 @@ class ExperimentRegistry(BCIGui):
 
     def build_create_experiment_button(self) -> None:
         """Build Create Experiment Button.
-        
+
         Create a button to create the experiment. This is it's own function to allow it to be inserted
         below the scroll areas.
         """
@@ -76,12 +76,22 @@ class ExperimentRegistry(BCIGui):
 
         Appends a scrollable area at the bottom of the UI for management of registered fields via LineItems.
         """
-        
+
         protocol_line_widget = LineItems([], self.width)
         line_widget = LineItems([], self.width)
-        self.protocol_panel = ScrollableFrame(150, self.width, background_color='white', widget=protocol_line_widget, title='Task Protocol')
+        self.protocol_panel = ScrollableFrame(
+            150,
+            self.width,
+            background_color='white',
+            widget=protocol_line_widget,
+            title='Task Protocol')
         self.add_widget(self.protocol_panel)
-        self.field_panel = ScrollableFrame(150, self.width, background_color='white', widget=line_widget, title='Registered fields *click to toggle required field*')
+        self.field_panel = ScrollableFrame(
+            150,
+            self.width,
+            background_color='white',
+            widget=line_widget,
+            title='Registered fields *click to toggle required field*')
         self.add_widget(self.field_panel)
 
     def refresh_field_panel(self) -> None:
@@ -159,7 +169,8 @@ class ExperimentRegistry(BCIGui):
         task_name = self.window.sender().get_id()
         index = self.protocol_tasks.index(task_name)
         if index > 0:
-            self.protocol_tasks[index], self.protocol_tasks[index - 1] = self.protocol_tasks[index - 1], self.protocol_tasks[index]
+            self.protocol_tasks[index], self.protocol_tasks[index - 1] = \
+                self.protocol_tasks[index - 1], self.protocol_tasks[index]
             self.refresh_protocol_panel()
 
     def move_task_down(self) -> None:
@@ -173,7 +184,8 @@ class ExperimentRegistry(BCIGui):
         task_name = self.window.sender().get_id()
         index = self.protocol_tasks.index(task_name)
         if index < len(self.protocol_tasks) - 1:
-            self.protocol_tasks[index], self.protocol_tasks[index + 1] = self.protocol_tasks[index + 1], self.protocol_tasks[index]
+            self.protocol_tasks[index], self.protocol_tasks[index + 1] = \
+                self.protocol_tasks[index + 1], self.protocol_tasks[index]
             self.refresh_protocol_panel()
 
     def remove_field(self) -> None:
@@ -381,7 +393,7 @@ class ExperimentRegistry(BCIGui):
             items=self.task_registry.list(),
             background_color='white',
             text_color='black')
-        
+
         input_y += self.padding
         self.field_input = self.add_combobox(
             position=[input_x, input_y],
