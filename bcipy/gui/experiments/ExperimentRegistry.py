@@ -352,14 +352,7 @@ class ExperimentRegistry(BCIGui):
             text_color='white',
             font_size=font_size)
         text_y += self.padding + 45
-        # self.add_static_textbox(
-        #     text='Registered fields *click to toggle required field*',
-        #     position=[text_x, text_y],
-        #     size=[300, 50],
-        #     background_color='black',
-        #     text_color='white',
-        #     font_size=14)
-
+        
     def build_inputs(self) -> None:
         """Build Inputs.
 
@@ -410,7 +403,6 @@ class ExperimentRegistry(BCIGui):
         """
         btn_create_x = self.width - self.padding - 10
         btn_create_y = self.height - self.padding - 500
-        # btn_create_y = self.height - self.padding - 100
         size = 150
 
         btn_field_x = (self.width / 2) + 150
