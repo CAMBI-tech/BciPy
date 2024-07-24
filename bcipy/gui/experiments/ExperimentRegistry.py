@@ -352,7 +352,7 @@ class ExperimentRegistry(BCIGui):
             text_color='white',
             font_size=font_size)
         text_y += self.padding + 45
-        
+
     def build_inputs(self) -> None:
         """Build Inputs.
 
