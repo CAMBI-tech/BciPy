@@ -79,7 +79,7 @@ class ExperimentFieldCollectionAction(Task):
     Action for collecting experiment field data.
     """
 
-    name = 'ExperimentFieldCollectionAction'
+    name = 'Experiment Field Collection Action'
 
     def __init__(self, experiment_id: str, save_path: str) -> None:
         super().__init__()
