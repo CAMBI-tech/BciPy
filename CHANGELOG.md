@@ -1,6 +1,6 @@
-# Experiment Action
-
+# Experiment Refactor
 - Refactors the Experiment Field Collection GUI to be an action
+- Allows task protocol to be defined in the orchestrator
 
 # Orchestrator Parameters
 Adds parsing functions for action sequences required for the Session Orchestrator
