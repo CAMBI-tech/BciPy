@@ -1000,7 +1000,7 @@ class ScrollableFrame(QWidget):
         if title:
             title_label = QLabel(title)
             title_label.setStyleSheet(
-                f'background-color: black; color: white;')
+                'background-color: black; color: white;')
             title_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
             title_label.setFont(font(16))
             self.vbox.addWidget(title_label)
