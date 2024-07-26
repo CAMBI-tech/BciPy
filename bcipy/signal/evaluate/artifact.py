@@ -126,6 +126,8 @@ class ArtifactDetection:
 
     supported_units = ['volts', 'microvolts']
     support_device_types = ['EEG']
+    analysis_done = False
+    dropped = None
 
     def __init__(
             self,
@@ -171,7 +173,6 @@ class ArtifactDetection:
         # If this value is False, a conversion to volts will be required.
         self.volts = True if self.units == 'volts' else False
         self.mne_data = self.raw_data_to_mne(raw_data, volts=self.volts)
-        self.analysis_done = False
         self.detect_voltage = detect_voltage
         self.detect_eog = detect_eog
         self.semi_automatic = semi_automatic
@@ -199,12 +200,14 @@ class ArtifactDetection:
             dropped_epochs = len(epochs.drop_log)
             total_epochs = len(self.trigger_label)
             percent_dropped = (dropped_epochs / total_epochs) * 100
+            self.dropped = f'{dropped_epochs}/{total_epochs}-[{percent_dropped}] epochs dropped due to artifacts.'
 
         self.analysis_done = True
         if self.save_path:
             self.save_artifacts(overwrite=True)
             print(f'Artifact labelled data saved to {self.save_path}')
 
+        labels = f'{len(labels)} artifacts found in the data.'
 
         return labels, percent_dropped
         

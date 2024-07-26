@@ -10,6 +10,7 @@ from reportlab.platypus import Flowable, KeepTogether
 from reportlab.lib.units import inch
 
 from bcipy.config import BCIPY_FULL_LOGO_PATH
+from bcipy.signal.evaluate.artifact import ArtifactDetection
 
 
 class ReportSection(ABC):
@@ -40,9 +41,15 @@ class SignalReportSection(ReportSection):
 
     def __init__(
             self,
-            figures: List[Figure]) -> None:
+            figures: List[Figure],
+            artifact: Optional[ArtifactDetection]=None) -> None:
         self.figures = figures
         self.report_flowables: List[Flowable] = []
+        self.artifact = artifact
+
+        if self.artifact:
+            assert self.artifact.analysis_done is not False, (
+                "If providing artifact for this report, an analysis must be complete to run this report.")
         self.style = getSampleStyleSheet()
 
     def compile(self) -> Flowable:
@@ -52,7 +59,19 @@ class SignalReportSection(ReportSection):
         """
         self.report_flowables.append(self._create_header())
         self.report_flowables.extend(self._create_epochs_section())
+
+        if self.artifact:
+            self.report_flowables.append(self._create_artifact_section())
         return KeepTogether(self.report_flowables)
+    
+    def _create_artifact_section(self) -> Paragraph:
+        """Create Artifact Section.
+
+        Creates a paragraph with the artifact information. This is only included if an artifact detection is provided.
+        """
+        artifact_text = f'<b>Artifact:</b> {self.artifact}'
+        artifact_section = Paragraph(artifact_text, self.style['BodyText'])
+        return artifact_section
 
     def _create_epochs_section(self) -> List[Image]:
         """Create Epochs Section.
