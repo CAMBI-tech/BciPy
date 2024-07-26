@@ -149,21 +149,22 @@ if __name__ in "__main__":
     trial_data_rsvp, labels_rsvp = load_data_inquiries(rsvp_calib_path, trial_length=trial_length)
 
     # combine the two datasets
-    # trial_data = np.concatenate((trial_data_matrix, trial_data_rsvp), axis=0)
-    # labels = np.concatenate((labels_matrix, labels_rsvp), axis=0)
+    trial_data = np.concatenate((trial_data_matrix, trial_data_rsvp), axis=0)
+    labels = np.concatenate((labels_matrix, labels_rsvp), axis=0)
 
     print(f"Matrix calibration data shape: {trial_data_matrix.shape}, RSVP calibration data shape: {trial_data_rsvp.shape}")
 
     # print(f"Combined data shape: {trial_data.shape}, Combined labels shape: {labels.shape}")
 
     # cross validate the combined data
-    response, scores = crossvalidate_record((trial_data_rsvp, labels_rsvp))
-    # breakpoint()
+    response, scores = crossvalidate_record((trial_data, labels))
     for name in scores:
         results[name] = response[f'mean_test_{name}']
         results[f'std_{name}'] = response[f'std_test_{name}']
 
     print(results)
     print("Done")
+
+    breakpoint()
 
     
