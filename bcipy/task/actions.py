@@ -64,13 +64,14 @@ class OfflineAnalysisAction(Task):
         subprocess.Popen(cmd, shell=True)
         return TaskData(task_save=self.data_directory)
 
-    def construct_command(self):
+    def construct_command(self) -> str:
         command = 'python -m bcipy.signal.model.offline_analysis'
         command += ' --data_folder ' + self.data_directory
         if self.parameters_path:
             command += ' --parameters_file ' + self.parameters_path
         if self.alert:
             command += ' --alert'
+        return command
 
 
 class ExperimentFieldCollectionAction(Task):
