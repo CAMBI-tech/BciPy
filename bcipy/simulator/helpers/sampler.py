@@ -145,7 +145,7 @@ class InquirySampler(Sampler):
 
     def sample(self, state: SimState) -> np.ndarray:
         """Samples a random inquiry for a random data source.
-        
+
         Ensures that if a target is shown in the current inquiry the sampled
         data will be from an inquiry where the target was presented.
 
@@ -187,12 +187,12 @@ class InquirySampler(Sampler):
             # target already in the correct location, no need to adjust
             new_target_position = inquiry_target_position
         elif inquiry_target_position < target_position:
-            # target in the inquiry needs to be pushed later in the inquiry; 
+            # target in the inquiry needs to be pushed later in the inquiry;
             # There is another symbol currently at that position, so we need
             # to ensure that the target is past that symbol (by adding 0.5).
             new_target_position = target_position + 0.5
         elif inquiry_target_position > target_position:
-            # the target in the inquiry needs to be moved earlier in the inquiry; 
+            # the target in the inquiry needs to be moved earlier in the inquiry;
             # there is another non-target symbol currently at that position so
             # the target needs to be moved before that symbol.
             new_target_position = target_position - 0.5

@@ -1,14 +1,13 @@
 """ Factory for Simulator objects """
-import logging
 from pathlib import Path
 from typing import List
 
 from bcipy.helpers.load import load_json_parameters
-from bcipy.simulator.helpers.data_engine import (RawDataEngine)
+from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.metrics import (MetricReferee, RefereeImpl,
                                              SimMetrics1Handler)
 from bcipy.simulator.helpers.model_handler import (ModelHandler,
-                                                   SigLmModelHandler1, )
+                                                   SigLmModelHandler1)
 from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
 from bcipy.simulator.helpers.state_manager import (StateManager,
                                                    StateManagerImpl)

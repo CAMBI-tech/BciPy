@@ -1,3 +1,4 @@
+import inspect
 import logging
 import pickle
 from abc import ABC, abstractmethod
@@ -5,15 +6,14 @@ from typing import Optional
 
 import numpy as np
 
-from bcipy.helpers.language_model import (histogram, init_language_model,
-                                          with_min_prob, language_models_by_name)
+from bcipy.helpers.language_model import (histogram, language_models_by_name,
+                                          with_min_prob)
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.language import LanguageModel, ResponseType
 from bcipy.signal.model import SignalModel
 from bcipy.simulator.helpers.state_manager import SimState
 from bcipy.simulator.helpers.types import SimEvidence
 from bcipy.task.data import EvidenceType
-import inspect
 
 log = logging.getLogger(__name__)
 

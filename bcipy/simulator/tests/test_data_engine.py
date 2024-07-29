@@ -7,7 +7,8 @@ import numpy as np
 import pandas as pd
 
 from bcipy.helpers import load
-from bcipy.simulator.helpers.data_engine import DataEngine, RawDataEngine, RawDataEngineWrapper
+from bcipy.simulator.helpers.data_engine import (RawDataEngine,
+                                                 RawDataEngineWrapper)
 
 # Import the module or class you want to test
 
@@ -87,7 +88,7 @@ class TestRawDataEngine(unittest.TestCase):
 
     def test_matrix_single(self):
         source_dir = "/Users/srikarananthoju/cambi/data/matrixTestWrapper"
-        param_path = "/Users/srikarananthoju/cambi/data/matrixTestWrapper/S007_Matrix_Calibration_Thu_20_Jul_2023_09hr48min56sec_-0400/parameters.json"
+        param_path = f"{source_dir}/S007_Matrix_Calibration_Thu_20_Jul_2023_09hr48min56sec_-0400/parameters.json"
         params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
 
         data_engine = RawDataEngineWrapper(source_dir, params)

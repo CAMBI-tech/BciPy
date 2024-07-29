@@ -125,9 +125,15 @@ class StateManagerImpl(StateManager):
                                            evidences=evidence, decision=decision,
                                            fused_likelihood=fused_likelihood)
 
+        debug_info = [
+            'Fused Likelihoods',
+            f'current typed - {self.state.current_sentence}',
+            f'stimuli {self.state.display_alphabet}'
+        ]
         log.debug(
-            f"Fused Likelihoods | current typed - {self.state.current_sentence} | stimuli {self.state.display_alphabet} \n "
-            f"{histogram(fmt_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}")
+            f"{' | '.join(debug_info)} \n "
+            f"{histogram(fmt_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}"
+        )
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:

@@ -32,7 +32,7 @@ if __name__ == "__main__":
         type=Path,
         required=True,
         help="Parameter File to be used")
-    
+
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     sim_args = vars(args)

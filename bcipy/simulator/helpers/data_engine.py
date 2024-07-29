@@ -6,7 +6,6 @@ from typing import List, NamedTuple, Optional
 import numpy as np
 import pandas as pd
 
-from bcipy.helpers.list import grouper
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers.signal_helpers import (ExtractedExperimentData,
                                                     process_raw_data_for_model)
@@ -27,6 +26,7 @@ class DataEngine(ABC):
 
     def get_parameters(self) -> List[Parameters]:
         ...
+
 
 class Trial(NamedTuple):
     """Data for a given trial (a symbol within an Inquiry).
@@ -49,6 +49,7 @@ class Trial(NamedTuple):
     symbol: str
     target: int
     eeg: np.ndarray
+
 
 class RawDataEngine(DataEngine):
     """
@@ -111,12 +112,13 @@ class RawDataEngine(DataEngine):
                     # iterate through each symbol in the inquiry
                     eeg_samples = [channel[sym_i] for channel in inquiry_eeg
                                    ]  # (channel_n, sample_n)
-                    rows.append(Trial(source=data_source.source_dir,
-                                  inquiry_n=i,
-                                  inquiry_pos=sym_i + 1,
-                                  symbol=symbol,
-                                  target=inquiry_labels[sym_i],
-                                  eeg=np.array(eeg_samples)))
+                    rows.append(
+                        Trial(source=data_source.source_dir,
+                              inquiry_n=i,
+                              inquiry_pos=sym_i + 1,
+                              symbol=symbol,
+                              target=inquiry_labels[sym_i],
+                              eeg=np.array(eeg_samples)))
 
         self.schema = pd.DataFrame(rows)
 

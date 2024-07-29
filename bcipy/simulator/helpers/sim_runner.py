@@ -34,7 +34,7 @@ class MultiSimRunner:
             # creating save dir for sim_i, then mutating sim_i save_directory
             sim_i_save_dir = artifact.init_save_dir(self.wrapper_save_dir, f"run{i}")
             self.simulator.save_dir = sim_i_save_dir
-            artifact.configure_logger(f"{sim_i_save_dir}/logs", f"logs")
+            artifact.configure_logger(f"{sim_i_save_dir}/logs", "logs")
 
             # running simulator
             self.simulator.run()
