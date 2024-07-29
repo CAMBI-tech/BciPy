@@ -1,8 +1,7 @@
 import subprocess
 from typing import Callable, Optional
 
-from bcipy.gui.experiments.ExperimentField import \
-    start_experiment_field_collection_gui
+from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task
 from bcipy.task.main import TaskData
 
@@ -11,7 +10,8 @@ class CallbackAction(Task):
     """
     Action for running a callback.
     """
-    name = 'Callback Action'
+
+    name = "Callback Action"
 
     def __init__(self, callback: Callable, *args, **kwargs) -> None:
         super().__init__()
@@ -20,9 +20,11 @@ class CallbackAction(Task):
         self.kwargs = kwargs
 
     def execute(self) -> TaskData:
-        self.logger.info(f'Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}')
+        self.logger.info(
+            f"Executing callback action {self.callback} with args {self.args} and kwargs {self.kwargs}"
+        )
         self.callback(*self.args, **self.kwargs)
-        self.logger.info(f'Callback action {self.callback} executed')
+        self.logger.info(f"Callback action {self.callback} executed")
         return TaskData()
 
 
@@ -30,7 +32,8 @@ class CodeHookAction(Task):
     """
     Action for running generic code hooks.
     """
-    name = 'Code Hook Action'
+
+    name = "Code Hook Action"
 
     def __init__(self, code_hook: str, subprocess=True) -> None:
         super().__init__()
@@ -50,9 +53,12 @@ class OfflineAnalysisAction(Task):
     """
     Action for running offline analysis.
     """
-    name = 'Offline Analysis Action'
 
-    def __init__(self, data_directory: str, parameters_path: Optional[str] = None, alert=True) -> None:
+    name = "Offline Analysis Action"
+
+    def __init__(
+        self, data_directory: str, parameters_path: Optional[str] = None, alert=True
+    ) -> None:
         super().__init__()
         self.parameters_path = parameters_path
         self.alert = alert
@@ -62,15 +68,18 @@ class OfflineAnalysisAction(Task):
     def execute(self) -> TaskData:
         cmd = self.construct_command()
         subprocess.Popen(cmd, shell=True)
-        return TaskData(task_save=self.data_directory)
+        return TaskData(
+            save_path=self.data_directory,
+            task_dict={"data_directory": self.data_directory, "command": cmd},
+        )
 
     def construct_command(self) -> str:
-        command = 'python -m bcipy.signal.model.offline_analysis'
-        command += ' --data_folder ' + self.data_directory
+        command = "python -m bcipy.signal.model.offline_analysis"
+        command += " --data_folder " + self.data_directory
         if self.parameters_path:
-            command += ' --parameters_file ' + self.parameters_path
+            command += " --parameters_file " + self.parameters_path
         if self.alert:
-            command += ' --alert'
+            command += " --alert"
         return command
 
 
@@ -79,7 +88,7 @@ class ExperimentFieldCollectionAction(Task):
     Action for collecting experiment field data.
     """
 
-    name = 'Experiment Field Collection Action'
+    name = "Experiment Field Collection Action"
 
     def __init__(self, experiment_id: str, save_path: str) -> None:
         super().__init__()
@@ -88,8 +97,12 @@ class ExperimentFieldCollectionAction(Task):
 
     def execute(self) -> TaskData:
         self.logger.info(
-            f'Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}'
+            f"Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}"
         )
-        start_experiment_field_collection_gui(self.experiment_id,
-                                              self.save_folder)
-        return TaskData(task_save=self.save_folder)
+        start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
+        return TaskData(
+            save_path=self.save_folder,
+            task_dict={
+                "experiment_id": self.experiment_id,
+            },
+        )

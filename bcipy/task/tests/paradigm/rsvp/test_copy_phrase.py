@@ -225,7 +225,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.copy_phrase_wrapper, times=1).initialize_series()
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=0).do_inquiry()
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
         self.assertTrue(
             Path(task.session_save_location).is_file(),
@@ -264,7 +264,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
         self.assertTrue(
             Path(task.session_save_location).is_file(),
@@ -301,7 +301,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Assertions
         verify(self.display, times=2).do_inquiry()
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
         self.assertTrue(
             Path(task.session_save_location).is_file(),
@@ -342,7 +342,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Assertions
         verify(self.display, times=1).do_inquiry()
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
         self.assertTrue(
             Path(task.session_save_location).is_file(),
@@ -475,7 +475,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         verify(self.copy_phrase_wrapper, times=1).add_evidence(EvidenceType.BTN, ...)
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.init_evidence_evaluator')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
@@ -597,7 +597,7 @@ class TestCopyPhrase(unittest.TestCase):
         verify(copy_phrase_wrapper_mock, times=1).decide(...)
         verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
-        self.assertEqual(self.temp_dir, result.task_save)
+        self.assertEqual(self.temp_dir, result.save_path)
 
         self.assertTrue(
             Path(task.session_save_location).is_file(),

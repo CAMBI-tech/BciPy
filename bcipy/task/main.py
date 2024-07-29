@@ -11,7 +11,8 @@ class TaskData():
 
     Data structure for storing task return data.
     """
-    task_save: Optional[str] = None
+    save_path: Optional[str] = None
+    task_dict: Optional[dict] = None
 
 
 class Task(ABC):

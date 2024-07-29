@@ -239,7 +239,7 @@ class BaseCalibrationTask(Task):
         self.write_offset_trigger()
         self.cleanup()
 
-        return TaskData(task_save=self.file_save)
+        return TaskData(save_path=self.file_save, task_dict=self.session.as_dict())
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""
