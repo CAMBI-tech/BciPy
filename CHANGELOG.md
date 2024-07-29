@@ -1,3 +1,8 @@
+# Task Return Object
+- Create `TaskData` dataclass to be returned from tasks
+- updates task `execute` methods to return an instance of `TaskData`
+- Allows for optional storage of a save path and task dictionary in `TaskData`
+
 # Experiment Refactor
 - Refactors the Experiment Field Collection GUI to be an action
 - Allows task protocol to be defined in the orchestrator
