@@ -7,9 +7,10 @@ from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.metrics import RefereeImpl, SimMetrics1Handler
-from bcipy.simulator.helpers.sampler import Sampler, EEGByLetterSampler
-from bcipy.simulator.helpers.state_manager import StateManagerImpl, StateManager
 from bcipy.simulator.helpers.model_handler import SignalModelHandler1
+from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
+from bcipy.simulator.helpers.state_manager import (StateManager,
+                                                   StateManagerImpl)
 from bcipy.simulator.sim import SimulatorCopyPhrase
 
 if __name__ == "__main__":
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     )
     sim_parameters = load_json_parameters("bcipy/simulator/sim_parameters.json", value_cast=True)
 
-    data_engine = RawDataEngine(args['data_folders'])
+    data_engine = RawDataEngine(args['data_folders'], sim_parameters)
 
     display_alp = random.sample(alphabet(), 10)
 

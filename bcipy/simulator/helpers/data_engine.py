@@ -7,8 +7,9 @@ import numpy as np
 import pandas as pd
 
 from bcipy.helpers.parameters import Parameters
-from bcipy.simulator.helpers.signal_helpers import (ExtractedExperimentData,
-                                                    process_raw_data_for_model)
+from bcipy.simulator.helpers.signal_helpers import (EegRawDataProcessor,
+                                                    ExtractedExperimentData,
+                                                    RawDataProcessor)
 
 log = logging.getLogger(__name__)
 
@@ -53,12 +54,14 @@ class Trial(NamedTuple):
 
 class RawDataEngine(DataEngine):
     """
-    Object that loads in list of session data folders and transforms data into sample-able pd.df
+    Object that loads in list of session data folders and transforms data into sample-able DataFrame
     """
 
-    def __init__(self, source_dirs: List[str], parameters: Parameters):
+    def __init__(self, source_dirs: List[str], parameters: Parameters, data_processor: RawDataProcessor = None):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
+
+        self.data_processor = data_processor or EegRawDataProcessor()
         self.data: Optional[List[ExtractedExperimentData]] = None
         self.schema: Optional[pd.DataFrame] = None
 
@@ -76,11 +79,11 @@ class RawDataEngine(DataEngine):
         log.debug(f"Loading data from {len(self.source_dirs)} source directories")
 
         self.data = [
-            process_raw_data_for_model(source_dir, self.parameters)
+            self.data_processor.process(source_dir, self.parameters)
             for source_dir in self.source_dirs
         ]
 
-        log.info("Finished loading all data")
+        log.debug("Finished loading all data")
         return self
 
     def transform(self) -> DataEngine:
@@ -121,7 +124,6 @@ class RawDataEngine(DataEngine):
                               eeg=np.array(eeg_samples)))
 
         self.schema = pd.DataFrame(rows)
-
         return self
 
     def get_data(self):
@@ -138,19 +140,9 @@ class RawDataEngineWrapper(RawDataEngine):
         - each data dir contains its raw_data and triggers
     """
 
-    def __init__(self, source_dir: str, parameters: Parameters):
-        data_paths = self.get_data_dirs(source_dir)
-        super().__init__(data_paths, parameters)
-
-    @staticmethod
-    def get_data_dirs(source_dir: str) -> [str]:
-        """
-        Returns all the data dirs within the source dir
-            - e.g [dataDir1Path, dataDir2Path ... ]
-        """
-
-        assert source_dir
-
-        directories: List[str] = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
-
-        return directories
+    def __init__(self,
+                 source_dir: str,
+                 parameters: Parameters,
+                 data_processor: RawDataProcessor = None):
+        data_paths = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
+        super().__init__(data_paths, parameters, data_processor)
