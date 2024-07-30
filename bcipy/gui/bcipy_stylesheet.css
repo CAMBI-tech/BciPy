@@ -1,0 +1,20 @@
+/* This stylesheet uses the QSS syntax, but is named as a CSS file to take advantage of IDE CSS tooling */
+QWidget{
+    background-color: black;
+    color: white;
+    font-size: 16px;
+}
+
+QPushButton {
+    background-color: green;
+    padding: 10px;
+    border-radius: 10px;
+}
+
+QPushButton:hover {
+    background-color: darkgreen;
+}
+
+QPushButton:pressed {
+    background-color: darkslategrey;
+}
