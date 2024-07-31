@@ -1,5 +1,5 @@
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, NamedTuple, Optional
 
@@ -25,6 +25,7 @@ class DataEngine(ABC):
     def get_data(self):
         ...
 
+    @abstractmethod
     def get_parameters(self) -> List[Parameters]:
         ...
 
@@ -57,12 +58,15 @@ class RawDataEngine(DataEngine):
     Object that loads in list of session data folders and transforms data into sample-able DataFrame
     """
 
-    def __init__(self, source_dirs: List[str], parameters: Parameters, data_processor: RawDataProcessor = None):
+    def __init__(self,
+                 source_dirs: List[str],
+                 parameters: Parameters,
+                 data_processor: Optional[RawDataProcessor] = None):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
 
         self.data_processor = data_processor or EegRawDataProcessor()
-        self.data: Optional[List[ExtractedExperimentData]] = None
+        self.data: List[ExtractedExperimentData] = []
         self.schema: Optional[pd.DataFrame] = None
 
         # TODO validate parameters
@@ -76,7 +80,8 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
-        log.debug(f"Loading data from {len(self.source_dirs)} source directories")
+        log.debug(
+            f"Loading data from {len(self.source_dirs)} source directories")
 
         self.data = [
             self.data_processor.process(source_dir, self.parameters)
@@ -143,6 +148,6 @@ class RawDataEngineWrapper(RawDataEngine):
     def __init__(self,
                  source_dir: str,
                  parameters: Parameters,
-                 data_processor: RawDataProcessor = None):
+                 data_processor: Optional[RawDataProcessor] = None):
         data_paths = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
         super().__init__(data_paths, parameters, data_processor)

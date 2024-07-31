@@ -29,11 +29,12 @@ class SimulationFactory:
         # combining parameters
         model_file = Path(smodel_files.pop())
         sim_parameters = load_json_parameters(sim_param_path, value_cast=True)
-        base_parameters = load_json_parameters(kwargs.get('parameters'),
-                                               value_cast=True)
+        params_path: str = kwargs.get('parameters', None)
+        base_parameters = load_json_parameters(params_path, value_cast=True)
         base_parameters.add_missing_items(sim_parameters)
 
-        data_engine = RawDataEngine(source_dirs, base_parameters)
+        data_engine = RawDataEngine(list(map(str, source_dirs)),
+                                    base_parameters)
         state_manager: StateManager = StateManagerImpl(base_parameters)
         sampler: Sampler = EEGByLetterSampler(data_engine)
         model_handler: ModelHandler = SigLmModelHandler1(

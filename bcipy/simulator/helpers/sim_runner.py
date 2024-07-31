@@ -11,15 +11,29 @@ from bcipy.simulator.helpers.metrics import average_sim_metrics
 from bcipy.simulator.simulator_base import Simulator
 
 
-class MultiSimRunner:
+class SimRunner:
+    """An object that orchestrates one or more simulation runs."""
 
-    def __init__(self, simulator: Simulator, n: int, save_dir=None, iteration_sleep=0):
+    def run(self):
+        """Run the simulation"""
+        ...
+
+
+class MultiSimRunner(SimRunner):
+    """Runs multiple iterations of the simulation."""
+
+    def __init__(self,
+                 simulator: Simulator,
+                 n: int,
+                 save_dir=None,
+                 iteration_sleep=0):
         self.simulator: Simulator = simulator
         self.parameters: Parameters = self.simulator.get_parameters()
         self.n: int = n
         self.iteration_sleep: int = iteration_sleep
 
-        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path()
+        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path(
+        )
 
     def run(self):
         # making wrapper dir for all simulations
@@ -32,7 +46,8 @@ class MultiSimRunner:
         for i in range(self.n):
 
             # creating save dir for sim_i, then mutating sim_i save_directory
-            sim_i_save_dir = artifact.init_save_dir(self.wrapper_save_dir, f"run{i}")
+            sim_i_save_dir = artifact.init_save_dir(self.wrapper_save_dir,
+                                                    f"run{i}")
             self.simulator.save_dir = sim_i_save_dir
             artifact.configure_logger(f"{sim_i_save_dir}/logs", "logs")
 
@@ -62,17 +77,20 @@ class MultiSimRunner:
     def __save_average_metrics(self, avg_metric_dict: Dict):
         """ Writing average dictionary of metrics to a json file in root of MultiRun save dir """
 
-        with open(f"{self.wrapper_save_dir}/avg_metrics.json", 'w') as output_file:
+        with open(f"{self.wrapper_save_dir}/avg_metrics.json",
+                  'w') as output_file:
             json.dump(avg_metric_dict, output_file, indent=1)
 
 
-class SingleSimRunner:
+class SingleSimRunner(SimRunner):
+    """Runs the simulation once."""
 
     def __init__(self, simulator: Simulator, save_dir=None):
         self.simulator: Simulator = simulator
         self.parameters: Parameters = self.simulator.get_parameters()
 
-        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path()
+        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path(
+        )
 
     def run(self):
         # logging and save details

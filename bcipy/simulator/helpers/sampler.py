@@ -36,7 +36,7 @@ class EEGByLetterSampler(Sampler):
                  parameters: Parameters = None):
         self.data_engine: RawDataEngine = data_engine
         self.parameters: Parameters = self.data_engine.parameters if not parameters else parameters
-        self.model_input_reshaper: Callable = self.__default_reshaper
+        self.model_input_reshaper: Callable = default_reshaper
         self.alphabet: List[str] = self.parameters.get(
             'symbol_set') if self.parameters else alphabet()
         self.data: pd.DataFrame = self.data_engine.transform().get_data()
@@ -75,19 +75,6 @@ class EEGByLetterSampler(Sampler):
     def set_reshaper(self, reshaper: Callable):
         self.model_input_reshaper = reshaper
 
-    def __default_reshaper(self,
-                           eeg_responses: List[np.ndarray]) -> np.ndarray:
-        # returns (channel_n, trial_n, sample_n)
-
-        channels_eeg = [[] for i in range(len(eeg_responses[0]))]
-
-        for t_i, trial_channels_eeg in enumerate(eeg_responses):
-            for c_i, channel_eeg in enumerate(trial_channels_eeg):
-                channels_eeg[c_i].append(channel_eeg)
-
-        # make sure this returns (7, 10, 90) for tab_test_dynamic
-        return np.array(channels_eeg)
-
 
 def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
     """Default data reshaper.
@@ -97,7 +84,9 @@ def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
     ndarray with shape (channel_n, trial_n, sample_n)
     """
 
-    channels_eeg = [[] for i in range(len(eeg_responses[0]))]
+    channels_eeg: List[List[np.ndarray]] = [
+        [] for i in range(len(eeg_responses[0]))
+    ]
 
     for _i, trial_channels_eeg in enumerate(eeg_responses):
         for c_i, channel_eeg in enumerate(trial_channels_eeg):
@@ -180,12 +169,14 @@ class InquirySampler(Sampler):
         # new_target_position for the target.
         inquiry_target_position = target_position
         if target_letter in inquiry_letter_subset:
-            inquiry_target_index = inquiry_df[inquiry_df['target'] == 1].index[0]
-            inquiry_target_position = inquiry_df.index.tolist().index(inquiry_target_index)
+            inquiry_target_index = inquiry_df[inquiry_df['target'] ==
+                                              1].index[0]
+            inquiry_target_position = inquiry_df.index.tolist().index(
+                inquiry_target_index)
 
         if inquiry_target_position == target_position:
             # target already in the correct location, no need to adjust
-            new_target_position = inquiry_target_position
+            new_target_position = inquiry_target_position + 0.0
         elif inquiry_target_position < target_position:
             # target in the inquiry needs to be pushed later in the inquiry;
             # There is another symbol currently at that position, so we need

@@ -61,6 +61,7 @@ class RawDataProcessor():
     def process(self, data_folder: str,
                 parameters: Parameters) -> ExtractedExperimentData:
         """Load and process the data"""
+        raise NotImplementedError
 
 
 class EegRawDataProcessor(RawDataProcessor):
@@ -109,7 +110,7 @@ class EegRawDataProcessor(RawDataProcessor):
             f"Static offset: {static_offset}")
 
         # Load raw data
-        raw_data = load_raw_data(Path(data_folder, raw_data_file))
+        raw_data = load_raw_data(str(Path(data_folder, raw_data_file)))
         channels = raw_data.channels
         type_amp = raw_data.daq_type
         sample_rate = raw_data.sample_rate
@@ -153,7 +154,6 @@ class EegRawDataProcessor(RawDataProcessor):
         log.debug(f'Channels used in analysis: {channels_used}')
 
         data, fs = raw_data.by_channel()
-
         inquiries, inquiry_labels, inquiry_timing = self.reshaper(
             trial_targetness_label=trigger_targetness,
             timing_info=corrected_trigger_timing,
@@ -168,11 +168,16 @@ class EegRawDataProcessor(RawDataProcessor):
 
         inquiries, fs = filter_inquiries(inquiries, default_transform,
                                          sample_rate)
-        inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
+        # Convince mypy that the values received from the reshaper are actually ints.
+        inquiry_timing_ints: List[List[int]] = [
+            list(map(int, inq)) for inq in inquiry_timing
+        ]
+        updated_inquiry_timing = update_inquiry_timing(inquiry_timing_ints,
+                                                       downsample_rate)
         trial_duration_samples = int(window_length * fs)
         trials = self.reshaper.extract_trials(inquiries,
                                               trial_duration_samples,
-                                              inquiry_timing)
+                                              updated_inquiry_timing)
 
         # define the training classes using integers, where 0=nontargets/1=targets
         # labels = inquiry_labels.flatten()
@@ -180,7 +185,7 @@ class EegRawDataProcessor(RawDataProcessor):
         return ExtractedExperimentData(data_folder,
                                        inquiries,
                                        trials,
-                                       inquiry_labels,
+                                       [list(arr) for arr in inquiry_labels],
                                        inquiry_timing,
                                        decoded_triggers=(trigger_targetness,
                                                          trigger_timing,

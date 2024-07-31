@@ -3,7 +3,7 @@ import json
 import logging
 import random
 from time import sleep
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 import numpy as np
 
@@ -11,13 +11,15 @@ from bcipy.helpers import stimuli, symbols
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
+from bcipy.simulator.helpers.log_utils import (fmt_reshaped_evidence,
+                                               fmt_stim_likelihoods)
 from bcipy.simulator.helpers.metrics import MetricReferee
+from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.helpers.rsvp_utils import format_lm_output
 from bcipy.simulator.helpers.sampler import Sampler
-from bcipy.simulator.helpers.state_manager import StateManager, SimState, format_sim_state_dump
+from bcipy.simulator.helpers.state_manager import (SimState, StateManager,
+                                                   format_sim_state_dump)
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
-from bcipy.simulator.helpers.log_utils import fmt_stim_likelihoods, fmt_reshaped_evidence
-from bcipy.simulator.helpers.model_handler import ModelHandler
 from bcipy.simulator.simulator_base import Simulator
 from bcipy.task.data import EvidenceType
 
@@ -47,23 +49,24 @@ class SimulatorCopyPhrase(Simulator):
     """
 
     def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, parameters: Parameters = None,
-                 save_dir: str = None):
+                 state_manager: StateManager, referee: MetricReferee, parameters: Optional[Parameters] = None,
+                 save_dir: Optional[str] = None):
         super().__init__()
 
-        self.save_dir: str = save_dir
-        self.model_handler: ModelHandler = model_handler
-        self.sampler: Sampler = sampler
-        self.referee: MetricReferee = referee
-        self.state_manager: StateManager = state_manager
-        self.data_engine: DataEngine = data_engine
+        self.save_dir = save_dir
+        self.model_handler = model_handler
+        self.sampler = sampler
+        self.referee = referee
+        self.state_manager = state_manager
+        self.data_engine = data_engine
 
-        self.parameters: Parameters = self.load_parameters(parameters)
+        self.parameters = self.load_parameters(parameters)
 
         self.symbol_set = alphabet()
         self.write_output = False
 
     def run(self):
+        assert self.save_dir, "Save directory not set"
         log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
 
         while not self.state_manager.is_done():
@@ -152,7 +155,7 @@ class SimulatorCopyPhrase(Simulator):
 
     def save_run(self):
         """ Outputs the results of a run to json file """
-
+        assert self.save_dir, "Save directory not set"
         # creating result.json object with final state and metrics
         final_state = self.state_manager.get_state()
         final_state_json: Dict = format_sim_state_dump(final_state)

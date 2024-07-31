@@ -2,7 +2,6 @@ import inspect
 import logging
 import pickle
 from abc import ABC, abstractmethod
-from typing import Optional
 
 import numpy as np
 
@@ -10,7 +9,6 @@ from bcipy.helpers.language_model import (histogram, language_models_by_name,
                                           with_min_prob)
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.language import LanguageModel, ResponseType
-from bcipy.signal.model import SignalModel
 from bcipy.simulator.helpers.state_manager import SimState
 from bcipy.simulator.helpers.types import SimEvidence
 from bcipy.task.data import EvidenceType
@@ -33,7 +31,6 @@ class SignalModelHandler1(ModelHandler):
 
     def __init__(self, model_file):
         self.model_file = model_file
-        self.signal_model: Optional[SignalModel] = None
         with open(self.model_file, "rb") as signal_file:
             self.signal_model = pickle.load(signal_file)
 
@@ -85,7 +82,6 @@ class SigLmModelHandler1(ModelHandler):
             parameters: only needs to contain which type of language model
         """
         self.sm_model_file = sm_model_file
-        self.signal_model: Optional[SignalModel] = None
         self.lm_model: LanguageModel = sim_init_lm(parameters)
         log.info(f"Language Model Type: {self.lm_model.name()}")
         self.alp = alphabet()
