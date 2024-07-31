@@ -5,7 +5,7 @@ from glob import glob
 from pathlib import Path
 
 from bcipy.simulator.helpers.sim_runner import MultiSimRunner, SingleSimRunner
-from bcipy.simulator.sim_factory import SimulationFactoryV2
+from bcipy.simulator.sim_factory import SimulationFactory
 from bcipy.simulator.simulator_base import Simulator
 
 if __name__ == "__main__":
@@ -42,7 +42,7 @@ if __name__ == "__main__":
         if Path(d).is_dir()
     ]
 
-    simulator: Simulator = SimulationFactoryV2.create(**sim_args)
+    simulator = SimulationFactory.create(**sim_args)
 
     sim_run_count = simulator.get_parameters().get('sim_run_count', 1)
 
