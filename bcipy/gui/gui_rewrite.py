@@ -1,6 +1,7 @@
 import os
-from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout, QLabel, QHBoxLayout, QPushButton
+from PyQt6.QtWidgets import QWidget, QApplication, QVBoxLayout, QLabel, QHBoxLayout, QPushButton, QComboBox
 
+from typing import Optional, List
 
 class BCIUI(QWidget):
     contents: QVBoxLayout
@@ -32,6 +33,18 @@ class BCIUI(QWidget):
         layout.addStretch()
         return layout
 
+# --- Experiment registry code ---
+
+def format_experiment_combobox(label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]) -> QHBoxLayout:
+    label = QLabel(label_text)
+    label.setStyleSheet("font-size: 18px")
+    area = QVBoxLayout()
+    input_area = QHBoxLayout()
+    input_area.setContentsMargins(30, 0, 0, 30)
+    area.addWidget(label)
+    input_area.addWidget(combobox, 1)
+    area.addLayout(input_area)
+    return area
 
 if __name__ == '__main__':
     app = QApplication([])
@@ -44,13 +57,22 @@ if __name__ == '__main__':
     # Add form fields 
     form_area = QVBoxLayout()
     form_area.setContentsMargins(30, 50, 30, 0)
-    label = QLabel("Name")
-    label.setStyleSheet("font-size: 18px")
-    form_area.addWidget(label)
+
+    experiment_name_box = format_experiment_combobox("Name", QComboBox(), None)
+    form_area.addLayout(experiment_name_box)
+
+    experiment_summary_box = format_experiment_combobox("Summary", QComboBox(), None)
+    form_area.addLayout(experiment_summary_box)
+
+    experiment_field_box = format_experiment_combobox("Fields", QComboBox(), None)
+    form_area.addLayout(experiment_field_box)
+
+    
+
     bci.contents.addLayout(form_area)
 
-    test_button = QPushButton("Test")
-    bci.contents.addWidget(test_button)
+    create_experiment_button = QPushButton("Create experiment")
+    bci.contents.addWidget(create_experiment_button)
 
 
     bci.display()
