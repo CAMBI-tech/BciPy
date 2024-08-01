@@ -1,15 +1,15 @@
 import logging
-from abc import ABC
+from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, NamedTuple, Optional
 
 import numpy as np
 import pandas as pd
 
-from bcipy.helpers.list import grouper
 from bcipy.helpers.parameters import Parameters
-from bcipy.simulator.helpers.signal_helpers import (ExtractedExperimentData,
-                                                    process_raw_data_for_model)
+from bcipy.simulator.helpers.signal_helpers import (EegRawDataProcessor,
+                                                    ExtractedExperimentData,
+                                                    RawDataProcessor)
 
 log = logging.getLogger(__name__)
 
@@ -25,8 +25,10 @@ class DataEngine(ABC):
     def get_data(self):
         ...
 
+    @abstractmethod
     def get_parameters(self) -> List[Parameters]:
         ...
+
 
 class Trial(NamedTuple):
     """Data for a given trial (a symbol within an Inquiry).
@@ -50,15 +52,21 @@ class Trial(NamedTuple):
     target: int
     eeg: np.ndarray
 
+
 class RawDataEngine(DataEngine):
     """
-    Object that loads in list of session data folders and transforms data into sample-able pd.df
+    Object that loads in list of session data folders and transforms data into sample-able DataFrame
     """
 
-    def __init__(self, source_dirs: List[str], parameters: Parameters):
+    def __init__(self,
+                 source_dirs: List[str],
+                 parameters: Parameters,
+                 data_processor: Optional[RawDataProcessor] = None):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
-        self.data: Optional[List[ExtractedExperimentData]] = None
+
+        self.data_processor = data_processor or EegRawDataProcessor()
+        self.data: List[ExtractedExperimentData] = []
         self.schema: Optional[pd.DataFrame] = None
 
         # TODO validate parameters
@@ -72,14 +80,15 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
-        log.debug(f"Loading data from {len(self.source_dirs)} source directories")
+        log.debug(
+            f"Loading data from {len(self.source_dirs)} source directories")
 
         self.data = [
-            process_raw_data_for_model(source_dir, self.parameters)
+            self.data_processor.process(source_dir, self.parameters)
             for source_dir in self.source_dirs
         ]
 
-        log.info("Finished loading all data")
+        log.debug("Finished loading all data")
         return self
 
     def transform(self) -> DataEngine:
@@ -111,15 +120,15 @@ class RawDataEngine(DataEngine):
                     # iterate through each symbol in the inquiry
                     eeg_samples = [channel[sym_i] for channel in inquiry_eeg
                                    ]  # (channel_n, sample_n)
-                    rows.append(Trial(source=data_source.source_dir,
-                                  inquiry_n=i,
-                                  inquiry_pos=sym_i + 1,
-                                  symbol=symbol,
-                                  target=inquiry_labels[sym_i],
-                                  eeg=np.array(eeg_samples)))
+                    rows.append(
+                        Trial(source=data_source.source_dir,
+                              inquiry_n=i,
+                              inquiry_pos=sym_i + 1,
+                              symbol=symbol,
+                              target=inquiry_labels[sym_i],
+                              eeg=np.array(eeg_samples)))
 
         self.schema = pd.DataFrame(rows)
-
         return self
 
     def get_data(self):
@@ -136,19 +145,9 @@ class RawDataEngineWrapper(RawDataEngine):
         - each data dir contains its raw_data and triggers
     """
 
-    def __init__(self, source_dir: str, parameters: Parameters):
-        data_paths = self.get_data_dirs(source_dir)
-        super().__init__(data_paths, parameters)
-
-    @staticmethod
-    def get_data_dirs(source_dir: str) -> [str]:
-        """
-        Returns all the data dirs within the source dir
-            - e.g [dataDir1Path, dataDir2Path ... ]
-        """
-
-        assert source_dir
-
-        directories: List[str] = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
-
-        return directories
+    def __init__(self,
+                 source_dir: str,
+                 parameters: Parameters,
+                 data_processor: Optional[RawDataProcessor] = None):
+        data_paths = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
+        super().__init__(data_paths, parameters, data_processor)

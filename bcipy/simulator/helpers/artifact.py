@@ -28,7 +28,7 @@ def configure_logger(log_path, file_name):
     fileHandler.setFormatter(fmt_file)
 
     # Add each handler to the Logger object
-    if stdoutHandler.stream.name not in [handler.stream.name for handler in log.handlers]:
+    if stdoutHandler not in log.handlers:
         log.addHandler(stdoutHandler)
 
     log.addHandler(fileHandler)
@@ -46,4 +46,3 @@ def init_save_dir(output_path, save_dir_name):
     os.makedirs(f"{save_dir}/logs")
 
     return save_dir
-

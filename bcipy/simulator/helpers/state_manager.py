@@ -4,7 +4,7 @@ import logging
 import random
 from abc import ABC
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional
 
 import numpy as np
 
@@ -68,7 +68,7 @@ class StateManager(ABC):
         raise NotImplementedError()
 
     def get_state(self) -> SimState:
-        ...
+        raise NotImplementedError()
 
     def mutate_state(self, state_field, state_value):
         pass
@@ -82,7 +82,7 @@ class StateManagerImpl(StateManager):
     def __init__(self, parameters: Parameters, fuser_class=MultiplyFuser):
         self.state: SimState = self.initial_state(parameters)
         self.parameters = parameters
-        self.fuser_class: EvidenceFuser.__class__ = fuser_class
+        self.fuser_class: Callable[[], EvidenceFuser] = fuser_class
 
         self.max_inq_len = self.parameters.get('max_inq_len', 100)
 
@@ -125,9 +125,15 @@ class StateManagerImpl(StateManager):
                                            evidences=evidence, decision=decision,
                                            fused_likelihood=fused_likelihood)
 
+        debug_info = [
+            'Fused Likelihoods',
+            f'current typed - {self.state.current_sentence}',
+            f'stimuli {self.state.display_alphabet}'
+        ]
         log.debug(
-            f"Fused Likelihoods | current typed - {self.state.current_sentence} | stimuli {self.state.display_alphabet} \n "
-            f"{histogram(fmt_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}")
+            f"{' | '.join(debug_info)} \n "
+            f"{histogram(fmt_likelihoods_for_hist(new_inquiry_result.fused_likelihood, alphabet()))}"
+        )
 
         new_state['series_results'][self.state.series_n].append(new_inquiry_result)
         if is_decidable:
@@ -198,7 +204,7 @@ def format_sim_state_dump(state: SimState):
     ret.pop('series_results')
     series_dict = {}
     for i, series in enumerate(state.series_results):
-        curr_series_dict = {}
+        curr_series_dict: Dict = {}
         series_dict[str(i + 1)] = curr_series_dict
         for inq_idx, inq in enumerate(series):
             inq_dict = inq.to_json()

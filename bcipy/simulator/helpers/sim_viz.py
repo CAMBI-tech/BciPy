@@ -1,4 +1,5 @@
 import logging as logger
+from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,8 +56,11 @@ def plot_replay_comparison(new_target_eeg_evidence: np.ndarray,
                            outdir: str,
                            parameters: Parameters,
                            ) -> None:
-    def convert_to_records(arr, key_value, key_name="which_model", value_name="response_value") -> [
-        dict]:
+
+    def convert_to_records(arr,
+                           key_value,
+                           key_name="which_model",
+                           value_name="response_value") -> List[dict]:
         return [{key_name: key_value, value_name: val} for val in arr]
 
     records = []

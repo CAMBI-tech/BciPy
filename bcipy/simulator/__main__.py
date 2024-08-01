@@ -5,8 +5,7 @@ from glob import glob
 from pathlib import Path
 
 from bcipy.simulator.helpers.sim_runner import MultiSimRunner, SingleSimRunner
-from bcipy.simulator.sim_factory import SimulationFactoryV2
-from bcipy.simulator.simulator_base import Simulator
+from bcipy.simulator.sim_factory import SimulationFactory
 
 if __name__ == "__main__":
     glob_help = ('glob pattern to select a subset of data folders'
@@ -32,7 +31,7 @@ if __name__ == "__main__":
         type=Path,
         required=True,
         help="Parameter File to be used")
-    
+
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     sim_args = vars(args)
@@ -42,13 +41,11 @@ if __name__ == "__main__":
         if Path(d).is_dir()
     ]
 
-    simulator: Simulator = SimulationFactoryV2.create(**sim_args)
+    simulator = SimulationFactory.create(**sim_args)
 
     sim_run_count = simulator.get_parameters().get('sim_run_count', 1)
 
-    if sim_run_count > 1:  # running multiple times
-        runner = MultiSimRunner(simulator, sim_run_count)
-        runner.run()
-    else:
-        runner = SingleSimRunner(simulator)
-        runner.run()
+    runner = MultiSimRunner(
+        simulator,
+        sim_run_count) if sim_run_count > 1 else SingleSimRunner(simulator)
+    runner.run()

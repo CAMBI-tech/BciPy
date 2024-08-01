@@ -1,101 +1,89 @@
-import shutil
 import unittest
-import zipfile
 from pathlib import Path
+from unittest.mock import Mock
 
 import numpy as np
-import pandas as pd
 
-from bcipy.helpers import load
-from bcipy.simulator.helpers.data_engine import DataEngine, RawDataEngine, RawDataEngineWrapper
-
-# Import the module or class you want to test
-
-FILE_PATH_PREFIX = "bcipy/simulator/tests"
+from bcipy.simulator.helpers.data_engine import (ExtractedExperimentData,
+                                                 RawDataEngine)
 
 
 class TestRawDataEngine(unittest.TestCase):
+    """Tests for RawDataEngine"""
 
-    @classmethod
-    def setUp(cls) -> None:
-        with zipfile.ZipFile(f'{FILE_PATH_PREFIX}/resource/rsvpTest1.zip', 'r') as zip_ref:
-            zip_ref.extractall(f'{FILE_PATH_PREFIX}/resource/rsvpTest1')
+    def setUp(self) -> None:
+        """Setup common state"""
 
-    @classmethod
-    def tearDown(cls) -> None:
-        shutil.rmtree(f'{FILE_PATH_PREFIX}/resource/rsvpTest1')
+        self.data_processor = Mock()
+        self.data_processor.process = Mock()
+        self.parameters = Mock()
 
-    @classmethod
-    def check_eeg_shape(cls, schema: pd.DataFrame):
-        # checking all eeg response data has same shape
-
-        eeg_responses = schema['eeg']
-        ret = True
-        ret = ret and not (None in eeg_responses or np.NaN in eeg_responses)
-        shape_set = set(eeg_responses.apply(lambda x: x.shape))
-        ret = ret and (len(shape_set) == 1)
-
-        return ret
-
-    def test_one_source(self):
-        # Test the function with a specific input and assert the expected output
-
-        data_paths = ["/Users/srikarananthoju/cambi/tab_test_dynamic/16sec_-0700"]
-        param_path = "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/parameters.json"
-        params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
-
-        data_engine = RawDataEngine(data_paths, params)
+    def test_init(self):
+        """"Test initialization"""
+        data_engine = RawDataEngine(source_dirs=[],
+                                    parameters=self.parameters,
+                                    data_processor=self.data_processor)
         self.assertFalse(data_engine.get_data())
+        self.assertEqual(self.parameters, data_engine.get_parameters())
 
-        data_engine.transform()
-        self.assertTrue(len(data_engine.schema))
+    def test_single_data_source(self):
+        """Test loading data from a single directory."""
+        RawDataEngine(source_dirs=['data-dir1'],
+                      parameters=self.parameters,
+                      data_processor=self.data_processor)
+        self.data_processor.process.assert_called_once_with(
+            'data-dir1', self.parameters)
 
-        self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
+    def test_multiple_sources(self):
+        """Test loading data from multiple directories."""
+        RawDataEngine(source_dirs=['data-dir1', 'data-dir2', 'data-dir3'],
+                      parameters=self.parameters,
+                      data_processor=self.data_processor)
+        self.assertEqual(self.data_processor.process.call_count, 3)
+        # last call
+        self.data_processor.process.assert_called_with('data-dir3',
+                                                       self.parameters)
 
-    def test_two_sources(self):
-        # Test the function with a specific input and assert the expected output
+    def test_transform(self):
+        """Test the data transformation method"""
+        # Setup context
+        # mock the experiment data; single inquiry
+        mock_data = ExtractedExperimentData(
+            source_dir=Path('data-dir1'),
+            inquiries=np.zeros((7, 1, 692)),
+            trials=np.zeros((7, 10, 74)),
+            labels=np.array([[0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]),
+            inquiry_timing=[[150, 185, 220, 255, 291, 326, 361, 397, 432,
+                             467]],
+            decoded_triggers=([
+                'nontarget', 'nontarget', 'nontarget', 'nontarget',
+                'nontarget', 'target', 'nontarget', 'nontarget', 'nontarget',
+                'nontarget'
+            ], [
+                9.730993399999988, 9.966709099999662, 10.201713299999938,
+                10.436247999999978, 10.672083899999961, 10.90684519999968,
+                11.141479799999615, 11.377909999999702, 11.614850199999637,
+                11.849502299999585
+            ], ['G', 'C', 'D', 'B', 'I', 'A', 'H', '<', 'E', 'F']),
+            trials_per_inquiry=10)
+        self.data_processor.process = Mock(return_value=mock_data)
+        engine = RawDataEngine(source_dirs=['data-dir1'],
+                               parameters=self.parameters,
+                               data_processor=self.data_processor)
+        engine.transform()
+        data = engine.get_data()
 
-        data_paths = ["/Users/srikarananthoju/cambi/tab_test_dynamic/16sec_-0700",
-                      "/Users/srikarananthoju/cambi/tab_test_dynamic/50sec_-0700"]
-        param_path = "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/parameters.json"
-        params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
+        self.assertEqual(10, len(data))
 
-        data_engine = RawDataEngine(data_paths, params)
-        self.assertFalse(data_engine.get_data())
+        self.assertEqual(data.iloc[0].symbol, 'G')
+        self.assertEqual(data.iloc[0].inquiry_n, 0)
+        self.assertEqual(data.iloc[0].inquiry_pos, 1)
+        self.assertEqual(data.iloc[0].target, 0)
 
-        data_engine.transform()
-        self.assertTrue(len(data_engine.get_data()))
-
-        # asserting all eeg response data has same shape
-        self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
-
-    def test_RawDataEngineWrapper(self):
-        # Testing loading and transformaing data from a singular wrapper folder
-
-        # source_dir = "/Users/srikarananthoju/cambi/tab_test_dynamic/wrapper"
-        source_dir = FILE_PATH_PREFIX + "/resource/rsvpTest1/wrapper"
-        param_path = "/Users/srikarananthoju/cambi/tab_test_dynamic/calibr_37sec_-0700/parameters.json"
-        params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
-
-        data_engine = RawDataEngineWrapper(source_dir, params)
-        self.assertEqual(len(data_engine.source_dirs), 2)
-
-        data_engine.transform()
-        self.assertTrue(len(data_engine.get_data()))
-
-        self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
-
-    def test_matrix_single(self):
-        source_dir = "/Users/srikarananthoju/cambi/data/matrixTestWrapper"
-        param_path = "/Users/srikarananthoju/cambi/data/matrixTestWrapper/S007_Matrix_Calibration_Thu_20_Jul_2023_09hr48min56sec_-0400/parameters.json"
-        params = load.load_json_parameters(str(Path(param_path)), value_cast=True)
-
-        data_engine = RawDataEngineWrapper(source_dir, params)
-        data_engine.transform()
-
-        self.assertTrue(len(data_engine.get_data()))
-
-        self.assertTrue(self.check_eeg_shape(data_engine.get_data()))
+        self.assertEqual(data.iloc[len(data) - 1].symbol, 'F')
+        self.assertEqual(data.iloc[len(data) - 1].inquiry_n, 0)
+        self.assertEqual(data.iloc[len(data) - 1].inquiry_pos, 10)
+        self.assertEqual(data.iloc[len(data) - 1].target, 0)
 
 
 if __name__ == '__main__':

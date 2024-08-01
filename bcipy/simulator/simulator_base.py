@@ -1,6 +1,7 @@
 """ base simulator interface """
 
 from abc import ABC, abstractmethod
+from typing import Optional
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers import metrics
@@ -25,6 +26,7 @@ class Simulator(ABC):
     data_engine: DataEngine
     referee: metrics.MetricReferee
     parameters: Parameters
+    save_dir: Optional[str]
 
     @abstractmethod
     def run(self):
