@@ -1,5 +1,6 @@
 import os
 from typing import Callable
+from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
     QApplication,
@@ -12,7 +13,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QLayout,
 )
-
 from typing import Optional, List
 
 
@@ -48,47 +48,49 @@ class BCIUI(QWidget):
         return layout
     
     @staticmethod
-    def make_list_scroll_area(layout: QLayout) -> QScrollArea:
+    def make_list_scroll_area(widget: QWidget) -> QScrollArea:
         scroll_area = QScrollArea()
-        items_container = QWidget()
-        scroll_area.setWidget(items_container)
-        items_container.setLayout(layout)
+        scroll_area.setWidget(widget)
         scroll_area.setWidgetResizable(True)
         return scroll_area
 
-    # class DynamicList(QVBoxLayout):
-    #     """A list of QWidgets that can be dynamically updated"""
-    #     widgets: List[QWidget] = []
 
-    #     def __init__(self):
-    #         super().__init__()
-
-    #     def add_item(self, item: QWidget):
-    #         self.widgets.append(item)
-    #         self.addWidget(item)
-
-    #     def remove_item(self, item: QWidget):
-    #         self.widgets.remove(item)
-    #         self.removeWidget(item)
-    #         item.deleteLater()
-
-    #     def clear(self):
-    #         for widget in self.widgets:
-    #             self.remove_item(widget)
-    #         self.widgets = []
-        
-    #     def list(self):
-    #         return self.widgets
+class DynamicItem(QWidget):
+    """A widget that can be dynamically added and removed from the ui"""
+    on_remove: pyqtSignal = pyqtSignal()
     
-    # class DynamicItem(QWidget):
-    #     def __init__(self, layout: QLayout):
-    #         super().__init__()
+    def remove(self):
+        """Remove the widget from it's parent DynamicList, removing it from the UI and deleting it"""
+        self.on_remove.emit()
 
-    #     def remove(self):
-    #         self.deleteLater()
+class DynamicList(QWidget):
+    """A list of QWidgets that can be dynamically updated"""
+    
+    widgets: List[QWidget] = []
 
-    #     def set_parent(parent: DynamicList):
-    #         parent.add_item(self)
+    def __init__(self, layout: Optional[QLayout] = QVBoxLayout()):
+        super().__init__()
+        self.setLayout(layout)
+
+    def add_item(self, item: DynamicItem):
+        self.widgets.append(item)
+        item.on_remove.connect(lambda: self.remove_item(item))
+        self.layout().addWidget(item)
+
+    def remove_item(self, item: DynamicItem):
+        self.widgets.remove(item)
+        self.layout().removeWidget(item)
+        item.deleteLater()
+
+    def clear(self):
+        for widget in self.widgets:
+            self.layout().removeWidget(widget)
+            widget.deleteLater()
+        self.widgets = []
+    
+    def list(self):
+        return self.widgets
+
 
 # --- Experiment registry code ---
 
@@ -116,9 +118,10 @@ def make_field_entry(name: str) -> QWidget:
     remove_button.setStyleSheet("background-color: red;")
     remove_button.clicked.connect(lambda: layout.deleteLater())
     layout.addWidget(remove_button)
-    widget = QWidget()
+    widget = DynamicItem()
+    remove_button.clicked.connect(lambda: widget.remove())
     widget.setLayout(layout)
-    return widget, remove_button
+    return widget
 
 if __name__ == "__main__":
     app = QApplication([])
@@ -155,26 +158,23 @@ if __name__ == "__main__":
     # fields_scroll_area.setWidgetResizable(True)
     # bci.contents.addWidget(QLabel("Fields"))
     # bci.contents.addWidget(fields_scroll_area)
-    fields_content = QVBoxLayout()
+    fields_content = DynamicList()
     # fields_content = BCIUI.DynamicList()  
     fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
     label = QLabel("Fields")
     label.setStyleSheet("color: black;")
     bci.contents.addWidget(fields_scroll_area)
 
-    def removeable_field_entry(name: str) -> QWidget:
-        widget, button = make_field_entry(name)
-        button.clicked.connect(lambda: fields_content.removeWidget(widget))
-        button.clicked.connect(lambda: widget.deleteLater())
-        return widget
+    # def removeable_field_entry(name: str) -> QWidget:
+    #     widget, button = make_field_entry(name)
+    #     button.clicked.connect(lambda: fields_content.removeWidget(widget))
+    #     button.clicked.connect(lambda: widget.deleteLater())
+    #     return widget
 
-    
 
     create_experiment_button.clicked.connect(
-        lambda: fields_content.addWidget(removeable_field_entry("Field 1"))
-        # lambda: fields_content.addWidget(make_field_entry("Field 2"));
+        lambda: fields_content.add_item(make_field_entry("Field 2"))
     )
-
     # fields_scroll_area.addWidget(BCIUI.make_list_scroll_area())
     # protocol_scroll_area = QScrollArea()
     # protocol_items_container = QWidget()
