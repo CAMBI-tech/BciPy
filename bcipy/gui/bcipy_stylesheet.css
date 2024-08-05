@@ -23,14 +23,14 @@ QPushButton:pressed {
     background-color: darkslategrey;
 }
 
-QComboBox {
+QComboBox, QLineEdit {
     background-color: white;
     color: black;
     padding: 5px;
+    border: none;
 }
 
 QScrollArea {
     background-color: white;
     border-radius: 5px;
 }
-
