@@ -1,6 +1,8 @@
 import io
 from abc import ABC
-from typing import List, Optional
+from typing import List, Optional, Tuple
+
+from matplotlib import pyplot as plt
 
 from matplotlib.figure import Figure
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Image
@@ -58,20 +60,64 @@ class SignalReportSection(ReportSection):
         Compiles the Signal Report sections into a flowable that can be used to generate a Report.
         """
         self.report_flowables.append(self._create_header())
-        self.report_flowables.extend(self._create_epochs_section())
-
         if self.artifact:
             self.report_flowables.append(self._create_artifact_section())
+        self.report_flowables.extend(self._create_epochs_section())
+
         return KeepTogether(self.report_flowables)
     
-    def _create_artifact_section(self) -> Paragraph:
+    def _create_artifact_section(self) -> Flowable:
         """Create Artifact Section.
 
         Creates a paragraph with the artifact information. This is only included if an artifact detection is provided.
         """
-        artifact_text = f'<b>Artifact:</b> {self.artifact}'
+        artifact_report = []
+        artifacts_detected = self.artifact.dropped
+        artifact_text = f'<b>Artifact:</b>'
         artifact_section = Paragraph(artifact_text, self.style['BodyText'])
-        return artifact_section
+        artifact_overview = f'<b>Artifacts Detected:</b> {artifacts_detected}'
+        artifact_section = Paragraph(artifact_overview, self.style['BodyText'])
+        artifact_report.append(artifact_section)
+
+        if self.artifact.eog_annotations:
+            eog_artifacts = f'<b>EOG Artifacts:</b> {len(self.artifact.eog_annotations)}'
+            eog_section = Paragraph(eog_artifacts, self.style['BodyText'])
+            artifact_report.append(eog_section)
+            heatmap = self._create_heatmap(
+                self.artifact.eog_annotations.onset,
+                (0, self.artifact.total_time),
+                'EOG')
+            artifact_report.append(heatmap)
+
+        if self.artifact.voltage_annotations:
+            voltage_artifacts = f'<b>Voltage Artifacts:</b> {len(self.artifact.voltage_annotations)}'
+            voltage_section = Paragraph(voltage_artifacts, self.style['BodyText'])
+            artifact_report.append(voltage_section)
+
+            # create a heatmap with the onset values of the voltage artifacts
+            onsets = self.artifact.voltage_annotations.onset
+            heatmap = self._create_heatmap(
+                onsets,
+                (0, self.artifact.total_time),
+                'Voltage')
+            artifact_report.append(heatmap)
+        return KeepTogether(artifact_report)
+    
+    def _create_heatmap(self, onsets: List[float], range: Tuple[float, float], type: str) -> Image:
+        """Create Heatmap.
+
+        Creates a heatmap image with the onset values of the voltage artifacts.
+        """
+        # create a heatmap with the onset values
+        fig, ax = plt.subplots()
+        fig.set_size_inches(6, 3)
+        ax.hist(onsets, bins=100, range=range, color='red', alpha=0.7)
+        ax.set_title(f'{type} Artifact Onsets')
+        ax.set_xlabel('Time (s)')
+        # make the label text smaller
+        ax.set_ylabel('Frequency')
+        heatmap = self.convert_figure_to_image(fig)
+        return heatmap
 
     def _create_epochs_section(self) -> List[Image]:
         """Create Epochs Section.

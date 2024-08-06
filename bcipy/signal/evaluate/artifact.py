@@ -128,6 +128,8 @@ class ArtifactDetection:
     support_device_types = ['EEG']
     analysis_done = False
     dropped = None
+    eog_annotations = None
+    voltage_annotations = None
 
     def __init__(
             self,
@@ -142,6 +144,7 @@ class ArtifactDetection:
             eye_channels: Optional[List[str]]=None,
             detect_voltage: bool= True) -> None:
         self.raw_data = raw_data
+        self.total_time = raw_data.total_seconds
         self.device_spec = device_spec
         assert self.device_spec.content_type in self.support_device_types, \
             f'BciPy Artifact Analysis only supports {self.support_device_types} data at this time.'
@@ -197,10 +200,10 @@ class ArtifactDetection:
                 preload=True)
             
             # calculate the percentage of dropped epochs
-            dropped_epochs = len(epochs.drop_log)
+            kept_epochs = len(epochs)
             total_epochs = len(self.trigger_label)
-            percent_dropped = (dropped_epochs / total_epochs) * 100
-            self.dropped = f'{dropped_epochs}/{total_epochs}-[{percent_dropped}] epochs dropped due to artifacts.'
+            percent_dropped = (1 - (kept_epochs / total_epochs)) * 100
+            self.dropped = f'{kept_epochs}/{total_epochs} retained -[{percent_dropped}%] epochs dropped due to artifacts.'
 
         self.analysis_done = True
         if self.save_path:
@@ -233,6 +236,7 @@ class ArtifactDetection:
 
                 if voltage_annotations:
                     annotations += voltage_annotations
+                    self.voltage_annotations = voltage_annotations
 
         if detect_eog:
             eog = self.label_eog_events()
@@ -241,6 +245,7 @@ class ArtifactDetection:
                 print(f'EOG events found: {len(eog_events)}')
                 if eog_annotations:
                     annotations += eog_annotations
+                    self.eog_annotations = eog_annotations
 
         # Combine the annotations if multiple returned because set_annotations overwrites
         # existing labels.
