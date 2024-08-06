@@ -40,5 +40,6 @@ QComboBox, QLineEdit {
 }
 
 QScrollArea {
+    background-color: white;
     border-radius: 5px;
 }
