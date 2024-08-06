@@ -55,6 +55,34 @@ class BCIUI(QWidget):
         scroll_area.setWidgetResizable(True)
         return scroll_area
 
+class Toggle(QWidget):
+
+    def __init__(self, on_button: QPushButton, off_button: QPushButton):
+        super().__init__()
+        self.on = True
+        self.on_button = on_button
+        self.off_button = off_button
+        self.on_button.clicked.connect(self.toggle)
+        self.off_button.clicked.connect(self.toggle)
+        self.setLayout(QHBoxLayout())
+        self.layout().addWidget(self.on_button)
+        self.layout().addWidget(self.off_button)
+        self.off_button.hide()
+        # make the widget have no extra space
+        self.layout().setContentsMargins(0, 0, 0, 0)
+        self.layout().setSpacing(0)
+        
+
+    def toggle(self):
+        if self.on:
+            self.on_button.hide()
+            self.off_button.show()
+            self.on = False
+        else:
+            self.on_button.show()
+            self.off_button.hide()
+            self.on = True
+
 class SmallButton(QPushButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -64,10 +92,11 @@ class SmallButton(QPushButton):
 class DynamicItem(QWidget):
     """A widget that can be dynamically added and removed from the ui"""
     on_remove: pyqtSignal = pyqtSignal()
-    
+    data: dict = {}
     def remove(self):
         """Remove the widget from it's parent DynamicList, removing it from the UI and deleting it"""
         self.on_remove.emit()
+    
 
 class DynamicList(QWidget):
     """A list of QWidgets that can be dynamically updated"""
@@ -95,7 +124,7 @@ class DynamicList(QWidget):
         self.widgets = []
     
     def list(self):
-        return self.widgets
+        return [widget.data for widget in self.widgets]
 
 
 # --- Experiment registry code ---
@@ -120,21 +149,28 @@ def make_field_entry(name: str) -> QWidget:
     label = QLabel(name)
     label.setStyleSheet("color: black;")
     layout.addWidget(label)
+    widget = DynamicItem()
 
     remove_button = SmallButton("Remove")
     remove_button.setStyleSheet("background-color: red;")
     remove_button.clicked.connect(lambda: layout.deleteLater())
     
     anonymous_button = SmallButton("Anonymous")
+    onymous_button = SmallButton("Onymous")
+    anonymous_button.clicked.connect(lambda: widget.data.update({'anonymous': True}))
+    onymous_button.clicked.connect(lambda: widget.data.update({'anonymous': False}))
+    anonymous_toggle = Toggle(onymous_button, anonymous_button)
+
+
     anonymous_button.setStyleSheet("background-color: black;")
-    layout.addWidget(anonymous_button)
+    layout.addWidget(anonymous_toggle)
 
     optional_button = SmallButton("Optional")
     layout.addWidget(optional_button)
 
 
     layout.addWidget(remove_button)
-    widget = DynamicItem()
+    widget.data = {'field_name': name, 'anonymous': False, 'optional': False}
     remove_button.clicked.connect(lambda: widget.remove())
     widget.setLayout(layout)
     return widget
