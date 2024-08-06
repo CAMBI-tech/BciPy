@@ -20,7 +20,6 @@ QPushButton {
 
 
 QPushButton[class="small-button"] {
-    background-color: red;
     padding: 5px;
     border-radius: 5px;
 }
