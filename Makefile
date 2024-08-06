@@ -49,3 +49,9 @@ bci-gui:
 
 viewer:
 	python bcipy/gui/viewer/data_viewer.py --file $(filepath)
+
+offset:
+	python bcipy/helpers/offset.py -p
+
+offset-recommend:
+	python bcipy/helpers/offset.py -r -p

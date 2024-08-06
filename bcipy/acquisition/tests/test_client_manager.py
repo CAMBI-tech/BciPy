@@ -15,6 +15,7 @@ class TestClientManager(unittest.TestCase):
         self.eeg_device_mock.content_type = 'EEG'
         self.eeg_device_mock.sample_rate = 300
         self.eeg_device_mock.is_active = True
+        self.eeg_device_mock.static_offset = 0.1
 
         self.eeg_client_mock = Mock()
         self.eeg_client_mock.device_spec = self.eeg_device_mock
@@ -26,6 +27,7 @@ class TestClientManager(unittest.TestCase):
         self.gaze_device_mock.content_type = 'Eyetracker'
         self.gaze_device_mock.sample_rate = 60
         self.gaze_device_mock.is_active = False
+        self.gaze_device_mock.static_offset = 0.0
         self.gaze_client_mock = Mock()
         self.gaze_client_mock.device_spec = self.gaze_device_mock
 
@@ -115,6 +117,7 @@ class TestClientManager(unittest.TestCase):
         switch_device_mock.name = 'Test-switch-2000'
         switch_device_mock.content_type = 'Markers'
         switch_device_mock.sample_rate = 0.0
+        switch_device_mock.static_offset = 0.2
 
         switch_client_mock = Mock()
         switch_client_mock.device_spec = switch_device_mock
@@ -141,11 +144,11 @@ class TestClientManager(unittest.TestCase):
                                              ContentType.MARKERS
                                          ])
 
-        self.eeg_client_mock.get_data.assert_called_once_with(start=100,
+        self.eeg_client_mock.get_data.assert_called_once_with(start=100.1,
                                                               limit=1500)
         self.gaze_client_mock.get_data.assert_called_once_with(start=100,
                                                                limit=300)
-        switch_client_mock.get_data.assert_called_with(start=100, end=105)
+        switch_client_mock.get_data.assert_called_with(start=100.2, end=105.2)
 
         self.assertTrue(ContentType.EEG in results)
         self.assertTrue(ContentType.EYETRACKER in results)

@@ -158,6 +158,38 @@ For example, you may run the main BciPy demo by:
 This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
 
 
+## Offset Determination and Correction
+--------------------------------------
+
+Static offset determination and correction are critical steps before starting an experiment. BciPy uses LSL to acquire EEG data and Psychopy to present stimuli. 
+
+[LSL synchronization documentation](https://labstreaminglayer.readthedocs.io/info/time_synchronization.html)
+[PsychoPy timing documentation](https://www.psychopy.org/general/timing/index.html)
+
+A static offset is the regular time difference between our signals and stimuli. This offset is determined through testing via a photodiode or other triggering mechanism. The offset correction is done by shifting the EEG signal by the determined offset using the `static_offset` parameter. 
+
+After running a timing verification task (such as, RSVPTimingVerification) with a photodiode attached to the display and connected to a device, the offset can be determined by analyzing the data. Use the `offset` module to recommend an offset correction value and display the results.
+
+To run the offset determination and print the results, use the following command:
+
+```bash
+python bcipy/helpers/offset.py -r
+```
+
+After running the above command, the recommended offset correction value will be displayed in the terminal and can be passed to determine system stability and display the results.
+
+```bash
+# Let's say the recommneded offset value is 0.1
+python bcipy/helpers/offset.py --offset "0.1" -p
+
+```
+
+Alternately, if Make is installed, you may run the follow command to run offset determination and display the results:
+
+```sh
+make offset-recommend
+```
+
 ## Testing
 ----------
 
