@@ -1,4 +1,7 @@
 /* This stylesheet uses the QSS syntax, but is named as a CSS file to take advantage of IDE CSS tooling */
+* {
+    background-color: white;
+}
 QWidget {
     background-color: black;
     color: white;
@@ -13,6 +16,13 @@ QPushButton {
     background-color: green;
     padding: 10px;
     border-radius: 10px;
+}
+
+
+QPushButton[class="small-button"] {
+    background-color: red;
+    padding: 5px;
+    border-radius: 5px;
 }
 
 QPushButton:hover {
@@ -31,6 +41,5 @@ QComboBox, QLineEdit {
 }
 
 QScrollArea {
-    background-color: white;
     border-radius: 5px;
 }
