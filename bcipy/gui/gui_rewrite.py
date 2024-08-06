@@ -12,6 +12,7 @@ from PyQt6.QtWidgets import (
     QScrollArea,
     QLineEdit,
     QLayout,
+    QSizePolicy,
 )
 from typing import Optional, List
 
@@ -35,7 +36,7 @@ class BCIUI(QWidget):
 
     def display(self):
         # Push contents to the top of the window
-        self.contents.addStretch()
+        # self.contents.addStretch()
         self.apply_stylesheet()
         self.show()
 
@@ -54,6 +55,11 @@ class BCIUI(QWidget):
         scroll_area.setWidgetResizable(True)
         return scroll_area
 
+class SmallButton(QPushButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setProperty('class', 'small-button')
+        self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
 
 class DynamicItem(QWidget):
     """A widget that can be dynamically added and removed from the ui"""
@@ -114,7 +120,7 @@ def make_field_entry(name: str) -> QWidget:
     label = QLabel(name)
     label.setStyleSheet("color: black;")
     layout.addWidget(label)
-    remove_button = QPushButton("Remove")
+    remove_button = SmallButton("Remove")
     remove_button.setStyleSheet("background-color: red;")
     remove_button.clicked.connect(lambda: layout.deleteLater())
     layout.addWidget(remove_button)
@@ -153,34 +159,16 @@ if __name__ == "__main__":
     fields_scroll_area = QScrollArea()
     fields_items_container = QWidget()
 
-    # fields_items_container.setWidgetResizable(True)
-    # fields_scroll_area.setWidget(fields_items_container)
-    # fields_scroll_area.setWidgetResizable(True)
-    # bci.contents.addWidget(QLabel("Fields"))
-    # bci.contents.addWidget(fields_scroll_area)
     fields_content = DynamicList()
-    # fields_content = BCIUI.DynamicList()  
     fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
     label = QLabel("Fields")
     label.setStyleSheet("color: black;")
     bci.contents.addWidget(fields_scroll_area)
 
-    # def removeable_field_entry(name: str) -> QWidget:
-    #     widget, button = make_field_entry(name)
-    #     button.clicked.connect(lambda: fields_content.removeWidget(widget))
-    #     button.clicked.connect(lambda: widget.deleteLater())
-    #     return widget
-
 
     create_experiment_button.clicked.connect(
         lambda: fields_content.add_item(make_field_entry("Field 2"))
     )
-    # fields_scroll_area.addWidget(BCIUI.make_list_scroll_area())
-    # protocol_scroll_area = QScrollArea()
-    # protocol_items_container = QWidget()
-    # bci.contents.addWidget(QLabel("Protocol"))
-    # bci.contents.addWidget(protocol_scroll_area)
 
     bci.display()
-    # test_label.show()
     app.exec()
