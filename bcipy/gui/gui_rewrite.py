@@ -120,9 +120,19 @@ def make_field_entry(name: str) -> QWidget:
     label = QLabel(name)
     label.setStyleSheet("color: black;")
     layout.addWidget(label)
+
     remove_button = SmallButton("Remove")
     remove_button.setStyleSheet("background-color: red;")
     remove_button.clicked.connect(lambda: layout.deleteLater())
+    
+    anonymous_button = SmallButton("Anonymous")
+    anonymous_button.setStyleSheet("background-color: black;")
+    layout.addWidget(anonymous_button)
+
+    optional_button = SmallButton("Optional")
+    layout.addWidget(optional_button)
+
+
     layout.addWidget(remove_button)
     widget = DynamicItem()
     remove_button.clicked.connect(lambda: widget.remove())
