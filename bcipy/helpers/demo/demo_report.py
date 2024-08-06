@@ -16,9 +16,6 @@ from bcipy.signal.evaluate.artifact import ArtifactDetection
 from bcipy.helpers.report import Report, SignalReportSection, SessionReportSection
 
 
- 
-
-
 if __name__ == "__main__":
     import argparse
 
@@ -38,13 +35,12 @@ if __name__ == "__main__":
 
     trial_window = (0, 1.0)
 
-
     positions = None
     for session in Path(path).iterdir():
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
             print(f'Processing {session}')
-            prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
+            prompt = input('Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
@@ -93,14 +89,14 @@ if __name__ == "__main__":
                         eye_channels.append(channel)
                 if len(eye_channels) == 0:
                     eye_channels = None
-    
+
                 artifact_detector = ArtifactDetection(
-                        raw_data,
-                        parameters,
-                        device_spec,
-                        eye_channels=eye_channels,
-                        session_triggers=triggers)
-                
+                    raw_data,
+                    parameters,
+                    device_spec,
+                    eye_channels=eye_channels,
+                    session_triggers=triggers)
+
                 detected = artifact_detector.detect_artifacts()
                 figure_handles = visualize_erp(
                     raw_data,
@@ -119,7 +115,7 @@ if __name__ == "__main__":
                     if file.suffix == '.pkl':
                         pkl_file = file
                         break
-                
+
                 if pkl_file:
                     auc = pkl_file.stem.split('_')[-1]
                 else:

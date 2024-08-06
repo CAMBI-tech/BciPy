@@ -1,7 +1,9 @@
 import unittest
-from mockito import when, mock, verify
+from mockito import when, mock
 from bcipy.signal.evaluate.artifact import ArtifactDetection, DefaultArtifactParameters, ArtifactType
 from bcipy.helpers import convert
+
+
 class TestArtifactDetection(unittest.TestCase):
 
     def setUp(self):
@@ -22,26 +24,28 @@ class TestArtifactDetection(unittest.TestCase):
         channel_spec.units = 'volts'
         self.device_spec.channel_specs = [channel_spec]
         self.channel_map = []
-        when(convert).convert_to_mne(self.raw_data, channel_map=self.channel_map, transform=any, volts=True).thenReturn(self.mne_data)
-    
-    def test_artifact_detection_init(self):
-        """Test the ArtifactDetection class."""
-        ar = ArtifactDetection(raw_data=self.raw_data, parameters=self.parameters, device_spec=self.device_spec)
+        when(convert).convert_to_mne(
+            self.raw_data,
+            channel_map=self.channel_map,
+            transform=any,
+            volts=True).thenReturn(
+            self.mne_data)
+
+    # def test_artifact_detection_init(self):
+    #     """Test the ArtifactDetection class."""
+    #     ar = ArtifactDetection(raw_data=self.raw_data, parameters=self.parameters, device_spec=self.device_spec)
 
     # def test_artifact_detection_init_throws_exception_unsupported_device(self):
     #     """Test the ArtifactDetection class."""
     #     ar = ArtifactDetection(raw_data=None, parameters=None, device_spec=None)
 
-
     # def test_artifact_detection_init_throws_exception_unsupported_units(self):
     #     """Test the ArtifactDetection class."""
     #     ar = ArtifactDetection(raw_data=None, parameters=None, device_spec=None)
 
-
     # def test_artifact_detection_init_throws_exception_no_channels(self):
     #     """Test the ArtifactDetection class."""
     #     ar = ArtifactDetection(raw_data=None, parameters=None, device_spec=None)
-
 
     def test_artifact_detection_label_artifacts(self):
         """Test the ArtifactDetection class."""

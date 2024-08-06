@@ -4,7 +4,13 @@ import os
 from enum import Enum
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
-from bcipy.config import DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME, BCIPY_ROOT
+from bcipy.config import (
+    DEFAULT_PARAMETER_FILENAME,
+    RAW_DATA_FILENAME,
+    TRIGGER_FILENAME,
+    DEFAULT_DEVICE_SPEC_FILENAME,
+    BCIPY_ROOT
+)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
     load_experimental_data,
@@ -15,7 +21,6 @@ from mne import Annotations
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.load import load_raw_data
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
@@ -24,7 +29,7 @@ from bcipy.acquisition.devices import DeviceSpec
 
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
-    
+
     These values are used as defaults for artifact analysis purposes.
     """
 
@@ -46,7 +51,7 @@ class DefaultArtifactParameters(Enum):
     def __str__(self) -> str:
         """Return the value of the artifact type."""
         return self.value
-    
+
     def __repr__(self) -> str:
         """Return the class name and the artifact type name."""
         return f'{self.__class__.__name__}.{self.name}'
@@ -54,7 +59,7 @@ class DefaultArtifactParameters(Enum):
 
 class ArtifactType(Enum):
     """Artifact Type Enum.
-    
+
     The artifact type enum is used to define the types of artifacts that can be detected in the data.
     """
 
@@ -69,11 +74,11 @@ class ArtifactType(Enum):
     def __str__(self) -> str:
         """Return the value of the artifact type."""
         return self.value
-    
+
     def __repr__(self) -> str:
         """Return the class name and the artifact type name."""
         return f'{self.__class__.__name__}.{self.name}'
-    
+
     def label(self) -> str:
         """Label the artifact type.
 
@@ -83,13 +88,13 @@ class ArtifactType(Enum):
                          This is used for epoch handling by MNE.
         """
         return f'BAD_{self.value}'
-  
+
 
 class ArtifactDetection:
     """Artifact Detection Class.
 
     The artifact detection class is used to detect and label artifacts in the raw data. This class is designed to be
-    used in a pipeline for artifact detection and labelling. 
+    used in a pipeline for artifact detection and labelling.
 
 
     Parameters
@@ -115,7 +120,7 @@ class ArtifactDetection:
 
     detect_eog : bool
         Whether to detect EOG artifacts. Defaults to True. Eye channels must be provided if this is set to True.
-    
+
     eye_channels : list
         The list of eye channels to use for detecting EOG artifacts. Defaults to None. If provided, the channels should
         look like ['Fp1', 'Fp2', 'F7', 'F8'].
@@ -136,13 +141,13 @@ class ArtifactDetection:
             raw_data: RawData,
             parameters: dict,
             device_spec: DeviceSpec,
-            save_path: Optional[str]= None,
+            save_path: Optional[str] = None,
             semi_automatic: bool = False,
-            session_triggers: Tuple[list]=None,
-            percent_bad: float=50.0,
-            detect_eog: bool=True,
-            eye_channels: Optional[List[str]]=None,
-            detect_voltage: bool= True) -> None:
+            session_triggers: Tuple[list] = None,
+            percent_bad: float = 50.0,
+            detect_eog: bool = True,
+            eye_channels: Optional[List[str]] = None,
+            detect_voltage: bool = True) -> None:
         self.raw_data = raw_data
         self.total_time = raw_data.total_seconds
         self.device_spec = device_spec
@@ -182,15 +187,14 @@ class ArtifactDetection:
 
         self.save_path = save_path
 
-
     def detect_artifacts(self):
         """Detect artifacts in the raw data."""
-        
+
         labels = self.label_artifacts(extra_labels=self.session_triggers)
         percent_dropped = 0
 
-         # calculate the impact of artifacts on the session triggers by creating epochs around the triggers
-         # and dropping artifacts using MNE
+        # calculate the impact of artifacts on the session triggers by creating epochs around the triggers
+        # and dropping artifacts using MNE
         if self.session_triggers:
             print('Calculating the impact of artifacts on session triggers.')
             epochs = mne_epochs(
@@ -198,12 +202,14 @@ class ArtifactDetection:
                 self.trial_duration,
                 reject_by_annotation=True,
                 preload=True)
-            
+
             # calculate the percentage of dropped epochs
             kept_epochs = len(epochs)
             total_epochs = len(self.trigger_label)
             percent_dropped = (1 - (kept_epochs / total_epochs)) * 100
-            self.dropped = f'{kept_epochs}/{total_epochs} retained -[{percent_dropped}%] epochs dropped due to artifacts.'
+            self.dropped = (
+                f'{kept_epochs}/{total_epochs} retained. {percent_dropped}% epochs dropped due to artifacts.'
+            )
 
         self.analysis_done = True
         if self.save_path:
@@ -213,13 +219,12 @@ class ArtifactDetection:
         labels = f'{len(labels)} artifacts found in the data.'
 
         return labels, percent_dropped
-        
 
     def label_artifacts(
             self,
-            detect_voltage: bool=True,
-            detect_eog: bool=True,
-            extra_labels: Optional[Annotations]=None) -> Annotations:
+            detect_voltage: bool = True,
+            detect_eog: bool = True,
+            extra_labels: Optional[Annotations] = None) -> Annotations:
         """Label the artifacts in the raw data."""
         # Create an empty annotations object to store all the annotations
         annotations = mne.Annotations(0, 0, 'start')
@@ -273,8 +278,7 @@ class ArtifactDetection:
         else:
             print('Artifact cannot be saved, artifact analysis has been done yet.')
 
-
-    def raw_data_to_mne(self, raw_data: RawData, volts: bool=False) -> mne.io.RawArray:
+    def raw_data_to_mne(self, raw_data: RawData, volts: bool = False) -> mne.io.RawArray:
         """Convert the raw data to an MNE RawArray."""
 
         downsample_rate = self.parameters.get("down_sampling_rate")
@@ -298,13 +302,12 @@ class ArtifactDetection:
             transform=default_transform,
             volts=volts)
 
-
     def label_eog_events(
-        self,
-        preblink: float=DefaultArtifactParameters.EOG_LABEL_DURATION.value,
-        postblink: float=DefaultArtifactParameters.EOG_LABEL_DURATION.value,
-        label: str=ArtifactType.BLINK.label(),
-        threshold: float=DefaultArtifactParameters.EOG_THRESHOLD.value) -> Optional[Tuple[mne.Annotations, list]]:
+            self,
+            preblink: float = DefaultArtifactParameters.EOG_LABEL_DURATION.value,
+            postblink: float = DefaultArtifactParameters.EOG_LABEL_DURATION.value,
+            label: str = ArtifactType.BLINK.label(),
+            threshold: float = DefaultArtifactParameters.EOG_THRESHOLD.value) -> Optional[Tuple[mne.Annotations, list]]:
         """Label EOG artifacts.
 
         Parameters
@@ -341,13 +344,13 @@ class ArtifactDetection:
 
             return blink_annotations, eog_events
         return None
-    
+
     def label_voltage_events(
-        self,
-        pre_event: float=DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value,
-        post_event: float=DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value,
-        peak: Optional[Tuple[float, float, str]]=None,
-        flat: Optional[Tuple[float, float, str]]=None) -> Optional[Tuple[mne.Annotations, List[str]]]:
+            self,
+            pre_event: float = DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value,
+            post_event: float = DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value,
+            peak: Optional[Tuple[float, float, str]] = None,
+            flat: Optional[Tuple[float, float, str]] = None) -> Optional[Tuple[mne.Annotations, List[str]]]:
         """Annotate Voltage Events in the data.
 
         Parameters
@@ -407,9 +410,10 @@ class ArtifactDetection:
                 onsets,
                 duration,
                 descriptions)
-  
+
         # get the voltage events for flat
-        flat_voltage_annotations, bad_channels2 = mne.preprocessing.annotate_amplitude(self.mne_data, min_duration=flat[1], bad_percent=self.percent_bad, flat=flat[0])
+        flat_voltage_annotations, bad_channels2 = mne.preprocessing.annotate_amplitude(
+            self.mne_data, min_duration=flat[1], bad_percent=self.percent_bad, flat=flat[0])
         if len(flat_voltage_annotations) > 0:
             onsets, durations, descriptions = self.concat_annotations(
                 flat_voltage_annotations,
@@ -427,7 +431,6 @@ class ArtifactDetection:
             return mne.Annotations(onsets, durations, descriptions), bad_channels
 
         return None
-
 
     def concat_annotations(
             self,
@@ -458,7 +461,7 @@ class ArtifactDetection:
             The list of durations to append to.
         descriptions : list
             The list of descriptions to append to.
-        
+
         Returns
         -------
         Tuple[list, list, list] - The onsets, durations, and descriptions.
@@ -477,6 +480,7 @@ class ArtifactDetection:
 
         return onsets, duration, descriptions
 
+
 def write_mne_annotations(
         annotations: mne.Annotations,
         path: str,
@@ -484,7 +488,7 @@ def write_mne_annotations(
     """Write MNE annotations to a text file.
 
     This is useful for sharing annotations for use outside of MNE.
-    
+
     Parameters
     ----------
     annotations : mne.Annotations
@@ -493,7 +497,7 @@ def write_mne_annotations(
         The path to write the annotations to.
     filename : str
         The filename for the new annotations file.
-    
+
     Returns
     -------
     None
@@ -501,8 +505,10 @@ def write_mne_annotations(
     # write the annotations to a text file where each line is [description, bcipy_label, onset, duration]
     with open(os.path.join(path, filename), 'w') as tmp_file:
         for annotation in annotations:
-            tmp_file.write(f"{annotation['description'].split('BAD_')[-1]} {TriggerType.ARTIFACT} {annotation['onset']} {annotation['duration']}\n")
-    
+            tmp_file.write(
+                f"{annotation['description'].split('BAD_')[-1]} "
+                f"{TriggerType.ARTIFACT} {annotation['onset']} {annotation['duration']}\n")
+
 
 if __name__ == "__main__":
     import argparse
@@ -513,12 +519,12 @@ if __name__ == "__main__":
         '--path',
         help='Path to the directory with >= 1 sessions to be analyzed for artifacts',
         required=False)
-    # Semi-supervised artifact detection. 
+    # Semi-supervised artifact detection.
     # If flag used, the user will be prompted with a GUI to correct or add labels for artifacts.
     parser.add_argument("--semi", dest="semi", action="store_true")
     # Save the data after artifact detection as .fif file (MNE).
     parser.add_argument("--save", dest="save", action="store_true")
-    # If flag used with semi, the user will be prompted to correct or add labels for 
+    # If flag used with semi, the user will be prompted to correct or add labels for
     # artifacts alongside the other session triggers.
     parser.add_argument("--colabel", dest="colabel", action="store_true")
     parser.set_defaults(semi=False)
@@ -531,13 +537,12 @@ if __name__ == "__main__":
     if not path:
         path = load_experimental_data()
 
-
     positions = None
     for session in Path(path).iterdir():
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
             print(f'Processing {session}')
-            prompt = input(f'Hit enter to continue or type "skip" to skip processing: ')
+            prompt = input('Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
@@ -568,16 +573,16 @@ if __name__ == "__main__":
                         eye_channels.append(channel)
                 if len(eye_channels) == 0:
                     eye_channels = None
-    
+
                 artifact_detector = ArtifactDetection(
-                        raw_data,
-                        parameters,
-                        device_spec,
-                        eye_channels=eye_channels,
-                        session_triggers=triggers,
-                        save_path=None if not args.save else session,
-                        semi_automatic=args.semi)
-                
+                    raw_data,
+                    parameters,
+                    device_spec,
+                    eye_channels=eye_channels,
+                    session_triggers=triggers,
+                    save_path=None if not args.save else session,
+                    semi_automatic=args.semi)
+
                 detected = artifact_detector.detect_artifacts()
                 # write_mne_annotations(detected, session, 'artifacts.txt')
             else:

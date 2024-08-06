@@ -44,7 +44,7 @@ class SignalReportSection(ReportSection):
     def __init__(
             self,
             figures: List[Figure],
-            artifact: Optional[ArtifactDetection]=None) -> None:
+            artifact: Optional[ArtifactDetection] = None) -> None:
         self.figures = figures
         self.report_flowables: List[Flowable] = []
         self.artifact = artifact
@@ -65,7 +65,7 @@ class SignalReportSection(ReportSection):
         self.report_flowables.extend(self._create_epochs_section())
 
         return KeepTogether(self.report_flowables)
-    
+
     def _create_artifact_section(self) -> Flowable:
         """Create Artifact Section.
 
@@ -73,7 +73,7 @@ class SignalReportSection(ReportSection):
         """
         artifact_report = []
         artifacts_detected = self.artifact.dropped
-        artifact_text = f'<b>Artifact:</b>'
+        artifact_text = '<b>Artifact:</b>'
         artifact_section = Paragraph(artifact_text, self.style['BodyText'])
         artifact_overview = f'<b>Artifacts Detected:</b> {artifacts_detected}'
         artifact_section = Paragraph(artifact_overview, self.style['BodyText'])
@@ -102,7 +102,7 @@ class SignalReportSection(ReportSection):
                 'Voltage')
             artifact_report.append(heatmap)
         return KeepTogether(artifact_report)
-    
+
     def _create_heatmap(self, onsets: List[float], range: Tuple[float, float], type: str) -> Image:
         """Create Heatmap.
 

@@ -403,8 +403,8 @@ def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[Li
 
 def mne_epochs(mne_data: RawArray,
                trial_length: float,
-               trigger_timing: List[float]=None,
-               trigger_labels: List[int]=None,
+               trigger_timing: List[float] = None,
+               trigger_labels: List[int] = None,
                baseline: Optional[Tuple[Any, float]] = None,
                reject_by_annotation: bool = False,
                preload: bool = False) -> Epochs:
@@ -419,7 +419,7 @@ def mne_epochs(mne_data: RawArray,
         all_annotations = new_annotations + old_annotations
     else:
         all_annotations = old_annotations
-    
+
     tmp_data = mne_data.copy()
     tmp_data.set_annotations(all_annotations)
 
@@ -430,7 +430,7 @@ def mne_epochs(mne_data: RawArray,
         baseline=baseline,
         tmax=trial_length,
         tmin=-0.05,
-        proj=False, # apply SSP projection to data. Defaults to True in Epochs.
+        proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
         reject_by_annotation=reject_by_annotation,
         preload=preload)
 
