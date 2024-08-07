@@ -63,19 +63,19 @@ class BCIUI(QWidget):
         off_action: Optional[Callable] = lambda: None,
     ):
         """Connects two buttons to toggle between eachother and call passed methods"""
-        on_button.hide()
+        off_button.hide()
         def toggle_off():
-            on_button.show()
-            off_button.hide()
+            on_button.hide()
+            off_button.show()
             off_action()
 
         def toggle_on():
-            on_button.hide()
-            off_button.show()
+            on_button.show()
+            off_button.hide()
             on_action()
 
-        on_button.clicked.connect(toggle_on)
-        off_button.clicked.connect(toggle_off)
+        on_button.clicked.connect(toggle_off)
+        off_button.clicked.connect(toggle_on)
 
 
 class SmallButton(QPushButton):
