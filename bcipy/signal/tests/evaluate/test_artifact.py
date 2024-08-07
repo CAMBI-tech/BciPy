@@ -34,7 +34,7 @@ class TestArtifactDetection(unittest.TestCase):
             transform=any,
             volts=True).thenReturn(
             self.mne_data)
-        
+
     def tearDown(self) -> None:
         unstub()
 
@@ -46,6 +46,7 @@ class TestArtifactDetection(unittest.TestCase):
         self.assertIsNone(ar.dropped)
         self.assertIsNone(ar.eog_annotations)
         self.assertIsNone(ar.voltage_annotations)
+        self.assertIsNone(ar.session_triggers)
 
     def test_artifact_detection_init_throws_exception_unsupported_device(self):
         """Test the ArtifactDetection class throws exception when using a device that is not supported."""
@@ -77,15 +78,39 @@ class TestArtifactDetection(unittest.TestCase):
                 parameters=self.parameters,
                 device_spec=self.device_spec)
 
-    def test_artifact_detection_label_artifacts(self):
+    def test_artifact_detection_with_session_labels(self):
+        description = ['test', 'target', 'test']
+        timing = [1, 2, 3]
+        labels = [0, 1, 0]
+        session_triggers = (description, timing, labels)
+        ar = ArtifactDetection(
+            raw_data=self.raw_data,
+            parameters=self.parameters,
+            device_spec=self.device_spec,
+            session_triggers=session_triggers)
+        self.assertIsNotNone(ar.session_triggers)
+
+    def test_artifact_detection_detect_artifacts(self):
         """Test the ArtifactDetection class label artifacts method."""
-        pass
+        ar = ArtifactDetection(
+            raw_data=self.raw_data,
+            parameters=self.parameters,
+            device_spec=self.device_spec)
+        labels = [mock()]
+        expected_label_response = f'{len(labels)} artifacts found in the data.'
+        when(ar).label_artifacts(extra_labels=ar.session_triggers).thenReturn(labels)
+        response_labels, response_dropped = ar.detect_artifacts()
+        self.assertEqual(response_labels, expected_label_response)
+        self.assertEqual(response_dropped, 0)
 
-    def test_artifact_detection_label_eog_artifacts(self):
-        pass
-
-    def test_artifact_detection_label_voltage_artifacts(self):
-        pass
+    def test_artifact_detection_label_artifacts(self):
+        """Test the ArtifactDetection class label artifacts method with no labels."""
+        ar = ArtifactDetection(
+            raw_data=self.raw_data,
+            parameters=self.parameters,
+            device_spec=self.device_spec)
+        response = ar.label_artifacts(False, False)
+        self.assertTrue(len(response) == 1)
 
     def test_artifact_type(self):
         """Test the ArtifactType class."""

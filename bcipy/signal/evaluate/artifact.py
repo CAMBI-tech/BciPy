@@ -32,6 +32,7 @@ import mne
 mne.set_log_level('WARNING')
 from mne import Annotations
 
+
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
 
@@ -272,7 +273,7 @@ class ArtifactDetection:
 
         return annotations
 
-    def save_artifacts(self, overwrite: bool=False) -> None:
+    def save_artifacts(self, overwrite: bool = False) -> None:
         """Save the artifact file to disk."""
         if self.analysis_done:
             self.mne_data.save(
