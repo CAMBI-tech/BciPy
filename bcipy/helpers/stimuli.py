@@ -413,8 +413,8 @@ def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[Li
 
 def mne_epochs(mne_data: RawArray,
                trial_length: float,
-               trigger_timing: List[float] = None,
-               trigger_labels: List[int] = None,
+               trigger_timing: Optional[List[float]] = None,
+               trigger_labels: Optional[List[int]] = None,
                baseline: Optional[Tuple[Any, float]] = None,
                reject_by_annotation: bool = False,
                preload: bool = False) -> Epochs:

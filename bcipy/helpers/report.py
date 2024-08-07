@@ -1,3 +1,4 @@
+# mypy: disable-error-code="union-attr"
 import io
 from abc import ABC
 from typing import List, Optional, Tuple

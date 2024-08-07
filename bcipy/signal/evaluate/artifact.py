@@ -1,9 +1,12 @@
-import mne
-mne.set_log_level('WARNING')
+# mypy: disable-error-code="assignment,arg-type"
 import os
 from enum import Enum
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
+from logging import getLogger
+
+log = getLogger(__name__)
+
 from bcipy.config import (
     DEFAULT_PARAMETER_FILENAME,
     RAW_DATA_FILENAME,
@@ -17,7 +20,6 @@ from bcipy.helpers.load import (
     load_json_parameters,
     load_raw_data,
 )
-from mne import Annotations
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.raw_data import RawData
@@ -26,6 +28,9 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 
+import mne
+mne.set_log_level('WARNING')
+from mne import Annotations
 
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
@@ -129,12 +134,12 @@ class ArtifactDetection:
         Whether to detect voltage artifacts. Defaults to True.
     """
 
-    supported_units = ['volts', 'microvolts']
-    support_device_types = ['EEG']
-    analysis_done = False
-    dropped = None
-    eog_annotations = None
-    voltage_annotations = None
+    supported_units: List[str] = ['volts', 'microvolts']
+    support_device_types: List[str] = ['EEG']
+    analysis_done: bool = False
+    dropped: Optional[str] = None
+    eog_annotations: Optional[Annotations] = None
+    voltage_annotations: Optional[Annotations] = None
 
     def __init__(
             self,
@@ -143,7 +148,7 @@ class ArtifactDetection:
             device_spec: DeviceSpec,
             save_path: Optional[str] = None,
             semi_automatic: bool = False,
-            session_triggers: Tuple[list] = None,
+            session_triggers: Optional[Tuple[list, list, list]] = None,
             percent_bad: float = 50.0,
             detect_eog: bool = True,
             eye_channels: Optional[List[str]] = None,
@@ -161,6 +166,7 @@ class ArtifactDetection:
         start_trial, end_trial = self.parameters.get('trial_window', (0, 0.5))
         self.trial_duration = end_trial - start_trial
 
+        self.session_triggers = None
         if session_triggers:
             self.triggers = session_triggers
             self.trigger_description = session_triggers[0]
@@ -169,11 +175,8 @@ class ArtifactDetection:
 
             self.session_triggers = mne.Annotations(
                 self.trigger_time, [self.trial_duration] * len(self.trigger_time), self.trigger_description)
-        else:
-            self.session_triggers = None
 
-        self.log = None
-        assert len(device_spec.channel_specs) > 1, 'DeviceSpec used must have channels. None found.'
+        assert len(device_spec.channel_specs) > 0, 'DeviceSpec used must have channels. None found.'
         self.units = device_spec.channel_specs[0].units
         assert self.units in self.supported_units, \
             f'Data loaded in units that cannot be processed. Support units={self.supported_units}'
@@ -187,7 +190,7 @@ class ArtifactDetection:
 
         self.save_path = save_path
 
-    def detect_artifacts(self):
+    def detect_artifacts(self) -> Tuple[str, float]:
         """Detect artifacts in the raw data."""
 
         labels = self.label_artifacts(extra_labels=self.session_triggers)
@@ -196,7 +199,7 @@ class ArtifactDetection:
         # calculate the impact of artifacts on the session triggers by creating epochs around the triggers
         # and dropping artifacts using MNE
         if self.session_triggers:
-            print('Calculating the impact of artifacts on session triggers.')
+            log.info('Calculating the impact of artifacts on session triggers.')
             epochs = mne_epochs(
                 self.mne_data,
                 self.trial_duration,
@@ -214,7 +217,7 @@ class ArtifactDetection:
         self.analysis_done = True
         if self.save_path:
             self.save_artifacts(overwrite=True)
-            print(f'Artifact labelled data saved to {self.save_path}')
+            log.info(f'Artifact labelled data saved to {self.save_path}')
 
         labels = f'{len(labels)} artifacts found in the data.'
 
@@ -233,11 +236,11 @@ class ArtifactDetection:
             voltage = self.label_voltage_events()
             if voltage:
                 voltage_annotations, bad_channels = voltage
-                print(f'Voltage violation events found: {len(voltage_annotations)}')
+                log.info(f'Voltage violation events found: {len(voltage_annotations)}')
                 if bad_channels:
                     # add bad channel labels to the raw data
                     self.mne_data.info['bads'] = bad_channels
-                    print(f'Bad channels detected: {bad_channels}')
+                    log.info(f'Bad channels detected: {bad_channels}')
 
                 if voltage_annotations:
                     annotations += voltage_annotations
@@ -247,7 +250,7 @@ class ArtifactDetection:
             eog = self.label_eog_events()
             if eog:
                 eog_annotations, eog_events = eog
-                print(f'EOG events found: {len(eog_events)}')
+                log.info(f'EOG events found: {len(eog_events)}')
                 if eog_annotations:
                     annotations += eog_annotations
                     self.eog_annotations = eog_annotations
@@ -260,7 +263,7 @@ class ArtifactDetection:
         if len(annotations) > 0:
             self.mne_data.set_annotations(annotations)
         else:
-            print('No artifacts or labels provided for the data.')
+            log.info('No artifacts or labels provided for the data.')
 
         # Plot the data with all annotations. This allows a user to reject additional bad epochs
         # or modify existing annotations.
@@ -269,14 +272,14 @@ class ArtifactDetection:
 
         return annotations
 
-    def save_artifacts(self, overwrite=False):
+    def save_artifacts(self, overwrite: bool=False) -> None:
         """Save the artifact file to disk."""
         if self.analysis_done:
             self.mne_data.save(
                 f'{self.save_path}/{DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME.value}',
                 overwrite=overwrite)
         else:
-            print('Artifact cannot be saved, artifact analysis has been done yet.')
+            log.info('Artifact cannot be saved, artifact analysis has been done yet.')
 
     def raw_data_to_mne(self, raw_data: RawData, volts: bool = False) -> mne.io.RawArray:
         """Convert the raw data to an MNE RawArray."""
@@ -328,10 +331,10 @@ class ArtifactDetection:
         ( mne.Annotations, list) | None
         """
         if not self.eye_channels:
-            print('No eye channels provided. Cannot detect EOG artifacts.')
+            log.info('No eye channels provided. Cannot detect EOG artifacts.')
             return None
 
-        print(f'Using blink threshold of {threshold} for channels {self.eye_channels}.')
+        log.info(f'Using blink threshold of {threshold} for channels {self.eye_channels}.')
         eog_events = mne.preprocessing.find_eog_events(self.mne_data, ch_name=self.eye_channels, thresh=threshold)
         # eog_events = mne.preprocessing.ica_find_eog_events(raw) TODO compare to ICA
 
@@ -391,9 +394,9 @@ class ArtifactDetection:
                 DefaultArtifactParameters.PEAK_MIN_DURATION.value,
                 ArtifactType.VOLTAGE.label())
 
-        onsets = []
-        duration = []
-        descriptions = []
+        onsets: List[float] = []
+        duration: List[float] = []
+        descriptions: List[str] = []
 
         # get the voltage events for threshold
         peak_voltage_annotations, bad_channels1 = mne.preprocessing.annotate_amplitude(
@@ -541,7 +544,7 @@ if __name__ == "__main__":
     for session in Path(path).iterdir():
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
-            print(f'Processing {session}')
+            log.info(f'Processing {session}')
             prompt = input('Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
@@ -549,7 +552,7 @@ if __name__ == "__main__":
                     f'{session}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
 
                 # load the raw data from the data directory
-                raw_data = load_raw_data(Path(session, f'{RAW_DATA_FILENAME}.csv'))
+                raw_data = load_raw_data(str(Path(session, f'{RAW_DATA_FILENAME}.csv')))
                 type_amp = raw_data.daq_type
 
                 # load the triggers
@@ -586,6 +589,6 @@ if __name__ == "__main__":
                 detected = artifact_detector.detect_artifacts()
                 # write_mne_annotations(detected, session, 'artifacts.txt')
             else:
-                print(f'Skipping {session}')
+                log.info(f'Skipping {session}')
             # Uncomment below to pause between sessions.
             # breakpoint()
