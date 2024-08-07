@@ -155,8 +155,8 @@ def make_field_entry(name: str) -> QWidget:
 
     anonymous_button = SmallButton("Anonymous")
     onymous_button = SmallButton("Onymous")
-    anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
-    onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
+    # anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
+    # onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
     BCIUI.make_toggle(
         anonymous_button,
         onymous_button,
@@ -168,7 +168,15 @@ def make_field_entry(name: str) -> QWidget:
     anonymous_button.setStyleSheet("background-color: black;")
 
     optional_button = SmallButton("Optional")
+    required_button = SmallButton("Required")
+    BCIUI.make_toggle(
+        optional_button,
+        required_button,
+        on_action=lambda: widget.data.update({"optional": True}),
+        off_action=lambda: widget.data.update({"optional": False}),
+    )
     layout.addWidget(optional_button)
+    layout.addWidget(required_button)
 
     layout.addWidget(remove_button)
     widget.data = {"field_name": name, "anonymous": False, "optional": False}
