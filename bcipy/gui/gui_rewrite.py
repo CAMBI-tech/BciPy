@@ -64,6 +64,7 @@ class BCIUI(QWidget):
     ):
         """Connects two buttons to toggle between eachother and call passed methods"""
         off_button.hide()
+
         def toggle_off():
             on_button.hide()
             off_button.show()
@@ -126,7 +127,10 @@ class DynamicList(QWidget):
 
 
 # --- Experiment registry code ---
-from bcipy.helpers.load import load_fields
+from bcipy.helpers.load import load_fields, load_experiments
+from bcipy.helpers.save import save_experiment_data
+from bcipy.config import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
+
 
 def format_experiment_combobox(
     label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
@@ -138,6 +142,9 @@ def format_experiment_combobox(
     input_area.setContentsMargins(30, 0, 0, 30)
     area.addWidget(label)
     input_area.addWidget(combobox, 1)
+    if buttons:
+        for button in buttons:
+            input_area.addWidget(button)
     area.addLayout(input_area)
     return area
 
@@ -204,13 +211,15 @@ if __name__ == "__main__":
 
     field_input = QComboBox()
     field_input.addItems(load_fields())
-    form_area.addLayout(format_experiment_combobox("Fields", field_input, None))
+    add_field_button = QPushButton("Add")
+    new_field_button = QPushButton("New")
+    form_area.addLayout(
+        format_experiment_combobox(
+            "Fields", field_input, [add_field_button, new_field_button]
+        )
+    )
 
     bci.contents.addLayout(form_area)
-
-    create_experiment_button = QPushButton("Create experiment")
-
-    bci.contents.addWidget(create_experiment_button)
 
     fields_scroll_area = QScrollArea()
     fields_items_container = QWidget()
@@ -220,6 +229,13 @@ if __name__ == "__main__":
     label = QLabel("Fields")
     label.setStyleSheet("color: black;")
     bci.contents.addWidget(fields_scroll_area)
-    create_experiment_button.clicked.connect(lambda: print(fields_content.list()))
+    add_field_button.clicked.connect(
+        lambda: fields_content.add_item(make_field_entry(field_input.currentText()))
+    )
+
+    create_experiment_button = QPushButton("Create experiment")
+    create_experiment_button.clicked.connect(lambda: print('save here'))
+    bci.contents.addWidget(create_experiment_button)
+
     bci.display()
     app.exec()
