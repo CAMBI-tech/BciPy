@@ -47,7 +47,7 @@ class BCIUI(QWidget):
         layout.addWidget(widget)
         layout.addStretch()
         return layout
-    
+
     @staticmethod
     def make_list_scroll_area(widget: QWidget) -> QScrollArea:
         scroll_area = QScrollArea()
@@ -55,52 +55,50 @@ class BCIUI(QWidget):
         scroll_area.setWidgetResizable(True)
         return scroll_area
 
-class Toggle(QWidget):
+    @staticmethod
+    def make_toggle(
+        on_button: QPushButton,
+        off_button: QPushButton,
+        on_action: Callable,
+        off_action: Callable,
+    ):
+        """Connects two buttons to toggle between eachother and call passed methods"""
+        on_button.hide()
+        def toggle_off():
+            on_button.show()
+            off_button.hide()
+            off_action()
 
-    def __init__(self, on_button: QPushButton, off_button: QPushButton):
-        super().__init__()
-        self.on = True
-        self.on_button = on_button
-        self.off_button = off_button
-        self.on_button.clicked.connect(self.toggle)
-        self.off_button.clicked.connect(self.toggle)
-        self.setLayout(QHBoxLayout())
-        self.layout().addWidget(self.on_button)
-        self.layout().addWidget(self.off_button)
-        self.off_button.hide()
-        # make the widget have no extra space
-        self.layout().setContentsMargins(0, 0, 0, 0)
-        self.layout().setSpacing(0)
-        
+        def toggle_on():
+            on_button.hide()
+            off_button.show()
+            on_action()
 
-    def toggle(self):
-        if self.on:
-            self.on_button.hide()
-            self.off_button.show()
-            self.on = False
-        else:
-            self.on_button.show()
-            self.off_button.hide()
-            self.on = True
+        on_button.clicked.connect(toggle_on)
+        off_button.clicked.connect(toggle_off)
+
 
 class SmallButton(QPushButton):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.setProperty('class', 'small-button')
+        self.setProperty("class", "small-button")
         self.setSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed)
+
 
 class DynamicItem(QWidget):
     """A widget that can be dynamically added and removed from the ui"""
+
     on_remove: pyqtSignal = pyqtSignal()
     data: dict = {}
+
     def remove(self):
         """Remove the widget from it's parent DynamicList, removing it from the UI and deleting it"""
         self.on_remove.emit()
-    
+
 
 class DynamicList(QWidget):
     """A list of QWidgets that can be dynamically updated"""
-    
+
     widgets: List[QWidget] = []
 
     def __init__(self, layout: Optional[QLayout] = QVBoxLayout()):
@@ -122,7 +120,7 @@ class DynamicList(QWidget):
             self.layout().removeWidget(widget)
             widget.deleteLater()
         self.widgets = []
-    
+
     def list(self):
         return [widget.data for widget in self.widgets]
 
@@ -154,26 +152,30 @@ def make_field_entry(name: str) -> QWidget:
     remove_button = SmallButton("Remove")
     remove_button.setStyleSheet("background-color: red;")
     remove_button.clicked.connect(lambda: layout.deleteLater())
-    
+
     anonymous_button = SmallButton("Anonymous")
     onymous_button = SmallButton("Onymous")
-    anonymous_button.clicked.connect(lambda: widget.data.update({'anonymous': True}))
-    onymous_button.clicked.connect(lambda: widget.data.update({'anonymous': False}))
-    anonymous_toggle = Toggle(onymous_button, anonymous_button)
-
-
+    anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
+    onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
+    BCIUI.make_toggle(
+        anonymous_button,
+        onymous_button,
+        on_action=lambda: widget.data.update({"anonymous": True}),
+        off_action=lambda: widget.data.update({"anonymous": False}),
+    )
+    layout.addWidget(anonymous_button)
+    layout.addWidget(onymous_button)
     anonymous_button.setStyleSheet("background-color: black;")
-    layout.addWidget(anonymous_toggle)
 
     optional_button = SmallButton("Optional")
     layout.addWidget(optional_button)
 
-
     layout.addWidget(remove_button)
-    widget.data = {'field_name': name, 'anonymous': False, 'optional': False}
+    widget.data = {"field_name": name, "anonymous": False, "optional": False}
     remove_button.clicked.connect(lambda: widget.remove())
     widget.setLayout(layout)
     return widget
+
 
 if __name__ == "__main__":
     app = QApplication([])
@@ -199,7 +201,7 @@ if __name__ == "__main__":
     bci.contents.addLayout(form_area)
 
     create_experiment_button = QPushButton("Create experiment")
-   
+
     bci.contents.addWidget(create_experiment_button)
 
     fields_scroll_area = QScrollArea()
@@ -210,7 +212,6 @@ if __name__ == "__main__":
     label = QLabel("Fields")
     label.setStyleSheet("color: black;")
     bci.contents.addWidget(fields_scroll_area)
-
 
     create_experiment_button.clicked.connect(
         lambda: fields_content.add_item(make_field_entry("Field 2"))
