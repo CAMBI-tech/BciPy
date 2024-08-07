@@ -126,7 +126,7 @@ class DynamicList(QWidget):
 
 
 # --- Experiment registry code ---
-
+from bcipy.helpers.load import load_fields
 
 def format_experiment_combobox(
     label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
@@ -179,7 +179,7 @@ def make_field_entry(name: str) -> QWidget:
     layout.addWidget(required_button)
 
     layout.addWidget(remove_button)
-    widget.data = {"field_name": name, "anonymous": False, "optional": False}
+    widget.data = {"field_name": name, "anonymous": True, "optional": True}
     remove_button.clicked.connect(lambda: widget.remove())
     widget.setLayout(layout)
     return widget
@@ -190,7 +190,6 @@ if __name__ == "__main__":
     bci = BCIUI("Experiment Registry")
     header = QLabel("Experiment Registry")
     header.setStyleSheet("font-size: 24px")
-    # test_label.setStyleSheet("color: red")
     bci.contents.addLayout(BCIUI.centered(header))
 
     # Add form fields
@@ -203,8 +202,9 @@ if __name__ == "__main__":
     experiment_summary_box = format_experiment_combobox("Summary", QLineEdit(), None)
     form_area.addLayout(experiment_summary_box)
 
-    experiment_field_box = format_experiment_combobox("Fields", QComboBox(), None)
-    form_area.addLayout(experiment_field_box)
+    field_input = QComboBox()
+    field_input.addItems(load_fields())
+    form_area.addLayout(format_experiment_combobox("Fields", field_input, None))
 
     bci.contents.addLayout(form_area)
 
@@ -220,10 +220,6 @@ if __name__ == "__main__":
     label = QLabel("Fields")
     label.setStyleSheet("color: black;")
     bci.contents.addWidget(fields_scroll_area)
-
-    create_experiment_button.clicked.connect(
-        lambda: fields_content.add_item(make_field_entry("Field 2"))
-    )
-
+    create_experiment_button.clicked.connect(lambda: print(fields_content.list()))
     bci.display()
     app.exec()
