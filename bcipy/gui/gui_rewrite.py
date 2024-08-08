@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QLayout,
     QSizePolicy,
+    QMessageBox
 )
 from typing import Optional, List
 
@@ -43,6 +44,12 @@ class BCIUI(QWidget):
         self.app()
         self.apply_stylesheet()
         self.show()
+
+    def show_alert(self, alert_text: str):
+        msg = QMessageBox()
+        msg.setText(alert_text)
+        return msg.exec()
+
 
     @staticmethod
     def centered(widget: QWidget):
@@ -134,7 +141,6 @@ class DynamicList(QWidget):
 from bcipy.helpers.load import load_fields, load_experiments
 from bcipy.helpers.save import save_experiment_data
 from bcipy.config import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
-
 
 
 class ExperimentRegistry(BCIUI):
@@ -236,7 +242,7 @@ class ExperimentRegistry(BCIUI):
         )
 
         create_experiment_button = QPushButton("Create experiment")
-        create_experiment_button.clicked.connect(lambda: print('save here'))
+        create_experiment_button.clicked.connect(lambda: self.show_alert('created experiment'))
         bci.contents.addWidget(create_experiment_button)
 
 
