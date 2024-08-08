@@ -27,6 +27,9 @@ class BCIUI(QWidget):
         self.contents = QVBoxLayout()
         self.setLayout(self.contents)
 
+    def app(self):
+        ...
+
     def apply_stylesheet(self):
         gui_dir = os.path.dirname(os.path.realpath(__file__))
         stylesheet_path = os.path.join(gui_dir, "bcipy_stylesheet.css")
@@ -37,6 +40,7 @@ class BCIUI(QWidget):
     def display(self):
         # Push contents to the top of the window
         # self.contents.addStretch()
+        self.app()
         self.apply_stylesheet()
         self.show()
 
@@ -132,110 +136,112 @@ from bcipy.helpers.save import save_experiment_data
 from bcipy.config import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 
 
-def format_experiment_combobox(
-    label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
-) -> QHBoxLayout:
-    label = QLabel(label_text)
-    label.setStyleSheet("font-size: 18px")
-    area = QVBoxLayout()
-    input_area = QHBoxLayout()
-    input_area.setContentsMargins(30, 0, 0, 30)
-    area.addWidget(label)
-    input_area.addWidget(combobox, 1)
-    if buttons:
-        for button in buttons:
-            input_area.addWidget(button)
-    area.addLayout(input_area)
-    return area
 
+class ExperimentRegistry(BCIUI):
+    
+    def format_experiment_combobox(
+        self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
+    ) -> QHBoxLayout:
+        label = QLabel(label_text)
+        label.setStyleSheet("font-size: 18px")
+        area = QVBoxLayout()
+        input_area = QHBoxLayout()
+        input_area.setContentsMargins(30, 0, 0, 30)
+        area.addWidget(label)
+        input_area.addWidget(combobox, 1)
+        if buttons:
+            for button in buttons:
+                input_area.addWidget(button)
+        area.addLayout(input_area)
+        return area
 
-def make_field_entry(name: str) -> QWidget:
-    layout = QHBoxLayout()
-    label = QLabel(name)
-    label.setStyleSheet("color: black;")
-    layout.addWidget(label)
-    widget = DynamicItem()
+    def make_field_entry(self, name: str) -> QWidget:
+        layout = QHBoxLayout()
+        label = QLabel(name)
+        label.setStyleSheet("color: black;")
+        layout.addWidget(label)
+        widget = DynamicItem()
 
-    remove_button = SmallButton("Remove")
-    remove_button.setStyleSheet("background-color: red;")
-    remove_button.clicked.connect(lambda: layout.deleteLater())
+        remove_button = SmallButton("Remove")
+        remove_button.setStyleSheet("background-color: red;")
+        remove_button.clicked.connect(lambda: layout.deleteLater())
 
-    anonymous_button = SmallButton("Anonymous")
-    onymous_button = SmallButton("Onymous")
-    # anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
-    # onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
-    BCIUI.make_toggle(
-        anonymous_button,
-        onymous_button,
-        on_action=lambda: widget.data.update({"anonymous": True}),
-        off_action=lambda: widget.data.update({"anonymous": False}),
-    )
-    layout.addWidget(anonymous_button)
-    layout.addWidget(onymous_button)
-    anonymous_button.setStyleSheet("background-color: black;")
+        anonymous_button = SmallButton("Anonymous")
+        onymous_button = SmallButton("Onymous")
+        # anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
+        # onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
+        BCIUI.make_toggle(
+            anonymous_button,
+            onymous_button,
+            on_action=lambda: widget.data.update({"anonymous": True}),
+            off_action=lambda: widget.data.update({"anonymous": False}),
+        )
+        layout.addWidget(anonymous_button)
+        layout.addWidget(onymous_button)
+        anonymous_button.setStyleSheet("background-color: black;")
 
-    optional_button = SmallButton("Optional")
-    required_button = SmallButton("Required")
-    BCIUI.make_toggle(
-        optional_button,
-        required_button,
-        on_action=lambda: widget.data.update({"optional": True}),
-        off_action=lambda: widget.data.update({"optional": False}),
-    )
-    layout.addWidget(optional_button)
-    layout.addWidget(required_button)
+        optional_button = SmallButton("Optional")
+        required_button = SmallButton("Required")
+        BCIUI.make_toggle(
+            optional_button,
+            required_button,
+            on_action=lambda: widget.data.update({"optional": True}),
+            off_action=lambda: widget.data.update({"optional": False}),
+        )
+        layout.addWidget(optional_button)
+        layout.addWidget(required_button)
 
-    layout.addWidget(remove_button)
-    widget.data = {"field_name": name, "anonymous": True, "optional": True}
-    remove_button.clicked.connect(lambda: widget.remove())
-    widget.setLayout(layout)
-    return widget
+        layout.addWidget(remove_button)
+        widget.data = {"field_name": name, "anonymous": True, "optional": True}
+        remove_button.clicked.connect(lambda: widget.remove())
+        widget.setLayout(layout)
+        return widget
+
+    def app(self):
+        # Add form fields
+        header = QLabel("Experiment Registry")
+        header.setStyleSheet("font-size: 24px")
+        self.contents.addLayout(BCIUI.centered(header))
+        form_area = QVBoxLayout()
+        form_area.setContentsMargins(30, 30, 30, 0)
+
+        experiment_name_box = self.format_experiment_combobox("Name", QLineEdit(), None)
+        form_area.addLayout(experiment_name_box)
+
+        experiment_summary_box = self.format_experiment_combobox("Summary", QLineEdit(), None)
+        form_area.addLayout(experiment_summary_box)
+
+        field_input = QComboBox()
+        field_input.addItems(load_fields())
+        add_field_button = QPushButton("Add")
+        new_field_button = QPushButton("New")
+        form_area.addLayout(
+            self.format_experiment_combobox(
+                "Fields", field_input, [add_field_button, new_field_button]
+            )
+        )
+
+        bci.contents.addLayout(form_area)
+
+        fields_scroll_area = QScrollArea()
+        fields_items_container = QWidget()
+
+        fields_content = DynamicList()
+        fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
+        label = QLabel("Fields")
+        label.setStyleSheet("color: black;")
+        bci.contents.addWidget(fields_scroll_area)
+        add_field_button.clicked.connect(
+            lambda: fields_content.add_item(self.make_field_entry(field_input.currentText()))
+        )
+
+        create_experiment_button = QPushButton("Create experiment")
+        create_experiment_button.clicked.connect(lambda: print('save here'))
+        bci.contents.addWidget(create_experiment_button)
 
 
 if __name__ == "__main__":
     app = QApplication([])
-    bci = BCIUI("Experiment Registry")
-    header = QLabel("Experiment Registry")
-    header.setStyleSheet("font-size: 24px")
-    bci.contents.addLayout(BCIUI.centered(header))
-
-    # Add form fields
-    form_area = QVBoxLayout()
-    form_area.setContentsMargins(30, 30, 30, 0)
-
-    experiment_name_box = format_experiment_combobox("Name", QLineEdit(), None)
-    form_area.addLayout(experiment_name_box)
-
-    experiment_summary_box = format_experiment_combobox("Summary", QLineEdit(), None)
-    form_area.addLayout(experiment_summary_box)
-
-    field_input = QComboBox()
-    field_input.addItems(load_fields())
-    add_field_button = QPushButton("Add")
-    new_field_button = QPushButton("New")
-    form_area.addLayout(
-        format_experiment_combobox(
-            "Fields", field_input, [add_field_button, new_field_button]
-        )
-    )
-
-    bci.contents.addLayout(form_area)
-
-    fields_scroll_area = QScrollArea()
-    fields_items_container = QWidget()
-
-    fields_content = DynamicList()
-    fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
-    label = QLabel("Fields")
-    label.setStyleSheet("color: black;")
-    bci.contents.addWidget(fields_scroll_area)
-    add_field_button.clicked.connect(
-        lambda: fields_content.add_item(make_field_entry(field_input.currentText()))
-    )
-
-    create_experiment_button = QPushButton("Create experiment")
-    create_experiment_button.clicked.connect(lambda: print('save here'))
-    bci.contents.addWidget(create_experiment_button)
-
+    bci = ExperimentRegistry()
     bci.display()
     app.exec()
