@@ -1,6 +1,18 @@
 import logging
+from dataclasses import dataclass
+from typing import Optional
 from bcipy.helpers.parameters import Parameters
 from abc import ABC, abstractmethod
+
+
+@dataclass
+class TaskData():
+    """TaskData.
+
+    Data structure for storing task return data.
+    """
+    save_path: Optional[str] = None
+    task_dict: Optional[dict] = None
 
 
 class Task(ABC):
@@ -18,7 +30,7 @@ class Task(ABC):
         self.logger = logging.getLogger(__name__)
 
     @abstractmethod
-    def execute(self) -> str:
+    def execute(self) -> TaskData:
         ...
 
     def setup(self, parameters, data_save_location):
