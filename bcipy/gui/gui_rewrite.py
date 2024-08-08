@@ -47,7 +47,11 @@ class BCIUI(QWidget):
 
     def show_alert(self, alert_text: str):
         msg = QMessageBox()
+        # This doesn't seem to work at least on mac. TODO: fix this
+        msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(alert_text)
+        msg.setWindowTitle("Alert")
+
         return msg.exec()
 
 
