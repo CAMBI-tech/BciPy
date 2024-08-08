@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QLayout,
     QSizePolicy,
-    QMessageBox
+    QMessageBox,
 )
 from typing import Optional, List
 
@@ -28,8 +28,7 @@ class BCIUI(QWidget):
         self.contents = QVBoxLayout()
         self.setLayout(self.contents)
 
-    def app(self):
-        ...
+    def app(self): ...
 
     def apply_stylesheet(self):
         gui_dir = os.path.dirname(os.path.realpath(__file__))
@@ -53,7 +52,6 @@ class BCIUI(QWidget):
         msg.setWindowTitle("Alert")
 
         return msg.exec()
-
 
     @staticmethod
     def centered(widget: QWidget):
@@ -143,14 +141,16 @@ class DynamicList(QWidget):
     def list_property(self, prop: str):
         return [widget.data[prop] for widget in self.widgets]
 
+
 # --- Experiment registry code ---
 from bcipy.helpers.load import load_fields, load_experiments
 from bcipy.helpers.save import save_experiment_data
-from bcipy.config import DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
+from bcipy.config import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+import json
 
 
 class ExperimentRegistry(BCIUI):
-    
+
     def format_experiment_combobox(
         self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
     ) -> QHBoxLayout:
@@ -209,6 +209,55 @@ class ExperimentRegistry(BCIUI):
         widget.setLayout(layout)
         return widget
 
+    def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
+        """Load Fields.
+
+        PARAMETERS
+        ----------
+        :param: path: string path to the fields file.
+
+        Returns
+        -------
+            A dictionary of fields, with the following format:
+                {
+                    "field_name": {
+                        "help_text": "",
+                        "type": ""
+                }
+
+        """
+        with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
+            return json.load(json_file)
+    
+    def create_experiment(self):
+        existing_experiments = load_experiments()
+        experiment_name = self.experiment_name_input.text()
+        if not experiment_name:
+            self.show_alert("Please specify an experiment name")
+            return
+        experiment_summary = self.experiment_summary_input.text()
+        if not experiment_summary:
+            self.show_alert("Please specify an experiment summary")
+            return
+        fields = self.fields_content.list()
+
+        field_list = [
+            {
+                field["field_name"]: {
+                    "anonymize": field["anonymous"],
+                    "required": not field["optional"],
+                }
+            }
+            for field in fields
+        ]
+
+        existing_experiments[experiment_name] = {
+            "fields": field_list,
+            "summary": experiment_summary,
+        }
+        save_experiment_data(existing_experiments, load_fields(), DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME)
+        self.show_alert("created experiment")
+
     def app(self):
         # Add form fields
         header = QLabel("Experiment Registry")
@@ -217,19 +266,25 @@ class ExperimentRegistry(BCIUI):
         form_area = QVBoxLayout()
         form_area.setContentsMargins(30, 30, 30, 0)
 
-        experiment_name_box = self.format_experiment_combobox("Name", QLineEdit(), None)
+        self.experiment_name_input = QLineEdit()
+        experiment_name_box = self.format_experiment_combobox(
+            "Name", self.experiment_name_input, None
+        )
         form_area.addLayout(experiment_name_box)
 
-        experiment_summary_box = self.format_experiment_combobox("Summary", QLineEdit(), None)
+        self.experiment_summary_input = QLineEdit()
+        experiment_summary_box = self.format_experiment_combobox(
+            "Summary", self.experiment_summary_input, None
+        )
         form_area.addLayout(experiment_summary_box)
 
-        field_input = QComboBox()
-        field_input.addItems(load_fields())
+        self.field_input = QComboBox()
+        self.field_input.addItems(load_fields())
         add_field_button = QPushButton("Add")
         new_field_button = QPushButton("New")
         form_area.addLayout(
             self.format_experiment_combobox(
-                "Fields", field_input, [add_field_button, new_field_button]
+                "Fields", self.field_input, [add_field_button, new_field_button]
             )
         )
 
@@ -237,24 +292,25 @@ class ExperimentRegistry(BCIUI):
 
         fields_scroll_area = QScrollArea()
 
-        fields_content = DynamicList()
-        fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
+        self.fields_content = DynamicList()
+        fields_scroll_area = BCIUI.make_list_scroll_area(self.fields_content)
         label = QLabel("Fields")
         label.setStyleSheet("color: black;")
         bci.contents.addWidget(fields_scroll_area)
 
         def add_field():
-            if field_input.currentText() in fields_content.list_property("field_name"):
-                self.show_alert('Field already added')
+            if self.field_input.currentText() in self.fields_content.list_property(
+                "field_name"
+            ):
+                self.show_alert("Field already added")
                 return
-            fields_content.add_item(self.make_field_entry(field_input.currentText()))
+            self.fields_content.add_item(
+                self.make_field_entry(self.field_input.currentText())
+            )
 
-        add_field_button.clicked.connect(
-            add_field
-        )
-
+        add_field_button.clicked.connect(add_field)
         create_experiment_button = QPushButton("Create experiment")
-        create_experiment_button.clicked.connect(lambda: self.show_alert('created experiment'))
+        create_experiment_button.clicked.connect(self.create_experiment)
         bci.contents.addWidget(create_experiment_button)
 
 
