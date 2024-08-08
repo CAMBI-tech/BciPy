@@ -140,6 +140,8 @@ class DynamicList(QWidget):
     def list(self):
         return [widget.data for widget in self.widgets]
 
+    def list_property(self, prop: str):
+        return [widget.data[prop] for widget in self.widgets]
 
 # --- Experiment registry code ---
 from bcipy.helpers.load import load_fields, load_experiments
@@ -234,15 +236,23 @@ class ExperimentRegistry(BCIUI):
         bci.contents.addLayout(form_area)
 
         fields_scroll_area = QScrollArea()
-        fields_items_container = QWidget()
 
         fields_content = DynamicList()
         fields_scroll_area = BCIUI.make_list_scroll_area(fields_content)
         label = QLabel("Fields")
         label.setStyleSheet("color: black;")
         bci.contents.addWidget(fields_scroll_area)
+
+        def add_field():
+            if field_input.currentText() in fields_content.list_property("field_name"):
+                self.show_alert('Field already added')
+                return
+            print(fields_content.list())
+            print(field_input.currentText())
+            fields_content.add_item(self.make_field_entry(field_input.currentText()))
+
         add_field_button.clicked.connect(
-            lambda: fields_content.add_item(self.make_field_entry(field_input.currentText()))
+            add_field
         )
 
         create_experiment_button = QPushButton("Create experiment")
