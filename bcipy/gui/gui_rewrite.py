@@ -247,8 +247,6 @@ class ExperimentRegistry(BCIUI):
             if field_input.currentText() in fields_content.list_property("field_name"):
                 self.show_alert('Field already added')
                 return
-            print(fields_content.list())
-            print(field_input.currentText())
             fields_content.add_item(self.make_field_entry(field_input.currentText()))
 
         add_field_button.clicked.connect(
