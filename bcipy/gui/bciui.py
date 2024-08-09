@@ -314,9 +314,9 @@ class ExperimentRegistry(BCIUI):
         create_experiment_button.clicked.connect(self.create_experiment)
         self.contents.addWidget(create_experiment_button)
 
-def run_bciui(ui: Type[BCIUI]):
+def run_bciui(ui: Type[BCIUI], *args, **kwargs):
     app = QApplication([])
-    ui_instance = ui()
+    ui_instance = ui(*args, **kwargs)
     ui_instance.display()
     app.exec()
 
