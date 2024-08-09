@@ -20,6 +20,7 @@ from typing import Optional, List
 
 class BCIUI(QWidget):
     contents: QVBoxLayout
+    center_content_vertically: bool = False
 
     def __init__(self, title="BCIUI", default_width=500, default_height=600):
         super().__init__()
@@ -28,7 +29,8 @@ class BCIUI(QWidget):
         self.contents = QVBoxLayout()
         self.setLayout(self.contents)
 
-    def app(self): ...
+    def app(self): 
+        ...
 
     def apply_stylesheet(self):
         gui_dir = os.path.dirname(os.path.realpath(__file__))
@@ -39,8 +41,9 @@ class BCIUI(QWidget):
 
     def display(self):
         # Push contents to the top of the window
-        # self.contents.addStretch()
         self.app()
+        if not self.center_content_vertically:
+            self.contents.addStretch()
         self.apply_stylesheet()
         self.show()
 
@@ -258,12 +261,12 @@ class ExperimentRegistry(BCIUI):
 
     def app(self):
         # Add form fields
+        self.center_content_vertically = True
         header = QLabel("Experiment Registry")
         header.setStyleSheet("font-size: 24px")
         self.contents.addLayout(BCIUI.centered(header))
         form_area = QVBoxLayout()
         form_area.setContentsMargins(30, 30, 30, 0)
-
         self.experiment_name_input = QLineEdit()
         experiment_name_box = self.format_experiment_combobox(
             "Name", self.experiment_name_input, None
