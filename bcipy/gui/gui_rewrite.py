@@ -180,8 +180,6 @@ class ExperimentRegistry(BCIUI):
 
         anonymous_button = SmallButton("Anonymous")
         onymous_button = SmallButton("Onymous")
-        # anonymous_button.clicked.connect(lambda: widget.data.update({"anonymous": True}))
-        # onymous_button.clicked.connect(lambda: widget.data.update({"anonymous": False}))
         BCIUI.make_toggle(
             anonymous_button,
             onymous_button,
