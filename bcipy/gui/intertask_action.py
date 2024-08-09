@@ -13,7 +13,7 @@ from PyQt6.QtWidgets import (
     QLayout,
     QSizePolicy,
     QMessageBox,
-    QProgressBar
+    QProgressBar,
 )
 
 
@@ -22,16 +22,21 @@ class IntertaskAction(BCIUI):
     def __init__(self, total_tasks: int = 0, current_task_index: int = 0):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
-        print('initialized')
+        print("initialized")
         super().__init__("Progress", 400, 300)
 
     def app(self):
         self.contents.addLayout(BCIUI.centered(QLabel("Experiment Progress")))
 
+        progress_container = QHBoxLayout()
+        progress_container.addWidget(
+            QLabel(f"({self.current_task_index}/{self.total_tasks})")
+        )
         self.progress = QProgressBar()
         self.progress.setValue(75)
         self.progress.setTextVisible(False)
-        self.contents.addWidget(self.progress)
+        progress_container.addWidget(self.progress)
+        self.contents.addLayout(progress_container)
 
         self.contents.addStretch(1)
         self.next_button = QPushButton("Next")
@@ -41,6 +46,7 @@ class IntertaskAction(BCIUI):
         buttons_layout.addWidget(self.stop_button)
         buttons_layout.addWidget(self.next_button)
         self.contents.addLayout(buttons_layout)
+
 
 if __name__ == "__main__":
     run_bciui(IntertaskAction)
