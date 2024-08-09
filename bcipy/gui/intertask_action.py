@@ -22,7 +22,6 @@ class IntertaskAction(BCIUI):
     def __init__(self, total_tasks: int = 0, current_task_index: int = 0):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
-        print("initialized")
         super().__init__("Progress", 400, 300)
 
     def app(self):
@@ -33,7 +32,7 @@ class IntertaskAction(BCIUI):
             QLabel(f"({self.current_task_index}/{self.total_tasks})")
         )
         self.progress = QProgressBar()
-        self.progress.setValue(75)
+        self.progress.setValue(int(self.current_task_index / self.total_tasks * 100))
         self.progress.setTextVisible(False)
         progress_container.addWidget(self.progress)
         self.contents.addLayout(progress_container)
@@ -49,4 +48,5 @@ class IntertaskAction(BCIUI):
 
 
 if __name__ == "__main__":
-    run_bciui(IntertaskAction)
+    # test values
+    run_bciui(IntertaskAction, 3, 2)
