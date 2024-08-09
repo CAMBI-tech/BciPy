@@ -1,5 +1,5 @@
 import os
-from typing import Callable
+from typing import Callable, Type
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
@@ -286,7 +286,7 @@ class ExperimentRegistry(BCIUI):
             )
         )
 
-        bci.contents.addLayout(form_area)
+        self.contents.addLayout(form_area)
 
         fields_scroll_area = QScrollArea()
 
@@ -294,7 +294,7 @@ class ExperimentRegistry(BCIUI):
         fields_scroll_area = BCIUI.make_list_scroll_area(self.fields_content)
         label = QLabel("Fields")
         label.setStyleSheet("color: black;")
-        bci.contents.addWidget(fields_scroll_area)
+        self.contents.addWidget(fields_scroll_area)
 
         def add_field():
             if self.field_input.currentText() in self.fields_content.list_property(
@@ -309,11 +309,13 @@ class ExperimentRegistry(BCIUI):
         add_field_button.clicked.connect(add_field)
         create_experiment_button = QPushButton("Create experiment")
         create_experiment_button.clicked.connect(self.create_experiment)
-        bci.contents.addWidget(create_experiment_button)
+        self.contents.addWidget(create_experiment_button)
 
+def run_bciui(ui: Type[BCIUI]):
+    app = QApplication([])
+    ui_instance = ui()
+    ui_instance.display()
+    app.exec()
 
 if __name__ == "__main__":
-    app = QApplication([])
-    bci = ExperimentRegistry()
-    bci.display()
-    app.exec()
+    run_bciui(ExperimentRegistry)
