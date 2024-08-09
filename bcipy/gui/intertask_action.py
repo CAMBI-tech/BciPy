@@ -19,10 +19,13 @@ from PyQt6.QtWidgets import (
 
 class IntertaskAction(BCIUI):
 
-    def __init__(self, total_tasks: int = 0, current_task_index: int = 0):
+    def __init__(
+        self, next_task_name: str, total_tasks: int = 0, current_task_index: int = 0
+    ):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
-        super().__init__("Progress", 400, 300)
+        self.next_task_name = next_task_name
+        super().__init__("Progress", 400, 100)
 
     def app(self):
         self.contents.addLayout(BCIUI.centered(QLabel("Experiment Progress")))
@@ -37,6 +40,13 @@ class IntertaskAction(BCIUI):
         progress_container.addWidget(self.progress)
         self.contents.addLayout(progress_container)
 
+        next_info = QHBoxLayout()
+        next_info.addWidget(QLabel("Next Task: "))
+        next_task = QLabel(self.next_task_name)
+        next_task.setStyleSheet("font-weight: bold; color: green;")
+        next_info.addWidget(next_task)
+        self.contents.addLayout(next_info)
+
         self.contents.addStretch(1)
         self.next_button = QPushButton("Next")
         self.stop_button = QPushButton("Stop")
@@ -46,7 +56,11 @@ class IntertaskAction(BCIUI):
         buttons_layout.addWidget(self.next_button)
         self.contents.addLayout(buttons_layout)
 
+        self.next_button.clicked.connect(self.close)
+        # This should be replaced with a method that stops orchestrator execution
+        self.stop_button.clicked.connect(QApplication.instance().quit)
+    
 
 if __name__ == "__main__":
     # test values
-    run_bciui(IntertaskAction, 3, 2)
+    run_bciui(IntertaskAction,'Placeholder Task Name', 3, 2)
