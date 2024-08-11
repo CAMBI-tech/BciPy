@@ -12,27 +12,64 @@ from typing import List, Tuple
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 
+import warnings
 
-def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
-    X = X.ravel()
-    mu = mu.ravel()
-    uncertainty = 1.96 * np.sqrt(np.diag(cov))
+warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
+import gpflow as gpf
+from gpflow.ci_utils import reduce_in_tests
+from gpflow.utilities import print_summary, set_trainable
+
+
+# def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
+#     X = X.ravel()
+#     mu = mu.ravel()
+#     uncertainty = 1.96 * np.sqrt(np.diag(cov))
     
-    plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
-    plt.plot(X, mu, label='Mean')
-    for i, sample in enumerate(samples):
-        plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
-    if X_train is not None:
-        plt.plot(X_train, Y_train, 'rx')
-    plt.legend()
+#     plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
+#     plt.plot(X, mu, label='Mean')
+#     for i, sample in enumerate(samples):
+#         plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
+#     if X_train is not None:
+#         plt.plot(X_train, Y_train, 'rx')
+#     plt.legend()
+
+# def plot_model(m, X, Y, lower=-8.0, upper=8.0):
+#     pX = np.linspace(lower, upper, 100)[:, None]
+#     pY, pYv = m.predict_y(pX)
+#     if pY.ndim == 3:
+#         pY = pY[:, 0, :]
+#     plt.plot(X, Y, "x")
+#     plt.gca().set_prop_cycle(None)
+#     plt.plot(pX, pY)
+#     for i in range(pY.shape[1]):
+#         top = pY[:, i] + 2.0 * pYv[:, i] ** 0.5
+#         bot = pY[:, i] - 2.0 * pYv[:, i] ** 0.5
+#         plt.fill_between(pX[:, 0], top, bot, alpha=0.3)
+#     plt.xlabel("X")
+#     plt.ylabel("f")
+#     plt.title(f"ELBO: {m.elbo([X, Y]):.3}")
+#     plt.plot(Z, Z * 0.0, "o")
 
 class GazeModelKernelGaussianProcess(SignalModel):
     def __init__(self):
+        reshaper = GazeReshaper()
         self.ready_to_predict = False
 
     def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
-        return super().fit(training_data, training_labels)
-    
+        training_data = np.asarray(training_data)
+        # GPflow:
+        N = training_data.shape[0]
+        D = training_data.shape[1]
+        M = 15  # number of inducing points
+        L = 2  # number of latent GPs
+        P = 3  # number of observations = output dimensions
+
+
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
 
@@ -58,16 +95,16 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
     def fit(self, training_data: np.ndarray):
         # Multivariate Gaussian Process Solver
 
-        # How to det the kernel function? The current one is an RBF kernel
-        def mykernel(x1,x2):
-            a = 1
-            l = 2
-            return a*np.exp(-((x1-x2)**2)/(2*l**2))
+        # # RBF kernel
+        # def mykernel(x1,x2):
+        #     a = 1
+        #     l = 2
+        #     return a*np.exp(-((x1-x2)**2)/(2*l**2))
         
-        # Another kernel function
-        def mykernel2(x1,x2):
-            H = 0.3
-            return np.abs(x1)**(2*H) + np.abs(x2)**(2*H) - np.abs(x1-x2)**(2*H)
+        # # Another kernel function
+        # def mykernel2(x1,x2):
+        #     H = 0.3
+        #     return np.abs(x1)**(2*H) + np.abs(x2)**(2*H) - np.abs(x1-x2)**(2*H)
         
         def kernel(X1, X2, l=1.0, sigma_f=1.0):
             """
@@ -83,51 +120,8 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
             sqdist = np.sum(X1**2, 1).reshape(-1, 1) + np.sum(X2**2, 1) - 2 * np.dot(X1, X2.T)
             return sigma_f**2 * np.exp(-0.5 / l**2 * sqdist)
         
-        # K = mykernel(np.reshape(training_data,(1,-1)), np.reshape(training_data,(1,-1)))
-
-        # # visualization of kernel matrix
-        # fig = plt.figure(figsize=(10,10)) # scale of the plot
-        # image = plt.imshow(K)
-        # plt.show()
-
-        # mju = np.zeros(len(training_data)) # mean vector
-
-        # R = np.random.multivariate_normal(mju,K)
-
-        # fig2 = plt.figure(figsize=(10,5)) # scale of the plot
-        # plt.plot(training_data, R,'bx')
-        # plt.show()
-
-        # # conditions:
-        # f_cond = [1, 1]
-        # x_cond = [40, 80]
-        # mju_cond = [0, 0]
-
-        # K_x_c = np.transpose(mykernel(training_data.reshape((1,-1)),np.transpose(np.asarray(x_cond).reshape((1,-1)))))
-
-        # invK_c_c = inv(mykernel(np.asarray(x_cond).reshape((1,-1)),np.transpose(np.asarray(x_cond).reshape((1,-1)))))
-
-        # mju = np.zeros(d)
-        # K = mykernel(training_data.reshape((1,-1)),np.transpose(training_data.reshape((1,-1))))
-
-        # MU = mju + np.matmul(np.matmul(K_x_c,invK_c_c),np.array(f_cond) - np.array(mju_cond))
-        # SIGMA = K - np.matmul(np.matmul(K_x_c,invK_c_c),K_x_c.transpose())
-
-        # # m realisations of multivariate conditional Gaussian distribution:
-        # RC = np.random.multivariate_normal(MU,SIGMA,m)
-
-        # m = 1 # number of realisations
-        # R = np.random.multivariate_normal(mju,K,m)
-
-        # fig = plt.figure(figsize=(15,6))
-        # plt.figure(figsize=(15,7))
-        # plt.plot((np.ones((m,d)) * training_data).transpose(), RC.transpose(), 'x')
-        # plt.show()
-        
-        # extract list to np array:
-        training_data = np.asarray(training_data)
-
-        from numpy.linalg import inv
+        # # extract list to np array:
+        # training_data = np.asarray(training_data)
 
         """
         Computes the suffifient statistics of the posterior distribution 
@@ -146,41 +140,64 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
         """
         X_train = training_data[0][:,0].reshape(-1, 1)
         Y_train = np.array(range(len(X_train))).reshape(-1, 1)
-        X_s = training_data[71][:,0]
+        # X_s = training_data[71][:,0]
 
-        X = np.array(range(len(X_train))).reshape(-1, 1)
-        # Mean and covariance of the prior
-        mu = np.zeros(X.shape)
-        cov = kernel(X, X)  
+        # X = np.array(range(len(X_train))).reshape(-1, 1)
+        # # Mean and covariance of the prior
+        # mu = np.zeros(X.shape)
+        # cov = kernel(X, X)  
 
-        samples = np.random.multivariate_normal(mu.ravel(), cov, 3)
+        # samples = np.random.multivariate_normal(mu.ravel(), cov, 3)
 
         # Plot GP mean, uncertainty region and samples 
-        plot_gp(mu, cov, X, samples=samples) 
+        # plot_gp(mu, cov, X, samples=samples) 
 
         # Prediction from noise-free training data
-        l=1.0 
-        sigma_f=1.0
-        sigma_y=1e-4  
+        # l=1.0 
+        # sigma_f=1.0
+        # sigma_y=1e-4  
 
-        K = kernel(X_train, X_train, l, sigma_f) + sigma_y**2 * np.eye(len(X_train))
-        K_s = kernel(X_train, X_s, l, sigma_f)
-        K_ss = kernel(X_s, X_s, l, sigma_f) + 1e-8 * np.eye(len(X_s))
-        K_inv = inv(K)
-        
-        # K = mykernel(X_train, X_train) + sigma_y**2 * np.eye(len(X_train))
-        # K_s = mykernel(X_train, X_s)
-        # K_ss = mykernel(X_s, X_s) + 1e-4 * np.eye(len(X_s))
+        # K = kernel(X_train, X_train, l, sigma_f) + sigma_y**2 * np.eye(len(X_train))
+        # K_s = kernel(X_train, X_s, l, sigma_f)
+        # K_ss = kernel(X_s, X_s, l, sigma_f) + 1e-8 * np.eye(len(X_s))
         # K_inv = inv(K)
         
-        # Equation (7)
-        mu_s = K_s.T.dot(K_inv).dot(Y_train)
+        # # Equation (7)
+        # mu_s = K_s.T.dot(K_inv).dot(Y_train)
 
-        # Equation (8)
-        cov_s = K_ss - K_s.T.dot(K_inv).dot(K_s)
+        # # Equation (8)
+        # cov_s = K_ss - K_s.T.dot(K_inv).dot(K_s)
 
-        samples = np.random.multivariate_normal(mu_s.ravel(), cov_s, 3)
-        plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train, samples=samples)
+        # samples = np.random.multivariate_normal(mu_s.ravel(), cov_s, 3)
+        # plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train, samples=samples)
+        
+        gpf.config.set_default_float(np.float64)
+        # gpf.config.set_default_summary_fmt("notebook")
+        np.random.seed(0)
+
+        MAXITER = reduce_in_tests(2000)
+        # Shared independent multi-output kernel (MOK) and shared independent inducing variables
+        kernel = gpf.kernels.SharedIndependent(gpf.kernels.SquaredExponential() + gpf.kernels.Linear(), output_dim=2)       
+        Zinit = np.linspace(-5, 5, 15)[:, None]
+        # initialization of inducing input locations (M random points from the training inputs)
+        Z = Zinit.copy()
+        # create multi-output inducing variables from Z
+        iv = gpf.inducing_variables.SharedIndependentInducingVariables(gpf.inducing_variables.InducingPoints(Z))
+
+        # create SVGP model as usual and optimize
+        m = gpf.models.SVGP(kernel, gpf.likelihoods.Gaussian(), inducing_variable=iv, num_latent_gps=2)
+        print_summary(m)
+
+        def optimize_model_with_scipy(model):
+            optimizer = gpf.optimizers.Scipy()
+            optimizer.minimize(
+                model.training_loss_closure(X_train),
+                variables=model.trainable_variables,
+                method="l-bfgs-b",
+                options={"disp": 50, "maxiter": MAXITER},
+            )
+
+        optimize_model_with_scipy(m)
         breakpoint()
     
     
@@ -209,13 +226,30 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
             new_data (np.ndarray): Centralized data in shape of num_samples x num_dimensions
         """
         new_data = np.copy(data)
-        for i in range(len(data)):
-            new_data[i] = data[i] - symbol_pos
+        for i in range(len(data.T)):
+            new_data[0:2,i] = data[0:2,i] - symbol_pos
+            new_data[2:4,i] = data[2:4,i] - symbol_pos
+
+        return new_data
+    
+    def substract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
+        """ Using the symbol locations in matrix, centralize all data (in Tobii units).
+        This data will only be used in certain model types.
+        Args:
+            data (np.ndarray): Data in shape of num_samples x num_dimensions
+            symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
+        Returns:
+            new_data (np.ndarray): Centralized data in shape of num_samples x num_dimensions
+        """
+        new_data = np.copy(data)
+        for i in range(len(data.T)):
+            new_data[:,i] = data[:,i] - time_avg
 
         return new_data
 
 
 class GazeModelIndividual(SignalModel):
+    """Gaze model that fits different Gaussians/Gaussian Mixtures for each symbol."""
     reshaper = GazeReshaper()
     window_length = 3
 
