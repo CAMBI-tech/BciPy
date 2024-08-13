@@ -1,112 +1,124 @@
 """ Wrappers that run a simulation """
+import dataclasses
 import datetime
 import json
+import logging
 import os
 import time
-from typing import Dict
+from typing import Dict, List, NamedTuple
 
-from bcipy.helpers.parameters import Parameters
+from bcipy.config import BCIPY_ROOT
 from bcipy.simulator.helpers import artifact
-from bcipy.simulator.helpers.metrics import average_sim_metrics
+from bcipy.simulator.helpers.metrics import SimMetrics, average_sim_metrics
 from bcipy.simulator.simulator_base import Simulator
 
-
-class SimRunner:
-    """An object that orchestrates one or more simulation runs."""
-
-    def run(self):
-        """Run the simulation"""
-        ...
+log = logging.getLogger('sim_logger')
 
 
-class MultiSimRunner(SimRunner):
-    """Runs multiple iterations of the simulation."""
+class RunSummary(NamedTuple):
+    """Summary for a simulation run."""
+    run: int
+    target_text: str
+    typed_text: str
+    metrics: SimMetrics
+
+    def to_dict(self) -> Dict:
+        """Convert to a dictionary"""
+        d = self._asdict()  # pylint: disable=no-member
+        d['metrics'] = dataclasses.asdict(self.metrics)
+        return d
+
+
+class SimRunner():
+    """Runs one or more iterations of the simulation."""
 
     def __init__(self,
                  simulator: Simulator,
-                 n: int,
-                 save_dir=None,
-                 iteration_sleep=0):
-        self.simulator: Simulator = simulator
-        self.parameters: Parameters = self.simulator.get_parameters()
-        self.n: int = n
-        self.iteration_sleep: int = iteration_sleep
-
-        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path(
-        )
+                 runs: int = 1,
+                 iteration_sleep: int = 0):
+        self.simulator = simulator
+        self.runs = runs
+        self.iteration_sleep = iteration_sleep
+        self.save_dir = f"{self.default_save_location()}/{self.directory_name()}"
+        self.sim_log = 'sim.log'
 
     def run(self):
-        # making wrapper dir for all simulations
-        os.makedirs(self.wrapper_save_dir)
+        """Run one or more simulations"""
+        os.makedirs(self.save_dir)
+        artifact.configure_logger(self.save_dir,
+                                  self.sim_log,
+                                  logger_name='sim_logger',
+                                  use_stdout=True)
+        log.info("Starting simulation...\n")
 
-        # list of metrics from sim runs
-        all_run_metrics = []
-
+        run_summaries = []
         # running simulator n times. resetting after each run
-        for i in range(self.n):
+        for i in range(self.runs):
+            summary = self.do_run(i)
+            log.info(summary.to_dict())
+            run_summaries.append(summary)
+            time.sleep(self.iteration_sleep)
 
-            # creating save dir for sim_i, then mutating sim_i save_directory
-            sim_i_save_dir = artifact.init_save_dir(self.wrapper_save_dir,
-                                                    f"run{i}")
-            self.simulator.save_dir = sim_i_save_dir
-            artifact.configure_logger(f"{sim_i_save_dir}/logs", "logs")
+        self.summarize_metrics(run_summaries)
+        log.info(f"\nResults logged to {self.save_dir}/{self.sim_log}")
 
-            # running simulator
-            self.simulator.run()
+    def do_run(self, run: int) -> RunSummary:
+        """Do a simulator run and return the computed summary."""
 
-            if self.iteration_sleep > 0:
-                time.sleep(self.iteration_sleep)
-
-            # aggregating metrics from each run
-            run_metrics = self.simulator.referee.score(self.simulator)
-            all_run_metrics.append(run_metrics)
-
-            self.simulator.reset()
-
-        # save averaged results to a file in root of wrapper dir
-        average_metrics = average_sim_metrics(all_run_metrics)
-        self.__save_average_metrics(average_metrics)
-
-    def __make_default_save_path(self):
-        output_path = "bcipy/simulator/generated"
-        now_time = datetime.datetime.now().strftime("%m-%d-%H:%M")
-        dir_name = f"SIM_MULTI_{self.n}_{now_time}"
-
-        return f"{output_path}/{dir_name}"
-
-    def __save_average_metrics(self, avg_metric_dict: Dict):
-        """ Writing average dictionary of metrics to a json file in root of MultiRun save dir """
-
-        with open(f"{self.wrapper_save_dir}/avg_metrics.json",
-                  'w') as output_file:
-            json.dump(avg_metric_dict, output_file, indent=1)
-
-
-class SingleSimRunner(SimRunner):
-    """Runs the simulation once."""
-
-    def __init__(self, simulator: Simulator, save_dir=None):
-        self.simulator: Simulator = simulator
-        self.parameters: Parameters = self.simulator.get_parameters()
-
-        self.wrapper_save_dir: str = save_dir if save_dir else self.__make_default_save_path(
-        )
-
-    def run(self):
-        # logging and save details
-        now_time = datetime.datetime.now().strftime("%m-%d-%H:%M")
-        save_dir_path = artifact.init_save_dir(self.wrapper_save_dir, now_time)
-
-        # configuring logger to save to {output_wrapper_path}/logs
-        log_path = f"{save_dir_path}/logs"
-        artifact.configure_logger(log_path, now_time)
-
-        # mutating simulator to save to specific save_dir
-        self.simulator.save_dir = save_dir_path
-
-        # running sim
+        path = self.configure_run_directory(run)
+        self.simulator.save_dir = path
         self.simulator.run()
 
-    def __make_default_save_path(self):
-        output_path = "bcipy/simulator/generated"
-        return f"{output_path}"
+        state = self.simulator.state_manager.get_state()
+        run_metrics = self.simulator.referee.score(self.simulator)
+
+        summary = RunSummary(run + 1,
+                             target_text=state.target_sentence,
+                             typed_text=state.current_sentence,
+                             metrics=run_metrics)
+        self.simulator.reset()
+        return summary
+
+    def configure_run_directory(self, run: int) -> str:
+        """Create the necessary directories and configure the logger.
+        Returns the run directory.
+        """
+        run_name = f"run_{run + 1}"
+        path = f"{self.save_dir}/{run_name}"
+        os.mkdir(path)
+        artifact.configure_logger(log_path=path,
+                                  file_name=f"{run_name}.log",
+                                  use_stdout=False)
+        return path
+
+    def summarize_metrics(self, run_summaries: List[RunSummary]) -> None:
+        """Summarize metrics from all runs."""
+        all_run_metrics = [run.metrics for run in run_summaries]
+        self.__save_average_metrics(average_sim_metrics(all_run_metrics))
+
+        summary_dict = {
+            summary.run: summary.to_dict()
+            for summary in run_summaries
+        }
+        self.save_run_summaries(summary_dict)
+
+    def default_save_location(self) -> str:
+        """Directory in which simulations are saved."""
+        return f"{BCIPY_ROOT}/simulator/generated"
+
+    def directory_name(self) -> str:
+        """Name of the directory for a new simulation run."""
+        return datetime.datetime.now().strftime("SIM_%m-%d-%Y_%H_%M_%S")
+
+    def __save_average_metrics(self, avg_metric_dict: Dict):
+        """ Write average dictionary of metrics to a json file in root of save dir."""
+
+        with open(f"{self.save_dir}/avg_metrics.json", 'w',
+                  encoding='utf8') as output_file:
+            json.dump(avg_metric_dict, output_file, indent=2)
+
+    def save_run_summaries(self, summary_dict: Dict):
+        """Write the summary for each run in the save directory."""
+        with open(f"{self.save_dir}/run_summaries.json", 'w',
+                  encoding='utf8') as output:
+            json.dump(summary_dict, output, indent=2)

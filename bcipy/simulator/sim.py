@@ -104,8 +104,6 @@ class SimulatorCopyPhrase(Simulator):
         log.info(f"FINAL TYPED: {final_state.current_sentence}")
         log.info(self.referee.score(self).__dict__)
 
-        log.debug(f"Final State: {final_state}")
-
         self.save_run()
 
     def __make_stimuli(self, state: SimState):

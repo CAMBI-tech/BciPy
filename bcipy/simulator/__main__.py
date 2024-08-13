@@ -4,7 +4,7 @@ import argparse
 from glob import glob
 from pathlib import Path
 
-from bcipy.simulator.helpers.sim_runner import MultiSimRunner, SingleSimRunner
+from bcipy.simulator.helpers.sim_runner import SimRunner
 from bcipy.simulator.sim_factory import SimulationFactory
 
 if __name__ == "__main__":
@@ -32,6 +32,12 @@ if __name__ == "__main__":
         required=True,
         help="Parameter File to be used")
 
+    parser.add_argument(
+        "-n",
+        type=int,
+        required=False,
+        default=1,
+        help="Number of times to run the simulation")
     parser.add_argument("-o", "--out_dir", type=Path, default=Path(__file__).resolve().parent)
     args = parser.parse_args()
     sim_args = vars(args)
@@ -42,10 +48,5 @@ if __name__ == "__main__":
     ]
 
     simulator = SimulationFactory.create(**sim_args)
-
-    sim_run_count = simulator.get_parameters().get('sim_run_count', 1)
-
-    runner = MultiSimRunner(
-        simulator,
-        sim_run_count) if sim_run_count > 1 else SingleSimRunner(simulator)
+    runner = SimRunner(simulator, args.n)
     runner.run()

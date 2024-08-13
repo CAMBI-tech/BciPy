@@ -80,15 +80,16 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
-        log.debug(
-            f"Loading data from {len(self.source_dirs)} source directories")
+        if not self.data:
+            log.debug(
+                f"Loading data from {len(self.source_dirs)} source directories")
 
-        self.data = [
-            self.data_processor.process(source_dir, self.parameters)
-            for source_dir in self.source_dirs
-        ]
+            self.data = [
+                self.data_processor.process(source_dir, self.parameters)
+                for source_dir in self.source_dirs
+            ]
 
-        log.debug("Finished loading all data")
+            log.debug("Finished loading all data")
         return self
 
     def transform(self) -> DataEngine:

@@ -5,7 +5,7 @@ from typing import List
 from bcipy.helpers.load import load_json_parameters
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.metrics import (MetricReferee, RefereeImpl,
-                                             SimMetrics1Handler)
+                                             SimMetricsHandler)
 from bcipy.simulator.helpers.model_handler import (ModelHandler,
                                                    SigLmModelHandler1)
 from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
@@ -40,7 +40,7 @@ class SimulationFactory:
         model_handler: ModelHandler = SigLmModelHandler1(
             model_file, base_parameters)
         referee: MetricReferee = RefereeImpl(
-            metric_handlers={'basic': SimMetrics1Handler()})
+            metric_handlers={'basic': SimMetricsHandler()})
 
         sim = SimulatorCopyPhrase(data_engine,
                                   model_handler,
