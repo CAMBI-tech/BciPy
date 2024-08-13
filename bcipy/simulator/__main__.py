@@ -4,6 +4,7 @@ import argparse
 from glob import glob
 from pathlib import Path
 
+from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.sim_runner import SimRunner
 from bcipy.simulator.sim_factory import SimulationFactory
 
@@ -47,8 +48,10 @@ if __name__ == "__main__":
         if Path(d).is_dir()
     ]
 
-    runner = SimRunner(simulator=None, runs = args.n)
-    runner.setup()
+    sim_dir = artifact.init_simulation_dir()
     simulator = SimulationFactory.create(**sim_args)
+    runner = SimRunner(save_dir=sim_dir,
+                       simulator=simulator,
+                       runs=args.n)
     runner.simulator = simulator
     runner.run()

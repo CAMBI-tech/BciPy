@@ -1,12 +1,18 @@
 """ Handles artifacts related logic ie. logs, save dir creation, result.json, ..."""
+import datetime
 import logging
+import os
 import sys
 from typing import Optional
+
+from bcipy.config import BCIPY_ROOT
 
 # For a simulation, two loggers are configured: a top level logger summarizing
 # setup and progress, and a logger for each simulation run. The root logger is
 # re-configured for each simulation run.
 TOP_LEVEL_LOGGER_NAME = 'sim_logger'
+DEFAULT_LOGFILE_NAME = 'sim.log'
+DEFAULT_SAVE_LOCATION = f"{BCIPY_ROOT}/simulator/generated"
 
 
 def configure_logger(log_path: str,
@@ -46,3 +52,28 @@ def configure_logger(log_path: str,
         log.addHandler(stdout_handler)
 
     log.addHandler(file_handler)
+
+
+def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
+                  logfile_name: str = DEFAULT_LOGFILE_NAME) -> str:
+    """Setup the folder structure and logging for a simulation.
+    
+    Parameters
+    ----------
+        save_location - optional path in which new simulation directory will be created.
+        logfile_name - optional name of the top level logfile within that directory.
+
+    Returns the path of the simulation directory.
+    """
+    save_dir = f"{save_location}/{directory_name()}"
+    os.makedirs(save_dir)
+    configure_logger(save_dir,
+                     logfile_name,
+                     logger_name=TOP_LEVEL_LOGGER_NAME,
+                     use_stdout=True)
+    return save_dir
+
+
+def directory_name() -> str:
+    """Name of the directory for a new simulation run."""
+    return datetime.datetime.now().strftime("SIM_%m-%d-%Y_%H_%M_%S")

@@ -1,6 +1,5 @@
 """ Wrappers that run a simulation """
 import dataclasses
-import datetime
 import json
 import logging
 import os
@@ -8,7 +7,6 @@ import time
 from pathlib import Path
 from typing import Dict, List, NamedTuple
 
-from bcipy.config import BCIPY_ROOT
 from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.metrics import SimMetrics, average_sim_metrics
 from bcipy.simulator.simulator_base import Simulator
@@ -34,33 +32,25 @@ class SimRunner():
     """Runs one or more iterations of the simulation."""
 
     def __init__(self,
+                 save_dir: str,
                  simulator: Simulator,
                  runs: int = 1,
+                 sim_log: str = artifact.DEFAULT_LOGFILE_NAME,
                  iteration_sleep: int = 0):
         self.simulator = simulator
         self.runs = runs
         self.iteration_sleep = iteration_sleep
-        self.save_dir = f"{self.default_save_location()}/{self.directory_name()}"
-
-        self.logger_name = artifact.TOP_LEVEL_LOGGER_NAME
-        self.sim_log = 'sim.log'
-
-    def setup(self) -> None:
-        """Setup the folder structure and logging for the simulation."""
-        if not self.setup_complete():
-            os.makedirs(self.save_dir)
-            artifact.configure_logger(self.save_dir,
-                                    self.sim_log,
-                                    logger_name=self.logger_name,
-                                    use_stdout=True)
+        self.save_dir = save_dir
+        self.sim_log = sim_log
 
     def setup_complete(self) -> bool:
         """Check if setup has already been run."""
-        return Path(self.save_dir).is_dir()
+        return Path(self.save_dir).is_dir() and self.simulator is not None
 
     def run(self):
         """Run one or more simulations"""
-        self.setup()
+        assert self.setup_complete(), "Setup is not complete."
+        self.simulator.parameters.save(self.save_dir)
         log.info("Starting simulation...\n")
 
         run_summaries = []
@@ -113,14 +103,6 @@ class SimRunner():
             for summary in run_summaries
         }
         self.save_run_summaries(summary_dict)
-
-    def default_save_location(self) -> str:
-        """Directory in which simulations are saved."""
-        return f"{BCIPY_ROOT}/simulator/generated"
-
-    def directory_name(self) -> str:
-        """Name of the directory for a new simulation run."""
-        return datetime.datetime.now().strftime("SIM_%m-%d-%Y_%H_%M_%S")
 
     def __save_average_metrics(self, avg_metric_dict: Dict):
         """ Write average dictionary of metrics to a json file in root of save dir."""

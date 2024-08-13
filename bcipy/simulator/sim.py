@@ -161,11 +161,9 @@ class SimulatorCopyPhrase(Simulator):
         metric_dict.update(final_state_json)  # adding state data to metrics
 
         # writing result.json
-        with open(f"{self.save_dir}/result.json", 'w') as output_file:
+        with open(f"{self.save_dir}/session.json", 'w',
+                  encoding='utf8') as output_file:
             json.dump(metric_dict, output_file, indent=1)
-
-        # writing params
-        self.parameters.save(directory=self.save_dir)
 
     def reset(self):
         self.state_manager.reset_state()
