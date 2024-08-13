@@ -47,6 +47,8 @@ if __name__ == "__main__":
         if Path(d).is_dir()
     ]
 
+    runner = SimRunner(simulator=None, runs = args.n)
+    runner.setup()
     simulator = SimulationFactory.create(**sim_args)
-    runner = SimRunner(simulator, args.n)
+    runner.simulator = simulator
     runner.run()

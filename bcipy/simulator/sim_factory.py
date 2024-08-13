@@ -24,7 +24,6 @@ class SimulationFactory:
                save_dir=None,
                **kwargs) -> Simulator:
         """Create a Simulation, performing all of the necessary setup."""
-        # out_dir = kwargs.get('out_dir', Path(__file__).resolve().parent)
 
         # combining parameters
         model_file = Path(smodel_files.pop())

@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import time
+from pathlib import Path
 from typing import Dict, List, NamedTuple
 
 from bcipy.config import BCIPY_ROOT
@@ -12,7 +13,7 @@ from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.metrics import SimMetrics, average_sim_metrics
 from bcipy.simulator.simulator_base import Simulator
 
-log = logging.getLogger('sim_logger')
+log = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
 
 
 class RunSummary(NamedTuple):
@@ -40,15 +41,26 @@ class SimRunner():
         self.runs = runs
         self.iteration_sleep = iteration_sleep
         self.save_dir = f"{self.default_save_location()}/{self.directory_name()}"
+
+        self.logger_name = artifact.TOP_LEVEL_LOGGER_NAME
         self.sim_log = 'sim.log'
+
+    def setup(self) -> None:
+        """Setup the folder structure and logging for the simulation."""
+        if not self.setup_complete():
+            os.makedirs(self.save_dir)
+            artifact.configure_logger(self.save_dir,
+                                    self.sim_log,
+                                    logger_name=self.logger_name,
+                                    use_stdout=True)
+
+    def setup_complete(self) -> bool:
+        """Check if setup has already been run."""
+        return Path(self.save_dir).is_dir()
 
     def run(self):
         """Run one or more simulations"""
-        os.makedirs(self.save_dir)
-        artifact.configure_logger(self.save_dir,
-                                  self.sim_log,
-                                  logger_name='sim_logger',
-                                  use_stdout=True)
+        self.setup()
         log.info("Starting simulation...\n")
 
         run_summaries = []

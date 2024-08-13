@@ -7,11 +7,12 @@ import numpy as np
 import pandas as pd
 
 from bcipy.helpers.parameters import Parameters
+from bcipy.simulator.helpers.artifact import TOP_LEVEL_LOGGER_NAME
 from bcipy.simulator.helpers.signal_helpers import (EegRawDataProcessor,
                                                     ExtractedExperimentData,
                                                     RawDataProcessor)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
 
 class DataEngine(ABC):
@@ -82,12 +83,10 @@ class RawDataEngine(DataEngine):
         """
         if not self.data:
             log.debug(
-                f"Loading data from {len(self.source_dirs)} source directories")
-
-            self.data = [
-                self.data_processor.process(source_dir, self.parameters)
-                for source_dir in self.source_dirs
-            ]
+                f"Loading data from {len(self.source_dirs)} source directories:")
+            for source_dir in self.source_dirs:
+                log.debug(source_dir)
+                self.data.append(self.data_processor.process(source_dir, self.parameters))
 
             log.debug("Finished loading all data")
         return self

@@ -1,9 +1,12 @@
 """ Handles artifacts related logic ie. logs, save dir creation, result.json, ..."""
 import logging
-import os
-import random
 import sys
 from typing import Optional
+
+# For a simulation, two loggers are configured: a top level logger summarizing
+# setup and progress, and a logger for each simulation run. The root logger is
+# re-configured for each simulation run.
+TOP_LEVEL_LOGGER_NAME = 'sim_logger'
 
 
 def configure_logger(log_path: str,
@@ -43,17 +46,3 @@ def configure_logger(log_path: str,
         log.addHandler(stdout_handler)
 
     log.addHandler(file_handler)
-
-
-def init_save_dir(output_path, save_dir_name):
-    """ creating wrapper dir to save sim results to.
-     - Saves to {output_path}
-     - Adds a unique 4-digit id to end
-     """
-
-    unique_id = random.sample(range(1000, 10000), 1)[0]
-    save_dir = f"{output_path}/SIM_{save_dir_name}_{unique_id}"
-    os.makedirs(save_dir)
-    os.makedirs(f"{save_dir}/logs")
-
-    return save_dir
