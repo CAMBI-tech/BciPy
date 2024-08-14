@@ -75,10 +75,12 @@ class SimMetricsHandler(RefereeHandler):
         max_inq_time = max_inquiry_duration(parameters)
         total_time_spent = total_inquiries * max_inq_time
 
-        ret = SimMetrics(total_series=total_series, total_inquiries=total_inquiries,
-                          total_decisions=total_decisions, total_time_spent=total_time_spent,
-                          inquiries_per_selection=inquiries_per_selection,
-                          total_incorrect_decisions=total_incorrect_decisions)
+        ret = SimMetrics(total_series=total_series,
+                         total_inquiries=total_inquiries,
+                         total_decisions=total_decisions,
+                         total_time_spent=total_time_spent,
+                         inquiries_per_selection=inquiries_per_selection,
+                         total_incorrect_decisions=total_incorrect_decisions)
         return dataclasses.asdict(ret)
 
 

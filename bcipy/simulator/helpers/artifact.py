@@ -20,7 +20,7 @@ def configure_logger(log_path: str,
                      logger_name: Optional[str] = None,
                      use_stdout: bool = True):
     """Configures logger for standard out and file output.
-    
+
     Parameters
     ----------
         log_path - directory in which log file will reside
@@ -55,9 +55,9 @@ def configure_logger(log_path: str,
 
 
 def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
-                  logfile_name: str = DEFAULT_LOGFILE_NAME) -> str:
+                        logfile_name: str = DEFAULT_LOGFILE_NAME) -> str:
     """Setup the folder structure and logging for a simulation.
-    
+
     Parameters
     ----------
         save_location - optional path in which new simulation directory will be created.

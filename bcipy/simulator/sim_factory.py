@@ -28,7 +28,7 @@ class SimulationFactory:
 
         # combining parameters
         model_file = Path(smodel_files.pop())
-        
+
         sim_parameters = load_json_parameters(sim_param_path, value_cast=True)
         params_path: str = kwargs.get('parameters', None)
         base_parameters = load_json_parameters(params_path, value_cast=True)
@@ -39,7 +39,6 @@ class SimulationFactory:
         state_manager = StateManagerImpl(base_parameters)
         sampler = EEGByLetterSampler(data_engine)
         model_handler = SigLmModelHandler1(model_file, base_parameters)
-
 
         referee = RefereeImpl(metric_handlers={'basic': SimMetricsHandler()})
 
