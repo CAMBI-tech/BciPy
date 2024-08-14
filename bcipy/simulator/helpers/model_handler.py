@@ -2,6 +2,7 @@ import inspect
 import logging
 import pickle
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import numpy as np
 
@@ -118,3 +119,11 @@ class SigLmModelHandler1(ModelHandler):
             return self.lm_model
         else:
             raise RuntimeError(f"Can't find model {key}")
+
+    def __str__(self):
+        props = {
+            'signal_model': self.signal_model.__class__.__name__,
+            'language_model': self.lm_model.__class__.__name__,
+            'sm_file': f".../{Path(self.sm_model_file).parent.name}/{Path(self.sm_model_file).name}"
+        }
+        return f"<{self.__class__.__name__} {props}>"

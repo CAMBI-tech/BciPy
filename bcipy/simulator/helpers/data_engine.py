@@ -84,8 +84,8 @@ class RawDataEngine(DataEngine):
         if not self.data:
             log.debug(
                 f"Loading data from {len(self.source_dirs)} source directories:")
-            for source_dir in self.source_dirs:
-                log.debug(source_dir)
+            for i, source_dir in enumerate(self.source_dirs):
+                log.debug(f"{i+1}. {Path(source_dir).name}")
                 self.data.append(self.data_processor.process(source_dir, self.parameters))
 
             log.debug("Finished loading all data")

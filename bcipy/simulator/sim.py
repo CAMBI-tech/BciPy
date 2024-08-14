@@ -170,3 +170,6 @@ class SimulatorCopyPhrase(Simulator):
 
     def get_parameters(self):
         return self.parameters.copy()
+
+    def __str__(self):
+        return f"<{self.__class__.__name__}>"
