@@ -9,6 +9,7 @@ import numpy as np
 
 from bcipy.helpers import stimuli, symbols
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.session import session_excel
 from bcipy.helpers.symbols import alphabet
 from bcipy.simulator.helpers.data_engine import DataEngine
 from bcipy.simulator.helpers.log_utils import (fmt_reshaped_evidence,
@@ -21,7 +22,7 @@ from bcipy.simulator.helpers.state_manager import (SimState, StateManager,
                                                    format_sim_state_dump)
 from bcipy.simulator.helpers.types import InquiryResult, SimEvidence
 from bcipy.simulator.simulator_base import Simulator
-from bcipy.task.data import EvidenceType
+from bcipy.task.data import EvidenceType, Inquiry, Session
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +70,13 @@ class SimulatorCopyPhrase(Simulator):
         assert self.save_dir, "Save directory not set"
         log.info(f"SIM START with target word {self.state_manager.get_state().target_sentence}")
 
+        session = Session(
+            save_location=self.save_dir,
+            task='Copy Phrase Simulation',
+            mode='RSVP',
+            symbol_set=self.symbol_set,
+            decision_threshold=self.parameters['decision_threshold'])
+
         while not self.state_manager.is_done():
             self.state_manager.mutate_state('display_alphabet',
                                             self.__make_stimuli(self.state_manager.get_state()))
@@ -93,8 +101,12 @@ class SimulatorCopyPhrase(Simulator):
             inq_record: InquiryResult = self.state_manager.update(reshaped_evidence)
             updated_state = self.state_manager.get_state()
 
+            data = self.new_data_record(curr_state, inq_record)
+            session.add_sequence(data)
+
             if inq_record.decision:
                 log.info(f"Decided {inq_record.decision} for target {inq_record.target}")
+                session.add_series()
 
             log.info(f"Current typed: {updated_state.current_sentence}")
             sleep(self.parameters.get("sim_sleep_time", 0.5))
@@ -104,7 +116,7 @@ class SimulatorCopyPhrase(Simulator):
         log.info(f"FINAL TYPED: {final_state.current_sentence}")
         log.info(self.referee.score(self).__dict__)
 
-        self.save_run()
+        self.save_run(session)
 
     def __make_stimuli(self, state: SimState):
         """
@@ -151,7 +163,42 @@ class SimulatorCopyPhrase(Simulator):
         else:
             return self.data_engine.get_parameters()
 
-    def save_run(self):
+    def new_data_record(self, inquiry_state: SimState, inquiry_result: InquiryResult) -> Inquiry:
+        """Construct a new inquiry data record.
+
+        Parameters
+        ----------
+        - inquiry_state : state prior to presenting the inquiry
+        - inquiry_result : result of presenting the inquiry
+        - post_inquiry_state : updated state
+
+        Returns
+        -------
+        Inquiry data for the current schedule
+        """
+        target_info = [
+            'target' if inquiry_result == sym else 'nontarget'
+            for sym in inquiry_result.stimuli
+        ]
+
+        data = Inquiry(stimuli=inquiry_result.stimuli,
+                       timing=[],
+                       triggers=[],
+                       target_info=target_info,
+                       target_letter=inquiry_result.target,
+                       current_text=inquiry_state.current_sentence,
+                       target_text=inquiry_state.target_sentence)
+        data.precision = 4
+        data.evidences = {
+            val.evidence_type: val.evidence
+            for val in inquiry_result.evidences.values()
+        }
+        if EvidenceType.LM not in data.evidences:
+            data.evidences[EvidenceType.LM] = []
+        data.likelihood = list(inquiry_result.fused_likelihood)
+        return data
+
+    def save_run(self, session: Session):
         """ Outputs the results of a run to json file """
         assert self.save_dir, "Save directory not set"
         # creating result.json object with final state and metrics
@@ -161,9 +208,17 @@ class SimulatorCopyPhrase(Simulator):
         metric_dict.update(final_state_json)  # adding state data to metrics
 
         # writing result.json
-        with open(f"{self.save_dir}/session.json", 'w',
+        with open(f"{self.save_dir}/result.json", 'w',
                   encoding='utf8') as output_file:
-            json.dump(metric_dict, output_file, indent=1)
+            json.dump(metric_dict, output_file, indent=2)
+
+        with open(f"{self.save_dir}/session.json", 'wt',
+                  encoding='utf8') as session_file:
+            json.dump(session.as_dict(), session_file, indent=2)
+
+        if session.has_evidence():
+            session_excel(session=session,
+                            excel_file=f"{self.save_dir}/session.xlsx")
 
     def reset(self):
         self.state_manager.reset_state()
