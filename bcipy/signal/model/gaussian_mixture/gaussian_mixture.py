@@ -18,11 +18,6 @@ warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
-
-import gpflow as gpf
-from gpflow.ci_utils import reduce_in_tests
-from gpflow.utilities import print_summary, set_trainable
 
 
 # def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
@@ -62,12 +57,7 @@ class GazeModelKernelGaussianProcess(SignalModel):
 
     def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
         training_data = np.asarray(training_data)
-        # GPflow:
-        N = training_data.shape[0]
-        D = training_data.shape[1]
-        M = 15  # number of inducing points
-        L = 2  # number of latent GPs
-        P = 3  # number of observations = output dimensions
+
 
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
@@ -170,35 +160,7 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
 
         # samples = np.random.multivariate_normal(mu_s.ravel(), cov_s, 3)
         # plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train, samples=samples)
-        
-        gpf.config.set_default_float(np.float64)
-        # gpf.config.set_default_summary_fmt("notebook")
-        np.random.seed(0)
-
-        MAXITER = reduce_in_tests(2000)
-        # Shared independent multi-output kernel (MOK) and shared independent inducing variables
-        kernel = gpf.kernels.SharedIndependent(gpf.kernels.SquaredExponential() + gpf.kernels.Linear(), output_dim=2)       
-        Zinit = np.linspace(-5, 5, 15)[:, None]
-        # initialization of inducing input locations (M random points from the training inputs)
-        Z = Zinit.copy()
-        # create multi-output inducing variables from Z
-        iv = gpf.inducing_variables.SharedIndependentInducingVariables(gpf.inducing_variables.InducingPoints(Z))
-
-        # create SVGP model as usual and optimize
-        m = gpf.models.SVGP(kernel, gpf.likelihoods.Gaussian(), inducing_variable=iv, num_latent_gps=2)
-        print_summary(m)
-
-        def optimize_model_with_scipy(model):
-            optimizer = gpf.optimizers.Scipy()
-            optimizer.minimize(
-                model.training_loss_closure(X_train),
-                variables=model.trainable_variables,
-                method="l-bfgs-b",
-                options={"disp": 50, "maxiter": MAXITER},
-            )
-
-        optimize_model_with_scipy(m)
-        breakpoint()
+    
     
     
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):

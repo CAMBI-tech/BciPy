@@ -145,7 +145,7 @@ class PcaRdaKdeModel(SignalModel):
         likelihood_ratios = np.ones(len(symbol_set))
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
-        return likelihood_ratios
+        return likelihood_ratios   # used in multimodal update
 
     def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities.
@@ -170,8 +170,6 @@ class PcaRdaKdeModel(SignalModel):
         log_post_1 -= denom
         log_posterior = np.stack([log_post_0, log_post_1], axis=-1)
         return log_posterior  # TODO: This is the normalized posterior! You need to unnormalize
-    
-
     
     def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
         """

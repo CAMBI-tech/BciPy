@@ -20,10 +20,12 @@ from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
 from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.save import save_model
 from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
+from bcipy.helpers.task import relative_triggers
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_centralized_data,
                                          visualize_erp, visualize_gaze,
@@ -106,7 +108,7 @@ def calculate_acc(predictions: int, counter: int):
     return accuracy_per_symbol
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+def analyze_erp(eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, estimate_balanced_acc,
                 save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
@@ -128,6 +130,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         save_figures (bool): If true, saves ERP figures after training to the data folder.
         show_figures (bool): If true, shows ERP figures after training.
     """
+    '''EEG PART'''
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
     if trial_window is None:
@@ -152,9 +155,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         f"Prestimulus Buffer: {prestim_length}s, Poststimulus Buffer: {buffer}s \n"
         f"Static offset: {static_offset}"
     )
-    channels = erp_data.channels
-    type_amp = erp_data.daq_type
-    sample_rate = erp_data.sample_rate
+    channels = eeg_data.channels
+    type_amp = eeg_data.daq_type
+    sample_rate = eeg_data.sample_rate
 
     # setup filtering
     default_transform = get_default_transform(
@@ -185,11 +188,11 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
 
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
-    channel_map = analysis_channels(channels, device_spec)
+    channel_map = analysis_channels(channels, device_spec_eeg)
     channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
     log.info(f'Channels used in analysis: {channels_used}')
 
-    data, fs = erp_data.by_channel()
+    data, fs = eeg_data.by_channel()
 
     inquiries, inquiry_labels, inquiry_timing = model.reshaper(
         trial_targetness_label=trigger_targetness,
@@ -202,6 +205,10 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         prestimulus_length=prestim_length,
         transformation_buffer=buffer,
     )
+    # Save the target letter info for each inquiry:
+    tmp = CopyPhraseWrapper()
+    triggers = relative_triggers(inquiry_timing, prestim_length)
+    letters, times, labels = tmp.letter_info(triggers, trigger_targetness)
 
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
@@ -215,7 +222,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
+    model.metadata = SignalModelMetadata(device_spec=device_spec_eeg,
                                          transform=default_transform)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
@@ -234,20 +241,22 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
             train_data, test_data = data[train_index], data[test_index]
             train_labels, test_labels = np.array(labels)[train_index], np.array(labels)[test_index]
             dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            breakpoint()
+            # Swap axes back to original shape:
+            train_data = train_data.swapaxes(0, 1)
+            test_data = test_data.swapaxes(0, 1)
             dummy_model.fit(train_data, train_labels)
+            # Call compute_likelihood_ratio to get the likelihood ratios for each symbol, to be used in the multimodal update
+            # But you need symbol set instead of test_labels which are 0s and 1s
+            # This is an update done inquiry by inquiry, so your data will have a length of Channels x No. of letters in inquiry x Trial length
+            likelihood_ratios = dummy_model.compute_likelihood_ratio(test_data,list(test_labels), alphabet())
+
+
             probs = dummy_model.predict_proba(test_data)
             preds = probs.argmax(-1)
+            breakpoint()
             score = balanced_accuracy_score(test_labels, preds)
             scores.append(score)
-        
-        # for i in range(5):
-        #     train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2, swap_axes=True, random_state=i)
-        #     dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        #     dummy_model.fit(train_data, train_labels)
-        #     probs = dummy_model.predict_proba(test_data)
-        #     preds = probs.argmax(-1)
-        #     score = balanced_accuracy_score(test_labels, preds)
-        #     scores.append(score)
 
         average_score = np.mean(scores)
         log.info(f"Cross-validated balanced accuracy: {average_score}")
@@ -256,7 +265,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
 
     # this should have uncorrected trigger timing for display purposes
     figure_handles = visualize_erp(
-        erp_data,
+        eeg_data,
         channel_map,
         trigger_timing,
         labels,
@@ -800,27 +809,27 @@ def offline_analysis(
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
-    models = []
-    figure_handles = []
-    for raw_data_path in data_file_paths:
-        raw_data = load_raw_data(raw_data_path)
-        device_spec = devices_by_name.get(raw_data.daq_type)
-        # extract relevant information from raw data object eeg
-        # if device_spec.content_type == "EEG":
-        #     erp_model, erp_figure_handles = analyze_erp(
-        #         raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
-        #     models.append(erp_model)
-        #     figure_handles.append(erp_figure_handles)
+    eeg_data = load_raw_data(data_file_paths[0])
+    device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
+    gaze_data = load_raw_data(data_file_paths[1])
+    device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
 
-        if device_spec.content_type == "Eyetracker":
-            et_model, et_figure_handles = analyze_gaze(
-                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP_SampleAverage")
-            models.append(et_model)
-            figure_handles.append(et_figure_handles)
+      
+    # Analyze both EEG and Eyetracker data here
+    multi_model, multi_figure_handles = analyze_erp(
+                eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, estimate_balanced_acc, save_figures, show_figures)
+            # models.append(erp_model)
+            # figure_handles.append(erp_figure_handles)
+
+        # if device_spec.content_type == "Eyetracker":
+        #     et_model, et_figure_handles = analyze_gaze(
+        #         raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP_SampleAverage")
+        #     models.append(et_model)
+        #     figure_handles.append(et_figure_handles)
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    return models, figure_handles
+    return multi_model, multi_figure_handles
 
 
 if __name__ == "__main__":
@@ -834,7 +843,7 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=False)
+    parser.set_defaults(balanced=True)
     parser.set_defaults(save_figures=True)
     parser.set_defaults(show_figures=True)
     args = parser.parse_args()
