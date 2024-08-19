@@ -299,11 +299,10 @@ class VEPDisplay(Display):
         self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
         self.set_stimuli_colors(stimuli)
-        self.draw_animation(stimuli)
         self._set_inquiry(stimuli)
 
         self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
-        # display the inquiry
+        # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
         self.window.flip()
@@ -420,10 +419,23 @@ class VEPDisplay(Display):
 
     def reset_symbol_positions(self) -> None:
         """Reset the position of each symbol to its starting position"""
-        for sym in self.symbol_set:
-            pos_index = self.sort_order(sym)
-            self.sti[sym].pos = self.starting_positions[pos_index]
+        #box layout
+        layout = [
+            ['a', 'b', 'c', 'd', 'e', 'f'],
+            ['g', 'h', 'i', 'j', 'k', 'l', 'm'],
+            ['n', 'o', 'p', 'q', 'r', 's'],
+            ['t', 'u', 'v', 'w', 'x', 'y', 'z']
+        ]
 
+        position_index = 0
+        for row in layout:
+            for sym in row:
+                if sym in self.symbol_set:
+                    #Set position of symbol based on place in layout
+                    pos = self.starting_positions[position_index]
+                    self.sti[sym].pos = pos
+                    position_index += 1
+                    
     def build_vep_stimuli(self, positions: List[Tuple[float, float]],
                           codes: List[List[int]], colors: Iterable[Tuple[str,
                                                                          str]],
@@ -504,11 +516,19 @@ class VEPDisplay(Display):
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
         """Set the correct inquiry text for each text boxes.
         """
-        for i, sti in enumerate(stimuli):
-            box = self.text_boxes[i]
-            text = ' '.join(sti.symbol)
+        #box layout
+        layout = [
+            ['a', 'b', 'c', 'd', 'e', 'f'],
+            ['g', 'h', 'i', 'j', 'k', 'l', 'm'],
+            ['n', 'o', 'p', 'q', 'r', 's'],
+            ['t', 'u', 'v', 'w', 'x', 'y', 'z']
+        ]
+    
+        for box_index, symbols in enumerate(layout):
+            box = self.text_boxes[box_index]
+            text = ' '.join(symbols)
             box.text = text
-            box.color = sti.color
+            box.color = self.box_colors[box_index]
         return self.text_boxes
 
     def wait_screen(self, message: str, color: str) -> None:
