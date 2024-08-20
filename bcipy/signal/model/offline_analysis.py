@@ -173,6 +173,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
+    # TODO: Last argument is the letter_info for inquiries
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
@@ -223,7 +224,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     preferences.signal_model_directory = data_folder
 
     # Using an 80/20 split, report on balanced accuracy
-    
+    '''
+    If you want to estimate performance for both EEG , Gaze and Combined, you can use this loop.
+    '''
     if estimate_balanced_acc:
         # Implement cross-validation for balanced accuracy
         scores = []
@@ -232,22 +235,16 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         data = data.swapaxes(0, 1)
         for train_index, test_index in skf.split(data, labels):
             train_data, test_data = data[train_index], data[test_index]
+            # gaze_train_data, gaze_test_data = gaze_data[train_index], gaze_data[test_index]
             train_labels, test_labels = np.array(labels)[train_index], np.array(labels)[test_index]
             dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            # swap axes again
             dummy_model.fit(train_data, train_labels)
             probs = dummy_model.predict_proba(test_data)
             preds = probs.argmax(-1)
             score = balanced_accuracy_score(test_labels, preds)
             scores.append(score)
         
-        # for i in range(5):
-        #     train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2, swap_axes=True, random_state=i)
-        #     dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        #     dummy_model.fit(train_data, train_labels)
-        #     probs = dummy_model.predict_proba(test_data)
-        #     preds = probs.argmax(-1)
-        #     score = balanced_accuracy_score(test_labels, preds)
-        #     scores.append(score)
 
         average_score = np.mean(scores)
         log.info(f"Cross-validated balanced accuracy: {average_score}")

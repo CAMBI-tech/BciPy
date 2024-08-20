@@ -1,3 +1,4 @@
+import pickle
 from pathlib import Path
 
 import numpy as np
@@ -18,42 +19,6 @@ warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 import matplotlib.pyplot as plt
 import numpy as np
-import tensorflow as tf
-
-import gpflow as gpf
-from gpflow.ci_utils import reduce_in_tests
-from gpflow.utilities import print_summary, set_trainable
-
-
-# def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
-#     X = X.ravel()
-#     mu = mu.ravel()
-#     uncertainty = 1.96 * np.sqrt(np.diag(cov))
-    
-#     plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
-#     plt.plot(X, mu, label='Mean')
-#     for i, sample in enumerate(samples):
-#         plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
-#     if X_train is not None:
-#         plt.plot(X_train, Y_train, 'rx')
-#     plt.legend()
-
-# def plot_model(m, X, Y, lower=-8.0, upper=8.0):
-#     pX = np.linspace(lower, upper, 100)[:, None]
-#     pY, pYv = m.predict_y(pX)
-#     if pY.ndim == 3:
-#         pY = pY[:, 0, :]
-#     plt.plot(X, Y, "x")
-#     plt.gca().set_prop_cycle(None)
-#     plt.plot(pX, pY)
-#     for i in range(pY.shape[1]):
-#         top = pY[:, i] + 2.0 * pYv[:, i] ** 0.5
-#         bot = pY[:, i] - 2.0 * pYv[:, i] ** 0.5
-#         plt.fill_between(pX[:, 0], top, bot, alpha=0.3)
-#     plt.xlabel("X")
-#     plt.ylabel("f")
-#     plt.title(f"ELBO: {m.elbo([X, Y]):.3}")
-#     plt.plot(Z, Z * 0.0, "o")
 
 class GazeModelKernelGaussianProcess(SignalModel):
     def __init__(self):
@@ -152,53 +117,7 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
         # Plot GP mean, uncertainty region and samples 
         # plot_gp(mu, cov, X, samples=samples) 
 
-        # Prediction from noise-free training data
-        # l=1.0 
-        # sigma_f=1.0
-        # sigma_y=1e-4  
-
-        # K = kernel(X_train, X_train, l, sigma_f) + sigma_y**2 * np.eye(len(X_train))
-        # K_s = kernel(X_train, X_s, l, sigma_f)
-        # K_ss = kernel(X_s, X_s, l, sigma_f) + 1e-8 * np.eye(len(X_s))
-        # K_inv = inv(K)
-        
-        # # Equation (7)
-        # mu_s = K_s.T.dot(K_inv).dot(Y_train)
-
-        # # Equation (8)
-        # cov_s = K_ss - K_s.T.dot(K_inv).dot(K_s)
-
-        # samples = np.random.multivariate_normal(mu_s.ravel(), cov_s, 3)
-        # plot_gp(mu_s, cov_s, X, X_train=X_train, Y_train=Y_train, samples=samples)
-        
-        gpf.config.set_default_float(np.float64)
-        # gpf.config.set_default_summary_fmt("notebook")
-        np.random.seed(0)
-
-        MAXITER = reduce_in_tests(2000)
-        # Shared independent multi-output kernel (MOK) and shared independent inducing variables
-        kernel = gpf.kernels.SharedIndependent(gpf.kernels.SquaredExponential() + gpf.kernels.Linear(), output_dim=2)       
-        Zinit = np.linspace(-5, 5, 15)[:, None]
-        # initialization of inducing input locations (M random points from the training inputs)
-        Z = Zinit.copy()
-        # create multi-output inducing variables from Z
-        iv = gpf.inducing_variables.SharedIndependentInducingVariables(gpf.inducing_variables.InducingPoints(Z))
-
-        # create SVGP model as usual and optimize
-        m = gpf.models.SVGP(kernel, gpf.likelihoods.Gaussian(), inducing_variable=iv, num_latent_gps=2)
-        print_summary(m)
-
-        def optimize_model_with_scipy(model):
-            optimizer = gpf.optimizers.Scipy()
-            optimizer.minimize(
-                model.training_loss_closure(X_train),
-                variables=model.trainable_variables,
-                method="l-bfgs-b",
-                options={"disp": 50, "maxiter": MAXITER},
-            )
-
-        optimize_model_with_scipy(m)
-        breakpoint()
+        # Prediction from noise-free training data 
     
     
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
@@ -279,11 +198,11 @@ class GazeModelIndividual(SignalModel):
         '''
         ...
     
-    def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
-        '''
-        Not implemented in this model.
-        '''
-        ...
+    # def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    #     '''
+    #     Not implemented in this model.
+    #     '''
+    #     ...
 
     def predict(self, test_data: np.ndarray, inquiry, symbol_set) -> np.ndarray:
         '''
@@ -332,7 +251,10 @@ class GazeModelIndividual(SignalModel):
 
     def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
         data_length, _ = data.shape
-
+        
+        '''
+        p(g| theta) = p(g| theta = A), p(g| theta = B), p(g| theta = C), ... len(symbol_set)
+        '''
         likelihoods = np.zeros((data_length, self.num_components), dtype=object)
 
         # Find the likelihoods by insterting the test data into the pdf of each component
@@ -354,13 +276,17 @@ class GazeModelIndividual(SignalModel):
         return likelihoods
         
     
-    def save(self, path: Path):
-        """Save model state to the provided checkpoint"""
-        ...
+    def save(self, path: Path) -> None:
+        """Save model weights (e.g. after training) to `path`"""
+        with open(path, "wb") as f:
+            pickle.dump(self.model, f)
 
-    def load(self, path: Path):
-        """Load model state from the provided checkpoint"""
-        ...
+    def load(self, path: Path) -> SignalModel:
+        """Load pretrained model from `path`"""
+        with open(path, "rb") as f:
+            model = pickle.load(f)
+
+        return model
 
 
 class GazeModelCombined(SignalModel):

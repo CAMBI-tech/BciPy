@@ -60,32 +60,37 @@ class SignalModel(ABC):
         """
         ...
 
-    def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
-        """
-        For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
-        Rather than just computing an update p(data|l=+) for the seen symbol and p(data|l=-) for all unseen symbols,
-        we compute a likelihood ratio p(data | l=+) / p(data | l=-) to update the seen symbol, and all other symbols
-        can receive a multiplicative update of 1.
+    # def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    #     """
+    #     For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
+    #     Rather than just computing an update p(data|l=+) for the seen symbol and p(data|l=-) for all unseen symbols,
+    #     we compute a likelihood ratio p(data | l=+) / p(data | l=-) to update the seen symbol, and all other symbols
+    #     can receive a multiplicative update of 1.
 
-        Args:
-            data (np.array): data with shape (n_channel, n_trial, n_sample).
-            inquiry (List[str]): List describing the symbol shown in each trial.
-            symbol_set (List[str]): The set of all possible symbols.
+    #     Args:
+    #         data (np.array): data with shape (n_channel, n_trial, n_sample).
+    #         inquiry (List[str]): List describing the symbol shown in each trial.
+    #         symbol_set (List[str]): The set of all possible symbols.
 
-        Raises:
-            SignalException: error if called before model is fit.
+    #     Raises:
+    #         SignalException: error if called before model is fit.
 
-        Returns:
-            np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
-        """
-        ...
+    #     Returns:
+    #         np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
+    #     """
+    #     ...
 
     def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities."""
         ...
 
-    def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
-        ...
+    # def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
+    #     """Compute the log likelihood of the data under the model."""
+    #     ...
+
+    # def predict_proba(self, data: np.ndarray) -> np.ndarray:
+    #     """Converts log likelihoods from model into class probabilities."""
+    #     return self.compute_class_probabilities(data)
 
     @abstractmethod
     def save(self, path: Path) -> None:
@@ -101,6 +106,7 @@ class SignalModel(ABC):
 class ModelEvaluationReport:
     """
     Describes model performance characteristics.
+    TODO: Add more metrics as needed.
     """
 
     def __init__(self, auc: float):

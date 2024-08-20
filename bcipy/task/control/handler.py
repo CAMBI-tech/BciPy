@@ -32,7 +32,7 @@ class EvidenceFusion():
                 dict_evidence(dict{name: ndarray[float]}): dictionary of
                     evidences (EEG (likelihood ratios) and other likelihoods)
         """
-        # {EEG: [], GAZE: ()}
+        # {EEG: [likelihood_ratio], GAZE: [likehood]}
 
         for key in dict_evidence.keys():
             tmp = dict_evidence[key][:][:]

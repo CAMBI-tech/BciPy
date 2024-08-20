@@ -151,11 +151,11 @@ class PcaRdaKdeModel(SignalModel):
         """Converts log likelihoods from model into class probabilities.
 
         Returns:
-            posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
-                probability for the two labels.
+            log_posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
+                probability for the two labels. Note that it returns normalized posterior.
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict_proba()")
+            raise SignalException("must use model.fit() before model.compute_class_probabilities()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
         #
@@ -169,22 +169,17 @@ class PcaRdaKdeModel(SignalModel):
         log_post_0 -= denom
         log_post_1 -= denom
         log_posterior = np.stack([log_post_0, log_post_1], axis=-1)
-        return log_posterior  # TODO: This is the normalized posterior! You need to unnormalize
+        return log_posterior
     
-
-    
-    def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
-        """
-        Calculates log(p(e | l)) for each trial in the data.
-        p(e | l=1), p(e | l=0)
+    def predict_proba(self, data: np.ndarray) -> np.ndarray:
+        """Converts log likelihoods from model into class probabilities.
+        This method executes the same logic as compute_class_probabilities, but is kept to
+        comply with the naming convention of scikit-learn models.
         """
         if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
+        return self.compute_class_probabilities(data)
 
-        log_scores_class_0 = self.model.transform(data)[:, 0]
-        log_scores_class_1 = self.model.transform(data)[:, 1]
-        return np.stack([log_scores_class_0, log_scores_class_1], axis=-1)
-    
     def predict(self, data: np.ndarray) -> np.ndarray:
         """Predict the most likely label for each trial in the data.
 
