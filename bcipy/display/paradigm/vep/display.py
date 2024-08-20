@@ -155,7 +155,7 @@ class VEPDisplay(Display):
                    ) == stim_num, "Each box should have its own color"
 
         return [
-            StimProps(*props) for props in zip(
+            StimProps(symbol=props[0], duration=props[1], color='white') for props in zip(
                 self.stimuli_inquiry,
                 expanded(list(self.stimuli_timing), length=stim_num),
                 self.stimuli_colors)
@@ -312,7 +312,7 @@ class VEPDisplay(Display):
         reflect which box it will be placed in."""
         for group in stim_groups:
             for sym in group.symbol:
-                self.sti[sym].color = group.color
+                self.sti[sym].color = 'white'
 
     def draw_animation(self, stimuli: List[StimProps]) -> None:
         """Draw the stimuli animation.
@@ -412,7 +412,7 @@ class VEPDisplay(Display):
             pos_index = self.sort_order(sym)
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
-                                        color=self.starting_color,
+                                        color='white',
                                         pos=self.starting_positions[pos_index],
                                         height=self.stimuli_height)
         return grid
@@ -492,13 +492,13 @@ class VEPDisplay(Display):
                             font=self.stimuli_font,
                             pos=pos,
                             units=box_config.units,
-                            color=color,
+                            color='white',
                             colorSpace='rgb',
                             size=size,
                             alignment='center',
                             anchor='center',
                             borderWidth=self.box_border_width,
-                            borderColor=color,
+                            borderColor='white',
                             letterHeight=self.stimuli_height)
             for pos, color in zip(positions, cycle(self.box_colors))
         ]
@@ -528,7 +528,8 @@ class VEPDisplay(Display):
             box = self.text_boxes[box_index]
             text = ' '.join(symbols)
             box.text = text
-            box.color = self.box_colors[box_index]
+            box.color = 'white'
+            box.borderColor = 'white'
         return self.text_boxes
 
     def wait_screen(self, message: str, color: str) -> None:
