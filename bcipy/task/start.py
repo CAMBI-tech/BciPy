@@ -11,7 +11,6 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.signal.model import SignalModel
 from bcipy.language import LanguageModel
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 
 
 def make_task(
@@ -46,10 +45,6 @@ def make_task(
     if issubclass(task, BaseCalibrationTask):
         return task(display_window, daq, parameters, file_save)
 
-    # if task is RSVPCalibrationTask:
-    #     return RSVPCalibrationTask(
-    #         display_window, daq, parameters, file_save)
-    
     if task is RSVPCopyPhraseTask:
         return RSVPCopyPhraseTask(
             display_window, daq, parameters, file_save, signal_models,

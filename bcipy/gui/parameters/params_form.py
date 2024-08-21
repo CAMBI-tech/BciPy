@@ -421,6 +421,7 @@ class MainPanel(QWidget):
                 self.changes.update_changes(self.json_file)
                 self.repaint()
 
+
 def main(json_file, title='BCI Parameters', size=(750, 800)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)

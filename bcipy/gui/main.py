@@ -17,7 +17,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
 from bcipy.helpers.parameters import parse_range
 
 
-def font(size: int = 14, font_family: str = 'Helvetica') -> QFont:
+def font(size: int = 16, font_family: str = 'Helvetica') -> QFont:
     """Create a Font object with the given parameters."""
     return QFont(font_family, size, weight=0)
 
@@ -51,7 +51,7 @@ def contains_special_characters(string: str,
 def static_text_control(parent,
                         label: str,
                         color: str = 'black',
-                        size: int = 14,
+                        size: int = 16,
                         font_family: str = 'Helvetica') -> QLabel:
     """Creates a static text control with the given font parameters. Useful for
     creating labels and help components."""
@@ -253,7 +253,7 @@ class FormInput(QWidget):
 
     def init_label(self) -> QWidget:
         """Initialize the label widget."""
-        return static_text_control(None, label=self.label)
+        return static_text_control(None, label=self.label, size=16)
 
     def init_help(self, font_size: int, color: str) -> QWidget:
         """Initialize the help text widget."""
@@ -272,12 +272,12 @@ class FormInput(QWidget):
         """
         # Default is a text input
         return QLineEdit(value)
-    
+
     def init_editable(self, value: bool) -> QWidget:
         "Override. Another checkbox is needed for editable"
         editable_checkbox = QCheckBox("Editable")
         editable_checkbox.setChecked(value)
-        editable_checkbox.setFont(font())
+        editable_checkbox.setFont(font(size=12))
         return editable_checkbox
 
     def init_layout(self):
@@ -290,18 +290,27 @@ class FormInput(QWidget):
         if self.editable_widget:
             self.vbox.addWidget(self.editable_widget)
         self.vbox.addWidget(self.control)
+
+        self.vbox.addWidget(self.separator())
         self.setLayout(self.vbox)
+
+    def separator(self):
+        """Creates a separator line."""
+        line = QLabel()
+        line.setFixedHeight(1)
+        line.setStyleSheet("background-color: grey;")
+        return line
 
     def value(self) -> str:
         """Returns the value associated with the form input."""
         if self.control:
             return self.control.text()
         return None
-    
+
     def is_editable(self) -> bool:
         """Returns whether the input is editable."""
         return self.editable_widget.isChecked()
-    
+
     @property
     def editable(self) -> bool:
         """Returns whether the input is editable."""
@@ -437,19 +446,11 @@ class BoolInput(FormInput):
     def __init__(self, **kwargs):
         super(BoolInput, self).__init__(**kwargs)
 
-    # def init_label(self) -> QWidget:
-    #     """Override. Checkboxes do not have a separate label."""
-    #     return None
-
-    # def init_help(self, font_size: int, color: str) -> QWidget:
-    #     """Override. Checkboxes do not display help."""
-    #     return None
-
     def init_control(self, value):
         """Override to create a checkbox."""
         ctl = QCheckBox(f'Enable {self.label}')
         ctl.setChecked(value == 'true')
-        ctl.setFont(font())
+        ctl.setFont(font(size=14))
         return ctl
 
     def value(self) -> str:
@@ -470,7 +471,7 @@ class RangeInput(FormInput):
         ---------
             value - initial value
         """
-        return RangeWidget(value, self.options)
+        return RangeWidget(value, self.options, size=14)
 
 
 class SelectionInput(FormInput):
@@ -564,10 +565,12 @@ class FileInput(FormInput):
             self.vbox.addWidget(self.help_tip_widget)
         if self.editable_widget:
             self.vbox.addWidget(self.editable_widget)
+
         hbox = QHBoxLayout()
         hbox.addWidget(self.control)
         hbox.addWidget(self.button)
         self.vbox.addLayout(hbox)
+        self.vbox.addWidget(self.separator())
         self.setLayout(self.vbox)
 
     def widgets(self) -> List[QWidget]:
@@ -605,7 +608,8 @@ class RangeWidget(QWidget):
                  value: Tuple[int, int],
                  options: Optional[List[str]] = None,
                  label_low: str = "Low:",
-                 label_high="High:"):
+                 label_high="High:",
+                 size=14):
         super(RangeWidget, self).__init__()
 
         self.low, self.high = parse_range(value)
@@ -624,10 +628,10 @@ class RangeWidget(QWidget):
         self.high_input = self.create_input(self.high)
 
         hbox = QHBoxLayout()
-        hbox.addWidget(static_text_control(None, label=label_low))
+        hbox.addWidget(static_text_control(None, label=label_low, size=size))
         hbox.addWidget(self.low_input)
 
-        hbox.addWidget(static_text_control(None, label=label_high))
+        hbox.addWidget(static_text_control(None, label=label_high, size=size))
         hbox.addWidget(self.high_input)
 
         self.setLayout(hbox)
@@ -690,7 +694,7 @@ class SearchInput(QWidget):
             contents of the text box.
     """
 
-    def __init__(self, on_search, font_size: int = 10):
+    def __init__(self, on_search, font_size: int = 12):
         super(SearchInput, self).__init__()
 
         self.on_search = on_search
@@ -929,7 +933,7 @@ class BCIGui(QWidget):
                            text_color: str = 'default',
                            size: Optional[list] = None,
                            font_family='Times',
-                           font_size=12,
+                           font_size=14,
                            wrap_text=False) -> QLabel:
         """Add Static Text."""
 
