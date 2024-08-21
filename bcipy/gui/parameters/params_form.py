@@ -80,13 +80,13 @@ class ParamsForm(QWidget):
             'directorypath': DirectoryInput,
             'range': RangeInput
         }
-        has_options = isinstance(param['recommended_values'], list)
+        has_options = isinstance(param['recommended'], list)
         form_input = type_inputs.get(
             param['type'], SelectionInput if has_options else TextInput)
-        return form_input(label=param['readableName'],
+        return form_input(label=param['name'],
                           value=param['value'],
                           help_tip=param['helpTip'],
-                          options=param['recommended_values'],
+                          options=param['recommended'],
                           help_size=self.help_size,
                           help_color=self.help_color,
                           should_display=bool(param['section']))
@@ -192,7 +192,7 @@ class ChangeItems(QWidget):
 
             lbl = static_text_control(
                 None,
-                label=f"* {param['readableName']}: {param['value']}",
+                label=f"* {param['name']}: {param['value']}",
                 size=13,
                 color="darkgreen")
 

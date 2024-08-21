@@ -13,9 +13,10 @@ class Parameter(NamedTuple):
     """Represents a single parameter"""
     value: Any
     section: str
-    readableName: str
+    name: str
     helpTip: str
-    recommended_values: list
+    recommended: list
+    editable: bool
     type: str
 
 
@@ -79,9 +80,9 @@ class Parameters(dict):
         self.cast_values = cast_values
 
         self.required_keys = set([
-            'value', 'section', 'readableName', 'helpTip',
-            'recommended_values', 'type'
-        ])
+            'value', 'section', 'name', 'helpTip',
+            'recommended', 'editable', 'type'
+        ])  # TODO pull from Parameter
         self.conversions = {
             'int': int,
             'float': float,
@@ -111,9 +112,10 @@ class Parameters(dict):
                 key, {
                     'value': value_str,
                     'section': '',
-                    'readableName': '',
+                    'name': '',
                     'helpTip': '',
-                    'recommended_values': '',
+                    'recommended': '',
+                    'editable': '',  # TODO: persist?
                     'type': value_type
                 })
         return params
@@ -218,9 +220,10 @@ class Parameters(dict):
         "fake_data": {
             "value": "true",
             "section": "bci_config",
-            "readableName": "Fake Data Sessions",
+            "name": "Fake Data Sessions",
             "helpTip": "If true, fake data server used",
-            "recommended_values": "",
+            "recommended": "",
+            "editable": "true",
             "type": "bool"
         }
 

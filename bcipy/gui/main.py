@@ -440,7 +440,7 @@ class RangeInput(FormInput):
     """FormInput to select a range of values (low, high).
 
     Serializes to 'low_value:high_value'. Appropriate boundaries are determined
-    from the starting value and list of recommended_values if provided.
+    from the starting value and list of recommended if provided.
     """
 
     def init_control(self, value) -> QWidget:
