@@ -2,11 +2,11 @@ import csv
 import pandas as pd
 from bcipy.helpers.load import load_experimental_data
 
-DATA_PATH = '/Users/scitab/Desktop/cambi/BciPy'
-FILENAME = 'NAR_OF_RetrainwithMDM_limited_all_models.csv'
-PREFIX = 'of_nar_MDM_limited'
+DATA_PATH = '/Users/scitab/Desktop/scitab/CAMBI/BciPy'
+FILENAME = 'NAR_OF_1_10_all_models.csv'
+PREFIX = 'of_nar_1_10_luckfilter'
 EXPORT_NAME = f'{PREFIX}_IIR_flat_all_models.csv'
-MODELS = ['LR', 'NN', 'SVM', 'TS-LDA', 'MDM']
+MODELS = ['LR', 'NN', 'SVM', 'TS-LDA', 'MDM', 'PRK', 'RF']
 HEADERS = [f'_{model}' for model in MODELS]
 
 def export_flattened_csv(data_path):

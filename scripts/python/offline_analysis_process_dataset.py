@@ -59,10 +59,10 @@ if __name__ == "__main__":
                 results[session.name] = {}
                 progress_bar.set_description(f"Processing {session.name}...")
 
-                # # uncomment to use the inquiry based filtering
+                # # # uncomment to use the inquiry based filtering
                 raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _ = load_data_inquiries(
                     data_folder=session_folder
-                    )
+                )
 
                 # create epochs from inquiry data
                 # chanbel_type = 'eeg' * len(channels)
@@ -85,6 +85,8 @@ if __name__ == "__main__":
                 #     new_annotation_onset,
                 #     new_annotation_duration,
                 #     new_annotation_description)
+
+                # Whole dataset filter
                 # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _  = load_data_mne(
                 #     data_folder=session_folder, drop_artifacts=False, parameters=parameters)
 
@@ -106,7 +108,7 @@ if __name__ == "__main__":
     # of = NAR_OF_MDM_3_cov (1-20 Hz) OF
     # of_no_buffer = OF but no transformation buffer to prove the edge effects hypothesis
     # TODO: of hp only, check results for regular filter, try .1-75 Hz?
-    condition = 'NAR_OF_RetrainwithMDM_limited'
+    condition = 'NAR_OF_1_50Hz'
     file_name = f'{condition}_all_models.csv'
     
     export = pd.DataFrame.from_dict(results).transpose()

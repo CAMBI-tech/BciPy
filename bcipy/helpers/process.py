@@ -62,9 +62,9 @@ def load_data_inquiries(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = parameters.get("filter_high")
-    filter_low = parameters.get("filter_low")
-    filter_order = parameters.get("filter_order")
+    filter_high = 50
+    filter_low = .1
+    filter_order = 5
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
@@ -88,7 +88,7 @@ def load_data_inquiries(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
         bandpass_low=filter_low,
-        bandpass_high=None,
+        bandpass_high=filter_high,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
@@ -172,9 +172,9 @@ def load_data_mne(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = None
-    filter_low = 1
-    filter_order = parameters.get("filter_order")
+    filter_high = 50
+    filter_low = .1
+    filter_order = 5
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
@@ -198,7 +198,7 @@ def load_data_mne(
         sample_rate_hz=sample_rate,
         notch_freq_hz=notch_filter,
         bandpass_low=filter_low,
-        bandpass_high=None,
+        bandpass_high=filter_high,
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
