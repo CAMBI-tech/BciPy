@@ -5,7 +5,7 @@ import numpy as np
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
-import bcipy.task.base_calibration
+import bcipy.task.calibration
 import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
@@ -305,17 +305,17 @@ class TestMatrixCalibration(unittest.TestCase):
         first_run = True
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label('EEG').thenReturn(
+        when(bcipy.task.calibration).offset_label('EEG').thenReturn(
             'starting_offset')
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
         self.assertEqual(2, handler_mock.add_triggers.call_count)
 
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration, times=1).offset_label('EEG')
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration, times=1).offset_label('EEG')
+        verify(bcipy.task.calibration,
                times=1).convert_timing_triggers(timing, timing[0][0], any())
 
     @patch('bcipy.task.base_calibration.TriggerHandler')
@@ -335,7 +335,7 @@ class TestMatrixCalibration(unittest.TestCase):
         timing_mock = mock()
         timing = [('a', 0.0)]
         first_run = False
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
@@ -357,14 +357,14 @@ class TestMatrixCalibration(unittest.TestCase):
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label(
+        when(bcipy.task.calibration).offset_label(
             'EEG', prefix='daq_sample_offset').thenReturn('daq_sample_offset')
 
         task.write_offset_trigger()
         handler_mock.close.assert_called_once()
         handler_mock.add_triggers.assert_called_once()
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
 
 

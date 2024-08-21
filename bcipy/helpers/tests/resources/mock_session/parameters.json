@@ -2,7 +2,7 @@
   "fake_data": {
     "value": "false",
     "section": "bci_config",
-    "name": "Fake EEG Data On/Off",
+    "name": "Fake EEG Data",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
     "recommended": "",
     "editable": "true",
@@ -27,7 +27,7 @@
     "value": "text",
     "section": "bci_config",
     "name": "Trigger Stimulus Type",
-    "helpTip": "Specifies whether to use a picture or auditory stimulus to calibrate trigger latency. Default: text",
+    "helpTip": "Specifies whether to use text, image or auditory stimulus to calibrate trigger latency. Default: text",
     "recommended": [
       "image",
       "text"
@@ -142,51 +142,6 @@
     "editable": "true",
     "type": "int"
   },
-  "artifact_rejection": {
-    "value": "false",
-    "section": "artifact_rejection",
-    "name": "Artifact Rejection On/Off",
-    "helpTip": "If ‘true’, the system will detect and reject inquiries containing unwanted artifacts (e.g. blinks). This is not implemented in the current version of the system.",
-    "recommended": "",
-    "editable": "true",
-    "type": "bool"
-  },
-  "high_voltage_threshold": {
-    "value": "false",
-    "section": "artifact_rejection",
-    "name": "High Voltage Threshold On/Off",
-    "helpTip": "If ‘true’, an upper voltage threshold will be set for artifact rejection. Detection of values above the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
-    "recommended": "",
-    "editable": "true",
-    "type": "bool"
-  },
-  "high_voltage_value": {
-    "value": "75000000.0",
-    "section": "artifact_rejection",
-    "name": "High Voltage Threshold Value",
-    "helpTip": "Specifies the high voltage threshold (in microvolts) for artifact rejection (High Voltage Threshold must be set to ‘true’). Default: 75E+6. This is not implemented in the current version of the system.",
-    "recommended": "",
-    "editable": "true",
-    "type": "float"
-  },
-  "low_voltage_threshold": {
-    "value": "false",
-    "section": "artifact_rejection",
-    "name": "Low Voltage Threshold On/Off",
-    "helpTip": "If ‘true’, a lower voltage threshold will be set for artifact rejection. Detection of values below the specified threshold will trigger rejection of a inquiry. This is not implemented in the current version of the system.",
-    "recommended": "",
-    "editable": "true",
-    "type": "bool"
-  },
-  "low_voltage_value": {
-    "value": "-0.000075",
-    "section": "artifact_rejection",
-    "name": "LowVoltage Threshold Value",
-    "helpTip": "Specifies the low voltage threshold (in microvolts) for artifact rejection (Low Voltage Threshold must be set to ‘true’). Default: -75E-6 This is not implemented in the current version of the system.",
-    "recommended": "",
-    "editable": "true",
-    "type": "float"
-  },
   "summarize_session": {
     "value": "true",
     "section": "bci_config",
@@ -221,7 +176,7 @@
   "full_screen": {
     "value": "false",
     "section": "bci_config",
-    "name": "Full Screen Mode On/Off",
+    "name": "Full Screen Mode",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
     "recommended": "",
     "editable": "true",
@@ -275,8 +230,8 @@
   "acq_show_viewer": {
     "value": "false",
     "section": "acq_config",
-    "name": " EEG Viewer On/Off",
-    "helpTip": "If ‘true’, the EEG signal viewer will be displayed.",
+    "name": " EEG Viewer",
+    "helpTip": "If ‘true’, the EEG signal viewer will be displayed along with the Task.",
     "recommended": "",
     "editable": "true",
     "type": "bool"
@@ -302,8 +257,8 @@
   "is_txt_stim": {
     "value": "true",
     "section": "bci_config",
-    "name": "Text Stimuli On/Off",
-    "helpTip": "If ‘true’, text stimuli will be used. If ‘false’, image stimuli will be loaded from the folder specified in Image Stimulus Folder.",
+    "name": "Text Stimuli",
+    "helpTip": "If ‘true’, text stimuli will be used. If ‘false’, image stimuli will be loaded from the folder specified in Image Stimulus Folder. Default: true",
     "recommended": "",
     "editable": "true",
     "type": "bool"
@@ -605,7 +560,7 @@
   "enable_breaks": {
     "value": "false",
     "section": "bci_config",
-    "name": "Automatic Calibration Breaks On/Off",
+    "name": "Automatic Calibration Breaks",
     "helpTip": "If ‘true’, automatic breaks will be added to the calibration session. If ‘false’, automatic breaks will not occur, but the session can still be paused by pressing Space.",
     "recommended": "",
     "editable": "true",
@@ -703,7 +658,7 @@
   "backspace_always_shown": {
     "value": "true",
     "section": "bci_config",
-    "name": "Always Show Backspace On/Off",
+    "name": "Always Show Backspace",
     "helpTip": "If ‘true’, the backspace character will be included in every inquiry in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in inquiries only when warranted by EEG/language model evidence.",
     "recommended": "",
     "editable": "true",
@@ -745,8 +700,8 @@
   "show_preview_inquiry": {
     "value": "false",
     "section": "bci_config",
-    "name": "Preview Inquiry On/Off",
-    "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
+    "name": "Preview Inquiry Display",
+    "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the Task. *Note* Not all tasks will have this enabled!",
     "recommended": "",
     "editable": "true",
     "type": "bool"
@@ -798,8 +753,8 @@
   "show_feedback": {
     "value": "true",
     "section": "bci_config",
-    "name": "Feedback On/Off",
-    "helpTip": "If ‘true’, feedback will be shown after each inquiry.",
+    "name": "Feedback Display",
+    "helpTip": "If ‘true’, feedback will be shown after each inquiry. If ‘false’, feedback will not be shown. *Note* Not all tasks will have this enabled!",
     "recommended": "",
     "editable": "true",
     "type": "bool"

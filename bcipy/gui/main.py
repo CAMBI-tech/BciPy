@@ -224,6 +224,7 @@ class FormInput(QWidget):
                  value: str,
                  help_tip: Optional[str] = None,
                  options: Optional[List[str]] = None,
+                 editable: bool = True,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
@@ -236,6 +237,7 @@ class FormInput(QWidget):
 
         self.label_widget = self.init_label()
         self.help_tip_widget = self.init_help(help_size, help_color)
+        self.editable_widget = self.init_editable(editable)
         self.control = self.init_control(value)
         self.control.installEventFilter(self)
         self.init_layout()
@@ -270,6 +272,13 @@ class FormInput(QWidget):
         """
         # Default is a text input
         return QLineEdit(value)
+    
+    def init_editable(self, value: bool) -> QWidget:
+        "Override. Another checkbox is needed for editable"
+        editable_checkbox = QCheckBox("Editable")
+        editable_checkbox.setChecked(value)
+        editable_checkbox.setFont(font())
+        return editable_checkbox
 
     def init_layout(self):
         """Initialize the layout by adding the label, help, and control widgets."""
@@ -278,6 +287,8 @@ class FormInput(QWidget):
             self.vbox.addWidget(self.label_widget)
         if self.help_tip_widget:
             self.vbox.addWidget(self.help_tip_widget)
+        if self.editable_widget:
+            self.vbox.addWidget(self.editable_widget)
         self.vbox.addWidget(self.control)
         self.setLayout(self.vbox)
 
@@ -286,6 +297,15 @@ class FormInput(QWidget):
         if self.control:
             return self.control.text()
         return None
+    
+    def is_editable(self) -> bool:
+        """Returns whether the input is editable."""
+        return self.editable_widget.isChecked()
+    
+    @property
+    def editable(self) -> bool:
+        """Returns whether the input is editable."""
+        return "true" if self.editable_widget.isChecked() else "false"
 
     def cast_value(self) -> Any:
         """Returns the value associated with the form input, cast to the correct type.
@@ -417,17 +437,17 @@ class BoolInput(FormInput):
     def __init__(self, **kwargs):
         super(BoolInput, self).__init__(**kwargs)
 
-    def init_label(self) -> QWidget:
-        """Override. Checkboxes do not have a separate label."""
-        return None
+    # def init_label(self) -> QWidget:
+    #     """Override. Checkboxes do not have a separate label."""
+    #     return None
 
-    def init_help(self, font_size: int, color: str) -> QWidget:
-        """Override. Checkboxes do not display help."""
-        return None
+    # def init_help(self, font_size: int, color: str) -> QWidget:
+    #     """Override. Checkboxes do not display help."""
+    #     return None
 
     def init_control(self, value):
         """Override to create a checkbox."""
-        ctl = QCheckBox(self.label)
+        ctl = QCheckBox(f'Enable {self.label}')
         ctl.setChecked(value == 'true')
         ctl.setFont(font())
         return ctl
@@ -542,6 +562,8 @@ class FileInput(FormInput):
             self.vbox.addWidget(self.label_widget)
         if self.help_tip_widget:
             self.vbox.addWidget(self.help_tip_widget)
+        if self.editable_widget:
+            self.vbox.addWidget(self.editable_widget)
         hbox = QHBoxLayout()
         hbox.addWidget(self.control)
         hbox.addWidget(self.button)

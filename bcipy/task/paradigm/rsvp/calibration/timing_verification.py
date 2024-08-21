@@ -8,7 +8,7 @@ from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)
-from bcipy.task.base_calibration import Inquiry
+from bcipy.task.calibration import Inquiry
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
 

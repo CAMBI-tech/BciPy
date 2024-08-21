@@ -13,7 +13,7 @@ from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerType
-from bcipy.task.base_calibration import BaseCalibrationTask, Inquiry
+from bcipy.task.calibration import BaseCalibrationTask, Inquiry
 from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries
 

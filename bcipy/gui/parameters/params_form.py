@@ -87,6 +87,7 @@ class ParamsForm(QWidget):
                           value=param['value'],
                           help_tip=param['helpTip'],
                           options=param['recommended'],
+                          editable=bool(param['editable']),
                           help_size=self.help_size,
                           help_color=self.help_color,
                           should_display=bool(param['section']))
@@ -129,8 +130,11 @@ class ParamsForm(QWidget):
         for param_name, form_input in self.controls.items():
             param = self.params[param_name]
             value = form_input.value()
+            editable = form_input.editable
             if value != param['value']:
                 self.params[param_name]['value'] = value
+            if editable != param['editable']:
+                self.params[param_name]['editable'] = editable
 
 
 def clear_layout(layout):
@@ -417,8 +421,7 @@ class MainPanel(QWidget):
                 self.changes.update_changes(self.json_file)
                 self.repaint()
 
-
-def main(json_file, title='BCI Parameters', size=(450, 550)) -> str:
+def main(json_file, title='BCI Parameters', size=(650, 750)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)
     panel = MainPanel(json_file, title, size)

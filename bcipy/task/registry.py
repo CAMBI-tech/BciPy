@@ -52,7 +52,7 @@ class TaskRegistry:
 
     def calibration_tasks(self) -> List[Type[Task]]:
         """Returns a list of all registered calibration tasks."""
-        from bcipy.task.base_calibration import BaseCalibrationTask
+        from bcipy.task.calibration import BaseCalibrationTask
         return [task for task in self.get_all_types() if issubclass(task, BaseCalibrationTask)]
 
     def register_task(self, task: Type[Task]) -> None:
