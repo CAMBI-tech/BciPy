@@ -49,7 +49,6 @@ def init_language_model(parameters: dict) -> LanguageModel:
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
-    breakpoint()
 
     return model(response_type=ResponseType.SYMBOL,
                  symbol_set=alphabet(parameters),

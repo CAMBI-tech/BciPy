@@ -75,6 +75,9 @@ class EEGByLetterSampler(Sampler):
     def set_reshaper(self, reshaper: Callable):
         self.model_input_reshaper = reshaper
 
+    def __str__(self):
+        return f"<{self.__class__.__name__}>"
+
 
 def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
     """Default data reshaper.

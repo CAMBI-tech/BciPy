@@ -1,7 +1,7 @@
 import dataclasses
 from abc import ABC, abstractmethod
 from functools import reduce
-from typing import Dict, Any, List
+from typing import Any, Dict, List
 
 import numpy as np
 
@@ -11,7 +11,7 @@ from bcipy.simulator.helpers.types import InquiryResult
 
 
 @dataclasses.dataclass
-class SimMetrics1:
+class SimMetrics:
     total_series: int = 0
     total_inquiries: int = 0
     total_decisions: int = 0
@@ -21,10 +21,10 @@ class SimMetrics1:
     inquiries_per_selection: float = 0.0
 
 
-def average_sim_metrics(run_scores: List[SimMetrics1]) -> Dict:
-    """ Averages the values in multiple SimMetrics1 objects """
+def average_sim_metrics(run_scores: List[SimMetrics]) -> Dict:
+    """ Averages the values in multiple SimMetrics objects """
 
-    metric_acc_dict = dataclasses.asdict(SimMetrics1())
+    metric_acc_dict = dataclasses.asdict(SimMetrics())
     N = len(run_scores)
 
     if N < 1:
@@ -46,7 +46,7 @@ class RefereeHandler(ABC):
         ...
 
 
-class SimMetrics1Handler(RefereeHandler):
+class SimMetricsHandler(RefereeHandler):
 
     def handle(self, sim) -> Dict[str, Any]:
         state: SimState = getattr(sim, "state_manager").get_state()
@@ -75,10 +75,12 @@ class SimMetrics1Handler(RefereeHandler):
         max_inq_time = max_inquiry_duration(parameters)
         total_time_spent = total_inquiries * max_inq_time
 
-        ret = SimMetrics1(total_series=total_series, total_inquiries=total_inquiries,
-                          total_decisions=total_decisions, total_time_spent=total_time_spent,
-                          inquiries_per_selection=inquiries_per_selection,
-                          total_incorrect_decisions=total_incorrect_decisions)
+        ret = SimMetrics(total_series=total_series,
+                         total_inquiries=total_inquiries,
+                         total_decisions=total_decisions,
+                         total_time_spent=total_time_spent,
+                         inquiries_per_selection=inquiries_per_selection,
+                         total_incorrect_decisions=total_incorrect_decisions)
         return dataclasses.asdict(ret)
 
 
@@ -112,8 +114,8 @@ class RefereeImpl(MetricReferee):
         self.inquiry_time: float = 1  # 1 inq -> 1 second
         # TODO maybe some configurable parameters for visualizations
 
-    def score(self, sim) -> SimMetrics1:
-        metrics = SimMetrics1()
+    def score(self, sim) -> SimMetrics:
+        metrics = SimMetrics()
         metrics_dict = dataclasses.asdict(metrics)
         for handler_name, handler in self.metric_handlers.items():
             handler_metrics = handler.handle(sim)
@@ -122,7 +124,7 @@ class RefereeImpl(MetricReferee):
                 if key in metrics_dict:
                     metrics_dict[key] = val
 
-        return SimMetrics1(**metrics_dict)
+        return SimMetrics(**metrics_dict)
 
     def visualize(self, sim):
         for handler_name, viz_handler in self.viz_handlers.items():
