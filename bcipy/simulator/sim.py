@@ -190,7 +190,7 @@ class SimulatorCopyPhrase(Simulator):
                        target_text=inquiry_state.target_sentence)
         data.precision = 4
         data.evidences = {
-            val.evidence_type: val.evidence
+            val.evidence_type: list(val.evidence)
             for val in inquiry_result.evidences.values()
         }
         if EvidenceType.LM not in data.evidences:
@@ -218,7 +218,7 @@ class SimulatorCopyPhrase(Simulator):
 
         if session.has_evidence():
             session_excel(session=session,
-                            excel_file=f"{self.save_dir}/session.xlsx")
+                          excel_file=f"{self.save_dir}/session.xlsx")
 
     def reset(self):
         self.state_manager.reset_state()
