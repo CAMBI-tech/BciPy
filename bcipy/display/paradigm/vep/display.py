@@ -120,12 +120,11 @@ class VEPDisplay(Display):
             ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
             for hz in flicker_rates
         ]
-        vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
-                      ('orange', 'green')]
+        vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
                                           codes=codes,
-                                          colors=cycle(vep_colors),
+                                          colors=cycle([('red', 'green')]),
                                           stim_size=vep_stim_size,
                                           num_squares=25)
         self.box_border_width = 4
