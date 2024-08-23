@@ -118,6 +118,10 @@ class SimulatorCopyPhrase(Simulator):
 
         self.save_run(session)
 
+    def has_language_model(self) -> bool:
+        """Indicates whether this task has been configured with a language model"""
+        return self.model_handler.includes_language_model()
+
     def __make_stimuli(self, state: SimState):
         """
         Creates next set of stimuli:
@@ -125,22 +129,24 @@ class SimulatorCopyPhrase(Simulator):
             - uses language model for beginning of series
             - random letters in case of no LM and beginning of series
         """
-        subset_length = 10
-        val_func: Optional[np.ndarray] = state.get_current_likelihood()
-        always_in_stimuli = [symbols.SPACE_CHAR, symbols.BACKSPACE_CHAR]
+        subset_length = self.parameters['stim_length']
+        priors: Optional[np.ndarray] = state.get_current_likelihood()
+        always_in_stimuli = []
+        if self.parameters.get('backspace_always_shown', False):
+            always_in_stimuli.append(symbols.BACKSPACE_CHAR)
 
         # during series
-        if val_func is not None:
+        if priors is not None:
             return stimuli.best_selection(self.symbol_set, list(
-                val_func), subset_length, always_included=always_in_stimuli)
+                priors), subset_length, always_included=always_in_stimuli)
         # beginning of series
-        elif self.parameters.get('sim_lm_active', 0) == 1:
+        elif self.has_language_model():
             # use lang model for priors to make stim
             lm_model = self.model_handler.get_model('lm')
             lm_model_evidence = lm_model.predict(list(state.current_sentence))
-            val_func = format_lm_output(lm_model_evidence, self.symbol_set)
+            priors = format_lm_output(lm_model_evidence, self.symbol_set)
             return stimuli.best_selection(self.symbol_set, list(
-                val_func), subset_length, always_included=always_in_stimuli)
+                priors), subset_length, always_included=always_in_stimuli)
 
         return random.sample(self.symbol_set, subset_length)
 

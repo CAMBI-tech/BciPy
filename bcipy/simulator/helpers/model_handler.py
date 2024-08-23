@@ -27,6 +27,9 @@ class ModelHandler(ABC):
     def get_model(self, key=None):
         """ get the model """
 
+    def includes_language_model(self) -> bool:
+        return False
+
 
 class SignalModelHandler1(ModelHandler):
 
@@ -119,6 +122,9 @@ class SigLmModelHandler1(ModelHandler):
             return self.lm_model
         else:
             raise RuntimeError(f"Can't find model {key}")
+
+    def includes_language_model(self) -> bool:
+        return True
 
     def __str__(self):
         props = {
