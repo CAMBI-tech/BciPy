@@ -241,8 +241,8 @@ class VEPDisplay(Display):
         for sti in self.sti.values():
             sti.draw()
 
-        if target_box_index is not None:
-            self.highlight_target_box(target_box_index)
+        #if target_box_index is not None:
+            #self.highlight_target_box(target_box_index)
 
         self.draw_static()
         self.draw_boxes()
@@ -254,15 +254,15 @@ class VEPDisplay(Display):
         """Log the inquiry"""
         self.logger.info(f"Inquiry: {[stim.symbol for stim in stimuli]}")
 
-    def highlight_target_box(self, target_box_index: int) -> None:
-        """Emphasize the box at the given index"""
-        for i, box in enumerate(self.text_boxes):
-            if i == target_box_index:
-                box.borderWidth = self.box_border_width + 4
-                box.setOpacity(1.0)
-            else:
-                box.borderWidth = self.box_border_width - 2
-                box.setOpacity(0.8)
+    #def highlight_target_box(self, target_box_index: int) -> None:
+    #    """Emphasize the box at the given index"""
+    #    for i, box in enumerate(self.text_boxes):
+    #        if i == target_box_index:
+    #            box.borderWidth = self.box_border_width + 4
+    #            box.setOpacity(1.0)
+    #        else:
+    #            box.borderWidth = self.box_border_width - 2
+    #            box.setOpacity(0.8)
 
     def do_fixation(self, fixation: StimProps) -> None:
         """Show all symbols before animating."""
