@@ -1,18 +1,10 @@
 from bcipy.gui.bciui import BCIUI, run_bciui
 from PyQt6.QtWidgets import QLabel
 from PyQt6.QtWidgets import (
-    QWidget,
     QApplication,
-    QVBoxLayout,
     QLabel,
     QHBoxLayout,
     QPushButton,
-    QComboBox,
-    QScrollArea,
-    QLineEdit,
-    QLayout,
-    QSizePolicy,
-    QMessageBox,
     QProgressBar,
 )
 
