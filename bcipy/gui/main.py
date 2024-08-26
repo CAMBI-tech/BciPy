@@ -314,7 +314,7 @@ class FormInput(QWidget):
     @property
     def editable(self) -> bool:
         """Returns whether the input is editable."""
-        return "true" if self.editable_widget.isChecked() else "false"
+        return True if self.editable_widget.isChecked() else False
 
     def cast_value(self) -> Any:
         """Returns the value associated with the form input, cast to the correct type.

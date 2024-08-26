@@ -115,7 +115,7 @@ class Parameters(dict):
                     'name': '',
                     'helpTip': '',
                     'recommended': '',
-                    'editable': '',  # TODO: persist?
+                    'editable': '',
                     'type': value_type
                 })
         return params

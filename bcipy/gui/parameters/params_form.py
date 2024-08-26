@@ -134,6 +134,7 @@ class ParamsForm(QWidget):
             if value != param['value']:
                 self.params[param_name]['value'] = value
             if editable != param['editable']:
+                editable = True if editable == "true" or editable is True else False
                 self.params[param_name]['editable'] = editable
 
 

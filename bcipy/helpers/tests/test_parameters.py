@@ -56,7 +56,7 @@ class TestParameters(unittest.TestCase):
                 "helpTip":
                 "If ‘true’, fake EEG data will be used instead of real EEG data.",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "bool"
             },
             "acq_device": {
@@ -66,7 +66,7 @@ class TestParameters(unittest.TestCase):
                 "helpTip":
                 "Specifies the method used to connect to the data acquisition device (LSL or DSI).",
                 "recommended": ["DSI", "LSL"],
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             }
         }
@@ -82,7 +82,7 @@ class TestParameters(unittest.TestCase):
                 "section": "bci_config",
                 "name": "Fake EEG Data On/Off",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "bool"
             }
         }
@@ -99,7 +99,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Fake EEG Data On/Off",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "custom_type"
             }
         }
@@ -133,7 +133,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "mybool": {
@@ -142,7 +142,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "bool"
             },
             "mypath": {
@@ -151,7 +151,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "directorypath"
             },
             "mystr": {
@@ -160,7 +160,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             },
             "my_int_range": {
@@ -169,7 +169,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "range"
             }
         }
@@ -206,7 +206,7 @@ class TestParameters(unittest.TestCase):
             "name": "",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         self.assertEqual(len(parameters), 1)
@@ -218,7 +218,7 @@ class TestParameters(unittest.TestCase):
             "section": "",
             "name": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "bool"
         }
         unsupported_type = {
@@ -227,7 +227,7 @@ class TestParameters(unittest.TestCase):
             "name": "Fake EEG Data On/Off",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "custom_type"
         }
 
@@ -249,7 +249,7 @@ class TestParameters(unittest.TestCase):
             "name": "",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         parameters['mystr']['value'] = 'hello world'
@@ -264,7 +264,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Port",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "acq_device": {
@@ -273,7 +273,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Device",
                 "helpTip": "",
                 "recommended": ["LSL", "DSI"],
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             },
             "is_txt_stim": {
@@ -282,7 +282,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "bool"
             }
         }
@@ -312,7 +312,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Port",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "acq_device": {
@@ -321,7 +321,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Device",
                 "helpTip": "",
                 "recommended": ["LSL", "DSI"],
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             }
         }
@@ -347,7 +347,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Port",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "acq_device": {
@@ -356,7 +356,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Acquisition Device",
                 "helpTip": "",
                 "recommended": ["LSL", "DSI"],
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             }
         }
@@ -414,7 +414,7 @@ class TestParameters(unittest.TestCase):
             "name": "",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         with self.assertRaises(Exception):
@@ -437,7 +437,7 @@ class TestParameters(unittest.TestCase):
             "name": "",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         self.assertEqual(len(parameters.items()), 1)
@@ -470,7 +470,7 @@ class TestParameters(unittest.TestCase):
                 "name": "Fake Data Sessions",
                 "helpTip": "If true, fake data server used",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "bool"
             })
         with self.assertRaises(Exception):
@@ -487,7 +487,7 @@ class TestParameters(unittest.TestCase):
                     "name": "Fake Data Sessions",
                     "helpTip": "If true, fake data server used",
                     "recommended": "",
-                    "editable": "true",
+                    "editable": True,
                     "type": "bool"
                 })
 
@@ -514,7 +514,7 @@ class TestParameters(unittest.TestCase):
             "name": "Acquisition Port",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "int"
         }
         entry2 = {
@@ -523,7 +523,7 @@ class TestParameters(unittest.TestCase):
             "name": "Acquisition Device",
             "helpTip": "",
             "recommended": ["LSL", "DSI"],
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
 
@@ -548,7 +548,7 @@ class TestParameters(unittest.TestCase):
             "name": "Acquisition Port",
             "helpTip": "",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "int"
         }
         entry2 = {
@@ -557,7 +557,7 @@ class TestParameters(unittest.TestCase):
             "name": "High Voltage Threshold Value",
             "helpTip": "Specifies the high voltage threshold (in microvolts)",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "float"
         }
         entry2_same = {
@@ -566,7 +566,7 @@ class TestParameters(unittest.TestCase):
             "name": "High Voltage Threshold Value",
             "helpTip": "Specifies the high voltage threshold (in microvolts)",
             "recommended": "",
-            "editable": "true",
+            "editable": True,
             "type": "float"
         }
         entry3 = {
@@ -575,7 +575,7 @@ class TestParameters(unittest.TestCase):
             "name": "Acquisition Device",
             "helpTip": "",
             "recommended": ["DSI-24", "DSI-VR300"],
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         entry3_modified = {
@@ -584,7 +584,7 @@ class TestParameters(unittest.TestCase):
             "name": "Acquisition Device",
             "helpTip": "",
             "recommended": ["DSI-24", "DSI-VR300"],
-            "editable": "true",
+            "editable": True,
             "type": "str"
         }
         parameters = Parameters(source=None)
@@ -617,7 +617,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": "",
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "b": {
@@ -626,7 +626,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": [],
-                "editable": "true",
+                "editable": True,
                 "type": "int"
             },
             "c": {
@@ -635,7 +635,7 @@ class TestParameters(unittest.TestCase):
                 "name": "",
                 "helpTip": "",
                 "recommended": [],
-                "editable": "true",
+                "editable": True,
                 "type": "str"
             }
         }

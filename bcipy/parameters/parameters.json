@@ -5,7 +5,7 @@
     "name": "Fake EEG Data",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "acq_mode": {
@@ -20,7 +20,7 @@
       "EEG+Eyetracker",
       "EEG+Eyetracker:passive"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "trigger_type": {
@@ -32,7 +32,7 @@
       "image",
       "text"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "k_folds": {
@@ -41,7 +41,7 @@
     "name": "Number of Cross-Validation Folds",
     "helpTip": "Specifies the number of folds used for cross-validation when calculating AUC. Default: 10",
     "recommended": "[10]",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "trial_window": {
@@ -54,7 +54,7 @@
       "0.0:0.8",
       "0.2:0.8"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "range"
   },
   "prestim_length": {
@@ -63,7 +63,7 @@
     "name": "Prestimulus Window Length",
     "helpTip": "Specifies the length (in seconds) of the EEG data window to return before inquiry presentation. Default: 1",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "alert_sound_file": {
@@ -72,7 +72,7 @@
     "name": "Alert Tone",
     "helpTip": "Specifies the path to an audio file to be played as an alert tone when experiments or offline analysis is complete. Default: beep.wav",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "filepath"
   },
   "signal_model_path": {
@@ -81,7 +81,7 @@
     "name": "Signal Model Path",
     "helpTip": "Directory of the pre-trained signal model. This is often the the calibration session directory.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "directorypath"
   },
   "filter_high": {
@@ -94,7 +94,7 @@
       "45",
       "50"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "filter_low": {
@@ -106,7 +106,7 @@
       "1",
       "2"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "filter_order": {
@@ -118,7 +118,7 @@
       "2",
       "3"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "notch_filter_frequency": {
@@ -130,7 +130,7 @@
       "59",
       "60"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "down_sampling_rate": {
@@ -139,7 +139,7 @@
     "name": "Downsampling Rate",
     "helpTip": "Specifies the decimation factor (integer only) for downsampling of EEG data. Default: 2",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "summarize_session": {
@@ -148,7 +148,7 @@
     "name": "Summarize Session Data",
     "helpTip": "If 'true', writes an Excel file which summarizes the session data by charting evidence per inquiry.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "parameter_location": {
@@ -159,7 +159,7 @@
     "recommended": [
       "parameters/parameters.json"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "filepath"
   },
   "data_save_loc": {
@@ -170,7 +170,7 @@
     "recommended": [
       "data/"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "directorypath"
   },
   "full_screen": {
@@ -179,7 +179,7 @@
     "name": "Full Screen Mode",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "window_height": {
@@ -188,7 +188,7 @@
     "name": "Task Window Height",
     "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "window_width": {
@@ -197,7 +197,7 @@
     "name": "Task Window Width",
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "matrix_rows": {
@@ -206,7 +206,7 @@
     "name": "Matrix Rows",
     "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "matrix_columns": {
@@ -215,7 +215,7 @@
     "name": "Matrix Columns",
     "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "matrix_width": {
@@ -224,7 +224,7 @@
     "name": "Matrix Width (%)",
     "helpTip": "Specifies the max percentage of the display that the matrix grid should utilize. Must be between 0 and 1",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "acq_show_viewer": {
@@ -233,7 +233,7 @@
     "name": " EEG Viewer",
     "helpTip": "If ‘true’, the EEG signal viewer will be displayed along with the Task.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "stim_screen": {
@@ -242,7 +242,7 @@
     "name": "Task Display Monitor",
     "helpTip": "Specifies which monitor to use for task display when two monitors are in use. If ‘0’, the task will be displayed on the primary monitor (with the EEG signal viewer on the second monitor, if EEG Viewer On/Off is set to ‘true’). If ‘1’, the opposite monitor assignment will be used.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "task_buffer_length": {
@@ -251,7 +251,7 @@
     "name": "Inter-inquiry Interval",
     "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "is_txt_stim": {
@@ -260,7 +260,7 @@
     "name": "Text Stimuli",
     "helpTip": "If ‘true’, text stimuli will be used. If ‘false’, image stimuli will be loaded from the folder specified in Image Stimulus Folder. Default: true",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "path_to_presentation_images": {
@@ -269,7 +269,7 @@
     "name": "Image Stimulus Folder",
     "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "directorypath"
   },
   "stim_space_char": {
@@ -283,7 +283,7 @@
       "‒",
       "□"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "stim_order": {
@@ -295,7 +295,7 @@
       "alphabetical",
       "random"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "target_positions": {
@@ -307,7 +307,7 @@
       "distributed",
       "random"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "nontarget_inquiries": {
@@ -316,7 +316,7 @@
     "name": "Percentage of Nontarget Inquiries",
     "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "stim_length": {
@@ -325,7 +325,7 @@
     "name": "Stimuli Per inquiry",
     "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "time_flash": {
@@ -334,7 +334,7 @@
     "name": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "time_prompt": {
@@ -343,7 +343,7 @@
     "name": "Time Prompt Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "time_fixation": {
@@ -352,7 +352,7 @@
     "name": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "time_vep_animation": {
@@ -361,7 +361,7 @@
     "name": "Time VEP Animation (sec)",
     "helpTip": "The amount of time in seconds for the animation moving symbols to boxes.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "stim_jitter": {
@@ -370,7 +370,7 @@
     "name": "Stimulus Presentation Jitter (sec)",
     "helpTip": "Specifies the time (sec) to jitter presentation rates. Default: 0.0",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "stim_pos_x": {
@@ -379,7 +379,7 @@
     "name": "Stimulus Position Horizontal",
     "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "stim_pos_y": {
@@ -388,7 +388,7 @@
     "name": "Stimulus Position Vertical",
     "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "font": {
@@ -401,7 +401,7 @@
       "Lucida Sans",
       "Consolas"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "stim_height": {
@@ -410,7 +410,7 @@
     "name": "Stimulus Size",
     "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "stim_color": {
@@ -419,7 +419,7 @@
     "name": "Stimulus Color",
     "helpTip": "Specifies the color of text stimuli within the RSVP stream. Default: white",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "target_color": {
@@ -428,7 +428,7 @@
     "name": "Target Color",
     "helpTip": "Specifies the color of target characters during calibration. Default: white",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "fixation_color": {
@@ -437,7 +437,7 @@
     "name": "Fixation Cross Color",
     "helpTip": "Specifies the color of the fixation cross that appears before each inquiry. Default: red",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "background_color": {
@@ -446,7 +446,7 @@
     "name": "Task Background Color",
     "helpTip": "Specifies the color of the task background. Default: black",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "info_pos_x": {
@@ -457,7 +457,7 @@
     "recommended": [
       "0"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "info_pos_y": {
@@ -468,7 +468,7 @@
     "recommended": [
       "-0.75"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "info_text": {
@@ -481,7 +481,7 @@
       "Demo Text",
       "DEMO"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "info_height": {
@@ -492,7 +492,7 @@
     "recommended": [
       "0.1"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "info_color": {
@@ -505,7 +505,7 @@
       "black",
       "blue"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "task_text": {
@@ -514,7 +514,7 @@
     "name": "Target Phrase",
     "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "task_height": {
@@ -525,7 +525,7 @@
     "recommended": [
       "0.1"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "task_color": {
@@ -534,7 +534,7 @@
     "name": "Task Text Color",
     "helpTip": "Specifies the color of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: white",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "task_padding": {
@@ -545,7 +545,7 @@
     "recommended": [
       "0.05"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "stim_number": {
@@ -554,7 +554,7 @@
     "name": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "enable_breaks": {
@@ -563,7 +563,7 @@
     "name": "Automatic Calibration Breaks",
     "helpTip": "If ‘true’, automatic breaks will be added to the calibration session. If ‘false’, automatic breaks will not occur, but the session can still be paused by pressing Space.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "break_len": {
@@ -572,7 +572,7 @@
     "name": "Automatic Calibration Break Length",
     "helpTip": "Specifies the length (in seconds) of automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "trials_before_break": {
@@ -581,7 +581,7 @@
     "name": "Automatic Calibration Break Timing",
     "helpTip": "Specifies the number of inquiries between automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "break_message": {
@@ -590,7 +590,7 @@
     "name": "Automatic Calibration Break Message",
     "helpTip": "Specifies the message displayed during automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "max_inq_len": {
@@ -602,7 +602,7 @@
       "20",
       "25"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "max_minutes": {
@@ -611,7 +611,7 @@
     "name": "Maximum Task Length (Time)",
     "helpTip": "Specifies the time limit (in minutes) for copy/spelling tasks. The task will end if this time limit is reached.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "max_selections": {
@@ -620,7 +620,7 @@
     "name": "Maximum Number of Selections",
     "helpTip": "The maximum number of selections for copy/spelling tasks. The task will end if this number is reached.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "decision_threshold": {
@@ -629,7 +629,7 @@
     "name": "Decision Threshold",
     "helpTip": "Specifies the decision threshold for stimulus selection in copy/spelling class. If the posterior probability (combining EEG and language model evidence) for a stimulus reaches this threshold, it will be selected. Possible value range: 0.0-1.0. Default: 0.8",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "min_inq_per_series": {
@@ -640,7 +640,7 @@
     "recommended": [
       "1"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "max_inq_per_series": {
@@ -652,7 +652,7 @@
       "10",
       "15"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "backspace_always_shown": {
@@ -661,7 +661,7 @@
     "name": "Always Show Backspace",
     "helpTip": "If ‘true’, the backspace character will be included in every inquiry in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in inquiries only when warranted by EEG/language model evidence.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "spelled_letters_count": {
@@ -670,7 +670,7 @@
     "name": "Pre-Selected Letters Count",
     "helpTip": "Specifies the number of letters in the target phrase that are already typed when the task begins, e.g. if the target phrase is “THE_DOG”, setting this parameter to ‘4’ would display “THE_” as the typed string, and the user would begin typing with D. If ‘0’, the typed string will be blank.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "lang_model_type": {
@@ -685,7 +685,7 @@
       "MIXTURE",
       "ORACLE"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "lm_backspace_prob": {
@@ -694,16 +694,16 @@
     "name": "Backspace Probability",
     "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
     "recommended": "0.05",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "show_preview_inquiry": {
-    "value": "false",
+    "value": "true",
     "section": "bci_config",
     "name": "Preview Inquiry Display",
     "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the Task. *Note* Not all tasks will have this enabled!",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "preview_inquiry_progress_method": {
@@ -716,7 +716,7 @@
       "1",
       "2"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "int"
   },
   "preview_inquiry_length": {
@@ -725,7 +725,7 @@
     "name": "Preview Inquiry Display Length",
     "helpTip": "Length of time in seconds to present an inquiry preview to the user.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "preview_inquiry_key_input": {
@@ -738,7 +738,7 @@
       "escape",
       "return"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   },
   "preview_inquiry_isi": {
@@ -747,7 +747,7 @@
     "name": "Preview Inquiry Inter-Stimulus Interval",
     "helpTip": "The time between previewing an inquiry and the start of an inquiry.",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "show_feedback": {
@@ -756,7 +756,7 @@
     "name": "Feedback Display",
     "helpTip": "If ‘true’, feedback will be shown after each inquiry. If ‘false’, feedback will not be shown. *Note* Not all tasks will have this enabled!",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "bool"
   },
   "feedback_duration": {
@@ -765,7 +765,7 @@
     "name": "Feedback Time (seconds)",
     "helpTip": "Specifies the length in time (seconds) feedback will be displayed after each inquiry in registered tasks (ex. RSVP Copy Phrase). Default: 2",
     "recommended": "",
-    "editable": "true",
+    "editable": true,
     "type": "float"
   },
   "psd_method": {
@@ -777,7 +777,7 @@
       "Welch",
       "MutliTaper"
     ],
-    "editable": "true",
+    "editable": true,
     "type": "str"
   }
 }
