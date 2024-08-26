@@ -61,7 +61,7 @@ if __name__ == "__main__":
                 # Online Filtering Data
                 raw_data, data, labels, trigger_timing, channel_map, poststim_length, def_transform, _, channels = load_data_inquiries(
                                     data_folder=session_folder,
-                                    trial_length=0.72,
+                                    trial_length=0.76,
                                     apply_filter=True)
                 
                 # turn data and labels into epochs
@@ -89,7 +89,7 @@ if __name__ == "__main__":
                     data_folder=session_folder,
                     # mne_data_annotations=mne_data.annotations,
                     drop_artifacts=False,
-                    trial_length=0.72,
+                    trial_length=0.76,
                     parameters=parameters)
 
                 non_target_cf.append(epochs['1'])
@@ -146,19 +146,20 @@ if __name__ == "__main__":
 
     # all_data_epochs = mne.concatenate_epochs([non_target_of, target_of])
     # REGULAR CF
+    trial_length = 0.65
     target_cf = mne.concatenate_epochs(target_cf)
-    target_cf = target_cf.crop(tmin=0.0, tmax=0.7)
+    target_cf = target_cf.crop(tmin=0.0, tmax=trial_length)
     target_cf_evoked = target_cf.average()
     non_target_cf = mne.concatenate_epochs(non_target_cf)
-    non_target_cf = non_target_cf.crop(tmin=0.0, tmax=0.7)
+    non_target_cf = non_target_cf.crop(tmin=0.0, tmax=trial_length)
     non_target_cf_evoked = non_target_cf.average()
 
     # OF
     target_of = mne.concatenate_epochs(target_of)
-    target_of = target_of.crop(tmin=0.0, tmax=0.7)
+    target_of = target_of.crop(tmin=0.0, tmax=trial_length)
     target_of_evoked = target_of.average()
     non_target_of = mne.concatenate_epochs(non_target_of)
-    non_target_of = non_target_of.crop(tmin=0.0, tmax=0.7)
+    non_target_of = non_target_of.crop(tmin=0.0, tmax=trial_length)
     non_target_of_evoked = non_target_of.average()
     
     # data = [non_target_of, target_of]
@@ -175,17 +176,46 @@ if __name__ == "__main__":
     # breakpoint()
     # target_evoked.plot_image()
     # non_target_evoked.plot_image()
-    # visualize_joint_average((non_target, target), ['Non-Target', 'Target'], show=True, plot_joint_times=plot_joint_times)
 
     roi = ['Pz', 'Cz', 'P3', 'P4', 'O1', 'O2']
-    of_data = target_of.pick_channels(roi)
-    cf_data = target_cf.pick_channels(roi)
+    # of_data = target_of.pick_channels(roi)
+    # cf_data = target_cf.pick_channels(roi)
     # roi = channels
-    evokeds_erp_compare = dict(of=list(target_of.pick_channels(roi).iter_evoked()),  cf=list(target_cf.pick_channels(roi).iter_evoked()),)
-    fig = mne.viz.plot_compare_evokeds(evokeds_erp_compare, combine='mean', show=True, show_sensors='upper right')
+    evokeds_erp_compare = dict(
+        OF_target=list(target_of.iter_evoked()), 
+        CF_target=list(target_cf.iter_evoked()),
+        OF_non_target=list(non_target_of.iter_evoked()),
+        CF_non_target=list(non_target_cf.iter_evoked())
+    )
+
+    evokeds_erp_compare_targets = dict(
+        OF_target=list(target_of.iter_evoked()), 
+        CF_target=list(target_cf.iter_evoked()),
+    )
+
+    evokeds_erp_compare_non_targets = dict(
+        OF_non_target=list(non_target_of.iter_evoked()),
+        CF_non_target=list(non_target_cf.iter_evoked())
+    )
+
+    
+    breakpoint()
+    fig = mne.viz.plot_compare_evokeds(evokeds_erp_compare, combine='gfp', show=True)
+    fig_target_gfp = mne.viz.plot_compare_evokeds(evokeds_erp_compare_targets, combine='gfp', show=True)
+    fig_non_target_gfp = mne.viz.plot_compare_evokeds(evokeds_erp_compare_non_targets, combine='gfp', show=True)
     # Show a ERP of the two events using gfp by default and no CI?
     # visualize_evokeds([target_cf, target_of], show=True)
-    # plot_compare_evokeds([target_cf.average(), target_of.average()], picks=roi, title='ERP Difference Between Online and Conventional Filtering', combine='mean', ci=0.95, show=True)
+    target_compare = dict(
+        CF_target=target_cf.average(),
+        OF_target=target_of.average()
+    )
+    all_compare = dict(
+        CF_target=target_cf.average(),
+        OF_target=target_of.average(),
+        CF_non_target=non_target_cf.average(),
+        OF_non_target=non_target_of.average()
+    )
+    plot_compare_evokeds(all_compare, title='ERP Difference Between Online and Conventional Filtering', combine='gfp', show=True)
     # eco = plot_compare_evokeds([cf_evokeds_diff, of_evokeds_diff], picks=roi, title='ERP Difference Between Online and Conventional Filtering')
     # plot_compare_evokeds(evokeds, picks=roi, title='ERP Difference Between Online and Conventional Filtering')
     # plt.show()

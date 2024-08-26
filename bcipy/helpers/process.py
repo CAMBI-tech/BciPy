@@ -22,7 +22,7 @@ import numpy as np
 import logging
 
 log = logging.getLogger(__name__)
-logging.basicConfig(level=logging.WARNING, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 def load_data_inquiries(
         data_folder: Path,
@@ -62,8 +62,8 @@ def load_data_inquiries(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = 50
-    filter_low = .1
+    filter_high = 20
+    filter_low = 1
     filter_order = 5
     static_offset = parameters.get("static_trigger_offset")
 
@@ -172,8 +172,8 @@ def load_data_mne(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = 50
-    filter_low = .1
+    filter_high = 20
+    filter_low = 1
     filter_order = 5
     static_offset = parameters.get("static_trigger_offset")
 
