@@ -118,8 +118,10 @@ class DynamicList(QWidget):
 
     widgets: List[QWidget] = []
 
-    def __init__(self, layout: Optional[QLayout] = QVBoxLayout()):
+    def __init__(self, layout: Optional[QLayout] = None):
         super().__init__()
+        if layout is None:
+            layout = QVBoxLayout()
         self.setLayout(layout)
 
     def add_item(self, item: DynamicItem):
@@ -149,11 +151,18 @@ class DynamicList(QWidget):
 from bcipy.helpers.load import load_fields, load_experiments
 from bcipy.helpers.save import save_experiment_data
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+from bcipy.task.task_registry import TaskRegistry
 import json
 
 
 class ExperimentRegistry(BCIUI):
 
+    task_registry: TaskRegistry
+
+    def __init__(self):
+        super().__init__("Experiment Registry", 600, 700)
+        self.task_registry = TaskRegistry()
+    
     def format_experiment_combobox(
         self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
     ) -> QHBoxLayout:
@@ -161,7 +170,7 @@ class ExperimentRegistry(BCIUI):
         label.setStyleSheet("font-size: 18px")
         area = QVBoxLayout()
         input_area = QHBoxLayout()
-        input_area.setContentsMargins(30, 0, 0, 30)
+        input_area.setContentsMargins(15, 0, 0, 15)
         area.addWidget(label)
         input_area.addWidget(combobox, 1)
         if buttons:
@@ -266,7 +275,7 @@ class ExperimentRegistry(BCIUI):
         header.setStyleSheet("font-size: 24px")
         self.contents.addLayout(BCIUI.centered(header))
         form_area = QVBoxLayout()
-        form_area.setContentsMargins(30, 30, 30, 0)
+        form_area.setContentsMargins(30, 0, 30, 0)
         self.experiment_name_input = QLineEdit()
         experiment_name_box = self.format_experiment_combobox(
             "Name", self.experiment_name_input, None
@@ -278,6 +287,14 @@ class ExperimentRegistry(BCIUI):
             "Summary", self.experiment_summary_input, None
         )
         form_area.addLayout(experiment_summary_box)
+
+        self.experiment_protocol_input = QComboBox()
+        self.experiment_protocol_input.addItems(self.task_registry.list())
+        add_task_button = QPushButton("Add")
+        experiment_protocol_box = self.format_experiment_combobox(
+            "Protocol", self.experiment_protocol_input, [add_task_button]
+        )
+        form_area.addLayout(experiment_protocol_box)
 
         self.field_input = QComboBox()
         self.field_input.addItems(load_fields())
@@ -291,13 +308,22 @@ class ExperimentRegistry(BCIUI):
 
         self.contents.addLayout(form_area)
 
-        fields_scroll_area = QScrollArea()
+        scroll_area_layout = QHBoxLayout()
 
         self.fields_content = DynamicList()
         fields_scroll_area = BCIUI.make_list_scroll_area(self.fields_content)
         label = QLabel("Fields")
         label.setStyleSheet("color: black;")
-        self.contents.addWidget(fields_scroll_area)
+        scroll_area_layout.addWidget(fields_scroll_area)
+
+        protocol_scroll_area = QScrollArea()
+        self.protocol_contents = DynamicList()
+        protocol_scroll_area = BCIUI.make_list_scroll_area(self.protocol_contents)
+        label = QLabel("Protocol")
+        label.setStyleSheet("color: black;")
+        scroll_area_layout.addWidget(protocol_scroll_area)
+
+        self.contents.addLayout(scroll_area_layout)
 
         def add_field():
             if self.field_input.currentText() in self.fields_content.list_property(
