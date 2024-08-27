@@ -51,7 +51,18 @@ class Trial(NamedTuple):
     inquiry_pos: int
     symbol: str
     target: int
-    eeg: np.ndarray
+    eeg: np.ndarray # Channels by Samples
+
+    def __str__(self):
+        fields = [
+            f"source='{self.source}'", f"inquiry_n={self.inquiry_n}",
+            f"inquiry_pos={self.inquiry_pos}", f"symbol='{self.symbol}'",
+            f"target={self.target}", f"eeg={self.eeg.shape}"
+        ]
+        return f"Trial({', '.join(fields)})"
+
+    def __repr__(self):
+        return str(self)
 
 
 class RawDataEngine(DataEngine):

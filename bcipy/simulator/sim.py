@@ -87,7 +87,7 @@ class SimulatorCopyPhrase(Simulator):
                 f"Target '{curr_state.target_symbol}' | " +
                 f"Stimuli {curr_state.display_alphabet}")
 
-            sampled_data = self.sampler.sample(self.state_manager.get_state())
+            sampled_data = self.sampler.sample_data(self.state_manager.get_state())
             evidence: Dict[str, SimEvidence] = self.model_handler.generate_evidence(curr_state,
                                                                                     sampled_data)
 

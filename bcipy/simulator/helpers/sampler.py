@@ -9,74 +9,11 @@ import numpy as np
 import pandas as pd
 
 from bcipy.helpers.exceptions import TaskConfigurationException
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.symbols import alphabet
-from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.log_utils import (format_sample_df,
-                                               format_sample_rows)
+from bcipy.simulator.helpers.data_engine import RawDataEngine, Trial
+from bcipy.simulator.helpers.log_utils import format_samples
 from bcipy.simulator.helpers.state_manager import SimState
 
 log = logging.getLogger(__name__)
-
-
-class Sampler(ABC):
-    """ Interface to generate sample of data usable by a model """
-
-    def sample(self, state: SimState):
-        ...
-
-    def set_reshaper(self, reshaper: Callable):
-        ...
-
-
-class EEGByLetterSampler(Sampler):
-
-    def __init__(self,
-                 data_engine: RawDataEngine,
-                 parameters: Parameters = None):
-        self.data_engine: RawDataEngine = data_engine
-        self.parameters: Parameters = self.data_engine.parameters if not parameters else parameters
-        self.model_input_reshaper: Callable = default_reshaper
-        self.alphabet: List[str] = self.parameters.get(
-            'symbol_set') if self.parameters else alphabet()
-        self.data: pd.DataFrame = self.data_engine.transform().get_data()
-
-    def sample(self, state: SimState) -> np.ndarray:
-        """
-            - query eeg response by letter
-            - reshape for signal model input
-
-        Return:
-            nd array (n_channel, n_trial, n_sample)
-        """
-
-        inquiry_letter_subset = state.display_alphabet
-        target_letter = state.target_symbol
-        sample_rows = []
-        for symbol in inquiry_letter_subset:
-            is_target = int(symbol == target_letter)
-            # filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
-            filtered_data: pd.DataFrame = self.data.query(
-                f'target == {is_target}')
-            if filtered_data is None or len(filtered_data) == 0:
-                raise TaskConfigurationException(
-                    message="No eeg sample found with provided data and query")
-
-            row = filtered_data.sample(1).iloc[0]
-            sample_rows.append(row)
-
-        log.debug(f"EEG Samples: \n {format_sample_rows(sample_rows)}")
-
-        eeg_responses = [r['eeg'] for r in sample_rows]
-        sample = self.model_input_reshaper(eeg_responses)
-
-        return sample
-
-    def set_reshaper(self, reshaper: Callable):
-        self.model_input_reshaper = reshaper
-
-    def __str__(self):
-        return f"<{self.__class__.__name__}>"
 
 
 def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
@@ -98,12 +35,93 @@ def default_reshaper(eeg_responses: List[np.ndarray]) -> np.ndarray:
     return np.array(channels_eeg)
 
 
+class Sampler(ABC):
+    """Represents a strategy for sampling signal model data from a DataEngine
+    comprised of signal data from one or more data collection sessions."""
+
+    def __init__(self, data_engine: RawDataEngine):
+        self.data_engine: RawDataEngine = data_engine
+        self.model_input_reshaper: Callable = default_reshaper
+        self.data: pd.DataFrame = self.data_engine.transform().get_data()
+
+    def sample(self, state: SimState) -> List[Trial]:
+        """
+        Query the data engine for a list of trials corresponding to each
+        currently displayed symbol.
+
+        Parameters
+        ----------
+            state - specifies the target symbol and current inquiry (displayed symbols).
+
+        Returns
+        -------
+            a list of Trials with an item for each symbol in the current inquiry.
+        """
+        raise NotImplementedError
+
+    def sample_data(self, state: SimState) -> np.ndarray:
+        """
+        Query for trials and reshape for signal model input according to the
+        provided reshaper.
+
+        Return:
+            ndarray of shape (n_channel, n_trial, n_sample)
+        """
+        trials = self.sample(state)
+        return self.reshaped(trials)
+
+    def sample_with_context(self,
+                            state: SimState) -> Tuple[np.ndarray, List[Trial]]:
+        """        
+        Returns
+        -------
+            A tuple of the reshaped data (ndarray of shape (n_channel, n_trial, n_sample)) as
+            well as a list of Trial data (metadata and data not reshaped) for context.   
+        """
+        trials = self.sample(state)
+        data = self.reshaped(trials)
+        return data, trials
+
+    def reshaped(self, sample_rows: List[Trial]) -> np.ndarray:
+        """Returns the queried trials reshaped into a format that a model can predict."""
+        return self.model_input_reshaper([trial.eeg for trial in sample_rows])
+
+    def set_reshaper(self, reshaper: Callable):
+        """Set the reshaper"""
+        self.model_input_reshaper = reshaper
+
+    def __str__(self):
+        return f"<{self.__class__.__name__}>"
+
+
+class EEGByLetterSampler(Sampler):
+    """Sampler that that queries based on target/non-target label."""
+
+    def sample(self, state: SimState) -> List[Trial]:
+        current_stimuli = state.display_alphabet
+        target_letter = state.target_symbol
+        sample_rows = []
+        for symbol in current_stimuli:
+            is_target = int(symbol == target_letter)
+            # filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
+            filtered_data: pd.DataFrame = self.data.query(
+                f'target == {is_target}')
+            if filtered_data is None or len(filtered_data) == 0:
+                raise TaskConfigurationException(
+                    message="No eeg sample found with provided data and query")
+
+            row = filtered_data.sample(1).iloc[0]
+            sample_rows.append(Trial(**row))
+
+        log.debug(f"EEG Samples:\n{format_samples(sample_rows)}")
+        return sample_rows
+
+
 class InquirySampler(Sampler):
     """Samples an inquiry of data at a time."""
 
     def __init__(self, data_engine: RawDataEngine):
-        self.model_input_reshaper = default_reshaper
-        self.data: pd.DataFrame = data_engine.transform().get_data()
+        super().__init__(data_engine)
 
         # map source to inquiry numbers
         self.target_inquiries, self.no_target_inquiries = self.prepare_data(
@@ -135,15 +153,20 @@ class InquirySampler(Sampler):
 
         return target_inquiries, no_target_inquiries
 
-    def sample(self, state: SimState) -> np.ndarray:
+    def sample(self, state: SimState) -> List[Trial]:
         """Samples a random inquiry for a random data source.
 
         Ensures that if a target is shown in the current inquiry the sampled
         data will be from an inquiry where the target was presented.
 
+        Parameters
+        ----------
+            state - specifies the target symbol and current inquiry (displayed symbols).
+
         Returns
         -------
-            nd array (n_channel, n_trial, n_sample)
+            a list of Trials with an item for each symbol in the current
+            inquiry.
         """
 
         target_letter = state.target_symbol
@@ -197,13 +220,9 @@ class InquirySampler(Sampler):
 
         # select the inquiry items in sorted position
         sorted_inquiry_df = inquiry_df.loc[sort_pos.sort_values().index]
-        log.debug(f"EEG Samples: \n {format_sample_df(sorted_inquiry_df)}")
-
         rows = [
-            sorted_inquiry_df.iloc[i] for i in range(len(sorted_inquiry_df))
+            Trial(**sorted_inquiry_df.iloc[i])
+            for i in range(len(sorted_inquiry_df))
         ]
-        eeg_responses = [r['eeg'] for r in rows]
-        return self.model_input_reshaper(eeg_responses)
-
-    def set_reshaper(self, reshaper: Callable):
-        self.model_input_reshaper = reshaper
+        log.debug(f"EEG Samples:\n{format_samples(rows)}")
+        return rows

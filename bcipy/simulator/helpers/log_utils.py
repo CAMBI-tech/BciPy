@@ -2,6 +2,7 @@ from typing import Dict, List
 
 import pandas as pd
 
+from bcipy.simulator.helpers.data_engine import Trial
 from bcipy.simulator.helpers.types import SimEvidence
 
 
@@ -16,6 +17,10 @@ def fmt_likelihoods_for_hist(likelihoods, alp):
     formatted = [(a, l) for a, l in zip(alp, rounded)]
     return formatted
 
+
+def format_samples(sample_rows: List[Trial]) -> str:
+    """Returns a tabular representation of the sample rows."""
+    return '\n'.join([str(row) for row in sample_rows])
 
 def format_sample_rows(sample_rows: List[pd.Series]) -> str:
     """Returns a tabular representation of the sample rows."""
