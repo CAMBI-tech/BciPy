@@ -21,7 +21,7 @@ from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.task import TaskRegistry, Task
-from bcipy.task.start_task import start_task
+from bcipy.task.start import start_task
 
 log = logging.getLogger(__name__)
 task_registry = TaskRegistry()

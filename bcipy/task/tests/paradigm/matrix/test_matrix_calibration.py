@@ -5,7 +5,6 @@ import numpy as np
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
-import bcipy.task.base_calibration
 import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
@@ -132,8 +131,8 @@ class TestMatrixCalibration(unittest.TestCase):
         """Override"""
         unstub()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_initialize(self, save_session_mock, trigger_handler_mock):
         """Test initialization"""
         save_session_mock.return_value = mock()
@@ -148,8 +147,8 @@ class TestMatrixCalibration(unittest.TestCase):
                times=1).init_matrix_display(self.parameters, self.win, any(),
                                             any())
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_execute(self, save_session_mock, trigger_handler_mock):
         """Test task execute"""
         save_session_mock.return_value = mock()
@@ -172,8 +171,8 @@ class TestMatrixCalibration(unittest.TestCase):
             any(), any())
         verify(task, times=1).write_offset_trigger()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_validate_parameters_throws_task_exception_empty_parameter(
             self, save_session_mock, trigger_handler_mock):
         """Test validate parameters throws task exception when parameters is empty."""
@@ -187,8 +186,8 @@ class TestMatrixCalibration(unittest.TestCase):
                                   parameters=parameters,
                                   file_save=self.temp_dir)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_execute_save_stimuli_positions(self, save_session_mock,
                                             trigger_handler_mock):
         """Test execute save stimuli positions method is called as expected."""
@@ -215,8 +214,8 @@ class TestMatrixCalibration(unittest.TestCase):
             any(), any())
         verify(task, times=1).write_offset_trigger()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_targetness(self, save_session_mock,
                                      trigger_handler_mock):
         """Test trigger type targetness."""
@@ -244,8 +243,8 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.TARGET)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_fixation(self, save_session_mock,
                                    trigger_handler_mock):
         """Test trigger type fixation."""
@@ -264,8 +263,8 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.FIXATION)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_prompt(self, save_session_mock,
                                  trigger_handler_mock):
         """Test trigger type prompt."""
@@ -285,8 +284,8 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.PROMPT)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_trigger_data_first_run(self, save_session_mock,
                                           trigger_handler_mock):
         """Test write trigger data when it is the first run of the task."""
@@ -305,21 +304,21 @@ class TestMatrixCalibration(unittest.TestCase):
         first_run = True
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label('EEG').thenReturn(
+        when(bcipy.task.calibration).offset_label('EEG').thenReturn(
             'starting_offset')
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
         self.assertEqual(2, handler_mock.add_triggers.call_count)
 
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration, times=1).offset_label('EEG')
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration, times=1).offset_label('EEG')
+        verify(bcipy.task.calibration,
                times=1).convert_timing_triggers(timing, timing[0][0], any())
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_trigger_data_not_first_run(self, save_session_mock,
                                               trigger_handler_mock):
         """Test write trigger data when it is not the first run of the task."""
@@ -335,14 +334,14 @@ class TestMatrixCalibration(unittest.TestCase):
         timing_mock = mock()
         timing = [('a', 0.0)]
         first_run = False
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
         handler_mock.add_triggers.assert_called_once()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_offset_trigger(self, save_session_mock,
                                   trigger_handler_mock):
         """Test write offset trigger"""
@@ -357,14 +356,14 @@ class TestMatrixCalibration(unittest.TestCase):
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label(
+        when(bcipy.task.calibration).offset_label(
             'EEG', prefix='daq_sample_offset').thenReturn('daq_sample_offset')
 
         task.write_offset_trigger()
         handler_mock.close.assert_called_once()
         handler_mock.add_triggers.assert_called_once()
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
 
 

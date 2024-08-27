@@ -3,7 +3,7 @@ from typing import Iterator, List
 
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)
-from bcipy.task.base_calibration import Inquiry
+from bcipy.task.calibration import Inquiry
 from bcipy.task.paradigm.matrix.calibration import (MatrixCalibrationTask,
                                                     MatrixDisplay)
 

@@ -128,7 +128,7 @@ class RSVPCopyPhraseTask(Task):
         "max_inq_per_series",
         "max_minutes",
         "max_selections",
-        "min_inq_len",
+        "min_inq_per_series",
         "show_feedback",
         "feedback_duration",
         "show_preview_inquiry",
@@ -234,9 +234,10 @@ class RSVPCopyPhraseTask(Task):
                     else "false"
                 ),
                 "section": "",
-                "readableName": "",
+                "name": "",
                 "helpTip": "",
-                "recommended_values": "",
+                "recommended": "",
+                "editable": "false",
                 "type": "bool",
             },
         )
@@ -349,7 +350,7 @@ class RSVPCopyPhraseTask(Task):
         """
 
         self.copy_phrase_task = CopyPhraseWrapper(
-            self.parameters["min_inq_len"],
+            self.parameters["min_inq_per_series"],
             self.parameters["max_inq_per_series"],
             lmodel=self.language_model,
             alp=self.alp,

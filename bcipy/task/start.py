@@ -5,12 +5,12 @@ from psychopy import visual
 
 from bcipy.task import Task, TaskData
 from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.signal.model import SignalModel
 from bcipy.language import LanguageModel
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
 
 
 def make_task(
@@ -41,13 +41,14 @@ def make_task(
 
     # NORMAL RSVP MODES
 
-    from bcipy.task.base_calibration import BaseCalibrationTask
+    from bcipy.task.calibration import BaseCalibrationTask
     if issubclass(task, BaseCalibrationTask):
         return task(display_window, daq, parameters, file_save)
 
-    if task is RSVPCalibrationTask:
-        return RSVPCalibrationTask(
-            display_window, daq, parameters, file_save)
+    if task is RSVPCopyPhraseTask:
+        return RSVPCopyPhraseTask(
+            display_window, daq, parameters, file_save, signal_models,
+            language_model, fake=fake)
 
     if task is MatrixCopyPhraseTask:
         return MatrixCopyPhraseTask(

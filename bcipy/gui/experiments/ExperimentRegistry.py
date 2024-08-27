@@ -6,7 +6,7 @@ from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse, 
 from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
-from bcipy.task.task_registry import TaskRegistry
+from bcipy.task.registry import TaskRegistry
 from bcipy.orchestrator.config import serialize_protocol
 
 

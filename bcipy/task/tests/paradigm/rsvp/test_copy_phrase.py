@@ -48,7 +48,7 @@ class TestCopyPhrase(unittest.TestCase):
             'max_inq_len': 50,
             'max_inq_per_series': 10,
             'max_minutes': 20,
-            'min_inq_len': 1,
+            'min_inq_per_series': 1,
             'max_selections': 50,
             'notch_filter_frequency': 60.0,
             'preview_inquiry_isi': 1.0,

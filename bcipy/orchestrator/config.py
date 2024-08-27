@@ -4,7 +4,7 @@ To start these will be 1:1 with tasks, but later this can be extended to represe
 from typing import List, Type
 from bcipy.task import Task
 from bcipy.config import TASK_SEPERATOR
-from bcipy.task.task_registry import TaskRegistry
+from bcipy.task.registry import TaskRegistry
 
 
 def parse_protocol(protocol: str) -> List[Type[Task]]:
