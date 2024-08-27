@@ -120,13 +120,15 @@ def analyze_multimodal(eeg_data,
     Extract timing information from trigger file.
     Apply filtering and preprocessing on the raw data.
     Reshape and label the data for the training procedure.
-    Fit the model to the data. Use cross validation to select parameters.
+    Fit the model to the training data. Use cross validation to select parameters.
+    Return performance measures on a separate test set.
     Pickle dump model into .pkl file
     Generate and [optional] save/show ERP figures.
 
     Parameters:
     -----------
         eeg_data (RawData): RawData object containing the data to be analyzed.
+        gaze_data (RawData): RawData object containing the data to be analyzed.
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
@@ -197,9 +199,9 @@ def analyze_multimodal(eeg_data,
 
     # Define the model object before reshaping the data
     k_folds = parameters.get("k_folds")
-    eeg_model = PcaRdaKdeModel(k_folds=1)
+    eeg_model = PcaRdaKdeModel(k_folds=k_folds)
     # Select between the two (or three) gaze models to test:
-    gaze_model = KernelGPSampleAverage()
+    gaze_model = KernelGPSampleAverage() # change the name to gaussian process model
 
     # Process triggers.txt files for eeg data:
     trigger_targetness, trigger_timing, inquiry_symbols = trigger_decoder(
@@ -233,7 +235,7 @@ def analyze_multimodal(eeg_data,
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
     erp_data, fs_eeg = eeg_data.by_channel()
-    trajectory_data, gaze_channel_list, fs_eye = gaze_data.by_channel_map(gaze_channel_map) 
+    trajectory_data, fs_eye = gaze_data.by_channel() 
 
     # Reshaping EEG data:
     eeg_inquiries, eeg_inquiry_labels, eeg_inquiry_timing = eeg_model.reshaper(
@@ -247,6 +249,7 @@ def analyze_multimodal(eeg_data,
         prestimulus_length=prestim_length,
         transformation_buffer=buffer,
     )
+    # Size = Inquiries x Channels x Samples
 
     # Reshaping gaze data:
     gaze_inquiries_dict, gaze_inquiries_list, _ = gaze_model.reshaper(
@@ -258,71 +261,107 @@ def analyze_multimodal(eeg_data,
         num_stimuli_per_inquiry=10,
         symbol_set=symbol_set
     )
-    # Note that the gaze window length is not the same as the ERP window length, it consists 
-    # of the duration of whole inquiry.
 
     ## More EEG preprocessing:
     eeg_inquiries, fs = filter_inquiries(eeg_inquiries, default_transform, eeg_sample_rate)
     eeg_inquiry_timing = update_inquiry_timing(eeg_inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
-    preprocessed_eeg_data = eeg_model.reshaper.extract_trials(eeg_inquiries, trial_duration_samples, eeg_inquiry_timing)
+    # preprocessed_eeg_data = eeg_model.reshaper.extract_trials(eeg_inquiries, trial_duration_samples, eeg_inquiry_timing)
+    # we will extract the trials from the inquiries later
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    erp_labels = eeg_inquiry_labels.flatten().tolist()
+    # erp_labels = eeg_inquiry_labels.flatten().tolist()
 
-    # Use bootstrap resampling for both EEG and Gaze data
-    # First change the order of the data to (samples, channels, trials):
-    preprocessed_eeg_data = np.transpose(preprocessed_eeg_data, (2, 0, 1))
-    # Then pick the train and test data until test dataset is not empty
-    valid = False
-    while not valid:
-        try:
-            # Bootstrapping EEG & gaze data (make sure to use the same sampling indices for gaze data as well):
-            train_data_eeg = resample(preprocessed_eeg_data, replace=True, n_samples=100, random_state=0)
-            # train_data_gaze = resample(gaze_inquiries_list, replace=True, n_samples=100, random_state=0)
-            # Define test data as all observations NOT in the training set
-            test_data_eeg = np.array([x for x in preprocessed_eeg_data if x not in train_data_eeg])
-            # test_data_gaze = np.array([x for x in gaze_inquiries_list if x not in train_data_gaze])
-            if test_data_eeg.size == 0:
-                raise ValueError("Test data is empty")
-            valid = True
-        except ValueError:
-            log.info("Test data is empty. Trying again...")
+    
+    ## More gaze preprocessing:
+    preprocessed_gaze_data = np.zeros((len(gaze_inquiries_list), 4, 180))
+    # Extract left_x, left_y, right_x, right_y for each inquiry
+    for j in range(len(gaze_inquiries_list)):
+        left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_list[j])
+        preprocessed_gaze_data[j] = np.concatenate((left_eye.T, right_eye.T,), axis=0)
+
+    preprocessed_gaze_dict = {i: [] for i in symbol_set}
+    for i in symbol_set:
+        # Skip if there's no evidence for this symbol:
+        if len(gaze_inquiries_dict[i]) == 0:
             continue
+        for j in range(len(gaze_inquiries_dict[i])):
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_dict[i][j])
+            preprocessed_gaze_dict[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
+        preprocessed_gaze_dict[i] = np.array(preprocessed_gaze_dict[i])
+    
+    # Find the time averages for each symbol:
+    centralized_data_dict = {i: [] for i in symbol_set}
+    time_average_per_symbol = {i: [] for i in symbol_set}
+    for sym in symbol_set:
+    # Skip if there's no evidence for this symbol:
+        try: 
+            if len(gaze_inquiries_dict[sym]) == 0:
+                continue
+        except:
+            log.info(f"Error in symbol {sym}")
+            continue
+        
+        # with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
+        #         symbol_positions = json.load(params_file)
 
-    # Revert the axes for the training data:
-    train_data_eeg = np.transpose(train_data_eeg, (1, 2, 0))
-    test_data_eeg = np.transpose(test_data_eeg, (1, 2, 0))
+        for j in range(len(preprocessed_gaze_dict[sym])):
+            temp = np.mean(preprocessed_gaze_dict[sym][j], axis=1)
+            time_average_per_symbol[sym].append(temp)
+            centralized_data_dict[sym].append(gaze_model.substract_mean(preprocessed_gaze_dict[sym][j], temp))  # Delta_t = X_t - mu
+        centralized_data_dict[sym] = np.array(centralized_data_dict[sym])
+        time_average_per_symbol[sym] = np.mean(np.array(time_average_per_symbol[sym]), axis=0)
+    # print(f"time_average for symbol {sym}: ", time_average[sym])
 
-    breakpoint()
+    # Take the time average of the gaze data:
+    centralized_gaze_data = np.zeros_like(preprocessed_gaze_data)
+    for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
+        centralized_gaze_data[i] = gaze_model.substract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
 
+    '''Use bootstrap resampling for both EEG and Gaze data'''
+    log.info("Bootstrap sampling for EEG and Gaze data...")
+    n_iterations=1
+    for i in range(n_iterations):
+        # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
+        train_indices = resample(list(range(100)), replace=True, n_samples=150, random_state=0)
+        test_indices = np.array([x for x in list(range(100)) if x not in train_indices])
+        if len(test_indices) == 0:
+            break
 
-
-
-    # train and save the eeg model a pkl file
-    log.info("Training model. This will take some time...")
-    eeg_model.fit(preprocessed_eeg_data, erp_labels)
-    eeg_model.metadata = SignalModelMetadata(device_spec=device_spec_eeg,
-                                         transform=default_transform)
-    log.info(f"Training complete [AUC={eeg_model.auc:0.4f}]. Saving data...")
-    save_model(eeg_model, Path(data_folder, f"model_{eeg_model.auc:0.4f}.pkl"))
-    preferences.signal_model_directory = data_folder
-
-
-    # train and save the gaze model as a pkl file    
-
-    breakpoint()
-
-
-
-    # Given the test data, compute the log likelihood ratios for each symbol:
-    eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(test_data, inquiry_symbols, alphabet())
-    eeg_log_likelihood_ratios = np.log(eeg_likelihood_ratios)
-
-    # And the log likelihood evidence from gaze model:
+        train_data_eeg = eeg_inquiries[:, train_indices, :]
+        test_data_eeg = eeg_inquiries[:, test_indices, :]
+        eeg_inquiry_timing = np.array(eeg_inquiry_timing)
+        train_eeg_inquiry_timing = eeg_inquiry_timing[train_indices]
+        test_eeg_inquiry_timing = eeg_inquiry_timing[test_indices]
 
 
-    # Bayesian fusion update and decision making:
+        # Now extract the inquiries from trials for eeg model fitting:
+        preprocessed_train_eeg = eeg_model.reshaper.extract_trials(train_data_eeg, trial_duration_samples, train_eeg_inquiry_timing)
+        preprocessed_test_eeg = eeg_model.reshaper.extract_trials(test_data_eeg, trial_duration_samples, test_eeg_inquiry_timing)
+
+        # train and save the eeg model a pkl file
+        log.info("Training model. This will take some time...")
+        # Flatten the labels (0=nontarget/1=target) prior to model fitting
+        erp_train_labels = eeg_inquiry_labels[train_indices].flatten().tolist()
+        erp_test_labels = eeg_inquiry_labels[test_indices].flatten().tolist()
+        eeg_model.fit(preprocessed_train_eeg, erp_train_labels)
+        eeg_model.metadata = SignalModelMetadata(device_spec=device_spec_eeg,
+                                            transform=default_transform)
+        log.info(f"Training complete [AUC={eeg_model.auc:0.4f}]. Saving data...")
+        # save_model(eeg_model, Path(data_folder, f"model_{eeg_model.auc:0.4f}.pkl"))
+        preferences.signal_model_directory = data_folder
+
+        # Given the test data, compute the log likelihood ratios for each symbol:
+        eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(preprocessed_test_eeg, inquiry_symbols, alphabet())
+        eeg_log_likelihood_ratios = np.log(eeg_likelihood_ratios)
+        breakpoint()
+
+        # train and save the gaze model as a pkl file
+
+        # And the log likelihood evidence from gaze model:
+
+
+        # Bayesian fusion update and decision making:
 
     
     '''
@@ -494,8 +533,6 @@ def analyze_gaze(
              # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
     
-    
-
     centralized_data_left = []
     centralized_data_right = []
     centralized_data_train = {i: [] for i in symbol_set}
@@ -744,7 +781,7 @@ def analyze_gaze(
         
         breakpoint()
         
-        model.fit(centralized_data_training_set)
+        # model.fit(centralized_data_training_set)
 
     if model_type == "Centralized":
         # Model 2: Fit Gaussian mixture on a centralized data

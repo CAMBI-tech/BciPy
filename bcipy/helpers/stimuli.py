@@ -273,12 +273,8 @@ class GazeReshaper:
             reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
             labels (List[str]) [optional] : Target symbol in each inquiry.
         """
-        if channel_map:
-            # Remove the channels that we are not interested in
-            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
-
-        # Find the value closest to (& greater than) inq_start_times
+        # Find the timestamp value closest to (& greater than) inq_start_times.
+        # Lsl timestamps are the last row in the gaze_data
         gaze_data_timing = gaze_data[-1, :].tolist()
 
         start_times = []
@@ -329,7 +325,6 @@ class GazeReshaper:
             # Note that this is a workaround to the issue of having different number of targetness in
             # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
             # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
-
         return data_by_targets_dict, reshaped_data, labels
 
     def centralize_all_data(data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:

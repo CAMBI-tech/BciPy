@@ -192,7 +192,7 @@ class PcaRdaKdeModel(SignalModel):
         if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
-        posterior = self.predict_proba(data)
+        posterior = self.compute_class_probabilities(data)
         predictions = np.argmax(posterior, axis=1)
         return predictions
 
