@@ -179,6 +179,29 @@ class ExperimentRegistry(BCIUI):
         area.addLayout(input_area)
         return area
 
+    def make_task_entry(self, name: str) -> QWidget:
+        layout = QHBoxLayout()
+        label = QLabel(name)
+        label.setStyleSheet("color: black;")
+        layout.addWidget(label)
+        widget = DynamicItem()
+        
+        move_up_button = SmallButton("▲")
+        move_down_button = SmallButton("▼")
+        layout.addWidget(move_up_button)
+        layout.addWidget(move_down_button)
+
+        remove_button = SmallButton("Remove")
+        remove_button.setStyleSheet("background-color: red;")
+        remove_button.clicked.connect(lambda: layout.deleteLater()) #Is this needed?
+        remove_button.clicked.connect(lambda: widget.remove())
+        layout.addWidget(remove_button)
+
+
+        widget.data = {"task_name": name}
+        widget.setLayout(layout)
+        return widget
+    
     def make_field_entry(self, name: str) -> QWidget:
         layout = QHBoxLayout()
         label = QLabel(name)
@@ -288,9 +311,25 @@ class ExperimentRegistry(BCIUI):
         )
         form_area.addLayout(experiment_summary_box)
 
+        def add_field():
+            if self.field_input.currentText() in self.fields_content.list_property(
+                "field_name"
+            ):
+                self.show_alert("Field already added")
+                return
+            self.fields_content.add_item(
+                self.make_field_entry(self.field_input.currentText())
+            )
+        
+        def add_task():
+            self.protocol_contents.add_item(
+                self.make_task_entry(self.experiment_protocol_input.currentText())
+            )
+
         self.experiment_protocol_input = QComboBox()
         self.experiment_protocol_input.addItems(self.task_registry.list())
         add_task_button = QPushButton("Add")
+        add_task_button.clicked.connect(add_task)
         experiment_protocol_box = self.format_experiment_combobox(
             "Protocol", self.experiment_protocol_input, [add_task_button]
         )
@@ -324,16 +363,6 @@ class ExperimentRegistry(BCIUI):
         scroll_area_layout.addWidget(protocol_scroll_area)
 
         self.contents.addLayout(scroll_area_layout)
-
-        def add_field():
-            if self.field_input.currentText() in self.fields_content.list_property(
-                "field_name"
-            ):
-                self.show_alert("Field already added")
-                return
-            self.fields_content.add_item(
-                self.make_field_entry(self.field_input.currentText())
-            )
 
         add_field_button.clicked.connect(add_field)
         create_experiment_button = QPushButton("Create experiment")
