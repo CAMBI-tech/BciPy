@@ -362,8 +362,7 @@ class TestRSVPCalibration(unittest.TestCase):
         verify(self.eeg_client_mock, times=1).offset(0.0)
         verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
-        
-    
+
     @patch('bcipy.task.calibration.TriggerHandler')
     @patch('bcipy.task.calibration._save_session_related_data')
     def test_setup(self, save_session_mock, trigger_handler_mock):
@@ -380,7 +379,7 @@ class TestRSVPCalibration(unittest.TestCase):
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
                                    fake=self.fake)
-        
+
         self.assertTrue(task.initalized)
         verify(bcipy.task.calibration, times=1).init_acquisition(
             self.parameters, self.temp_dir, server=self.fake)
@@ -388,7 +387,7 @@ class TestRSVPCalibration(unittest.TestCase):
             self.parameters)
         self.assertEqual((self.daq, self.servers, self.win),
                          task.setup(self.parameters, self.temp_dir, self.fake))
-        
+
     @patch('bcipy.task.calibration.TriggerHandler')
     @patch('bcipy.task.calibration._save_session_related_data')
     def test_cleanup(self, save_session_mock, trigger_handler_mock):
@@ -398,7 +397,7 @@ class TestRSVPCalibration(unittest.TestCase):
         trigger_handler_mock.return_value = handler_mock
         when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
             (self.daq, self.servers, self.win))
-        
+
         # Mock the default cleanup
         when(bcipy.task.calibration.BaseCalibrationTask).write_offset_trigger().thenReturn(None)
         when(bcipy.task.calibration.BaseCalibrationTask).exit_display().thenReturn(None)
@@ -425,6 +424,7 @@ class TestRSVPCalibration(unittest.TestCase):
         verify(bcipy.task.calibration.BaseCalibrationTask, times=1).write_offset_trigger()
         verify(bcipy.task.calibration.BaseCalibrationTask, times=1).exit_display()
         verify(bcipy.task.calibration.BaseCalibrationTask, times=1).wait()
+
 
 if __name__ == '__main__':
     unittest.main()

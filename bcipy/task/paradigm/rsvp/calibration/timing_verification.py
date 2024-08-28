@@ -2,9 +2,6 @@
 from itertools import cycle, islice, repeat
 from typing import Iterator, List
 
-from psychopy import visual
-
-from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)

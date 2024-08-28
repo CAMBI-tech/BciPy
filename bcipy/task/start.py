@@ -1,12 +1,10 @@
 """Code for constructing and executing registered tasks"""
 # mypy: disable-error-code="arg-type, misc"
 from typing import List, Optional, Type
-from psychopy import visual
 
 from bcipy.task import Task, TaskData
 from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.signal.model import SignalModel

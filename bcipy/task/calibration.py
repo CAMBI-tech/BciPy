@@ -109,7 +109,7 @@ class BaseCalibrationTask(Task):
     def symbol_set(self) -> List[str]:
         """Symbols used in the calibration"""
         return self._symbol_set
-    
+
     def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
@@ -118,13 +118,13 @@ class BaseCalibrationTask(Task):
         # Initialize Display
         display = init_display_window(parameters)
         self.initalized = True
-    
+
         return daq, servers, display
-    
-    def validate(self) -> bool:
+
+    def validate(self) -> None:
         """Validate the task."""
         assert self.MODE != 'Undefined', 'MODE must be defined in subclass.'
-    
+
     def cleanup(self) -> None:
         """Any cleanup code to run after the last inquiry is complete."""
         self.exit_display()
@@ -296,7 +296,6 @@ class BaseCalibrationTask(Task):
 
         # Allow for some additional data to be collected for later processing
         self.wait()
-
 
     def write_trigger_data(self, timing: List[Tuple[str, float]],
                            first_run) -> None:

@@ -1,9 +1,7 @@
 import argparse
 import logging
 import multiprocessing
-from typing import List, Optional, Type
-
-from psychopy import visual
+from typing import Type
 
 from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
                           STATIC_AUDIO_PATH)
@@ -162,8 +160,6 @@ def execute_task(
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
 
     return True
-
-
 
 
 def bcipy_main() -> None:

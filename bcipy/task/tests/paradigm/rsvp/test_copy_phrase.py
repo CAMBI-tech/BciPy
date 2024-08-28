@@ -130,7 +130,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
-        
+
         # mock data for initial series
         series_gen = mock_inquiry_data()
         when(self.copy_phrase_wrapper).initialize_series().thenReturn(
@@ -618,7 +618,7 @@ class TestCopyPhrase(unittest.TestCase):
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
                                   fake=self.fake)
-        
+
         self.assertTrue(task.initalized)
         verify(bcipy.task.paradigm.rsvp.copy_phrase, times=1).init_acquisition(
             self.parameters, self.temp_dir, server=self.fake)
@@ -626,12 +626,12 @@ class TestCopyPhrase(unittest.TestCase):
             self.parameters)
         self.assertEqual((self.daq, self.servers, self.win),
                          task.setup(self.parameters, self.temp_dir, self.fake))
-        
+
     def test_cleanup(self):
         """Test cleanup"""
         when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
             (self.daq, self.servers, self.win))
-        
+
         # Mock the default cleanup
         when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).write_offset_trigger().thenReturn(None)
         when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).exit_display().thenReturn(None)

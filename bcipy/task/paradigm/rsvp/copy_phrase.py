@@ -252,16 +252,16 @@ class RSVPCopyPhraseTask(Task):
         # Initialize Display
         display = init_display_window(parameters)
         self.initalized = True
-    
+
         return daq, servers, display
-    
+
     def cleanup(self):
         self.exit_display()
         self.write_offset_trigger()
         self.save_session_data()
         # Wait some time before exiting so there is trailing eeg data saved
         self.wait()
-        
+
         if self.initalized:
 
             try:
@@ -286,11 +286,11 @@ class RSVPCopyPhraseTask(Task):
 
     def save_session_data(self) -> None:
         self.session.task_summary = TaskSummary(
-                self.session,
-                self.parameters["show_preview_inquiry"],
-                self.parameters["preview_inquiry_progress_method"],
-                self.trigger_handler.file_path,
-            ).as_dict()
+            self.session,
+            self.parameters["show_preview_inquiry"],
+            self.parameters["preview_inquiry_progress_method"],
+            self.trigger_handler.file_path,
+        ).as_dict()
         self.write_session_data()
 
         # Evidence is not recorded in the session when using fake decisions.

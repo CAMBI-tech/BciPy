@@ -1,7 +1,7 @@
 import logging
 import unittest
 
-from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+from mockito import (mock, unstub, verify, verifyNoUnwantedInteractions,
                      verifyStubbedInvocationsAreUsed, when)
 
 from bcipy import main
@@ -285,7 +285,6 @@ class TestExecuteTask(unittest.TestCase):
             signal_models=[],
             fake=self.fake,
         )
-
 
     def test_execute_language_model_enabled(self) -> None:
         self.fake = False
