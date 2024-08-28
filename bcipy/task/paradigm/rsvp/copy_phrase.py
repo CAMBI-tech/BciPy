@@ -258,26 +258,12 @@ class RSVPCopyPhraseTask(Task):
     def cleanup(self):
         self.exit_display()
         self.write_offset_trigger()
+        self.save_session_data()
+        # Wait some time before exiting so there is trailing eeg data saved
+        self.wait()
         
         if self.initalized:
 
-            self.session.task_summary = TaskSummary(
-                self.session,
-                self.parameters["show_preview_inquiry"],
-                self.parameters["preview_inquiry_progress_method"],
-                self.trigger_handler.file_path,
-            ).as_dict()
-            self.write_session_data()
-
-            # Evidence is not recorded in the session when using fake decisions.
-            if self.parameters["summarize_session"] and self.session.has_evidence():
-                session_excel(
-                    session=self.session,
-                    excel_file=f"{self.file_save}/{SESSION_SUMMARY_FILENAME}",
-                )
-
-            # Wait some time before exiting so there is trailing eeg data saved
-            self.wait()
             try:
                 # Stop Acquisition
                 self.daq.stop_acquisition()
@@ -293,10 +279,26 @@ class RSVPCopyPhraseTask(Task):
                 # windows when using a USB-C monitor. Putting the display close last in
                 # the inquiry allows acquisition to properly shutdown.
                 self.window.close()
+                self.initalized = False
 
             except Exception as e:
                 self.logger.exception(str(e))
 
+    def save_session_data(self) -> None:
+        self.session.task_summary = TaskSummary(
+                self.session,
+                self.parameters["show_preview_inquiry"],
+                self.parameters["preview_inquiry_progress_method"],
+                self.trigger_handler.file_path,
+            ).as_dict()
+        self.write_session_data()
+
+        # Evidence is not recorded in the session when using fake decisions.
+        if self.parameters["summarize_session"] and self.session.has_evidence():
+            session_excel(
+                session=self.session,
+                excel_file=f"{self.file_save}/{SESSION_SUMMARY_FILENAME}",
+            )
 
     def init_evidence_evaluators(
         self, signal_models: List[SignalModel]

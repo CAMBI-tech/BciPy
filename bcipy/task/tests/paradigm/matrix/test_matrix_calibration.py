@@ -72,7 +72,7 @@ class TestMatrixCalibration(unittest.TestCase):
         self.parameters = Parameters.from_cast_values(**parameters)
 
         self.win = mock({'size': np.array([500, 500]), 'units': 'height'})
-        self.servers = mock()
+        self.servers = [mock()]
 
         device_spec = DeviceSpec(name='Testing',
                                  channels=['a', 'b', 'c'],

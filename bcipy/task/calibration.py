@@ -146,6 +146,7 @@ class BaseCalibrationTask(Task):
                 # windows when using a USB-C monitor. Putting the display close last in
                 # the inquiry allows acquisition to properly shutdown.
                 self.window.close()
+                self.initalized = False
 
             except Exception as e:
                 self.logger.exception(str(e))

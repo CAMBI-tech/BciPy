@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
+import bcipy.task.calibration
 import bcipy.task.paradigm.rsvp.calibration.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
@@ -92,7 +93,7 @@ class TestRSVPCalibration(unittest.TestCase):
         })
         self.temp_dir = ''
         self.fake = False
-        self.servers = mock()
+        self.servers = [mock()]
         self.model_metadata = mock({
             'device_spec': device_spec,
             'transform': mock(),
@@ -361,7 +362,69 @@ class TestRSVPCalibration(unittest.TestCase):
         verify(self.eeg_client_mock, times=1).offset(0.0)
         verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
+        
+    
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
+    def test_setup(self, save_session_mock, trigger_handler_mock):
+        """Test setup"""
+        save_session_mock.return_value = mock()
+        handler_mock = Mock()
+        trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration).init_acquisition(any(), any(), server=self.fake).thenReturn(
+            (self.daq, self.servers))
+        when(bcipy.task.calibration).init_display_window(self.parameters).thenReturn(
+            self.win)
 
+        self.assertFalse(RSVPCalibrationTask.initalized)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
+        
+        self.assertTrue(task.initalized)
+        verify(bcipy.task.calibration, times=1).init_acquisition(
+            self.parameters, self.temp_dir, server=self.fake)
+        verify(bcipy.task.calibration, times=1).init_display_window(
+            self.parameters)
+        self.assertEqual((self.daq, self.servers, self.win),
+                         task.setup(self.parameters, self.temp_dir, self.fake))
+        
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
+    def test_cleanup(self, save_session_mock, trigger_handler_mock):
+        """Test cleanup"""
+        save_session_mock.return_value = mock()
+        handler_mock = Mock()
+        trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        
+        # Mock the default cleanup
+        when(bcipy.task.calibration.BaseCalibrationTask).write_offset_trigger().thenReturn(None)
+        when(bcipy.task.calibration.BaseCalibrationTask).exit_display().thenReturn(None)
+        when(bcipy.task.calibration.BaseCalibrationTask).wait().thenReturn(None)
+
+        # Mock the initialized cleanup
+        when(self.daq).stop_acquisition().thenReturn(None)
+        when(self.daq).cleanup().thenReturn(None)
+        when(self.servers[0]).stop().thenReturn(None)
+        when(self.win).close().thenReturn(None)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
+        # because the task is not initialized via setup, we need to set it to True here
+        task.initalized = True
+
+        task.cleanup()
+
+        verify(self.daq, times=1).stop_acquisition()
+        verify(self.daq, times=1).cleanup()
+        verify(self.servers[0], times=1).stop()
+        verify(self.win, times=1).close()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).setup(any(), any(), any())
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).write_offset_trigger()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).exit_display()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).wait()
 
 if __name__ == '__main__':
     unittest.main()
