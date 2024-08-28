@@ -106,6 +106,7 @@ class TestCopyPhrase(unittest.TestCase):
                     ContentType.EEG: self.eeg_client_mock
                 }
             })
+        self.servers = mock()
         when(self.daq).get_client(ContentType.EEG).thenReturn(self.eeg_client_mock)
         self.temp_dir = tempfile.mkdtemp()
         self.model_metadata = mock({
@@ -129,6 +130,9 @@ class TestCopyPhrase(unittest.TestCase):
 
         when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
+        
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         # mock data for initial series
         series_gen = mock_inquiry_data()
         when(self.copy_phrase_wrapper).initialize_series().thenReturn(
@@ -144,8 +148,6 @@ class TestCopyPhrase(unittest.TestCase):
     def test_initialize(self):
         """Test initialization"""
         RSVPCopyPhraseTask(
-            win=self.win,
-            daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
             signal_models=[self.signal_model],
@@ -154,8 +156,6 @@ class TestCopyPhrase(unittest.TestCase):
 
     def test_validate_parameters(self):
         task = RSVPCopyPhraseTask(
-            win=self.win,
-            daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
             signal_models=[self.signal_model],
@@ -169,8 +169,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
@@ -182,8 +180,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
@@ -195,8 +191,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
@@ -209,9 +203,7 @@ class TestCopyPhrase(unittest.TestCase):
                                      user_input_mock):
         """User should be able to exit the task without viewing any inquiries"""
 
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -241,9 +233,7 @@ class TestCopyPhrase(unittest.TestCase):
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
 
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -280,9 +270,7 @@ class TestCopyPhrase(unittest.TestCase):
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
         self.parameters['max_inq_len'] = 2
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -321,9 +309,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.parameters['task_text'] = 'Hello'
         self.parameters['spelled_letters_count'] = 4
 
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -358,9 +344,7 @@ class TestCopyPhrase(unittest.TestCase):
         """Spelled letters should reset if count is larger than copy phrase."""
         self.parameters['task_text'] = 'Hi'
         self.parameters['spelled_letters_count'] = 3
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -370,9 +354,7 @@ class TestCopyPhrase(unittest.TestCase):
 
     def test_stims_for_eeg(self):
         """The correct stims should be sent to get_device_data_for_decision"""
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -420,9 +402,7 @@ class TestCopyPhrase(unittest.TestCase):
                          user_input_mock):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -449,9 +429,7 @@ class TestCopyPhrase(unittest.TestCase):
                                             user_input_mock):
         """Test that preview is displayed"""
         self.parameters['show_preview_inquiry'] = True
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -576,9 +554,7 @@ class TestCopyPhrase(unittest.TestCase):
                 'nontarget', 'nontarget'
             ]))
 
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,

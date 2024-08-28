@@ -15,10 +15,9 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
         parameters (Dictionary)
         file_save (String)
+        fake (Boolean)
 
     Output:
         file_save (String)

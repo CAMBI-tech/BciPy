@@ -27,10 +27,9 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object [ClientManager]])
     parameters (Parameters Object)
     file_save (String)
+    fake (Boolean)
     """
     name = 'Matrix Calibration'
     MODE = 'Matrix'

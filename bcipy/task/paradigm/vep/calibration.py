@@ -3,7 +3,6 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from psychopy import visual  # type: ignore
 
-from bcipy.acquisition.multimodal import ClientManager
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -28,21 +27,19 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object)
     parameters (Dictionary)
     file_save (String)
+    fake (Boolean)
     """
     name = 'VEP Calibration'
     MODE = 'VEP'
 
-    def __init__(self, win: visual.Window, daq: ClientManager,
-                 parameters: Parameters, file_save: str):
+    def __init__(self, parameters: Parameters, file_save: str, fake: bool):
         self.box_colors = [
             '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
         ]
         self.num_boxes = 6
-        super().__init__(win, daq, parameters, file_save)
+        super().__init__(parameters, file_save, fake)
 
     def init_display(self) -> VEPDisplay:
         """Initialize the display"""

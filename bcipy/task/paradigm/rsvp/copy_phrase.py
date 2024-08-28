@@ -3,6 +3,7 @@ import logging
 from typing import List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
+from psychopy.visual import Window
 
 from bcipy.acquisition import ClientManager
 from bcipy.config import (
@@ -20,8 +21,10 @@ from bcipy.display import (
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
+from bcipy.helpers.acquisition import init_acquisition, LslDataServer
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+from bcipy.display import init_display_window
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
 from bcipy.helpers.parameters import Parameters
@@ -84,10 +87,6 @@ class RSVPCopyPhraseTask(Task):
 
     Parameters
     ----------
-        win : object,
-            display window to present visual stimuli.
-        daq : object,
-            data acquisition object initialized for the desired protocol
         parameters : dict,
             configuration details regarding the experiment. See parameters.json
         file_save : str,
@@ -105,6 +104,7 @@ class RSVPCopyPhraseTask(Task):
 
     name = "RSVP Copy Phrase"
     MODE = "RSVP"
+    initalized = False
 
     PARAMETERS_USED = [
         "time_fixation",
@@ -163,8 +163,6 @@ class RSVPCopyPhraseTask(Task):
 
     def __init__(
         self,
-        win: visual.Window,
-        daq: ClientManager,
         parameters: Parameters,
         file_save: str,
         signal_models: List[SignalModel],
@@ -173,6 +171,9 @@ class RSVPCopyPhraseTask(Task):
     ) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
         self.logger = logging.getLogger(__name__)
+        self.fake = fake
+        daq, servers, win = self.setup(parameters, file_save, fake)
+        self.servers = servers
         self.window = win
         self.daq = daq
         self.parameters = parameters
@@ -204,7 +205,6 @@ class RSVPCopyPhraseTask(Task):
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters["task_text"]
 
-        self.fake = fake
         self.language_model = language_model
         self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
@@ -243,6 +243,60 @@ class RSVPCopyPhraseTask(Task):
         )
 
         self.rsvp = self.init_display()
+
+    def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+        # Initialize Acquisition
+        daq, servers = init_acquisition(
+            parameters, data_save_location, server=fake)
+
+        # Initialize Display
+        display = init_display_window(parameters)
+        self.initalized = True
+    
+        return daq, servers, display
+    
+    def cleanup(self):
+        self.exit_display()
+        self.write_offset_trigger()
+        
+        if self.initalized:
+
+            self.session.task_summary = TaskSummary(
+                self.session,
+                self.parameters["show_preview_inquiry"],
+                self.parameters["preview_inquiry_progress_method"],
+                self.trigger_handler.file_path,
+            ).as_dict()
+            self.write_session_data()
+
+            # Evidence is not recorded in the session when using fake decisions.
+            if self.parameters["summarize_session"] and self.session.has_evidence():
+                session_excel(
+                    session=self.session,
+                    excel_file=f"{self.file_save}/{SESSION_SUMMARY_FILENAME}",
+                )
+
+            # Wait some time before exiting so there is trailing eeg data saved
+            self.wait()
+            try:
+                # Stop Acquisition
+                self.daq.stop_acquisition()
+                self.daq.cleanup()
+
+                # Stop Servers
+                if self.servers:
+                    for server in self.servers:
+                        server.stop()
+
+                # Close the display window
+                # NOTE: There is currently a bug in psychopy when attempting to shutdown
+                # windows when using a USB-C monitor. Putting the display close last in
+                # the inquiry allows acquisition to properly shutdown.
+                self.window.close()
+
+            except Exception as e:
+                self.logger.exception(str(e))
+
 
     def init_evidence_evaluators(
         self, signal_models: List[SignalModel]
@@ -541,26 +595,7 @@ class RSVPCopyPhraseTask(Task):
             run = self.check_stop_criteria()
             self.inq_counter += 1
 
-        self.exit_display()
-        self.write_offset_trigger()
-
-        self.session.task_summary = TaskSummary(
-            self.session,
-            self.parameters["show_preview_inquiry"],
-            self.parameters["preview_inquiry_progress_method"],
-            self.trigger_handler.file_path,
-        ).as_dict()
-        self.write_session_data()
-
-        # Evidence is not recorded in the session when using fake decisions.
-        if self.parameters["summarize_session"] and self.session.has_evidence():
-            session_excel(
-                session=self.session,
-                excel_file=f"{self.file_save}/{SESSION_SUMMARY_FILENAME}",
-            )
-
-        # Wait some time before exiting so there is trailing eeg data saved
-        self.wait()
+        self.cleanup()
 
         return TaskData(save_path=self.file_save, task_dict=self.session.as_dict())
 

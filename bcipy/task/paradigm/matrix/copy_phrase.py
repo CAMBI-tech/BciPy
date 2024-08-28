@@ -15,10 +15,6 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
 
     Parameters
     ----------
-        win : object,
-            display window to present visual stimuli.
-        daq : object,
-            data acquisition object initialized for the desired protocol
         parameters : dict,
             configuration details regarding the experiment. See parameters.json
         file_save : str,

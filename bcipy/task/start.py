@@ -14,8 +14,6 @@ from bcipy.language import LanguageModel
 
 
 def make_task(
-        display_window: visual.Window,
-        daq: ClientManager,
         task: Type[Task],
         parameters: Parameters,
         file_save: str,
@@ -26,8 +24,6 @@ def make_task(
 
     Parameters:
     -----------
-        display_window: psychopy Window
-        daq: ClientManager - manages one or more acquisition clients
         task: Task - instance of a Task subclass that will be initialized
         parameters: dict
         file_save: str - path to file in which to save data
@@ -39,28 +35,24 @@ def make_task(
         Task instance
     """
 
-    # NORMAL RSVP MODES
-
     from bcipy.task.calibration import BaseCalibrationTask
     if issubclass(task, BaseCalibrationTask):
-        return task(display_window, daq, parameters, file_save)
+        return task(parameters, file_save, fake)
 
     if task is RSVPCopyPhraseTask:
         return RSVPCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_models,
+            parameters, file_save, signal_models,
             language_model, fake=fake)
 
     if task is MatrixCopyPhraseTask:
         return MatrixCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_models,
+            parameters, file_save, signal_models,
             language_model, fake=fake)
 
     raise BciPyCoreException('The provided task is not available in main')
 
 
 def start_task(
-        display_window: visual.Window,
-        daq: ClientManager,
         task: Type[Task],
         parameters: Parameters,
         file_save: str,
@@ -69,8 +61,6 @@ def start_task(
         fake: bool = True) -> TaskData:
     """Creates a Task and starts execution."""
     bcipy_task = make_task(
-        display_window,
-        daq,
         task,
         parameters,
         file_save,

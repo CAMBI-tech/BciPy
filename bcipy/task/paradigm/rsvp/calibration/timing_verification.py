@@ -20,22 +20,20 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Window)
-        daq (ClientManager)
         parameters (Parameters)
         file_save (str)
+        fake (bool)
 
     Output:
         file_save (str)
     """
     name = 'RSVP Timing Verification'
 
-    def __init__(self, win: visual.Window, daq: ClientManager,
-                 parameters: Parameters, file_save: str) -> None:
+    def __init__(self, parameters: Parameters, file_save: str, fake: bool) -> None:
         parameters['stim_height'] = 0.8
         parameters['stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
-              self).__init__(win, daq, parameters, file_save)
+              self).__init__(parameters, file_save, fake)
 
     @property
     def symbol_set(self) -> List[str]:

@@ -25,10 +25,9 @@ class RSVPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display)
-    daq (Data Acquisition Client)
     parameters (dict)
     file_save (str)
+    fake (bool)
     """
     name = 'RSVP Calibration'
     MODE = 'RSVP'
