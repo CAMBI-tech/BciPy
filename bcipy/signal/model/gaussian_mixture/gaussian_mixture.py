@@ -20,7 +20,7 @@ warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 import matplotlib.pyplot as plt
 import numpy as np
 
-class GazeModelKernelGaussianProcess(SignalModel):
+class GP(SignalModel):
     def __init__(self):
         reshaper = GazeReshaper()
         self.ready_to_predict = False
@@ -50,7 +50,7 @@ class GazeModelKernelGaussianProcess(SignalModel):
     def load(self, path: Path):
         ...
 
-class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
+class GPSampleAverage(SignalModel):
     reshaper = GazeReshaper()
     window_length = 3
     
@@ -167,7 +167,7 @@ class GazeModelKernelGaussianProcessSampleAverage(SignalModel):
         return new_data
 
 
-class GazeModelIndividual(SignalModel):
+class GMIndividual(SignalModel):
     """Gaze model that fits different Gaussians/Gaussian Mixtures for each symbol."""
     reshaper = GazeReshaper()
     window_length = 3
@@ -180,7 +180,7 @@ class GazeModelIndividual(SignalModel):
 
         self.ready_to_predict = False
 
-    def fit(self, train_data: np.ndarray) -> 'GazeModelIndividual':
+    def fit(self, train_data: np.ndarray):
         model = GaussianMixture(n_components=self.num_components, random_state=self.random_state, init_params='kmeans')
         model.fit(train_data)
         self.model = model
@@ -289,7 +289,7 @@ class GazeModelIndividual(SignalModel):
         return model
 
 
-class GazeModelCombined(SignalModel):
+class GMCentralized(SignalModel):
     '''Gaze model that uses all symbols to fit a single Gaussian '''
     reshaper = GazeReshaper()
     window_length = 3

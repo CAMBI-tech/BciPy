@@ -188,7 +188,7 @@ class InquiryReshaper:
             prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
-        After using the InquiryReshaper, it may be necessary to further trial the data for processing.
+        After using the InquiryReshaper, it may be necessary to further extract the trials for processing.
         Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
         Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
         slicing parameters.
@@ -239,39 +239,42 @@ class GazeReshaper:
                  num_stimuli_per_inquiry: int,
                  symbol_set: List[str],
                  channel_map: Optional[List[int]] = None,
-                 ) -> dict:
-        """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
-        the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
-        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
-        the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
+                 ) -> Tuple[dict, List[float], List[str]]:
+        """Extract gaze trajectory data and labels. 
+        
+        Different from the EEG, gaze inquiry windows start with the first highlighted symbol and end with the 
+        last highlighted symbol in the inquiry. Each inquiry has a length of (trial duration x num of trials) 
+        seconds. Labels are provided in 'target_symbols'. It returns a Dict, where keys are the target symbols 
+        and the values are inquiries (appended in order of appearance) where the corresponding target symbol is 
+        prompted.
+        
         Optional outputs:
-        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended
-        in chronological order. labels returns the list of target symbols in each inquiry.
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are 
+        appended in chronological order. 
+        labels returns the list of target symbols in each inquiry.
 
-        Args:
+        Parameters
+        ----------
             inq_start_times (List[float]): Timestamp of each event in seconds
             target_symbols (List[str]): Prompted symbol in each inquiry
             gaze_data (np.ndarray): shape (channels, samples) eye tracking data
-            sample_rate (int): sample rate of data provided in eeg_data
-            stimulus_duration (float): duration of flash time (in seconds) for each stimulus
+            sample_rate (int): sample rate of eye tracker data
+            stimulus_duration (float): duration of flash time (in seconds) for each trial
             num_stimuli_per_inquiry (int): number of stimuli in each inquiry (default: 10)
             symbol_set (List[str]): list of all symbols for the task
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to None; all channels will be used.
 
-        Returns:
-            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
-            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
-
+        Returns
+        -------
+            data_by_targets (dict): Dictionary where keys consist of the symbol set, and values 
+            the appended inquiries for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
+            
             reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
             labels (List[str]) [optional] : Target symbol in each inquiry.
         """
-        if channel_map:
-            # Remove the channels that we are not interested in
-            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
-
         # Find the value closest to (& greater than) inq_start_times
+        # Lsl timestamps are the last row in the gaze_data
         gaze_data_timing = gaze_data[-1, :].tolist()
 
         start_times = []
@@ -289,15 +292,14 @@ class GazeReshaper:
 
         # Create a dictionary with symbols as keys and data as values
         # 'A': [], 'B': [] ...
-        data_by_targets: Dict[str, list] = {}
+        data_by_targets_dict: Dict[str, list] = {}
         for symbol in symbol_set:
-            data_by_targets[symbol] = []
+            data_by_targets_dict[symbol] = []
 
         buffer = stimulus_duration / 5  # seconds, buffer for each inquiry
         # NOTE: This buffer is used to account for the screen downtime between each stimulus.
         # There seems to be a duty cycle of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
-        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry
-        # in seconds, total length of flickering (after prompt) for each inquiry
+        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry # seconds
 
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
@@ -308,13 +310,13 @@ class GazeReshaper:
             if stop > len(gaze_data[0, :]):
                 continue
 
-            reshaped_data.append(gaze_data[:, start:stop])
             # (Optional) extracted data (Inquiries x Channels x Samples)
+            reshaped_data.append(gaze_data[:, start:stop])
 
             # Populate the dict by appending the inquiry to the correct key:
-            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+            data_by_targets_dict[labels[i]].append(gaze_data[:, start:stop])
     
-
+        # TODO: Remove this section after testing
         # After populating, flatten the arrays in the dictionary to (Channels x Samples):
         # for symbol in symbol_set:
             # if len(data_by_targets[symbol]) > 0:
@@ -326,7 +328,7 @@ class GazeReshaper:
             # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
             # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
 
-        return data_by_targets
+        return data_by_targets_dict, reshaped_data, labels
 
     def centralize_all_data(data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).

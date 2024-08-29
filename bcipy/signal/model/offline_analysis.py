@@ -32,10 +32,7 @@ from bcipy.helpers.visualization import (visualize_centralized_data,
                                          visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GazeModelCombined,
-                                                 GazeModelIndividual,
-                                                 GazeModelKernelGaussianProcess,
-                                                 GazeModelKernelGaussianProcessSampleAverage)
+from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized, GP, GPSampleAverage)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
@@ -324,14 +321,7 @@ def analyze_gaze(
 
     data, _fs = gaze_data.by_channel()
 
-    if model_type == "Individual":
-        model = GazeModelIndividual()
-    elif model_type == "Centralized":
-        model = GazeModelCombined()
-    elif model_type == "GP":
-        model = GazeModelKernelGaussianProcess()
-    elif model_type == "GP_SampleAverage":
-        model = GazeModelKernelGaussianProcessSampleAverage()
+    model = GPSampleAverage()
 
     window_length = model.window_length
 
@@ -403,7 +393,6 @@ def analyze_gaze(
             left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i][j])
             preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
              # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
-        breakpoint()
         preprocessed_data[i] = np.array(preprocessed_data[i])
     
     
@@ -553,6 +542,8 @@ def analyze_gaze(
         
         # for i in range(centralized_data_training_set.shape[0]):
         reshaped_data = centralized_data_training_set.reshape((72,720))
+        units = 1e5
+        reshaped_data *= units
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         # cov_matrix.shape = (720,720)
         plt.imshow(cov_matrix)
@@ -564,6 +555,7 @@ def analyze_gaze(
         l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         counter = 0
+        eps = 0
         for i_sym0, sym0 in enumerate(symbol_set):
             for i_sym1, sym1 in enumerate(symbol_set):
                 if len(centralized_data[sym1]) == 0:
@@ -574,9 +566,13 @@ def analyze_gaze(
                 central_data = model.substract_mean(test_dict[sym0], time_average[sym1])
                 flattened_data = central_data.reshape((720,))
                 diff = flattened_data - reshaped_mean
-                eps = 1e-6
                 inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
-                log_likelihood = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
+                # NOTE: Why does the inverse exist if the matrix is singular? (det is zero)
+                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
+                # denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
+                # Common denominator is negligible.
+                log_likelihood = numerator
+                # log_likelihood = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
                 # print(f"{log_likelihood:.3E}")
                 log_likelihoods[i_sym0, i_sym1] = log_likelihood
             # Find the max likelihood:
@@ -590,9 +586,8 @@ def analyze_gaze(
         # print(central_data)
         # print("log_likelihoods: ")
         # print(log_likelihoods)
-        breakpoint()
         # max_like = l_likelihoodsl_likelihoods.max(axis=0)
-
+        breakpoint()
         # Find the covariances of the centralized data:
         cov_matrix_trial = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[0], centralized_data_training_set.shape[0]))
         for i_coord in range(centralized_data_training_set.shape[1]):

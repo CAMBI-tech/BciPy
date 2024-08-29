@@ -1,8 +1,8 @@
-from .gaussian_mixture import GazeModelCombined, GazeModelIndividual, GazeModelKernelGaussianProcess, GazeModelKernelGaussianProcessSampleAverage
+from .gaussian_mixture import GMIndividual, GMCentralized, GP, GPSampleAverage
 
 __all__ = [
-    "GazeModelCombined",
-    "GazeModelIndividual",
-    "GazeModelKernelGaussianProcess",
-    "GazeModelKernelGaussianProcessSampleAverage",
+    "GMIndividual",
+    "GMCentralized",
+    "GP",
+    "GPSampleAverage",
 ]
