@@ -1,5 +1,4 @@
 from bcipy.gui.bciui import BCIUI, run_bciui
-from PyQt6.QtWidgets import QLabel
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
@@ -51,8 +50,8 @@ class IntertaskAction(BCIUI):
         self.next_button.clicked.connect(self.close)
         # This should be replaced with a method that stops orchestrator execution
         self.stop_button.clicked.connect(QApplication.instance().quit)
-    
+
 
 if __name__ == "__main__":
     # test values
-    run_bciui(IntertaskAction,'Placeholder Task Name', 3, 2)
+    run_bciui(IntertaskAction, 'Placeholder Task Name', 3, 2)

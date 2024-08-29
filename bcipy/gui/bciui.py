@@ -29,7 +29,8 @@ class BCIUI(QWidget):
         self.contents = QVBoxLayout()
         self.setLayout(self.contents)
 
-    def app(self): ...
+    def app(self):
+        ...
 
     def apply_stylesheet(self):
         gui_dir = os.path.dirname(os.path.realpath(__file__))
@@ -126,7 +127,7 @@ class DynamicList(QWidget):
 
     def __len__(self):
         return len(self.widgets)
-    
+
     def add_item(self, item: DynamicItem):
         self.widgets.append(item)
         item.on_remove.connect(lambda: self.remove_item(item))
@@ -350,7 +351,7 @@ class ExperimentRegistry(BCIUI):
             shell=True)
 
         self.update_field_list()
-    
+
     def update_field_list(self):
         self.field_input.clear()
         self.field_input.addItems(load_fields())
