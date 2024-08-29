@@ -115,13 +115,14 @@ class DynamicItem(QWidget):
 class DynamicList(QWidget):
     """A list of QWidgets that can be dynamically updated"""
 
-    widgets: List[QWidget] = []
+    widgets: List[QWidget]
 
     def __init__(self, layout: Optional[QLayout] = None):
         super().__init__()
         if layout is None:
             layout = QVBoxLayout()
         self.setLayout(layout)
+        self.widgets = []
 
     def __len__(self):
         return len(self.widgets)
@@ -174,6 +175,7 @@ from bcipy.config import (
 )
 from bcipy.task.task_registry import TaskRegistry
 import subprocess
+from bcipy.orchestrator.config import serialize_protocol
 import json
 
 
@@ -321,10 +323,14 @@ class ExperimentRegistry(BCIUI):
             }
             for field in fields
         ]
+        task_names = self.protocol_contents.list_property("task_name")
+        task_objects = [self.task_registry.get(task_name) for task_name in task_names]
+        protocol = serialize_protocol(task_objects)
 
         existing_experiments[experiment_name] = {
             "fields": field_list,
             "summary": experiment_summary,
+            "protocol": protocol,
         }
         save_experiment_data(
             existing_experiments,
