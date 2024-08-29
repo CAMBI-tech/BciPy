@@ -29,8 +29,7 @@ class BCIUI(QWidget):
         self.contents = QVBoxLayout()
         self.setLayout(self.contents)
 
-    def app(self): 
-        ...
+    def app(self): ...
 
     def apply_stylesheet(self):
         gui_dir = os.path.dirname(os.path.realpath(__file__))
@@ -124,10 +123,25 @@ class DynamicList(QWidget):
             layout = QVBoxLayout()
         self.setLayout(layout)
 
+    def __len__(self):
+        return len(self.widgets)
+    
     def add_item(self, item: DynamicItem):
         self.widgets.append(item)
         item.on_remove.connect(lambda: self.remove_item(item))
         self.layout().addWidget(item)
+
+    def move_item(self, item: DynamicItem, new_index: int):
+        if new_index < 0 or new_index >= len(self):
+            raise IndexError(f"Index out of range for length {len(self)}")
+
+        self.widgets.pop(self.widgets.index(item))
+        self.widgets.insert(new_index, item)
+        self.layout().removeWidget(item)
+        self.layout().insertWidget(new_index, item)
+
+    def index(self, item: DynamicItem):
+        return self.widgets.index(item)
 
     def remove_item(self, item: DynamicItem):
         self.widgets.remove(item)
@@ -150,7 +164,13 @@ class DynamicList(QWidget):
 # --- Experiment registry code ---
 from bcipy.helpers.load import load_fields, load_experiments
 from bcipy.helpers.save import save_experiment_data
-from bcipy.config import DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH, EXPERIMENT_FILENAME, FIELD_FILENAME
+from bcipy.config import (
+    DEFAULT_ENCODING,
+    DEFAULT_EXPERIMENT_PATH,
+    DEFAULT_FIELD_PATH,
+    EXPERIMENT_FILENAME,
+    FIELD_FILENAME,
+)
 from bcipy.task.task_registry import TaskRegistry
 import json
 
@@ -162,7 +182,7 @@ class ExperimentRegistry(BCIUI):
     def __init__(self):
         super().__init__("Experiment Registry", 600, 700)
         self.task_registry = TaskRegistry()
-    
+
     def format_experiment_combobox(
         self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
     ) -> QHBoxLayout:
@@ -185,23 +205,39 @@ class ExperimentRegistry(BCIUI):
         label.setStyleSheet("color: black;")
         layout.addWidget(label)
         widget = DynamicItem()
-        
+
+        # The indices will have to be updated to reflect the actual index we want to move to
         move_up_button = SmallButton("▲")
+        move_up_button.clicked.connect(
+            lambda: self.protocol_contents.move_item(
+                widget, max(self.protocol_contents.index(widget) - 1, 0)
+            )
+        )
         move_down_button = SmallButton("▼")
+        move_down_button.clicked.connect(
+            lambda: self.protocol_contents.move_item(
+                widget,
+                min(
+                    self.protocol_contents.index(widget) + 1,
+                    len(self.protocol_contents) - 1,
+                ),
+            )
+        )
         layout.addWidget(move_up_button)
         layout.addWidget(move_down_button)
 
         remove_button = SmallButton("Remove")
         remove_button.setStyleSheet("background-color: red;")
-        remove_button.clicked.connect(lambda: layout.deleteLater()) #Is this needed?
+        remove_button.clicked.connect(
+            lambda: layout.deleteLater()
+        )  # This may not be needed
         remove_button.clicked.connect(lambda: widget.remove())
         layout.addWidget(remove_button)
-
 
         widget.data = {"task_name": name}
         widget.setLayout(layout)
         return widget
-    
+
     def make_field_entry(self, name: str) -> QWidget:
         layout = QHBoxLayout()
         label = QLabel(name)
@@ -242,7 +278,7 @@ class ExperimentRegistry(BCIUI):
         widget.setLayout(layout)
         return widget
 
-    def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
+    def load_fields(path: str = f"{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}") -> dict:
         """Load Fields.
 
         PARAMETERS
@@ -259,9 +295,9 @@ class ExperimentRegistry(BCIUI):
                 }
 
         """
-        with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
+        with open(path, "r", encoding=DEFAULT_ENCODING) as json_file:
             return json.load(json_file)
-    
+
     def create_experiment(self):
         existing_experiments = load_experiments()
         experiment_name = self.experiment_name_input.text()
@@ -288,7 +324,12 @@ class ExperimentRegistry(BCIUI):
             "fields": field_list,
             "summary": experiment_summary,
         }
-        save_experiment_data(existing_experiments, load_fields(), DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAME)
+        save_experiment_data(
+            existing_experiments,
+            load_fields(),
+            DEFAULT_EXPERIMENT_PATH,
+            EXPERIMENT_FILENAME,
+        )
         self.show_alert("created experiment")
 
     def app(self):
@@ -320,7 +361,7 @@ class ExperimentRegistry(BCIUI):
             self.fields_content.add_item(
                 self.make_field_entry(self.field_input.currentText())
             )
-        
+
         def add_task():
             self.protocol_contents.add_item(
                 self.make_task_entry(self.experiment_protocol_input.currentText())
@@ -369,11 +410,13 @@ class ExperimentRegistry(BCIUI):
         create_experiment_button.clicked.connect(self.create_experiment)
         self.contents.addWidget(create_experiment_button)
 
+
 def run_bciui(ui: Type[BCIUI], *args, **kwargs):
     app = QApplication([])
     ui_instance = ui(*args, **kwargs)
     ui_instance.display()
     app.exec()
+
 
 if __name__ == "__main__":
     run_bciui(ExperimentRegistry)
