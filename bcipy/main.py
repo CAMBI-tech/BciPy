@@ -87,9 +87,6 @@ def bci_main(
 
     log.info(sys_info)
 
-    # Collect experiment field data
-    # collect_experiment_field_data(experiment, save_folder)
-
     if execute_task(task, parameters, save_folder, alert, fake):
         if visualize:
 
