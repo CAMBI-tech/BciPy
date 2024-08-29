@@ -170,8 +170,10 @@ from bcipy.config import (
     DEFAULT_FIELD_PATH,
     EXPERIMENT_FILENAME,
     FIELD_FILENAME,
+    BCIPY_ROOT,
 )
 from bcipy.task.task_registry import TaskRegistry
+import subprocess
 import json
 
 
@@ -332,6 +334,21 @@ class ExperimentRegistry(BCIUI):
         )
         self.show_alert("created experiment")
 
+    def create_experiment_field(self) -> None:
+        """Create Field.
+
+        Launch to FieldRegistry to create a new field for experiments.
+        """
+        subprocess.call(
+            f'python {BCIPY_ROOT}/gui/experiments/FieldRegistry.py',
+            shell=True)
+
+        self.update_field_list()
+    
+    def update_field_list(self):
+        self.field_input.clear()
+        self.field_input.addItems(load_fields())
+
     def app(self):
         # Add form fields
         self.center_content_vertically = True
@@ -380,6 +397,7 @@ class ExperimentRegistry(BCIUI):
         self.field_input.addItems(load_fields())
         add_field_button = QPushButton("Add")
         new_field_button = QPushButton("New")
+        new_field_button.clicked.connect(self.create_experiment_field)
         form_area.addLayout(
             self.format_experiment_combobox(
                 "Fields", self.field_input, [add_field_button, new_field_button]
