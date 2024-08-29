@@ -5,7 +5,7 @@
 QWidget {
     background-color: black;
     color: white;
-    font-size: 16px;
+    font-size: 14px;
 }
 
 QWidget > * {
@@ -41,5 +41,4 @@ QComboBox, QLineEdit {
 
 QScrollArea {
     background-color: white;
-    border-radius: 5px;
 }

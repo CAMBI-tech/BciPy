@@ -50,7 +50,7 @@ class BCIUI(QWidget):
     def show_alert(self, alert_text: str):
         msg = QMessageBox()
         # This doesn't seem to work at least on mac. TODO: fix this
-        msg.setIcon(QMessageBox.Icon.Warning)
+        # msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(alert_text)
         msg.setWindowTitle("Alert")
 
@@ -212,13 +212,13 @@ class ExperimentRegistry(BCIUI):
         widget = DynamicItem()
 
         # The indices will have to be updated to reflect the actual index we want to move to
-        move_up_button = SmallButton("▲")
+        move_up_button = SmallButton(" ▲ ")
         move_up_button.clicked.connect(
             lambda: self.protocol_contents.move_item(
                 widget, max(self.protocol_contents.index(widget) - 1, 0)
             )
         )
-        move_down_button = SmallButton("▼")
+        move_down_button = SmallButton(" ▼ ")
         move_down_button.clicked.connect(
             lambda: self.protocol_contents.move_item(
                 widget,
