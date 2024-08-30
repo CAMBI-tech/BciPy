@@ -698,7 +698,7 @@
     "type": "float"
   },
   "show_preview_inquiry": {
-    "value": "true",
+    "value": "false",
     "section": "bci_config",
     "name": "Preview Inquiry Display",
     "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the Task. *Note* Not all tasks will have this enabled!",

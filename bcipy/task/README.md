@@ -33,25 +33,3 @@ Currently, these are the supported paradigms and modes:
 > Copy Phrase: Used to copy a phrase using the Matrix paradigm (e.g. P300 Speller) on data from a P300 calibration
 
 
-
-## Start Task
--------------
-
-Start Task takes in Display [object], parameters [dict], file save [str-path] and task type [dict]. Using the
-task type, start_task() will route to the correct paradigm (RSVP, SSVEP, MATRIX) and mode (Calibration, Copy Phrase, etc.)
-
-It is called in the following way:
-
-
-```
-	from bcipy.task.start_task import start_task
-
-    start_task(
-       	display_window,
-        data_acquisition_client,
-        parameters,
-        file_save)
-
-```
-
-It will throw an error if the task isn't implemented.

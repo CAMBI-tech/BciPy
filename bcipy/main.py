@@ -1,23 +1,16 @@
 import argparse
 import logging
 import multiprocessing
-from typing import List, Optional, Type
+from typing import Type
 
-from psychopy import visual
-
-from bcipy.acquisition import ClientManager, LslDataServer
 from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
                           STATIC_AUDIO_PATH)
-from bcipy.display import init_display_window
-from bcipy.helpers.acquisition import init_eeg_acquisition
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import (load_experiments, load_json_parameters,
                                 load_signal_models)
 from bcipy.helpers.save import init_save_data_structure
-from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import configure_logger, get_system_info
-from bcipy.helpers.task import print_message
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.task import TaskRegistry, Task
@@ -94,9 +87,6 @@ def bci_main(
 
     log.info(sys_info)
 
-    # Collect experiment field data
-    collect_experiment_field_data(experiment, save_folder)
-
     if execute_task(task, parameters, save_folder, alert, fake):
         if visualize:
 
@@ -150,21 +140,9 @@ def execute_task(
 
         language_model = init_language_model(parameters)
 
-    # Initialize DAQ and export the device configuration
-    daq, servers = init_eeg_acquisition(
-        parameters, save_folder, server=fake)
-
-    # Initialize Display Window
-    # We have to wait until after the prompt to load the signal model before
-    # displaying the window, otherwise in fullscreen mode this throws an error
-    display = init_display_window(parameters)
-    print_message(display, f'Initializing {task}...')
-
     # Start Task
     try:
-        start_task(display,
-                   daq,
-                   task,
+        start_task(task,
                    parameters,
                    save_folder,
                    language_model=language_model,
@@ -178,41 +156,7 @@ def execute_task(
     if alert:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
 
-    return _clean_up_session(display, daq, servers)
-
-
-def _clean_up_session(
-        display: visual.Window,
-        daq: ClientManager,
-        servers: Optional[List[LslDataServer]] = None) -> bool:
-    """Clean up session.
-
-    Closes the display window and data acquisition objects. Returns True if the session was closed successfully.
-
-    Input:
-        display (visual.Window): display window
-        daq (LslAcquisitionClient): data acquisition client
-        server (LslDataServer): data server
-    """
-    try:
-        # Stop Acquisition
-        daq.stop_acquisition()
-        daq.cleanup()
-
-        # Stop Servers
-        if servers:
-            for server in servers:
-                server.stop()
-
-        # Close the display window
-        # NOTE: There is currently a bug in psychopy when attempting to shutdown
-        # windows when using a USB-C monitor. Putting the display close last in
-        # the inquiry allows acquisition to properly shutdown.
-        display.close()
-        return True
-    except Exception as e:
-        log.exception(str(e))
-        return False
+    return True
 
 
 def bcipy_main() -> None:

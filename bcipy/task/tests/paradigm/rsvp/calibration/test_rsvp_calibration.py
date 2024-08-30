@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
+import bcipy.task.calibration
 import bcipy.task.paradigm.rsvp.calibration.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
@@ -91,6 +92,8 @@ class TestRSVPCalibration(unittest.TestCase):
             }
         })
         self.temp_dir = ''
+        self.fake = False
+        self.servers = [mock()]
         self.model_metadata = mock({
             'device_spec': device_spec,
             'transform': mock(),
@@ -127,16 +130,19 @@ class TestRSVPCalibration(unittest.TestCase):
 
     @patch('bcipy.task.calibration.TriggerHandler')
     @patch('bcipy.task.calibration._save_session_related_data')
-    def test_initialize(self, save_session_mock, trigger_handler_mock):
+    @patch('bcipy.task.calibration.BaseCalibrationTask.cleanup')
+    def test_initialize(self, save_session_mock, trigger_handler_mock, cleanup_mock):
         """Test initialization"""
 
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        cleanup_mock.return_value = None
 
-        RSVPCalibrationTask(win=self.win,
-                            daq=self.daq,
-                            parameters=self.parameters,
-                            file_save=self.temp_dir)
+        RSVPCalibrationTask(parameters=self.parameters,
+                            file_save=self.temp_dir,
+                            fake=self.fake)
 
         verify(bcipy.task.paradigm.rsvp.calibration.calibration,
                times=1).init_calibration_display_task(self.parameters,
@@ -148,10 +154,11 @@ class TestRSVPCalibration(unittest.TestCase):
         """Test task execute"""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
         when(task).write_trigger_data(any(), any()).thenReturn(None)
@@ -173,11 +180,12 @@ class TestRSVPCalibration(unittest.TestCase):
         parameters = {}
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         with self.assertRaises(Exception):
-            RSVPCalibrationTask(win=self.win,
-                                daq=self.daq,
-                                parameters=parameters,
-                                file_save=self.temp_dir)
+            RSVPCalibrationTask(parameters=parameters,
+                                file_save=self.temp_dir,
+                                fake=self.fake)
 
     @patch('bcipy.task.calibration.TriggerHandler')
     @patch('bcipy.task.calibration._save_session_related_data')
@@ -186,10 +194,11 @@ class TestRSVPCalibration(unittest.TestCase):
         """Test trigger type targetness."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         # non-target
         symbol = 'N'
@@ -214,10 +223,11 @@ class TestRSVPCalibration(unittest.TestCase):
         """Test trigger type fixation."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         # fixation
         symbol = '+'
@@ -232,12 +242,13 @@ class TestRSVPCalibration(unittest.TestCase):
     def test_trigger_type_prompt(self, save_session_mock,
                                  trigger_handler_mock):
         """Test trigger type prompt."""
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         # prompt, index = 0, otherwise it would be a target
         symbol = 'P'
@@ -254,10 +265,11 @@ class TestRSVPCalibration(unittest.TestCase):
         """Test trigger type preview."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         # preview, index > 0, otherwise it would be a prompt
         symbol = 'inquiry_preview'
@@ -274,11 +286,12 @@ class TestRSVPCalibration(unittest.TestCase):
         """Test write trigger data when it is the first run of the task."""
         handler_mock = Mock()
         save_session_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         trigger_handler_mock.return_value = handler_mock
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         timing_mock = mock()
@@ -307,10 +320,11 @@ class TestRSVPCalibration(unittest.TestCase):
         handler_mock = Mock()
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = handler_mock
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
 
         timing_mock = mock()
         timing = [('a', 0.0)]
@@ -329,10 +343,11 @@ class TestRSVPCalibration(unittest.TestCase):
         save_session_mock.return_value = mock()
         handler_mock = Mock()
         trigger_handler_mock.return_value = handler_mock
-        task = RSVPCalibrationTask(win=self.win,
-                                   daq=self.daq,
-                                   parameters=self.parameters,
-                                   file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
@@ -347,6 +362,68 @@ class TestRSVPCalibration(unittest.TestCase):
         verify(self.eeg_client_mock, times=1).offset(0.0)
         verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
+
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
+    def test_setup(self, save_session_mock, trigger_handler_mock):
+        """Test setup"""
+        save_session_mock.return_value = mock()
+        handler_mock = Mock()
+        trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration).init_acquisition(any(), any(), server=self.fake).thenReturn(
+            (self.daq, self.servers))
+        when(bcipy.task.calibration).init_display_window(self.parameters).thenReturn(
+            self.win)
+
+        self.assertFalse(RSVPCalibrationTask.initalized)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
+
+        self.assertTrue(task.initalized)
+        verify(bcipy.task.calibration, times=1).init_acquisition(
+            self.parameters, self.temp_dir, server=self.fake)
+        verify(bcipy.task.calibration, times=1).init_display_window(
+            self.parameters)
+        self.assertEqual((self.daq, self.servers, self.win),
+                         task.setup(self.parameters, self.temp_dir, self.fake))
+
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
+    def test_cleanup(self, save_session_mock, trigger_handler_mock):
+        """Test cleanup"""
+        save_session_mock.return_value = mock()
+        handler_mock = Mock()
+        trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+
+        # Mock the default cleanup
+        when(bcipy.task.calibration.BaseCalibrationTask).write_offset_trigger().thenReturn(None)
+        when(bcipy.task.calibration.BaseCalibrationTask).exit_display().thenReturn(None)
+        when(bcipy.task.calibration.BaseCalibrationTask).wait().thenReturn(None)
+
+        # Mock the initialized cleanup
+        when(self.daq).stop_acquisition().thenReturn(None)
+        when(self.daq).cleanup().thenReturn(None)
+        when(self.servers[0]).stop().thenReturn(None)
+        when(self.win).close().thenReturn(None)
+        task = RSVPCalibrationTask(parameters=self.parameters,
+                                   file_save=self.temp_dir,
+                                   fake=self.fake)
+        # because the task is not initialized via setup, we need to set it to True here
+        task.initalized = True
+
+        task.cleanup()
+
+        verify(self.daq, times=1).stop_acquisition()
+        verify(self.daq, times=1).cleanup()
+        verify(self.servers[0], times=1).stop()
+        verify(self.win, times=1).close()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).setup(any(), any(), any())
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).write_offset_trigger()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).exit_display()
+        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).wait()
 
 
 if __name__ == '__main__':
