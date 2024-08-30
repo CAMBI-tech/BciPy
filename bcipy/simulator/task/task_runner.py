@@ -5,14 +5,15 @@ import logging
 import os
 from glob import glob
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
+from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.data_process import EegRawDataProcessor
-from bcipy.simulator.helpers.sampler import EEGByLetterSampler
+from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.task.main import Task
 
@@ -51,9 +52,9 @@ class TaskRunner():
         self.simulation_task = SimulatorCopyPhraseTask
 
         self.parameters = None
-        self.signal_models = []
+        self.signal_models: List[SignalModel] = []
         self.language_model = None
-        self.sampler = None
+        self.sampler: Optional[Sampler] = None
 
     def setup(self) -> None:
         """Setup the task objects"""
@@ -88,6 +89,7 @@ class TaskRunner():
 
     def make_task(self, run_dir) -> Task:
         """Create the task. This is done for every run."""
+        assert self.sampler, "Sampler must be initialized"
         return self.simulation_task(self.parameters,
                                     file_save=run_dir,
                                     signal_models=self.signal_models,
@@ -98,6 +100,7 @@ class TaskRunner():
         """Run one or more simulations"""
         if not self.setup_complete():
             self.setup()
+        assert self.parameters, "Parameters is not initialized"
         self.parameters.save(self.sim_dir)
         for i in range(self.runs):
             logger.info(f"Executing task {i+1}")

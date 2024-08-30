@@ -61,7 +61,7 @@ def load_device_data(data_folder: str,
     raw_data_path = Path(data_folder, raw_data_filename(device_spec))
     if not raw_data_path.exists():
         raise FileNotFoundError(f"Raw data file not found: {raw_data_path}")
-    raw_data = load_raw_data(raw_data_path)
+    raw_data = load_raw_data(str(raw_data_path))
 
     if device_spec != devices.preconfigured_device(raw_data.daq_type):
         raise IncompatibleDeviceSpec(
@@ -208,6 +208,7 @@ class RawDataProcessor():
     @property
     def produces(self) -> EvidenceType:
         """Type of evidence that is output"""
+        raise NotImplementedError
 
     @property
     def content_type(self):
@@ -266,7 +267,6 @@ class RawDataProcessor():
             f"{data_folder}/{DEFAULT_PARAMETER_FILENAME}", value_cast=True)
 
         timing_params = parameters.instantiate(TimingParams)
-        transform_params = self.transform_parameters(parameters)
 
         self.check_data_compatibility(
             data_device=device_spec,
@@ -281,7 +281,7 @@ class RawDataProcessor():
                                           timing_params)
 
         filtered_reshaped_data, new_sample_rate = self.apply_filters(
-            reshaped_data, transform_params, raw_data.sample_rate)
+            reshaped_data, parameters, raw_data.sample_rate)
 
         trials = self.extract_trials(filtered_reshaped_data, timing_params,
                                      new_sample_rate)
@@ -301,8 +301,8 @@ class RawDataProcessor():
         raise NotImplementedError
 
     def apply_filters(self, reshaped_data: ReshapedData,
-                      transform_params: Optional[NamedTuple],
-                      data_sample_rate: float) -> Tuple[ReshapedData, int]:
+                      parameters: Parameters,
+                      data_sample_rate: int) -> Tuple[ReshapedData, int]:
         """Apply any filters to the reshaped data.
 
         Returns
@@ -325,11 +325,6 @@ class RawDataProcessor():
     def excluded_triggers(self):
         """Trigger types to exclude when decoding"""
         return [TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION]
-
-    def transform_parameters(self,
-                             parameters: Parameters) -> Optional[NamedTuple]:
-        """Extract the parameters used for filtering."""
-        raise NotImplementedError
 
     def devices_compatible(self, model_device: DeviceSpec,
                            data_device: DeviceSpec) -> bool:
@@ -376,15 +371,15 @@ class EegRawDataProcessor(RawDataProcessor):
         return reshaped
 
     def apply_filters(self, reshaped_data: ReshapedData,
-                      transform_params: Optional[NamedTuple],
-                      data_sample_rate: float) -> Tuple[ReshapedData, int]:
+                      parameters: Parameters,
+                      data_sample_rate: int) -> Tuple[ReshapedData, int]:
         """Apply any filters to the reshaped data.
 
         Returns
         -------
             inquiry data after filtering, updated sample_rate
         """
-        assert transform_params, "Transform params not initialized."
+        transform_params = parameters.instantiate(ERPTransformParams)
         transform = self.get_transform(transform_params, data_sample_rate)
         inquiries, fs = filter_inquiries(reshaped_data.inquiries, transform,
                                          data_sample_rate)
@@ -413,8 +408,8 @@ class EegRawDataProcessor(RawDataProcessor):
             filtered_reshaped_data.inquiries, trial_duration_samples,
             filtered_reshaped_data.inquiry_timing)
 
-    def get_transform(self, transform_params: NamedTuple,
-                      data_sample_rate: float) -> Composition:
+    def get_transform(self, transform_params: ERPTransformParams,
+                      data_sample_rate: int) -> Composition:
         """"Get the transform used for filtering the data."""
         return get_default_transform(
             sample_rate_hz=data_sample_rate,
@@ -424,8 +419,3 @@ class EegRawDataProcessor(RawDataProcessor):
             bandpass_order=transform_params.filter_order,
             downsample_factor=transform_params.down_sampling_rate,
         )
-
-    def transform_parameters(self,
-                             parameters: Parameters) -> ERPTransformParams:
-        """Extract the parameters used for filtering."""
-        return parameters.instantiate(ERPTransformParams)
