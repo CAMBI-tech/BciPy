@@ -5,7 +5,7 @@ for classification."""
 import logging as logger
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -36,7 +36,7 @@ log = logger.getLogger(__name__)
 def load_device_data(data_folder: str,
                      content_type: str) -> Tuple[RawData, DeviceSpec]:
     """Loads the data into the RawData format for the given content type.
-    
+
     Parameters
     ----------
         data_folder - session data folder with the raw data, device_spec, etc.
@@ -185,7 +185,7 @@ class ReshapedData():
 class RawDataProcessor():
     """Processes raw data for a given device and converts it to
     ExtractedExperimentData for use in the simulator.
-    
+
     1. Loads the data file as a RawData object
     2. Extract timing information from trigger file based on the device of interest.
     3. Reshape and label the data.
@@ -252,10 +252,10 @@ class RawDataProcessor():
     def process(self, data_folder: str,
                 parameters: Parameters) -> ExtractedExperimentData:
         """Load and process the data
-        
+
         Parameters
         ----------
-            data_folder - session directory for a given dataset 
+            data_folder - session directory for a given dataset
                 (contains raw_data, devices.json, and parameters.json).
             parameters - parameters.json file for the calibration session used
                 to train the model / run the simulation.
@@ -298,6 +298,63 @@ class RawDataProcessor():
                      decoded_triggers: DecodedTriggers,
                      timing_params: TimingParams) -> ReshapedData:
         """Use the configured reshaper to reshape the data."""
+        raise NotImplementedError
+
+    def apply_filters(self, reshaped_data: ReshapedData,
+                      transform_params: Optional[NamedTuple],
+                      data_sample_rate: float) -> Tuple[ReshapedData, int]:
+        """Apply any filters to the reshaped data.
+
+        Returns
+        -------
+            inquiry data after filtering, updated sample_rate
+        """
+        raise NotImplementedError
+
+    def extract_trials(self, filtered_reshaped_data: ReshapedData,
+                       timing_params: TimingParams,
+                       updated_sample_rate: float) -> np.ndarray:
+        """Extract trial data from the filtered, reshaped data.
+
+        Returns
+        -------
+            np.ndarray of shape (Channels, Trials, Samples)
+        """
+        raise NotImplementedError
+
+    def excluded_triggers(self):
+        """Trigger types to exclude when decoding"""
+        return [TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION]
+
+    def transform_parameters(self,
+                             parameters: Parameters) -> Optional[NamedTuple]:
+        """Extract the parameters used for filtering."""
+        raise NotImplementedError
+
+    def devices_compatible(self, model_device: DeviceSpec,
+                           data_device: DeviceSpec) -> bool:
+        """Check compatibility between the device on which the model was trained
+        and the device used for data collection."""
+
+        # TODO: check analysis channels?
+        return model_device.sample_rate == data_device.sample_rate
+
+    def parameters_compatible(self, sim_timing_params: TimingParams,
+                              data_timing_params: TimingParams) -> bool:
+        """Check compatibility between the parameters used for simulation and
+        those used for data collection."""
+        return sim_timing_params.time_flash == data_timing_params.time_flash
+
+
+class EegRawDataProcessor(RawDataProcessor):
+    """RawDataProcessor that processes EEG data."""
+    consumes = ContentType.EEG
+    produces = EvidenceType.ERP
+
+    def reshape_data(self, raw_data: RawData,
+                     decoded_triggers: DecodedTriggers,
+                     timing_params: TimingParams) -> ReshapedData:
+        """Use the configured reshaper to reshape the data."""
 
         data, _fs = raw_data.by_channel()
         channel_map = analysis_channels(raw_data.channels, self.model_device)
@@ -318,12 +375,8 @@ class RawDataProcessor():
         reshaped.inquiry_timing = inquiry_timing
         return reshaped
 
-    def reshaped_data_inquiries(self, reshaped_data: Any) -> np.ndarray:
-        """Get the inquiries from the result of calling self.reshape_data(...)"""
-        return reshaped_data[0]
-
     def apply_filters(self, reshaped_data: ReshapedData,
-                      transform_params: NamedTuple,
+                      transform_params: Optional[NamedTuple],
                       data_sample_rate: float) -> Tuple[ReshapedData, int]:
         """Apply any filters to the reshaped data.
 
@@ -331,6 +384,7 @@ class RawDataProcessor():
         -------
             inquiry data after filtering, updated sample_rate
         """
+        assert transform_params, "Transform params not initialized."
         transform = self.get_transform(transform_params, data_sample_rate)
         inquiries, fs = filter_inquiries(reshaped_data.inquiries, transform,
                                          data_sample_rate)
@@ -348,7 +402,7 @@ class RawDataProcessor():
                        timing_params: TimingParams,
                        updated_sample_rate: float) -> np.ndarray:
         """Extract trial data from the filtered, reshaped data.
-        
+
         Returns
         -------
             np.ndarray of shape (Channels, Trials, Samples)
@@ -371,30 +425,7 @@ class RawDataProcessor():
             downsample_factor=transform_params.down_sampling_rate,
         )
 
-    def excluded_triggers(self):
-        """Trigger types to exclude when decoding"""
-        return [TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION]
-
-    def transform_parameters(self, parameters: Parameters) -> NamedTuple:
+    def transform_parameters(self,
+                             parameters: Parameters) -> ERPTransformParams:
         """Extract the parameters used for filtering."""
         return parameters.instantiate(ERPTransformParams)
-
-    def devices_compatible(self, model_device: DeviceSpec,
-                           data_device: DeviceSpec) -> bool:
-        """Check compatibility between the device on which the model was trained
-        and the device used for data collection."""
-
-        # TODO: check analysis channels?
-        return model_device.sample_rate == data_device.sample_rate
-
-    def parameters_compatible(self, sim_timing_params: TimingParams,
-                              data_timing_params: TimingParams) -> bool:
-        """Check compatibility between the parameters used for simulation and
-        those used for data collection."""
-        return sim_timing_params.time_flash == data_timing_params.time_flash
-
-
-class EegRawDataProcessor(RawDataProcessor):
-    """RawDataProcessor that processes EEG data."""
-    consumes = ContentType.EEG
-    produces = EvidenceType.ERP

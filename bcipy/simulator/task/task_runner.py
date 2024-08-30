@@ -117,14 +117,11 @@ def main():
     glob_help = ('glob pattern to select a subset of data folders'
                  ' Ex. "*RSVP_Copy_Phrase*"')
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d",
-        "--data_folder",
-        type=Path,
-        required=True,
-        help=
-        "Raw data folders to be processed. Singular wrapper dir with data folders"
-    )
+    parser.add_argument("-d",
+                        "--data_folder",
+                        type=Path,
+                        required=True,
+                        help="Raw data folders to be processed.")
     parser.add_argument('-g', '--glob_pattern', help=glob_help, default="*")
     parser.add_argument("-m",
                         "--model_path",

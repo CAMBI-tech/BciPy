@@ -72,11 +72,11 @@ class Sampler(ABC):
 
     def sample_with_context(self,
                             state: SimState) -> Tuple[np.ndarray, List[Trial]]:
-        """        
+        """
         Returns
         -------
             A tuple of the reshaped data (ndarray of shape (n_channel, n_trial, n_sample)) as
-            well as a list of Trial data (metadata and data not reshaped) for context.   
+            well as a list of Trial data (metadata and data not reshaped) for context.
         """
         trials = self.sample(state)
         data = self.reshaped(trials)

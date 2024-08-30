@@ -22,6 +22,7 @@ def format_samples(sample_rows: List[Trial]) -> str:
     """Returns a tabular representation of the sample rows."""
     return '\n'.join([str(row) for row in sample_rows])
 
+
 def format_sample_rows(sample_rows: List[pd.Series]) -> str:
     """Returns a tabular representation of the sample rows."""
     return pd.DataFrame(sample_rows).drop(columns=['eeg']).to_string(
