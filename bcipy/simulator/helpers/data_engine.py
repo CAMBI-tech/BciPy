@@ -51,7 +51,7 @@ class Trial(NamedTuple):
     inquiry_pos: int
     symbol: str
     target: int
-    eeg: np.ndarray # Channels by Samples
+    eeg: np.ndarray  # Channels by Samples
 
     def __str__(self):
         fields = [
@@ -81,7 +81,6 @@ class RawDataEngine(DataEngine):
         self.data: List[ExtractedExperimentData] = []
         self.schema: Optional[pd.DataFrame] = None
 
-        # TODO validate parameters
         self.load()
 
     def load(self) -> DataEngine:
@@ -94,10 +93,12 @@ class RawDataEngine(DataEngine):
         """
         if not self.data:
             log.debug(
-                f"Loading data from {len(self.source_dirs)} source directories:")
+                f"Loading data from {len(self.source_dirs)} source directories:"
+            )
             for i, source_dir in enumerate(self.source_dirs):
                 log.debug(f"{i+1}. {Path(source_dir).name}")
-                self.data.append(self.data_processor.process(source_dir, self.parameters))
+                self.data.append(
+                    self.data_processor.process(source_dir, self.parameters))
 
             log.debug("Finished loading all data")
         return self
@@ -114,33 +115,36 @@ class RawDataEngine(DataEngine):
         Returns:
             self for chaining
         """
-
-        # TODO store how good evidence was in session
-
         rows = []
         for data_source in self.data:
-            symbols_by_inquiry = data_source.symbols_by_inquiry
-            labels_by_inquiry = data_source.labels_by_inquiry
-
-            for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
-                # iterate through each inquiry
-                inquiry_symbols = symbols_by_inquiry[i]
-                inquiry_labels = labels_by_inquiry[i]
-
-                for sym_i, symbol in enumerate(inquiry_symbols):
-                    # iterate through each symbol in the inquiry
-                    eeg_samples = [channel[sym_i] for channel in inquiry_eeg
-                                   ]  # (channel_n, sample_n)
-                    rows.append(
-                        Trial(source=data_source.source_dir,
-                              inquiry_n=i,
-                              inquiry_pos=sym_i + 1,
-                              symbol=symbol,
-                              target=inquiry_labels[sym_i],
-                              eeg=np.array(eeg_samples)))
+            rows.extend(self.trials(data_source))
 
         self.schema = pd.DataFrame(rows)
         return self
+
+    def trials(self, data_source: ExtractedExperimentData) -> List[Trial]:
+        """Convert extracted data from a single data source to a list of Trials."""
+        trials = []
+        symbols_by_inquiry = data_source.symbols_by_inquiry
+        labels_by_inquiry = data_source.labels_by_inquiry
+
+        for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
+            # iterate through each inquiry
+            inquiry_symbols = symbols_by_inquiry[i]
+            inquiry_labels = labels_by_inquiry[i]
+
+            for sym_i, symbol in enumerate(inquiry_symbols):
+                # iterate through each symbol in the inquiry
+                eeg_samples = [channel[sym_i] for channel in inquiry_eeg
+                               ]  # (channel_n, sample_n)
+                trials.append(
+                    Trial(source=data_source.source_dir,
+                          inquiry_n=i,
+                          inquiry_pos=sym_i + 1,
+                          symbol=symbol,
+                          target=inquiry_labels[sym_i],
+                          eeg=np.array(eeg_samples)))
+        return trials
 
     def get_data(self):
         return self.schema.copy() if self.schema is not None else None

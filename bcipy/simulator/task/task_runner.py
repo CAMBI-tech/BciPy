@@ -9,10 +9,10 @@ from typing import List
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
-from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
+from bcipy.simulator.helpers.data_process import EegRawDataProcessor
+from bcipy.simulator.helpers.sampler import EEGByLetterSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.task.main import Task
 
@@ -47,6 +47,9 @@ class TaskRunner():
         self.sim_dir = save_dir
         self.runs = runs
 
+        self.sampling_strategy = EEGByLetterSampler
+        self.simulation_task = SimulatorCopyPhraseTask
+
         self.parameters = None
         self.signal_models = []
         self.language_model = None
@@ -67,8 +70,11 @@ class TaskRunner():
         logger.debug(self.language_model)
 
         logger.info("Creating data engine")
-        data_engine = self.init_data_engine(self.source_dirs, self.parameters)
-        self.sampler = self.init_sampler(data_engine)
+        # TODO: initialize a data engine and sampler for each model
+        data_processor = EegRawDataProcessor(self.signal_models[0])
+        data_engine = RawDataEngine(list(map(str, self.source_dirs)),
+                                    self.parameters, data_processor)
+        self.sampler = self.sampling_strategy(data_engine)
         logger.debug("Using sampler:")
         logger.debug(self.sampler)
 
@@ -80,22 +86,13 @@ class TaskRunner():
             self.sampler is not None
         ])
 
-    def init_data_engine(self, source_dirs: List[str],
-                         parameters: Parameters) -> RawDataEngine:
-        """Initialize the data engine"""
-        return RawDataEngine(list(map(str, source_dirs)), parameters)
-
-    def init_sampler(self, data_engine: RawDataEngine) -> Sampler:
-        """Initialize the Sampler"""
-        return EEGByLetterSampler(data_engine)
-
     def make_task(self, run_dir) -> Task:
         """Create the task. This is done for every run."""
-        return SimulatorCopyPhraseTask(self.parameters,
-                                       file_save=run_dir,
-                                       signal_models=self.signal_models,
-                                       language_model=self.language_model,
-                                       sampler=self.sampler)
+        return self.simulation_task(self.parameters,
+                                    file_save=run_dir,
+                                    signal_models=self.signal_models,
+                                    language_model=self.language_model,
+                                    sampler=self.sampler)
 
     def run(self):
         """Run one or more simulations"""
@@ -160,7 +157,6 @@ def main():
                         save_dir=sim_dir,
                         runs=sim_args['n'])
     runner.run()
-
 
 
 if __name__ == '__main__':

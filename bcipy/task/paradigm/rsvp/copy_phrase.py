@@ -119,6 +119,9 @@ class RSVPCopyPhraseTask(Task):
         self.window = win
         self.daq = daq
         self.parameters = parameters
+        self.signal_models = signal_models
+        self.language_model = language_model
+        self.fake = fake
 
         self.validate_parameters()
 
@@ -133,7 +136,7 @@ class RSVPCopyPhraseTask(Task):
         self.button_press_error_prob = 0.05
 
         self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
-        self.evidence_types = self.init_evidence_types(self.evidence_evaluators)
+        self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
 
         self.file_save = file_save
         self.save_session_every_inquiry = True
@@ -142,8 +145,6 @@ class RSVPCopyPhraseTask(Task):
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters['task_text']
 
-        self.fake = fake
-        self.language_model = language_model
         self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
@@ -192,7 +193,10 @@ class RSVPCopyPhraseTask(Task):
                 )
         return evaluators
 
-    def init_evidence_types(self, evidence_evaluators: List[EvidenceEvaluator]) -> List[EvidenceType]:
+    def init_evidence_types(
+            self, signal_models: List[SignalModel],
+            evidence_evaluators: List[EvidenceEvaluator]
+    ) -> List[EvidenceType]:
         evidence_types = [EvidenceType.LM]
         evidence_types.extend(
             [evaluator.produces for evaluator in evidence_evaluators])

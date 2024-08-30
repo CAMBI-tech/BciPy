@@ -14,6 +14,13 @@ from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
+DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
+
+
+def get_evidence_type(model: SignalModel) -> EvidenceType:
+    """Get the evidence type provided by the given model"""
+    return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
+
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     """CopyPhraseTask that simulates user interactions by sampling data
@@ -41,10 +48,12 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
         return []
 
     def init_evidence_types(
-            self, evidence_evaluators: List[EvidenceEvaluator]
+            self, signal_models: List[SignalModel],
+            evidence_evaluators: List[EvidenceEvaluator]
     ) -> List[EvidenceType]:
-        # TODO: revisit this based on the provided models
-        return [EvidenceType.LM, EvidenceType.ERP]
+        evidence_types = set(
+            [get_evidence_type(model) for model in self.signal_models])
+        return [EvidenceType.LM, *evidence_types]
 
     def init_display(self) -> Display:
         return NullDisplay()
@@ -84,7 +93,6 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
         # sampled_trial = self.sampler.sample_trial(self.get_sim_state())
         sampled_data = self.sampler.sample_data(self.get_sim_state())
-
 
         # trial_info = (datasource, inquiry_n)
         # eye_gaze_data = self.sampler['EYE'].sample(self.get_sim_state(), trial_info)
