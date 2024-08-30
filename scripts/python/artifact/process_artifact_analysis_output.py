@@ -2,9 +2,9 @@ import csv
 import pandas as pd
 from bcipy.helpers.load import load_experimental_data
 
-DATA_PATH = '/Users/scitab/Desktop/scitab/CAMBI/BciPy'
-FILENAME = 'NAR_OF_1_10_all_models.csv'
-PREFIX = 'of_nar_1_10_luckfilter'
+DATA_PATH = '/Users/scitab/Desktop/ArtifactFilteringOnlineParity1_output'
+FILENAME = 'cf_nar_1_10_luckfilter_IIR_flat_all_models.csv'
+PREFIX = 'cf_nar_1_10'
 EXPORT_NAME = f'{PREFIX}_IIR_flat_all_models.csv'
 MODELS = ['LR', 'NN', 'SVM', 'TS-LDA', 'MDM', 'PRK', 'RF']
 HEADERS = [f'_{model}' for model in MODELS]

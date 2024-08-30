@@ -40,12 +40,6 @@ if __name__ == "__main__":
 
     parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
 
-    non_target_cf_auto = []
-    target_cf_auto = []
-    all_epochs_cf_auto = []
-    non_target_cf_sar = []
-    target_cf_sar = []
-    all_epochs_cf_sar = []
     non_target_cf = []
     target_cf = []
     all_epochs_cf = []
@@ -96,53 +90,11 @@ if __name__ == "__main__":
                 target_cf.append(epochs['2'])
                 all_epochs_cf.append(epochs)
 
-                # # load the mne auto artifact labelled data
-                # mne_data = mne.io.read_raw_fif(f'{session}/{AUTO_ARTIFACT_LABELLED_FILENAME}')
-                # raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, epochs  = load_data_mne(
-                #     data_folder=session_folder,
-                #     mne_data_annotations=mne_data.annotations,
-                #     drop_artifacts=True,
-                #     trial_length=0.72,
-                #     parameters=parameters)
-
-                # non_target_cf_auto.append(epochs['1'])
-                # target_cf_auto.append(epochs['2'])
-                # all_epochs_cf_auto.append(epochs)
-
-                # mne_data = mne.io.read_raw_fif(f'{session}/{ARTIFACT_LABELLED_FILENAME}')
-                # raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, epochs  = load_data_mne(
-                #     data_folder=session_folder,
-                #     mne_data_annotations=mne_data.annotations,
-                #     drop_artifacts=True,
-                #     trial_length=0.72,
-                #     parameters=parameters)
-
-                # non_target_cf_sar.append(epochs['1'])
-                # target_cf_sar.append(epochs['2'])
-                # all_epochs_cf_sar.append(epochs)
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 breakpoint()
 
     
-    # concatenate the epochs
-    # breakpoint()
-    # all_mne_epochs = mne.concatenate_epochs(all_epochs_of)
-    # AAR
-    # target_cf_auto = mne.concatenate_epochs(target_cf_auto)
-    # target_cf_auto = target_cf_auto.crop(tmin=0.0, tmax=0.7)
-    # target_cf_auto_evoked = target_cf_auto.average()
-    # non_target_cf_auto = mne.concatenate_epochs(non_target_cf_auto)
-    # non_target_cf_auto = non_target_cf_auto.crop(tmin=0.0, tmax=0.7)
-    # non_target_cf_auto_evoked = non_target_cf_auto.average()
-    
-    # SAR
-    # target_cf_sar = mne.concatenate_epochs(target_cf_sar)
-    # target_cf_sar = target_cf_sar.crop(tmin=0.0, tmax=0.7)
-    # target_cf_sar_evoked = target_cf_sar.average()
-    # non_target_cf_sar = mne.concatenate_epochs(non_target_cf_sar)
-    # non_target_cf_sar = non_target_cf_sar.crop(tmin=0.0, tmax=0.7)
-    # non_target_cf_sar_evoked = non_target_cf_sar.average()
 
     # all_data_epochs = mne.concatenate_epochs([non_target_of, target_of])
     # REGULAR CF
@@ -165,22 +117,11 @@ if __name__ == "__main__":
     # data = [non_target_of, target_of]
     # visualize_evokeds(data, show=True)
 
-    # evokeds = { 'Online Filter Target': target_of_evoked, 'Online Filter Non-Target': non_target_of_evoked, 'Conventional Filter Non-Target': target_cf_evoked, 'Conventional Filter Target': non_target_cf_evoked }
+    evokeds = { 'Online Filter Target': target_of_evoked, 'Online Filter Non-Target': non_target_of_evoked, 'Conventional Filter Non-Target': non_target_cf_evoked, 'Conventional Filter Target': target_cf_evoked }
     
     # Figure 1.
-    # all_diff_no = mne.combine_evoked([evokeds['Conventional Filter Target'], evokeds['Online Filter Target']], weights=[1, -1])
-    # all_diff_no.plot_joint(times=plot_joint_times, title='ERP Difference Between Online and Conventional Filtering')
-    # all_diff_no.plot()
-    # plot the averages using grand_average
-    # target_evoked, non_target_evoked = group_average(target, non_target)
-    # breakpoint()
-    # target_evoked.plot_image()
-    # non_target_evoked.plot_image()
-
     roi = ['Pz', 'Cz', 'P3', 'P4', 'O1', 'O2']
-    # of_data = target_of.pick_channels(roi)
-    # cf_data = target_cf.pick_channels(roi)
-    # roi = channels
+
     evokeds_erp_compare = dict(
         OF_target=list(target_of.iter_evoked()), 
         CF_target=list(target_cf.iter_evoked()),
@@ -200,7 +141,7 @@ if __name__ == "__main__":
 
     
     breakpoint()
-    fig = mne.viz.plot_compare_evokeds(evokeds_erp_compare, combine='gfp', show=True)
+    fig = mne.viz.plot_compare_evokeds(evokeds_erp_compare, combine='mean', show=True, picks=roi, ci=0.95)
     fig_target_gfp = mne.viz.plot_compare_evokeds(evokeds_erp_compare_targets, combine='gfp', show=True)
     fig_non_target_gfp = mne.viz.plot_compare_evokeds(evokeds_erp_compare_non_targets, combine='gfp', show=True)
     # Show a ERP of the two events using gfp by default and no CI?
@@ -223,7 +164,3 @@ if __name__ == "__main__":
     # target_evoked.plot_image()
     # non_target_evoked.plot_image()
     breakpoint()
-
-    # plot the joint average
-    # visualize_joint_average((non_target, target), ['Non-Target', 'Target'], show=True, plot_joint_times=plot_joint_times)
-    # visualize_joint_average(all_mne_epochs, ['Non-Target', 'Target'], show=True, plot_joint_times=plot_joint_times)

@@ -64,7 +64,7 @@ def load_data_inquiries(
     notch_filter = parameters.get("notch_filter_frequency")
     filter_high = 20
     filter_low = 1
-    filter_order = 5
+    filter_order = 8
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
@@ -174,7 +174,7 @@ def load_data_mne(
     notch_filter = parameters.get("notch_filter_frequency")
     filter_high = 20
     filter_low = 1
-    filter_order = 5
+    filter_order = 8
     static_offset = parameters.get("static_trigger_offset")
 
     log.info(
