@@ -41,6 +41,9 @@ class BCIUI(QWidget):
 
     def display(self):
         # Push contents to the top of the window
+        """
+        Display the UI window and apply the stylesheet.
+        """
         self.app()
         if not self.center_content_vertically:
             self.contents.addStretch()
@@ -48,12 +51,16 @@ class BCIUI(QWidget):
         self.show()
 
     def show_alert(self, alert_text: str):
+        """
+        Shows an alert dialog with the specified text.
+
+        PARAMETERS
+        ----------
+        :param: alert_text: string text to display in the alert dialog.
+        """
         msg = QMessageBox()
-        # This doesn't seem to work at least on mac. TODO: fix this
-        # msg.setIcon(QMessageBox.Icon.Warning)
         msg.setText(alert_text)
         msg.setWindowTitle("Alert")
-
         return msg.exec()
 
     @staticmethod
@@ -77,8 +84,18 @@ class BCIUI(QWidget):
         off_button: QPushButton,
         on_action: Optional[Callable] = lambda: None,
         off_action: Optional[Callable] = lambda: None,
-    ):
-        """Connects two buttons to toggle between eachother and call passed methods"""
+    ) -> None:
+        """
+        Connects two buttons to toggle between eachother and call passed methods
+
+        PARAMETERS
+        ----------
+        :param: on_button: QPushButton to toggle on
+        :param: off_button: QPushButton to toggle off
+        :param: on_action: function to call when on_button is clicked
+        :param: off_action: function to call when off_button is clicked
+
+        """
         off_button.hide()
 
         def toggle_off():
@@ -96,6 +113,8 @@ class BCIUI(QWidget):
 
 
 class SmallButton(QPushButton):
+    """A small button with a fixed size"""
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.setProperty("class", "small-button")
@@ -190,7 +209,20 @@ class ExperimentRegistry(BCIUI):
 
     def format_experiment_combobox(
         self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
-    ) -> QHBoxLayout:
+    ) -> QVBoxLayout:
+        """
+        Create a formatted widget for a the experiment comboboxes with optional buttons.
+
+        PARAMETERS
+        ----------
+        :param: label_text: string text to display above the combobox.
+        :param: combobox: the combobox.
+        :param: buttons: list of buttons to add to right side of the combobox.
+
+        Returns
+        -------
+            A QVBoxLayout with the label, combobox, and buttons.
+        """
         label = QLabel(label_text)
         label.setStyleSheet("font-size: 18px")
         area = QVBoxLayout()
@@ -204,7 +236,18 @@ class ExperimentRegistry(BCIUI):
         area.addLayout(input_area)
         return area
 
-    def make_task_entry(self, name: str) -> QWidget:
+    def make_task_entry(self, name: str) -> DynamicItem:
+        """
+        Create a formatted widget for a task entry.
+
+        PARAMETERS
+        ----------
+        :param: name: string name of the task that will be displayed.
+
+        Returns
+        -------
+            A DynamicItem widget with the 'task_name' property set as it's data.
+        """
         layout = QHBoxLayout()
         label = QLabel(name)
         label.setStyleSheet("color: black;")
@@ -243,7 +286,18 @@ class ExperimentRegistry(BCIUI):
         widget.setLayout(layout)
         return widget
 
-    def make_field_entry(self, name: str) -> QWidget:
+    def make_field_entry(self, name: str) -> DynamicItem:
+        """
+        Create a formatted widget for a field entry.
+
+        PARAMETERS
+        ----------
+        :param: name: string name of the field that will be displayed.
+
+        Returns
+        -------
+            A DynamicItem widget with the 'field_name', 'anonymous', and 'optional' properties set as it's data.
+        """
         layout = QHBoxLayout()
         label = QLabel(name)
         label.setStyleSheet("color: black;")
