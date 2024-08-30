@@ -51,7 +51,7 @@ EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
 TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
-LOG_FILENAME = 'bcipy_system_log.txt'
+LOG_FILENAME = 'session_log.txt'
 STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
 
 # misc configuration

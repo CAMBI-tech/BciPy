@@ -1,6 +1,6 @@
 # mypy: disable-error-code="arg-type"
 import logging
-from typing import List, NamedTuple, Optional, Tuple
+from typing import Any, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 from psychopy.visual import Window
@@ -26,6 +26,8 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.display import init_display_window
 from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.helpers.language_model import init_language_model
+from bcipy.helpers.load import load_signal_models
 from bcipy.helpers.list import destutter
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
@@ -165,10 +167,12 @@ class RSVPCopyPhraseTask(Task):
         self,
         parameters: Parameters,
         file_save: str,
-        fake: bool,
+        logger: logging.Logger,
+        fake: bool = False,
+        **kwargs: Any
     ) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
-        self.logger = logging.getLogger(__name__)
+        self.logger = logger
         self.fake = fake
         daq, servers, win = self.setup(parameters, file_save, fake)
         self.servers = servers
@@ -186,6 +190,9 @@ class RSVPCopyPhraseTask(Task):
 
         self.button_press_error_prob = 0.05
 
+        self.language_model = self.get_language_model()
+        signal_models = self.get_signal_models()
+        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
 
         self.evidence_types = [EvidenceType.LM]
@@ -203,8 +210,6 @@ class RSVPCopyPhraseTask(Task):
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters["task_text"]
 
-        self.language_model = language_model
-        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
         self.feedback = VisualFeedback(
@@ -252,6 +257,21 @@ class RSVPCopyPhraseTask(Task):
         self.initalized = True
 
         return daq, servers, display
+    
+    def get_language_model(self) -> LanguageModel:
+        return init_language_model(self.parameters)
+    
+    def get_signal_models(self) -> Optional[List[SignalModel]]:
+        if not self.fake:
+            try:
+                model_dir = self.parameters['signal_model_path']
+                signal_models = load_signal_models(directory=model_dir)
+                assert signal_models, f"No signal models found in {model_dir}"
+            except Exception as error:
+                self.logger.exception(f'Cannot load signal model. Exiting. {error}')
+                raise error
+            return signal_models
+        return None
 
     def cleanup(self):
         self.exit_display()

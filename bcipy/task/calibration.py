@@ -1,5 +1,6 @@
 """Base calibration task."""
 
+import logging
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
@@ -70,10 +71,16 @@ class BaseCalibrationTask(Task):
     MODE = 'Undefined'
     initalized = False
 
-    def __init__(self, parameters: Parameters, file_save: str, fake: bool, **kwargs) -> None:
+    def __init__(self,
+            parameters: Parameters,
+            file_save: str,
+            logger:logging.Logger,
+            fake: bool = False,
+            **kwargs: Any) -> None:
         super().__init__()
 
         self.fake = fake
+        self.logger = logger
         self.validate()
         daq, servers, win = self.setup(parameters, file_save, fake)
         self.window = win

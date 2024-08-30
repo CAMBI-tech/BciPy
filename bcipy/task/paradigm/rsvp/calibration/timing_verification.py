@@ -1,6 +1,7 @@
 # mypy: disable-error-code="assignment"
 from itertools import cycle, islice, repeat
-from typing import Iterator, List
+import logging
+from typing import Any, Iterator, List
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
@@ -26,11 +27,16 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     """
     name = 'RSVP Timing Verification'
 
-    def __init__(self, parameters: Parameters, file_save: str, fake: bool) -> None:
+    def __init__(self,
+                 parameters: Parameters,
+                 file_save: str,
+                 logger: logging.Logger,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
         parameters['stim_height'] = 0.8
         parameters['stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
-              self).__init__(parameters, file_save, fake)
+              self).__init__(parameters, file_save, logger, fake=fake)
 
     @property
     def symbol_set(self) -> List[str]:
