@@ -145,8 +145,6 @@ def execute_task(
         start_task(task,
                    parameters,
                    save_folder,
-                   language_model=language_model,
-                   signal_models=signal_models,
                    fake=fake)
 
     # If exception, close all display and acquisition objects

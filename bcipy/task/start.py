@@ -15,8 +15,6 @@ def make_task(
         task: Type[Task],
         parameters: Parameters,
         file_save: str,
-        signal_models: Optional[List[SignalModel]] = None,
-        language_model: Optional[LanguageModel] = None,
         fake: bool = True) -> Task:
     """Creates a Task based on the provided parameters.
 
@@ -39,13 +37,11 @@ def make_task(
 
     if task is RSVPCopyPhraseTask:
         return RSVPCopyPhraseTask(
-            parameters, file_save, signal_models,
-            language_model, fake=fake)
+            parameters, file_save, fake=fake)
 
     if task is MatrixCopyPhraseTask:
         return MatrixCopyPhraseTask(
-            parameters, file_save, signal_models,
-            language_model, fake=fake)
+            parameters, file_save, fake=fake)
 
     raise BciPyCoreException('The provided task is not available in main')
 
@@ -54,15 +50,11 @@ def start_task(
         task: Type[Task],
         parameters: Parameters,
         file_save: str,
-        signal_models: Optional[List[SignalModel]] = None,
-        language_model: Optional[LanguageModel] = None,
         fake: bool = True) -> TaskData:
     """Creates a Task and starts execution."""
     bcipy_task = make_task(
         task,
         parameters,
         file_save,
-        signal_models,
-        language_model,
         fake)
     return bcipy_task.execute()

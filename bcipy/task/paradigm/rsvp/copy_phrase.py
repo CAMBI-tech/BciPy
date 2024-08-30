@@ -165,8 +165,6 @@ class RSVPCopyPhraseTask(Task):
         self,
         parameters: Parameters,
         file_save: str,
-        signal_models: List[SignalModel],
-        language_model: LanguageModel,
         fake: bool,
     ) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
