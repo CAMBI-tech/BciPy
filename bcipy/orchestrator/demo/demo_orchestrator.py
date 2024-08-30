@@ -1,5 +1,5 @@
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
-from bcipy.orchestrator.orchestrator import SessionOrchestrator
+from bcipy.orchestrator import SessionOrchestrator
 from bcipy.task.actions import (ExperimentFieldCollectionAction,
                                 OfflineAnalysisAction)
 from bcipy.task.registry import TaskRegistry

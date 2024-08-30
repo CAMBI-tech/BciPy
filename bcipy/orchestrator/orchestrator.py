@@ -8,7 +8,7 @@ from typing import List, Optional, Union
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_experiment
-from bcipy.helpers.system_utils import get_system_info
+from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
@@ -48,35 +48,56 @@ class SessionOrchestrator:
         self.user = user
         self.fake = fake
         self.experiment_id = experiment_id
-        # TODO  load tasks from experiment protocol
-        self.log = logging.getLogger(__name__)
-        #TODO: fix logger, should be writing to a file per task and overall. See configure_logger.
         self.sys_info = get_system_info()
         self.tasks = []
         self.task_names = []
         self.session_data = []
         self.init_orchestrator_save_folder(self.parameters["data_save_loc"])
 
+        self.logger = configure_logger(
+            self.save_folder,
+            'protocol_log.txt', #TODO: move to config
+            logging.DEBUG,
+            self.sys_info['bcipy_version'])
+
         self.ready_to_execute = True
 
     def add_task(self, task: Task) -> None:
-        # Loading task specific parameters could happen here
-        # TODO validate it is a Valid Task
         self.tasks.append(task)
         self.task_names.append(task.name)
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
 
+        if not self.ready_to_execute:
+            self.log.error("Orchestrator not ready to execute tasks")
+            raise Exception("Orchestrator not ready to execute tasks")
+
         for task in self.tasks:
             try:
+                # initialize the task save folder and logger
                 data_save_location = self.init_task_save_folder(task)
                 self.session_data.append(data_save_location)
-                initialized_task = task(self.parameters, data_save_location, fake=self.fake, experiment_id=self.experiment_id, parameters_path=self.parameters_path, last_task_dir=self.last_task_dir)
+                session_logger = configure_logger(
+                    data_save_location,
+                    log_level=logging.DEBUG,
+                    version=self.sys_info['bcipy_version'])
+                
+                # initialize the task and execute it
+                initialized_task = task(
+                    self.parameters,
+                    data_save_location,
+                    session_logger,
+                    fake=self.fake,
+                    experiment_id=self.experiment_id,
+                    parameters_path=self.parameters_path,
+                    last_task_dir=self.last_task_dir)
                 initialized_task.execute()
+
+                # some tasks may need access to the previous task's data
                 self.last_task_dir = data_save_location
             except Exception as e:
-                self.log.exception(e)
+                self.logger.exception(e)
         self.save()
 
     def init_orchestrator_save_folder(self, save_path: str) -> None:
@@ -85,6 +106,7 @@ class SessionOrchestrator:
         # * `data_save_location` in parameters
         path = f'{save_path}{self.user}/{self.experiment_id}/{timestamp}/'
         os.makedirs(path)
+        os.makedirs(os.path.join(path, 'logs'), exist_ok=True)
         self.save_folder = path
 
     def init_task_save_folder(self, task: Task) -> str:
@@ -102,9 +124,8 @@ class SessionOrchestrator:
         return save_directory
 
     def save(self) -> None:
-        # Save the session data
-        system_info = get_system_info()
-        with open(f'{self.save_folder}/session_data.json', 'w') as f:
+        # Save the protocol data
+        with open(f'{self.save_folder}/protocol.json', 'w') as f:
             f.write(json.dumps({
                 'tasks': self.task_names,
                 'parameters': self.parameters_path,

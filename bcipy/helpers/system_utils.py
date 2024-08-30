@@ -220,7 +220,9 @@ def configure_logger(
     print(f'Printing all BciPy logs to: {path_to_logs}')
 
     if version:
-        logging.info(f'Start of Session for BciPy Version: ({version})')
+        root_logger.info(f'Start of Session for BciPy Version: ({version})')
+    
+    return root_logger
 
 
 def import_submodules(package, recursive=True):

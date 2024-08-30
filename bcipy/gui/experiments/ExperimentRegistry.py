@@ -7,7 +7,7 @@ from bcipy.config import BCIPY_ROOT, DEFAULT_EXPERIMENT_PATH, EXPERIMENT_FILENAM
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.save import save_experiment_data
 from bcipy.task.registry import TaskRegistry
-from bcipy.orchestrator.config import serialize_protocol
+from bcipy.orchestrator.protocol import serialize_protocol
 
 
 class ExperimentRegistry(BCIGui):
