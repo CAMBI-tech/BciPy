@@ -8,7 +8,7 @@ from PyQt6.QtWidgets import (
 )
 
 
-class IntertaskAction(BCIUI):
+class IntertaskGUI(BCIUI):
 
     def __init__(
         self, next_task_name: str, total_tasks: int = 0, current_task_index: int = 0
@@ -54,4 +54,4 @@ class IntertaskAction(BCIUI):
 
 if __name__ == "__main__":
     # test values
-    run_bciui(IntertaskAction, 'Placeholder Task Name', 3, 2)
+    run_bciui(IntertaskGUI, 'Placeholder Task Name', 3, 2)
