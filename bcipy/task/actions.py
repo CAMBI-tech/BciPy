@@ -4,6 +4,8 @@ from typing import Callable, Optional
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task
 from bcipy.task.main import TaskData
+from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.signal.model.offline_analysis import offline_analysis
 
 
 class CallbackAction(Task):
@@ -13,7 +15,7 @@ class CallbackAction(Task):
 
     name = "Callback Action"
 
-    def __init__(self, callback: Callable, *args, **kwargs) -> None:
+    def __init__(self, callback: Optional[Callable] = None, *args, **kwargs) -> None:
         super().__init__()
         self.callback = callback
         self.args = args
@@ -35,7 +37,7 @@ class CodeHookAction(Task):
 
     name = "Code Hook Action"
 
-    def __init__(self, code_hook: str, subprocess=True) -> None:
+    def __init__(self, parameters, data_directory, code_hook: Optional[str] = None, subprocess: bool=True, **kwargs) -> None:
         super().__init__()
         self.code_hook = code_hook
         self.subprocess = subprocess
@@ -57,25 +59,26 @@ class OfflineAnalysisAction(Task):
     name = "Offline Analysis Action"
 
     def __init__(
-        self, data_directory: str, parameters_path: Optional[str] = None, alert=True
-    ) -> None:
+        self, parameters, data_directory, alert=True, parameters_path: str = f'{DEFAULT_PARAMETERS_PATH}', last_task_dir: Optional[str] = None, **kwargs) -> None:
         super().__init__()
+        self.parameters = parameters
         self.parameters_path = parameters_path
         self.alert = alert
-        self.data_directory = data_directory
-        self.command = self.construct_command()
+
+        if last_task_dir:
+            self.data_directory = last_task_dir
+        else:
+            self.data_directory = data_directory
 
     def execute(self) -> TaskData:
-        cmd = self.construct_command()
-        subprocess.Popen(cmd, shell=True)
+        response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert)
         return TaskData(
             save_path=self.data_directory,
-            task_dict={"data_directory": self.data_directory, "command": cmd},
+            task_dict={"parameters": self.parameters_path, "response": response},
         )
 
     def construct_command(self) -> str:
         command = "python -m bcipy.signal.model.offline_analysis"
-        command += " --data_folder " + self.data_directory
         if self.parameters_path:
             command += " --parameters_file " + self.parameters_path
         if self.alert:
@@ -90,10 +93,11 @@ class ExperimentFieldCollectionAction(Task):
 
     name = "Experiment Field Collection Action"
 
-    def __init__(self, experiment_id: str, save_path: str) -> None:
+    def __init__(self, parameters, save_path, experiment_id: str = 'default', **kwargs) -> None:
         super().__init__()
         self.experiment_id = experiment_id
         self.save_folder = save_path
+        self.parameters = parameters
 
     def execute(self) -> TaskData:
         self.logger.info(

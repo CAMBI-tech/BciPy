@@ -70,7 +70,7 @@ class BaseCalibrationTask(Task):
     MODE = 'Undefined'
     initalized = False
 
-    def __init__(self, parameters: Parameters, file_save: str, fake: bool) -> None:
+    def __init__(self, parameters: Parameters, file_save: str, fake: bool, **kwargs) -> None:
         super().__init__()
 
         self.fake = fake
