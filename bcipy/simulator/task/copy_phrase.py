@@ -22,13 +22,13 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
     return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
 
 
-class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
-    """CopyPhraseTask that simulates user interactions by sampling data
-    from a DataSampler."""
+class SimTask(RSVPCopyPhraseTask):
+    """"Task used for simulation. API differs from a regular task in its use of
+    data samplers."""
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
-                 language_model: LanguageModel, sampler: Sampler):
+                 language_model: LanguageModel, samplers: List[Sampler]):
         super().__init__(win=None,
                          daq=None,
                          parameters=parameters,
@@ -37,10 +37,12 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
                          language_model=language_model,
                          fake=False)
         self.save_session_every_inquiry = False
-        # TODO: support multi-modal by including a sampler for every model
-        # TODO: easily swap out samplers (parameter -> list of samplers, one for each mode/evidence type)
-        # maybe accept a List[Tuple[SignalModel, Sampler]]
-        self.sampler = sampler
+        self.samplers = samplers
+
+
+class SimulatorCopyPhraseTask(SimTask):
+    """CopyPhraseTask that simulates user interactions by sampling data
+    from a DataSampler."""
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
@@ -92,7 +94,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
         self.logger.info(self.get_sim_state())
 
         # sampled_trial = self.sampler.sample_trial(self.get_sim_state())
-        sampled_data = self.sampler.sample_data(self.get_sim_state())
+        sampled_data = self.samplers[0].sample_data(self.get_sim_state())
 
         # trial_info = (datasource, inquiry_n)
         # eye_gaze_data = self.sampler['EYE'].sample(self.get_sim_state(), trial_info)

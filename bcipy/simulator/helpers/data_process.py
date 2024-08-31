@@ -5,7 +5,7 @@ for classification."""
 import logging as logger
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple
+from typing import List, NamedTuple, Optional, Tuple, Type
 
 import numpy as np
 
@@ -419,3 +419,51 @@ class EegRawDataProcessor(RawDataProcessor):
             bandpass_order=transform_params.filter_order,
             downsample_factor=transform_params.down_sampling_rate,
         )
+
+
+def get_processor(
+        data_source: ContentType,
+        evidence_type: Optional[EvidenceType] = None
+) -> Type[RawDataProcessor]:
+    """Returns the matching processor class.
+
+    Parameters
+    ----------
+        data_source - type of data that the processor should consume
+        evidence_type - type of evidence that the processor should produce.
+    """
+    matches = [
+        cls for cls in RawDataProcessor.__subclasses__()
+        if cls.consumes == data_source and (
+            evidence_type is None or cls.produces == evidence_type)
+    ]
+    if matches:
+        return matches[0]
+    else:
+        msg = f"Data processor not found for {data_source.name}"
+        if evidence_type:
+            msg += f" -> {evidence_type.name}"
+        raise Exception(msg)
+
+
+def find_data_processor(model: SignalModel) -> Type[RawDataProcessor]:
+    """Get the DataProcessor appropriate for the given model."""
+    content_type = ContentType(model.metadata.device_spec.content_type)
+    # Metadata may provide an EvidenceType with a model so the same data source can
+    # be used to produce multiple types of evidence (ex. alpha)
+    evidence_type = None
+    model_output = model.metadata.evidence_type
+    if model_output:
+        try:
+            evidence_type = EvidenceType(model_output.upper())
+        except ValueError:
+            logger.error(f"Unsupported evidence type: {model_output}")
+
+    return get_processor(content_type, evidence_type)
+
+
+def init_data_processor(signal_model: SignalModel) -> RawDataProcessor:
+    """Find an DataProcessor that matches the given signal_model and
+    initialize it."""
+    processor_class = find_data_processor(signal_model)
+    return processor_class(signal_model)

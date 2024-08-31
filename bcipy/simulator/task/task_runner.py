@@ -5,17 +5,16 @@ import logging
 import os
 from glob import glob
 from pathlib import Path
-from typing import List, Optional
+from typing import List, Type
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.data_process import EegRawDataProcessor
+from bcipy.simulator.helpers.data_process import init_data_processor
 from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
-from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
-from bcipy.task.main import Task
+from bcipy.simulator.task.copy_phrase import SimTask, SimulatorCopyPhraseTask
 
 logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
 
@@ -33,31 +32,21 @@ def configure_run_directory(sim_dir: str, run: int) -> str:
     return path
 
 
-class TaskRunner():
-    """Responsible for executing a task a given number of times."""
+class TaskFactory():
+    """Constructs the hierarchy of objects necessary for initializing a task."""
 
     def __init__(self,
-                 model_path: str,
                  params_path: str,
+                 model_path: str,
                  source_dirs: List[str],
-                 save_dir: str,
-                 runs: int = 1):
-        self.model_path = model_path
+                 sampling_strategy: Type[Sampler] = EEGByLetterSampler,
+                 task: Type[SimTask] = SimulatorCopyPhraseTask):
         self.params_path = params_path
+        self.model_path = model_path
         self.source_dirs = source_dirs
-        self.sim_dir = save_dir
-        self.runs = runs
+        self.sampling_strategy = sampling_strategy
+        self.simulation_task = task
 
-        self.sampling_strategy = EEGByLetterSampler
-        self.simulation_task = SimulatorCopyPhraseTask
-
-        self.parameters = None
-        self.signal_models: List[SignalModel] = []
-        self.language_model = None
-        self.sampler: Optional[Sampler] = None
-
-    def setup(self) -> None:
-        """Setup the task objects"""
         logger.info("Loading parameters")
         self.parameters = load_json_parameters(self.params_path,
                                                value_cast=True)
@@ -70,38 +59,51 @@ class TaskRunner():
         self.language_model = init_language_model(self.parameters)
         logger.debug(self.language_model)
 
-        logger.info("Creating data engine")
-        # TODO: initialize a data engine and sampler for each model
-        data_processor = EegRawDataProcessor(self.signal_models[0])
-        data_engine = RawDataEngine(list(map(str, self.source_dirs)),
-                                    self.parameters, data_processor)
-        self.sampler = self.sampling_strategy(data_engine)
-        logger.debug("Using sampler:")
-        logger.debug(self.sampler)
+        self.samplers = self.init_samplers(self.signal_models)
+        logger.debug(self.samplers)
 
-    def setup_complete(self) -> bool:
-        """Determines if the runner has been setup correctly."""
-        return all([
-            self.parameters is not None,
-            len(self.signal_models) > 0, self.language_model is not None,
-            self.sampler is not None
-        ])
+    def init_samplers(self, signal_models: List[SignalModel]) -> List[Sampler]:
+        """Initializes the evidence evaluators from the provided signal models.
 
-    def make_task(self, run_dir) -> Task:
-        """Create the task. This is done for every run."""
-        assert self.sampler, "Sampler must be initialized"
+        Returns a list of evaluators for active devices. Raises an exception if
+        more than one evaluator provides the same type of evidence.
+        """
+
+        samplers = []
+        for model in signal_models:
+            processor = init_data_processor(model)
+            logger.info(f"Creating data engine for {model}")
+            engine = RawDataEngine(list(map(str, self.source_dirs)),
+                                   self.parameters,
+                                   data_processor=processor)
+            sampler = self.sampling_strategy(engine)
+            samplers.append(sampler)
+        return samplers
+
+    def make_task(self, run_dir: str) -> SimTask:
+        """Construct a new task"""
         return self.simulation_task(self.parameters,
                                     file_save=run_dir,
                                     signal_models=self.signal_models,
                                     language_model=self.language_model,
-                                    sampler=self.sampler)
+                                    samplers=self.samplers)
+
+
+class TaskRunner():
+    """Responsible for executing a task a given number of times."""
+
+    def __init__(self,
+                 save_dir: str,
+                 task_factory: TaskFactory,
+                 runs: int = 1):
+
+        self.task_factory = task_factory
+        self.sim_dir = save_dir
+        self.runs = runs
 
     def run(self):
         """Run one or more simulations"""
-        if not self.setup_complete():
-            self.setup()
-        assert self.parameters, "Parameters is not initialized"
-        self.parameters.save(self.sim_dir)
+        self.task_factory.parameters.save(self.sim_dir)
         for i in range(self.runs):
             logger.info(f"Executing task {i+1}")
             self.do_run(i + 1)
@@ -111,7 +113,7 @@ class TaskRunner():
         """Execute a simulation run."""
         run_dir = configure_run_directory(self.sim_dir, run)
         logger.info(run_dir)
-        task = self.make_task(run_dir)
+        task = self.task_factory.make_task(run_dir)
         task.execute()
 
 
@@ -151,10 +153,13 @@ def main():
 
     sim_dir = artifact.init_simulation_dir()
     logger.info(sim_dir)
-    runner = TaskRunner(model_path=sim_args['model_path'],
-                        params_path=sim_args['parameters'],
-                        source_dirs=sim_args['source_dirs'],
-                        save_dir=sim_dir,
+    task_factory = TaskFactory(params_path=sim_args['parameters'],
+                               model_path=sim_args['model_path'],
+                               source_dirs=sim_args['source_dirs'],
+                               sampling_strategy=EEGByLetterSampler,
+                               task=SimulatorCopyPhraseTask)
+    runner = TaskRunner(save_dir=sim_dir,
+                        task_factory=task_factory,
                         runs=sim_args['n'])
     runner.run()
 
