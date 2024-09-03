@@ -679,12 +679,31 @@ def analyze_gaze(
         # for i in range(centralized_data_training_set.shape[0]):
         reshaped_data = centralized_data_training_set.reshape((72,720))
         cov_matrix = np.cov(reshaped_data, rowvar=False)
+        time_horizon = 9
+        
+        for eye_coord_0 in range(4):
+            for eye_coord_1 in range(4):
+                for time_0 in range(180):
+                    for time_1 in range(180):
+                        l_ind = eye_coord_0 * 180 + time_0
+                        m_ind = eye_coord_1 * 180 + time_1
+                        if np.abs(time_1 - time_0) > time_horizon:
+                            cov_matrix[l_ind, m_ind] = 0
+                            # cov_matrix[m_ind, l_ind] = 0
         # cov_matrix.shape = (720,720)
+
         plt.imshow(cov_matrix)
         plt.colorbar()
         plt.show()
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
+        breakpoint()
+        eps = 0
+        inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
+        denominator = 0
+        # denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
+        # print(np.linalg.det(cov_matrix))
+        # print(denominator)
         # Find the likelihoods for the test case:
         l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
@@ -699,12 +718,7 @@ def analyze_gaze(
                 central_data = model.substract_mean(test_dict[sym0], time_average[sym1])
                 flattened_data = central_data.reshape((720,))
                 diff = flattened_data - reshaped_mean
-                eps = 1e-6
-                inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
                 numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
-                # denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
-                #TODO: Fix -inf error  
-                denominator = 0
                 log_likelihood = numerator - denominator
                 # print(f"{log_likelihood:.3E}")
                 log_likelihoods[i_sym0, i_sym1] = log_likelihood
@@ -714,7 +728,6 @@ def analyze_gaze(
             if max_like == i_sym0:
                 # print("True")
                 counter += 1
-
                 # l_likelihoods[i_sym0, i_sym1] = calculate_loglikelihoods(flattened_data, reshaped_mean,  cov_matrix)
         # print(central_data)
         # print("log_likelihoods: ")
@@ -933,15 +946,15 @@ def offline_analysis(
 
       
     # Analyze both EEG and Eyetracker data here
-    multi_model, multi_figure_handles = analyze_multimodal(
-                eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, 
-                  estimate_balanced_acc, save_figures, show_figures)
+    # multi_model, multi_figure_handles = analyze_multimodal(
+    #             eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, 
+    #               estimate_balanced_acc, save_figures, show_figures)
             # models.append(erp_model)
             # figure_handles.append(erp_figure_handles)
 
-    # et_model, et_figure_handles = analyze_gaze(
-    #             gaze_data, parameters, device_spec_gaze, data_folder, save_figures, 
-    #             show_figures, model_type="GP_SampleAverage")
+    et_model, et_figure_handles = analyze_gaze(
+                gaze_data, parameters, device_spec_gaze, data_folder, save_figures, 
+                show_figures, model_type="GP_SampleAverage")
             # models.append(et_model)
             # figure_handles.append(et_figure_handles)
 
