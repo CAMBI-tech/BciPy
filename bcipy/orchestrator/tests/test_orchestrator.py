@@ -16,6 +16,7 @@ class TestSessionOrchestrator(unittest.TestCase):
 
     def test_orchestrator_queues_task(self) -> None:
         task = Mock(spec=Task)
+        task.name = "test task"
         orchestrator = SessionOrchestrator()
         assert len(orchestrator.tasks) == 0
         orchestrator.add_task(task)
