@@ -81,6 +81,7 @@ class DecodedTriggers(NamedTuple):
 
 @dataclass()
 class ExtractedExperimentData:
+    """Data from an acquisition device after reshaping and filtering."""
     source_dir: str
     inquiries: np.ndarray
     trials: np.ndarray

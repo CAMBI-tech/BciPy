@@ -132,6 +132,7 @@ class SimulatorCopyPhraseTask(SimTask):
 
     def current_symbols(self) -> List[str]:
         """Get the list of symbols from the current inquiry."""
+        assert self.current_inquiry, "current inquiry not initialized."
         schedule = self.current_inquiry
         stimuli = schedule.stimuli[0]
         _fixation, *symbols = stimuli

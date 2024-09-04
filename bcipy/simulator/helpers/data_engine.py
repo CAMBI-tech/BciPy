@@ -1,12 +1,13 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import List, NamedTuple, Optional
+from typing import List, NamedTuple, Optional, Union
 
 import numpy as np
 import pandas as pd
 
 from bcipy.helpers.parameters import Parameters
+from bcipy.simulator.helpers import data_process
 from bcipy.simulator.helpers.artifact import TOP_LEVEL_LOGGER_NAME
 from bcipy.simulator.helpers.signal_helpers import (EegRawDataProcessor,
                                                     ExtractedExperimentData,
@@ -70,15 +71,18 @@ class RawDataEngine(DataEngine):
     Object that loads in list of session data folders and transforms data into sample-able DataFrame
     """
 
-    def __init__(self,
-                 source_dirs: List[str],
-                 parameters: Parameters,
-                 data_processor: Optional[RawDataProcessor] = None):
+    def __init__(
+        self,
+        source_dirs: List[str],
+        parameters: Parameters,
+        data_processor: Optional[Union[RawDataProcessor,
+                                       data_process.RawDataProcessor]] = None):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
 
         self.data_processor = data_processor or EegRawDataProcessor()
-        self.data: List[ExtractedExperimentData] = []
+        self.data: List[Union[ExtractedExperimentData,
+                              data_process.ExtractedExperimentData]] = []
         self.schema: Optional[pd.DataFrame] = None
 
         self.load()
@@ -122,7 +126,10 @@ class RawDataEngine(DataEngine):
         self.schema = pd.DataFrame(rows)
         return self
 
-    def trials(self, data_source: ExtractedExperimentData) -> List[Trial]:
+    def trials(
+        self, data_source: Union[ExtractedExperimentData,
+                                 data_process.ExtractedExperimentData]
+    ) -> List[Trial]:
         """Convert extracted data from a single data source to a list of Trials."""
         trials = []
         symbols_by_inquiry = data_source.symbols_by_inquiry
