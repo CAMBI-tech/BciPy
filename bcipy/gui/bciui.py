@@ -22,7 +22,7 @@ class BCIUI(QWidget):
     contents: QVBoxLayout
     center_content_vertically: bool = False
 
-    def __init__(self, title="BCIUI", default_width=500, default_height=600):
+    def __init__(self, title: str = "BCIUI", default_width: int = 500, default_height: int = 600) -> None:
         super().__init__()
         self.resize(default_width, default_height)
         self.setWindowTitle(title)
@@ -32,14 +32,14 @@ class BCIUI(QWidget):
     def app(self):
         ...
 
-    def apply_stylesheet(self):
+    def apply_stylesheet(self) -> None:
         gui_dir = os.path.dirname(os.path.realpath(__file__))
         stylesheet_path = os.path.join(gui_dir, "bcipy_stylesheet.css")
         with open(stylesheet_path, "r") as f:
             stylesheet = f.read()
         self.setStyleSheet(stylesheet)
 
-    def display(self):
+    def display(self) -> None:
         # Push contents to the top of the window
         """
         Display the UI window and apply the stylesheet.
@@ -50,7 +50,7 @@ class BCIUI(QWidget):
         self.apply_stylesheet()
         self.show()
 
-    def show_alert(self, alert_text: str):
+    def show_alert(self, alert_text: str) -> int:
         """
         Shows an alert dialog with the specified text.
 
@@ -64,7 +64,7 @@ class BCIUI(QWidget):
         return msg.exec()
 
     @staticmethod
-    def centered(widget: QWidget):
+    def centered(widget: QWidget) -> QHBoxLayout:
         layout = QHBoxLayout()
         layout.addStretch()
         layout.addWidget(widget)
@@ -127,7 +127,7 @@ class DynamicItem(QWidget):
     on_remove: pyqtSignal = pyqtSignal()
     data: dict = {}
 
-    def remove(self):
+    def remove(self) -> None:
         """Remove the widget from it's parent DynamicList, removing it from the UI and deleting it"""
         self.on_remove.emit()
 
@@ -147,12 +147,27 @@ class DynamicList(QWidget):
     def __len__(self):
         return len(self.widgets)
 
-    def add_item(self, item: DynamicItem):
+    def add_item(self, item: DynamicItem) -> None:
+        """
+        Add a DynamicItem to the list.
+
+        PARAMETERS
+        ----------
+        :param: item: DynamicItem to add to the list.
+        """
         self.widgets.append(item)
         item.on_remove.connect(lambda: self.remove_item(item))
         self.layout().addWidget(item)
 
-    def move_item(self, item: DynamicItem, new_index: int):
+    def move_item(self, item: DynamicItem, new_index: int) -> None:
+        """
+        Move a DynamicItem to a new index in the list.
+
+        PARAMETERS
+        ----------
+        :param: item: A reference to the DynamicItem in the list to be moved.
+        :param: new_index: int new index to move the item to.
+        """
         if new_index < 0 or new_index >= len(self):
             raise IndexError(f"Index out of range for length {len(self)}")
 
@@ -161,15 +176,34 @@ class DynamicList(QWidget):
         self.layout().removeWidget(item)
         self.layout().insertWidget(new_index, item)
 
-    def index(self, item: DynamicItem):
+    def index(self, item: DynamicItem) -> int:
+        """
+        Get the index of a DynamicItem in the list.
+        
+        PARAMETERS
+        ----------
+        :param: item: A reference to the DynamicItem in the list to get the index of.
+
+        Returns
+        -------
+            The index of the item in the list.
+        """
         return self.widgets.index(item)
 
-    def remove_item(self, item: DynamicItem):
+    def remove_item(self, item: DynamicItem) -> None:
+        """
+        Remove a DynamicItem from the list.
+
+        PARAMETERS
+        ----------
+        :param: item: A reference to the DynamicItem to remove from the list
+        """
         self.widgets.remove(item)
         self.layout().removeWidget(item)
         item.deleteLater()
 
-    def clear(self):
+    def clear(self) -> None:
+        """Remove all items from the list"""
         for widget in self.widgets:
             self.layout().removeWidget(widget)
             widget.deleteLater()
@@ -179,6 +213,17 @@ class DynamicList(QWidget):
         return [widget.data for widget in self.widgets]
 
     def list_property(self, prop: str):
+        """
+        Get a list of values for a given property of each DynamicItem's data dictionary.
+
+        PARAMETERS
+        ----------
+        :param: prop: string property name to get the values of.
+
+        Returns
+        -------
+            A list of values for the given property.
+        """
         return [widget.data[prop] for widget in self.widgets]
 
 
