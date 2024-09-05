@@ -48,7 +48,7 @@ class TestCopyPhrase(unittest.TestCase):
             'max_inq_len': 50,
             'max_inq_per_series': 10,
             'max_minutes': 20,
-            'min_inq_len': 1,
+            'min_inq_per_series': 1,
             'max_selections': 50,
             'notch_filter_frequency': 60.0,
             'preview_inquiry_isi': 1.0,
@@ -82,7 +82,7 @@ class TestCopyPhrase(unittest.TestCase):
             'trigger_type': 'image',
         }
         self.parameters = Parameters.from_cast_values(**parameters)
-
+        self.fake = True
         self.win = mock({'size': [500, 500], 'units': 'height'})
 
         device_spec = DeviceSpec(name='Testing',
@@ -106,6 +106,7 @@ class TestCopyPhrase(unittest.TestCase):
                     ContentType.EEG: self.eeg_client_mock
                 }
             })
+        self.servers = [mock()]
         when(self.daq).get_client(ContentType.EEG).thenReturn(self.eeg_client_mock)
         self.temp_dir = tempfile.mkdtemp()
         self.model_metadata = mock({
@@ -129,6 +130,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(self.copy_phrase_wrapper)
+
         # mock data for initial series
         series_gen = mock_inquiry_data()
         when(self.copy_phrase_wrapper).initialize_series().thenReturn(
@@ -143,79 +145,78 @@ class TestCopyPhrase(unittest.TestCase):
 
     def test_initialize(self):
         """Test initialization"""
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         RSVPCopyPhraseTask(
-            win=self.win,
-            daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
             signal_models=[self.signal_model],
             language_model=self.language_model,
-            fake=True)
+            fake=self.fake)
 
     def test_validate_parameters(self):
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(
-            win=self.win,
-            daq=self.daq,
             parameters=self.parameters,
             file_save=self.temp_dir,
             signal_models=[self.signal_model],
             language_model=self.language_model,
-            fake=True)
+            fake=self.fake)
 
         task.validate_parameters()
 
     def test_validate_parameters_throws_task_exception_missing_parameter(self):
         parameters = {}
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
                 language_model=self.language_model,
-                fake=True)
+                fake=self.fake)
 
     def test_validate_parameters_throws_task_exception_excess_prestim_length(self):
         self.parameters['prestim_length'] = 1000
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
                 language_model=self.language_model,
-                fake=True)
+                fake=self.fake)
 
     def test_validate_parameters_throws_task_exception_excess_trial_window(self):
         self.parameters['trial_window'] = "0.0:1000.0"
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
         with self.assertRaises(TaskConfigurationException):
             RSVPCopyPhraseTask(
-                win=self.win,
-                daq=self.daq,
                 parameters=self.parameters,
                 file_save=self.temp_dir,
                 signal_models=[self.signal_model],
                 language_model=self.language_model,
-                fake=True)
+                fake=self.fake)
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.trial_complete_message')
     def test_execute_without_inquiry(self, message_mock,
                                      user_input_mock):
         """User should be able to exit the task without viewing any inquiries"""
-
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         user_input_mock.return_value = False
 
@@ -240,14 +241,13 @@ class TestCopyPhrase(unittest.TestCase):
     def test_execute_fake_data_single_inquiry(self, process_data_mock, message_mock,
                                               user_input_mock):
         """Test that fake data does not use the decision maker"""
-
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         # Execute a single inquiry then `escape` to stop
         user_input_mock.side_effect = [True, False]
@@ -280,13 +280,13 @@ class TestCopyPhrase(unittest.TestCase):
                          user_input_mock):
         """Test stoppage criteria for the max inquiry length"""
         self.parameters['max_inq_len'] = 2
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         # Don't provide any `escape` input from the user
         user_input_mock.return_value = True
@@ -320,14 +320,13 @@ class TestCopyPhrase(unittest.TestCase):
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
         self.parameters['spelled_letters_count'] = 4
-
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         # Don't provide any `escape` input from the user
         user_input_mock.return_value = True
@@ -358,25 +357,25 @@ class TestCopyPhrase(unittest.TestCase):
         """Spelled letters should reset if count is larger than copy phrase."""
         self.parameters['task_text'] = 'Hi'
         self.parameters['spelled_letters_count'] = 3
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         self.assertEqual(task.starting_spelled_letters(), 0)
 
     def test_stims_for_eeg(self):
         """The correct stims should be sent to get_device_data_for_decision"""
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
         timings1 = [['calibration_trigger', 2.0539278959913645],
                     ['+', 3.7769652379938634], ['Y', 4.247819707990857],
                     ['S', 4.46274590199755], ['W', 4.679621118993964],
@@ -418,15 +417,15 @@ class TestCopyPhrase(unittest.TestCase):
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_device_data_for_decision')
     def test_next_letter(self, process_data_mock, message_mock,
                          user_input_mock):
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         """Test that the task stops when the copy_phrase has been correctly spelled."""
         self.parameters['task_text'] = 'Hello'
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
         task.spelled_text = 'H'
         self.assertEqual(task.next_target(), 'e')
 
@@ -449,13 +448,13 @@ class TestCopyPhrase(unittest.TestCase):
                                             user_input_mock):
         """Test that preview is displayed"""
         self.parameters['show_preview_inquiry'] = True
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
-                                  fake=True)
+                                  fake=self.fake)
 
         # Execute a single inquiry then `escape` to stop
         user_input_mock.side_effect = [True, False]
@@ -531,7 +530,8 @@ class TestCopyPhrase(unittest.TestCase):
 
         when(bcipy.task.paradigm.rsvp.copy_phrase).CopyPhraseWrapper(
             ...).thenReturn(copy_phrase_wrapper_mock)
-
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
         # mock data for initial series
         when(copy_phrase_wrapper_mock).initialize_series().thenReturn(
             (False,
@@ -576,9 +576,7 @@ class TestCopyPhrase(unittest.TestCase):
                 'nontarget', 'nontarget'
             ]))
 
-        task = RSVPCopyPhraseTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=self.parameters,
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
                                   signal_models=[self.signal_model],
                                   language_model=self.language_model,
@@ -605,6 +603,64 @@ class TestCopyPhrase(unittest.TestCase):
         with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
+
+    def test_setup(self):
+        """Test setup"""
+
+        when(bcipy.task.paradigm.rsvp.copy_phrase).init_acquisition(any(), any(), server=self.fake).thenReturn(
+            (self.daq, self.servers))
+        when(bcipy.task.paradigm.rsvp.copy_phrase).init_display_window(self.parameters).thenReturn(
+            self.win)
+
+        self.assertFalse(RSVPCopyPhraseTask.initalized)
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_models=[self.signal_model],
+                                  language_model=self.language_model,
+                                  fake=self.fake)
+
+        self.assertTrue(task.initalized)
+        verify(bcipy.task.paradigm.rsvp.copy_phrase, times=1).init_acquisition(
+            self.parameters, self.temp_dir, server=self.fake)
+        verify(bcipy.task.paradigm.rsvp.copy_phrase, times=1).init_display_window(
+            self.parameters)
+        self.assertEqual((self.daq, self.servers, self.win),
+                         task.setup(self.parameters, self.temp_dir, self.fake))
+
+    def test_cleanup(self):
+        """Test cleanup"""
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+
+        # Mock the default cleanup
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).write_offset_trigger().thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).exit_display().thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).save_session_data().thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).wait().thenReturn(None)
+
+        # Mock the initialized cleanup
+        when(self.daq).stop_acquisition().thenReturn(None)
+        when(self.daq).cleanup().thenReturn(None)
+        when(self.servers[0]).stop().thenReturn(None)
+        when(self.win).close().thenReturn(None)
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  signal_models=[self.signal_model],
+                                  language_model=self.language_model,
+                                  fake=self.fake)
+        # because the task is not initialized via setup, we need to set it to True here
+        task.initalized = True
+
+        task.cleanup()
+
+        verify(self.daq, times=1).stop_acquisition()
+        verify(self.daq, times=1).cleanup()
+        verify(self.servers[0], times=1).stop()
+        verify(self.win, times=1).close()
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).setup(any(), any(), any())
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).write_offset_trigger()
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).exit_display()
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).wait()
 
 
 def mock_inquiry_data():

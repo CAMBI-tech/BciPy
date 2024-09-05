@@ -136,9 +136,10 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     "fake_data": {
         "value": "true",
         "section": "bci_config",
-        "readableName": "Fake Data Sessions",
+        "name": "Fake Data Sessions",
         "helpTip": "If true, fake data server used",
-        "recommended_values": "",
+        "recommended": "",
+        "editable": "true",
         "type": "bool"
         }
 

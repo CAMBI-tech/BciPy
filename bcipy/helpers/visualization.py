@@ -91,7 +91,7 @@ def visualize_erp(
         baseline = None
 
     mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trial_length, trigger_labels, baseline=baseline)
+    epochs = mne_epochs(mne_data, trial_length, trigger_timing, trigger_labels, baseline=baseline)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.

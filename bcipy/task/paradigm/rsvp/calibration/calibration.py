@@ -7,7 +7,7 @@ from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerType
-from bcipy.task.base_calibration import BaseCalibrationTask
+from bcipy.task.calibration import BaseCalibrationTask
 
 
 class RSVPCalibrationTask(BaseCalibrationTask):
@@ -25,10 +25,9 @@ class RSVPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display)
-    daq (Data Acquisition Client)
     parameters (dict)
     file_save (str)
+    fake (bool)
     """
     name = 'RSVP Calibration'
     MODE = 'RSVP'

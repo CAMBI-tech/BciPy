@@ -19,13 +19,13 @@ from bcipy.helpers.save import save_device_specs
 log = logging.getLogger(__name__)
 
 
-def init_eeg_acquisition(
+def init_acquisition(
         parameters: dict,
         save_folder: str,
         server: bool = False) -> Tuple[ClientManager, List[LslDataServer]]:
     """Initialize EEG Acquisition.
 
-    Initializes a client that connects with the EEG data source and begins
+    Initializes a client that connects with ta data source and begins
     data collection.
 
     Parameters

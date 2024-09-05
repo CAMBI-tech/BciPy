@@ -9,7 +9,7 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_stimuli_position_info
 from bcipy.helpers.system_utils import get_screen_info
-from bcipy.task.base_calibration import BaseCalibrationTask
+from bcipy.task.calibration import BaseCalibrationTask
 
 
 class MatrixCalibrationTask(BaseCalibrationTask):
@@ -27,10 +27,9 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object [ClientManager]])
     parameters (Parameters Object)
     file_save (String)
+    fake (Boolean)
     """
     name = 'Matrix Calibration'
     MODE = 'Matrix'
