@@ -10,7 +10,7 @@ from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
                             invalid_length)
 from bcipy.helpers.load import (copy_parameters, load_experiments,
                                 load_json_parameters, load_users)
-from bcipy.task import TaskType
+from bcipy.task import TaskRegistry
 
 
 class BCInterface(BCIGui):
@@ -20,7 +20,7 @@ class BCInterface(BCIGui):
         editing and loading, and offline analysis execution.
     """
 
-    tasks = TaskType.list()
+    tasks = TaskRegistry().list()
 
     default_text = '...'
     padding = 20
