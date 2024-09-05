@@ -14,6 +14,7 @@ from PyQt6.QtWidgets import (
 from typing import Optional, List
 from bcipy.config import BCIPY_ROOT
 
+
 class BCIUI(QWidget):
     contents: QVBoxLayout
     center_content_vertically: bool = False
@@ -177,7 +178,7 @@ class DynamicList(QWidget):
     def index(self, item: DynamicItem) -> int:
         """
         Get the index of a DynamicItem in the list.
-        
+
         PARAMETERS
         ----------
         :param: item: A reference to the DynamicItem in the list to get the index of.

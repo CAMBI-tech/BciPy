@@ -55,6 +55,7 @@ class IntertaskGUI(BCIUI):
         # This should be replaced with a method that stops orchestrator execution
         self.stop_button.clicked.connect(QApplication.instance().quit)
 
+
 class IntertaskAction(Task):
     name = "Intertask Action"
     protocol: List[Task]
@@ -64,7 +65,7 @@ class IntertaskAction(Task):
         task = self.protocol[self.current_task_index]
         run_bciui(IntertaskGUI, task.name, self.current_task_index, len(self.protocol))
         return TaskData()
-    
+
 
 if __name__ == "__main__":
     # test values
