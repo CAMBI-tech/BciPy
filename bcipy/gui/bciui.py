@@ -69,6 +69,7 @@ class BCIUI(QWidget):
 
     @staticmethod
     def make_list_scroll_area(widget: QWidget) -> QScrollArea:
+        widget.setStyleSheet("background-color: transparent;")
         scroll_area = QScrollArea()
         scroll_area.setWidget(widget)
         scroll_area.setWidgetResizable(True)
