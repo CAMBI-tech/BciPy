@@ -81,8 +81,8 @@ def bci_main(
 
     # configure bcipy session logging
     logger = configure_logger(
-                save_folder,
-                version=sys_info['bcipy_version'])
+        save_folder,
+        version=sys_info['bcipy_version'])
 
     log.info(sys_info)
 

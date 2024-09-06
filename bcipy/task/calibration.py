@@ -72,11 +72,11 @@ class BaseCalibrationTask(Task):
     initalized = False
 
     def __init__(self,
-            parameters: Parameters,
-            file_save: str,
-            logger:logging.Logger,
-            fake: bool = False,
-            **kwargs: Any) -> None:
+                 parameters: Parameters,
+                 file_save: str,
+                 logger: logging.Logger,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
         super().__init__()
 
         self.fake = fake

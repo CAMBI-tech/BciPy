@@ -138,8 +138,10 @@ class TestCopyPhrase(unittest.TestCase):
             next(series_gen))
         when(TriggerHandler).write().thenReturn()
         when(TriggerHandler).add_triggers(any()).thenReturn()
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).get_language_model().thenReturn(self.language_model)
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).get_signal_models().thenReturn(self.signal_models)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).get_language_model().thenReturn(
+            self.language_model)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).get_signal_models().thenReturn(
+            self.signal_models)
 
     def tearDown(self):
         """Override"""

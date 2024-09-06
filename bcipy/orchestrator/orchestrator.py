@@ -59,7 +59,7 @@ class SessionOrchestrator:
 
         self.logger = configure_logger(
             self.save_folder,
-            'protocol_log.txt', #TODO: move to config
+            'protocol_log.txt',  # TODO: move to config
             logging.DEBUG,
             self.sys_info['bcipy_version'])
 
@@ -79,14 +79,14 @@ class SessionOrchestrator:
 
         for task in self.tasks:
             try:
-                # initialize the task save folder and logger
+                #  initialize the task save folder and logger
                 data_save_location = self.init_task_save_folder(task)
                 session_logger = configure_logger(
                     data_save_location,
                     log_level=logging.DEBUG,
                     version=self.sys_info['bcipy_version'])
-                
-                # initialize the task and execute it
+
+                #  initialize the task and execute it
                 initialized_task: Task = task(
                     self.parameters,
                     data_save_location,

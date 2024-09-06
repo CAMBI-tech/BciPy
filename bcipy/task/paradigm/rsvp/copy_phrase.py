@@ -257,10 +257,10 @@ class RSVPCopyPhraseTask(Task):
         self.initalized = True
 
         return daq, servers, display
-    
+
     def get_language_model(self) -> LanguageModel:
         return init_language_model(self.parameters)
-    
+
     def get_signal_models(self) -> Optional[List[SignalModel]]:
         if not self.fake:
             try:

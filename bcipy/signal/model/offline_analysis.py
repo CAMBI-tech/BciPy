@@ -31,7 +31,7 @@ from bcipy.helpers.visualization import (visualize_centralized_data,
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture.gaussian_mixture import (GazeModelCombined,
-                                                 GazeModelIndividual)
+                                                                  GazeModelIndividual)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)

@@ -221,7 +221,7 @@ def configure_logger(
 
     if version:
         root_logger.info(f'Start of Session for BciPy Version: ({version})')
-    
+
     return root_logger
 
 

@@ -23,7 +23,7 @@ class CodeHookAction(Task):
             data_directory: str,
             logger: logging.Logger,
             code_hook: Optional[str] = None,
-            subprocess: bool=True, **kwargs) -> None:
+            subprocess: bool = True, **kwargs) -> None:
         super().__init__()
         self.code_hook = code_hook
         self.subprocess = subprocess
