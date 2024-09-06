@@ -30,11 +30,12 @@ class CodeHookAction(Task):
         self.logger = logger
 
     def execute(self) -> TaskData:
-        if self.subprocess:
-            subprocess.Popen(self.code_hook, shell=True)
+        if self.code_hook:
+            if self.subprocess:
+                subprocess.Popen(self.code_hook, shell=True)
 
-        else:
-            subprocess.run(self.code_hook, shell=True)
+            else:
+                subprocess.run(self.code_hook, shell=True)
         return TaskData()
 
 
