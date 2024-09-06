@@ -1,10 +1,9 @@
-from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.orchestrator import SessionOrchestrator
-from bcipy.task.actions import (ExperimentFieldCollectionAction,
-                                OfflineAnalysisAction)
-from bcipy.task.registry import TaskRegistry
+from bcipy.task.actions import (OfflineAnalysisAction)
 from bcipy.task.paradigm.rsvp import RSVPCalibrationTask, RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.matrix import MatrixCalibrationTask
+
 
 def demo_orchestrator(parameters_path: str) -> None:
     """Demo the SessionOrchestrator.

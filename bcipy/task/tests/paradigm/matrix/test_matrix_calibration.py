@@ -161,7 +161,7 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
@@ -205,7 +205,7 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
@@ -235,7 +235,7 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         # non-target
@@ -265,7 +265,7 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         # fixation
@@ -288,7 +288,7 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         # prompt, index = 0, otherwise it would be a target
@@ -312,7 +312,7 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
@@ -347,7 +347,7 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
 
         timing_mock = mock()
@@ -372,7 +372,7 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger, 
+                                     logger=self.logger,
                                      fake=self.fake)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(

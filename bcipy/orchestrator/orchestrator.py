@@ -4,15 +4,13 @@ import json
 from datetime import datetime
 import logging
 from logging import Logger
-from typing import List, Optional, Union, Type
+from typing import List, Type
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
-from bcipy.signal.model import SignalModel
-from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters
 
 """
@@ -56,7 +54,7 @@ class SessionOrchestrator:
 
         self.logger = configure_logger(
             self.save_folder,
-            'protocol_log.txt', #TODO: move to config
+            'protocol_log.txt',  # TODO: move to config
             logging.DEBUG,
             self.sys_info['bcipy_version'])
 
@@ -76,14 +74,14 @@ class SessionOrchestrator:
 
         for task in self.tasks:
             try:
-                # initialize the task save folder and logger
+                #  initialize the task save folder and logger
                 data_save_location = self.init_task_save_folder(task)
                 session_logger = configure_logger(
                     data_save_location,
                     log_level=logging.DEBUG,
                     version=self.sys_info['bcipy_version'])
-                
-                # initialize the task and execute it
+
+                #  initialize the task and execute it
                 initialized_task: Task = task(
                     self.parameters,
                     data_save_location,
