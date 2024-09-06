@@ -1,3 +1,10 @@
+# GUI Refactor
+
+- Create new `BCIUI` class for simpler more straightforward UI creation.
+- Create dedicated external stylesheet for global styling
+- Rewrite Experiment Registry to use new GUI code
+- Create intertask action UI
+
 # Task Return Object
 - Create `TaskData` dataclass to be returned from tasks
 - updates task `execute` methods to return an instance of `TaskData`
