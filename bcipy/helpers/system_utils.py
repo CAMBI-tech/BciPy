@@ -199,7 +199,7 @@ def configure_logger(
         save_folder: str,
         log_name=LOG_FILENAME,
         log_level=logging.INFO,
-        version=None) -> None:
+        version=None) -> logging.Logger:
     """Configure Logger.
 
     Does what it says.

@@ -25,7 +25,7 @@ class Task(ABC):
     data_save_location: str
     logger: logging.Logger
 
-    def __init__(self) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         super(Task, self).__init__()
         assert getattr(self, 'name', None) is not None, "Task must have a `name` attribute defined"
 

@@ -5,9 +5,7 @@ from typing import Type
 
 from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
                           STATIC_AUDIO_PATH)
-from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import (load_experiments, load_json_parameters,
-                                load_signal_models)
+from bcipy.helpers.load import (load_experiments, load_json_parameters)
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.stimuli import play_sound
 from bcipy.helpers.system_utils import configure_logger, get_system_info
@@ -82,12 +80,13 @@ def bci_main(
         experiment_id=experiment)
 
     # configure bcipy session logging
-    configure_logger(save_folder,
-                     version=sys_info['bcipy_version'])
+    logger = configure_logger(
+                save_folder,
+                version=sys_info['bcipy_version'])
 
     log.info(sys_info)
 
-    if execute_task(task, parameters, save_folder, alert, fake):
+    if execute_task(task, parameters, save_folder, logger, alert, fake):
         if visualize:
 
             # Visualize session data and fail silently if it errors
@@ -104,6 +103,7 @@ def execute_task(
         task: Type[Task],
         parameters: dict,
         save_folder: str,
+        logger: logging.Logger,
         alert: bool,
         fake: bool) -> bool:
     """Execute Task.
@@ -122,29 +122,13 @@ def execute_task(
     Returns:
         (bool): True if the task was successfully executed, False otherwise
     """
-    signal_models = []
-    language_model = None
-
-    # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
-    # modules to be loaded.
-    if task not in task_registry.calibration_tasks():
-        # Try loading in our signal_model and starting a langmodel(if enabled)
-        if not fake:
-            try:
-                model_dir = parameters['signal_model_path']
-                signal_models = load_signal_models(directory=model_dir)
-                assert signal_models, f"No signal models found in {model_dir}"
-            except Exception as error:
-                log.exception(f'Cannot load signal model. Exiting. {error}')
-                raise error
-
-        language_model = init_language_model(parameters)
 
     # Start Task
     try:
         start_task(task,
                    parameters,
                    save_folder,
+                   logger,
                    fake=fake)
 
     # If exception, close all display and acquisition objects

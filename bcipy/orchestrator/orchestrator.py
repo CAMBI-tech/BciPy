@@ -5,12 +5,12 @@ from datetime import datetime
 from random import shuffle
 import logging
 from logging import Logger
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Type
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.system_utils import get_system_info, configure_logger
-from bcipy.task import Task
+from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
@@ -26,16 +26,18 @@ experiment ID, user ID, and parameters file. Tasks are added to the orchestrator
 
 
 class SessionOrchestrator:
-    tasks: List[Task]
+    tasks: List[Type[Task]]
     task_names: List[str]
     parameters: Parameters
     sys_info: dict
     log: Logger
-    save_folder: Optional[str] = None
-    session_data: List[str]
+    save_folder: str
+    session_data: List[TaskData]
     ready_to_execute: bool = False
     last_task_dir: Optional[str] = None
     copyphrases: List[str]
+    last_task_dir: str
+
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
@@ -63,7 +65,7 @@ class SessionOrchestrator:
 
         self.ready_to_execute = True
 
-    def add_task(self, task: Task) -> None:
+    def add_task(self, task: Type[Task]) -> None:
         self.tasks.append(task)
         self.task_names.append(task.name)
 
@@ -71,21 +73,21 @@ class SessionOrchestrator:
         """Executes queued tasks in order"""
 
         if not self.ready_to_execute:
-            self.log.error("Orchestrator not ready to execute tasks")
-            raise Exception("Orchestrator not ready to execute tasks")
+            msg = "Orchestrator not ready to execute tasks"
+            self.log.error(msg)
+            raise Exception(msg)
 
         for task in self.tasks:
             try:
                 # initialize the task save folder and logger
                 data_save_location = self.init_task_save_folder(task)
-                self.session_data.append(data_save_location)
                 session_logger = configure_logger(
                     data_save_location,
                     log_level=logging.DEBUG,
                     version=self.sys_info['bcipy_version'])
                 
                 # initialize the task and execute it
-                initialized_task = task(
+                initialized_task: Task = task(
                     self.parameters,
                     data_save_location,
                     session_logger,
@@ -93,8 +95,9 @@ class SessionOrchestrator:
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
                     last_task_dir=self.last_task_dir)
-                initialized_task.execute()
-
+                task_data = initialized_task.execute()
+                self.session_data.append(task_data)
+                self.logger.info(f"Task {task.name} completed successfully")
                 # some tasks may need access to the previous task's data
                 self.last_task_dir = data_save_location
             except Exception as e:
@@ -110,7 +113,7 @@ class SessionOrchestrator:
         os.makedirs(os.path.join(path, 'logs'), exist_ok=True)
         self.save_folder = path
 
-    def init_task_save_folder(self, task: Task) -> str:
+    def init_task_save_folder(self, task: Type[Task]) -> str:
         assert self.save_folder is not None, "Orchestrator save folder not initialized"
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         save_directory = self.save_folder + f'{task.name}_{timestamp}/'
