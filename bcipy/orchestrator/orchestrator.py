@@ -2,6 +2,7 @@ import errno
 import os
 import json
 from datetime import datetime
+from random import shuffle
 import logging
 from logging import Logger
 from typing import List, Optional, Union
@@ -13,7 +14,7 @@ from bcipy.task import Task
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.signal.model import SignalModel
 from bcipy.language.main import LanguageModel
-from bcipy.helpers.load import load_json_parameters
+from bcipy.helpers.load import load_json_parameters, load_txt_data
 
 """
 Session Orchestrator
@@ -39,7 +40,7 @@ class SessionOrchestrator:
     # This will need to be refactored to a more complex data structure to store data from each task
     session_data: List[str]
     # Session Orchestrator will contain global objects here (DAQ, models etc) to be shared between executed tasks.
-
+    copyphrases: List[str]
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
@@ -100,6 +101,16 @@ class SessionOrchestrator:
             if error.errno != errno.EEXIST:
                 raise error
         return save_directory
+
+    def load_copyphrases_from_file(self, shuffle_phrases: bool = True) -> None:
+        """Opens a file dialog to allow the user to select a file to load copy phrases from."""
+        phrase_list_filename = load_txt_data()
+        with open(phrase_list_filename, 'r') as f:
+            phrases = f.readlines()
+        self.copyphrases = [phrase.strip() for phrase in phrases]
+        if shuffle_phrases:
+            shuffle(self.copyphrases)
+
 
     def save(self) -> None:
         # Save the session data
