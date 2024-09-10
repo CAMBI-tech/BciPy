@@ -23,6 +23,15 @@
     "editable": true,
     "type": "str"
   },
+  "multi_phrase_input": {
+    "value": "false",
+    "section": "bci_config",
+    "name": "Multi-Phrase Input",
+    "helpTip": "If ‘true’, the user will be prompted to load a list of phrases to spell.",
+    "recommended": "",
+    "editable": true,
+    "type": "bool"
+  },
   "trigger_type": {
     "value": "text",
     "section": "bci_config",
