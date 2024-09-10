@@ -5,7 +5,7 @@ from datetime import datetime
 from random import shuffle
 import logging
 from logging import Logger
-from typing import List, Optional, Union, Type
+from typing import List, Type, Optional
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_experiment
@@ -37,7 +37,7 @@ class SessionOrchestrator:
     last_task_dir: Optional[str] = None
     copyphrases: List[str]
     last_task_dir: str
-
+    copyphrases: List[str]
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
