@@ -206,7 +206,7 @@
     "type": "bool"
   },
   "window_height": {
-    "value": "500",
+    "value": "1000",
     "section": "bci_config",
     "readableName": "Task Window Height",
     "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
@@ -214,7 +214,7 @@
     "type": "int"
   },
   "window_width": {
-    "value": "500",
+    "value": "1000",
     "section": "bci_config",
     "readableName": "Task Window Width",
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",

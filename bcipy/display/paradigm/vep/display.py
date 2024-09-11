@@ -219,33 +219,10 @@ class VEPDisplay(Display):
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
-        # Show all symbols in the matrix at reduced opacity
-        for sym in self.symbol_set:
-            pos_index = self.sort_order(sym)
-            sti = self.sti[sym]
-            sti.pos = self.starting_positions[pos_index]
-            sti.setOpacity(0.5)
-            sti.draw()
-        self.draw_static()
-        self.draw_boxes()
-
-        # pause for a time
-        self.window.flip()
-        core.wait(target.duration / 2)
-
-        # highlight target
-        self.window.callOnFlip(self.add_timing, target.symbol)
-        target_stim = self.sti[target.symbol]
-        target_stim.setOpacity(1)
-
-        for sti in self.sti.values():
-            sti.draw()
-
-        #if target_box_index is not None:
-            #self.highlight_target_box(target_box_index)
+        if target_box_index is not None:
+            self.highlight_target_box(target_box_index)
 
         self.draw_static()
-        self.draw_boxes()
 
         self.window.flip()
         core.wait(target.duration / 2)
@@ -254,36 +231,23 @@ class VEPDisplay(Display):
         """Log the inquiry"""
         self.logger.info(f"Inquiry: {[stim.symbol for stim in stimuli]}")
 
-    #def highlight_target_box(self, target_box_index: int) -> None:
-    #    """Emphasize the box at the given index"""
-    #    for i, box in enumerate(self.text_boxes):
-    #        if i == target_box_index:
-    #            box.borderWidth = self.box_border_width + 4
-    #            box.setOpacity(1.0)
-    #        else:
-    #            box.borderWidth = self.box_border_width - 2
-    #            box.setOpacity(0.8)
+    def highlight_target_box(self, target_box_index: int) -> None:
+        """Emphasize the box at the given index"""
+        for i, box in enumerate(self.text_boxes):
+            if i == target_box_index:
+                box.borderWidth = self.box_border_width + 4
+                box.setOpacity(1.0)
+            else:
+                box.borderWidth = self.box_border_width - 2
+                box.setOpacity(0.8)
 
     def do_fixation(self, fixation: StimProps) -> None:
         """Show all symbols before animating."""
         duration = fixation.duration or self.timing_fixation
-
-        starting_opacity = {}
-        for sym in self.symbol_set:
-            sti = self.sti[sym]
-            starting_opacity[sym] = sti.opacity
-            sti.setOpacity(1.0)
-            sti.draw()
         self.draw_static()
         self.draw_boxes()
         self.window.flip()
         core.wait(duration / 2)
-
-        # reset to starting opacity
-        for sym in self.symbol_set:
-            sti = self.sti[sym]
-            sti.setOpacity(starting_opacity[sym])
-            sti.draw()
         self.draw_static()
         self.draw_boxes()
         self.window.flip()
@@ -420,10 +384,10 @@ class VEPDisplay(Display):
         """Reset the position of each symbol to its starting position"""
         #box layout
         layout = [
-            ['a', 'b', 'c', 'd', 'e', 'f'],
-            ['g', 'h', 'i', 'j', 'k', 'l', 'm'],
-            ['n', 'o', 'p', 'q', 'r', 's'],
-            ['t', 'u', 'v', 'w', 'x', 'y', 'z']
+            ['A', 'B', 'C', 'D', 'E', 'F'],
+            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R', 'S'],
+            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
         ]
 
         position_index = 0
@@ -517,10 +481,10 @@ class VEPDisplay(Display):
         """
         #box layout
         layout = [
-            ['a', 'b', 'c', 'd', 'e', 'f'],
-            ['g', 'h', 'i', 'j', 'k', 'l', 'm'],
-            ['n', 'o', 'p', 'q', 'r', 's'],
-            ['t', 'u', 'v', 'w', 'x', 'y', 'z']
+            ['A', 'B', 'C', 'D', 'E', 'F'],
+            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R', 'S'],
+            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
         ]
     
         for box_index, symbols in enumerate(layout):
