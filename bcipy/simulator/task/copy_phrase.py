@@ -107,7 +107,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask, SimTask):
 
         for model in self.signal_models:
             sampler = self.samplers[model]
-            # This assumes that sampling is independent. Changes to the sampler API are needed if 
+            # This assumes that sampling is independent. Changes to the sampler API are needed if
             # we need to provide the trial context of the last sample.
             sampled_data = sampler.sample_data(current_state)
             evidence = model.predict(sampled_data, self.current_symbols(),

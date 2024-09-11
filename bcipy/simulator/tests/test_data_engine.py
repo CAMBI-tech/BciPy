@@ -4,8 +4,29 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from bcipy.simulator.helpers.data_engine import (ExtractedExperimentData,
-                                                 RawDataEngine)
+from bcipy.simulator.helpers.data_engine import RawDataEngine
+from bcipy.simulator.helpers.data_process import (DecodedTriggers,
+                                                  ExtractedExperimentData)
+
+
+def mock_data() -> ExtractedExperimentData:
+    times = [
+        9.730993399999988, 9.966709099999662, 10.201713299999938,
+        10.436247999999978, 10.672083899999961, 10.90684519999968,
+        11.141479799999615, 11.377909999999702, 11.614850199999637,
+        11.849502299999585
+    ]
+    return ExtractedExperimentData(
+        source_dir=Path('data-dir1'),
+        inquiries=np.zeros((7, 1, 692)),
+        trials=np.zeros((7, 10, 74)),
+        labels=np.array([[0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]),
+        inquiry_timing=[[150, 185, 220, 255, 291, 326, 361, 397, 432, 467]],
+        decoded_triggers=DecodedTriggers([
+            'nontarget', 'nontarget', 'nontarget', 'nontarget', 'nontarget',
+            'target', 'nontarget', 'nontarget', 'nontarget', 'nontarget'
+        ], times, ['G', 'C', 'D', 'B', 'I', 'A', 'H', '<', 'E', 'F'], times),
+        trials_per_inquiry=10)
 
 
 class TestRawDataEngine(unittest.TestCase):
@@ -28,6 +49,7 @@ class TestRawDataEngine(unittest.TestCase):
 
     def test_single_data_source(self):
         """Test loading data from a single directory."""
+        self.data_processor.process = Mock(return_value=mock_data())
         RawDataEngine(source_dirs=['data-dir1'],
                       parameters=self.parameters,
                       data_processor=self.data_processor)
@@ -36,6 +58,7 @@ class TestRawDataEngine(unittest.TestCase):
 
     def test_multiple_sources(self):
         """Test loading data from multiple directories."""
+        self.data_processor.process = Mock(return_value=mock_data())
         RawDataEngine(source_dirs=['data-dir1', 'data-dir2', 'data-dir3'],
                       parameters=self.parameters,
                       data_processor=self.data_processor)
@@ -48,25 +71,7 @@ class TestRawDataEngine(unittest.TestCase):
         """Test the data transformation method"""
         # Setup context
         # mock the experiment data; single inquiry
-        mock_data = ExtractedExperimentData(
-            source_dir=Path('data-dir1'),
-            inquiries=np.zeros((7, 1, 692)),
-            trials=np.zeros((7, 10, 74)),
-            labels=np.array([[0, 0, 0, 0, 0, 1, 0, 0, 0, 0]]),
-            inquiry_timing=[[150, 185, 220, 255, 291, 326, 361, 397, 432,
-                             467]],
-            decoded_triggers=([
-                'nontarget', 'nontarget', 'nontarget', 'nontarget',
-                'nontarget', 'target', 'nontarget', 'nontarget', 'nontarget',
-                'nontarget'
-            ], [
-                9.730993399999988, 9.966709099999662, 10.201713299999938,
-                10.436247999999978, 10.672083899999961, 10.90684519999968,
-                11.141479799999615, 11.377909999999702, 11.614850199999637,
-                11.849502299999585
-            ], ['G', 'C', 'D', 'B', 'I', 'A', 'H', '<', 'E', 'F']),
-            trials_per_inquiry=10)
-        self.data_processor.process = Mock(return_value=mock_data)
+        self.data_processor.process = Mock(return_value=mock_data())
         engine = RawDataEngine(source_dirs=['data-dir1'],
                                parameters=self.parameters,
                                data_processor=self.data_processor)
