@@ -11,6 +11,7 @@ from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import StratifiedKFold, KFold
+from sklearn.utils import resample
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
@@ -271,7 +272,6 @@ def analyze_gaze(
         data_folder,
         save_figures=None,
         show_figures=False,
-        plot_points=False,
         model_type="Individual"):
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
@@ -321,18 +321,14 @@ def analyze_gaze(
 
     data, _fs = gaze_data.by_channel()
 
-    model = GPSampleAverage()
-
-    window_length = model.window_length
-
-    # # Extract all Triggers info
-    # trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-    #     trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-    #     remove_pre_fixation=True,
-    #     exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-    #     device_type='EYETRACKER',
-    #     apply_starting_offset=False
-    # )
+    if model_type == "Individual":
+        model = GMIndividual()
+    elif model_type == "Centralized":
+        model = GMCentralized()
+    elif model_type == "GP":
+        model = GP()
+    elif model_type == "GP_SampleAverage":
+        model = GPSampleAverage()
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -358,28 +354,15 @@ def analyze_gaze(
     inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
-    inquiries = model.reshaper(
+    inquiries, inquiries_list, _ = model.reshaper(
         inq_start_times=inq_start,
         target_symbols=target_symbols,
         gaze_data=data,
         sample_rate=sample_rate,
         stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=10,
+        num_stimuli_per_inquiry=stim_size,
         symbol_set=symbol_set
     )
-
-    # TODO use the inquiry reshaper signatures to extract the inquiries and then create a seperate method to construct other needed structures
-    # inquiries, _, _ = model.reshaper(
-    #     trial_targetness_label=trigger_targetness,
-    #     timing_info=trigger_timing,
-    #     eeg_data=data,
-    #     sample_rate=sample_rate,
-    #     trials_per_inquiry=stim_size,
-    #     channel_map=channel_map,
-    #     poststimulus_length=window_length,
-    #     prestimulus_length=0,
-    #     transformation_buffer=0,
-    # )
 
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
@@ -390,15 +373,11 @@ def analyze_gaze(
             continue
 
         for j in range(len(inquiries[i])):
-            left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries[i][j])
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries[i][j])
             preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
              # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
     
-    
-
-    centralized_data_left = []
-    centralized_data_right = []
     centralized_data_train = {i: [] for i in symbol_set}
     centralized_data = {i: [] for i in symbol_set}
     time_average = {i: [] for i in symbol_set}
@@ -413,19 +392,18 @@ def analyze_gaze(
         try: 
             if len(inquiries[sym]) == 0:
                 continue
-            # le = preprocessed_data[sym][0]
-            # re = preprocessed_data[sym][1]
-            # breakpoint()
+            le = preprocessed_data[sym][0]
+            re = preprocessed_data[sym][1]
 
-        #     # Train test split:
-        #     labels = np.array([sym] * len(le))  # Labels are the same for both eyes
-        #     train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
-        #     train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-        #     train_dict[sym] = np.concatenate((train_le, train_re), axis=0)  # Note that here both eyes are concatenated
-        #     test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
+            # Train test split:
+            labels = np.array([sym] * len(le))  # Labels are the same for both eyes
+            train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
+            train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
+            train_dict[sym] = np.concatenate((train_le, train_re), axis=0)  # Note that here both eyes are concatenated
+            test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
 
         except:
-            log.info(f"Error in symbol {sym}")
+            log.info(f"No evidence for symbol {sym}")
             continue
 
         # Fit the model based on model type.
@@ -433,26 +411,16 @@ def analyze_gaze(
             # Model 1: Fit Gaussian mixture on each symbol separately
             model.fit(train_dict[sym])
 
-
             left_eye_all.append(le)
             right_eye_all.append(re)
 
-
-        # if model_type == "Centralized":
         if model_type == "GP_SampleAverage":
             # Centralize the data using symbol positions:
             # Load json file.
-            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
-                symbol_positions = json.load(params_file)
-            # Subtract the symbol positions from the data:
-            # centralized_data_left.append(model.centralize(train_le, symbol_positions[sym]))
-            # centralized_data_right.append(model.centralize(train_re, symbol_positions[sym]))
-            # centralized_data_train.append(model.centralize(train_dict[sym], symbol_positions[sym]))
+            # with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
+            #     symbol_positions = json.load(params_file)
 
-            # for j in range(len(preprocessed_data[sym])):
-            #     centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
-
-            # Instead of centralizing, take the time average:
+            # Subtract the time average from data points:
             for j in range(len(preprocessed_data[sym])):
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
                 time_average[sym].append(temp)
@@ -500,15 +468,6 @@ def analyze_gaze(
             #     plt.plot(range(len(centralized_data[sym][j][:, 0])), centralized_data[sym][j][:, 0], label=f'{sym} Inquiry {j}', c=colors[j])
             # plt.legend()
             # plt.show()
-            # breakpoint()
-       
-        # # Save the dictionary as a csv file:
-        # df = pd.DataFrame.from_dict(centralized_data, orient='index')
-        # df.to_csv('centralized_data.csv', header=False)
-
-        # # Also save preprocessed data:
-        # df_2 = pd.DataFrame.from_dict(preprocessed_data, orient='index')
-        # df_2.to_csv('preprocessed_data.csv', header=False)
 
         # Split the data into train and test sets & fit the model:
         centralized_data_training_set = []
@@ -523,7 +482,7 @@ def analyze_gaze(
             # Add the last inquiry to the test set:
             test_dict[sym] = preprocessed_data[sym][-1]
 
-        # Save the test dict as well:
+        # Save the test dict:
         import pickle 
         with open('test_dict.pkl', 'wb') as f:
             pickle.dump(test_dict, f)
@@ -533,16 +492,9 @@ def analyze_gaze(
             pickle.dump(centralized_data_training_set, f)
 
         centralized_data_training_set = np.array(centralized_data_training_set)
-
-        # Take the sample average of the centralized data: time_average
-        # centralized_data_training_set.shape = (72,4,180)
         
-        # flatten the covariance to (72, 720)
-        # cov_matrix = np.zeros((centralized_data_training_set.shape[0], centralized_data_training_set.shape[1]*centralized_data_training_set.shape[2]))
-        
-        # for i in range(centralized_data_training_set.shape[0]):
         reshaped_data = centralized_data_training_set.reshape((72,720))
-        units = 1e5
+        units = 1  # for debugging, delete later
         reshaped_data *= units
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         # cov_matrix.shape = (720,720)
@@ -552,10 +504,12 @@ def analyze_gaze(
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
         # Find the likelihoods for the test case:
-        l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         counter = 0
-        eps = 0
+        eps = 1e-4
+        # log_denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
+        # Common denominator is negligible.
+        log_denominator = 0
         for i_sym0, sym0 in enumerate(symbol_set):
             for i_sym1, sym1 in enumerate(symbol_set):
                 if len(centralized_data[sym1]) == 0:
@@ -567,13 +521,8 @@ def analyze_gaze(
                 flattened_data = central_data.reshape((720,))
                 diff = flattened_data - reshaped_mean
                 inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
-                # NOTE: Why does the inverse exist if the matrix is singular? (det is zero)
-                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
-                # denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
-                # Common denominator is negligible.
-                log_likelihood = numerator
-                # log_likelihood = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
-                # print(f"{log_likelihood:.3E}")
+                log_numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
+                log_likelihood = log_numerator - log_denominator
                 log_likelihoods[i_sym0, i_sym1] = log_likelihood
             # Find the max likelihood:
             max_like = np.argmax(log_likelihoods[i_sym0, :])
@@ -581,27 +530,23 @@ def analyze_gaze(
             if max_like == i_sym0:
                 # print("True")
                 counter += 1
-
-                # l_likelihoods[i_sym0, i_sym1] = calculate_loglikelihoods(flattened_data, reshaped_mean,  cov_matrix)
-        # print(central_data)
-        # print("log_likelihoods: ")
-        # print(log_likelihoods)
-        # max_like = l_likelihoodsl_likelihoods.max(axis=0)
         breakpoint()
+        # print("log_likelihoods: ", log_likelihoods)
+
         # Find the covariances of the centralized data:
         cov_matrix_trial = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[0], centralized_data_training_set.shape[0]))
         for i_coord in range(centralized_data_training_set.shape[1]):
             cov_matrix_trial[i_coord] = np.cov(centralized_data_training_set[:, i_coord, :])
         # cov_matrix_trial.shape = (4,72,72)
-        plt.imshow(cov_matrix_trial[0])
-        plt.show()
+        # plt.imshow(cov_matrix_trial[0])
+        # plt.show()
         
         cov_matrix_coord = np.zeros((centralized_data_training_set.shape[2], centralized_data_training_set.shape[1], centralized_data_training_set.shape[1]))
         for i_time in range(centralized_data_training_set.shape[2]):
             cov_matrix_coord[i_time] = np.cov((centralized_data_training_set[:, :, i_time]).T)
         # cov_matrix_coord.shape = (180,4,4)
-        plt.imshow(cov_matrix_coord[0])
-        plt.show()
+        # plt.imshow(cov_matrix_coord[0])
+        # plt.show()
 
         cov_matrix_time = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[2], centralized_data_training_set.shape[2]))
         for i_coord in range(centralized_data_training_set.shape[1]):
@@ -610,10 +555,10 @@ def analyze_gaze(
         # Plot the correlation between the time points
         corr = np.corrcoef(centralized_data_training_set[:, 0, :].T) # left_x over all time points
         # plt.imshow(corr)
-        fig, ax = plt.subplots()
-        cax = ax.matshow(corr, cmap='coolwarm')
-        fig.colorbar(cax)
-        plt.show()
+        # fig, ax = plt.subplots()
+        # cax = ax.matshow(corr, cmap='coolwarm')
+        # fig.colorbar(cax)
+        # plt.show()
 
         # Plot the correlation between the different dimensions, with colorbar:
         # corr = np.corrcoef(centralized_data_training_set[0, :, :])
@@ -627,7 +572,7 @@ def analyze_gaze(
             std_dev = np.sqrt(np.diag(cov_matrix_time[i]))
             axs[i].fill_between(range(len(mean_delta[i, :])), mean_delta[i, :]- std_dev, mean_delta[i, :]+std_dev, alpha=0.2)
             axs[i].legend()
-            axs[i].set_ylim(-0.01, 0.01)
+            axs[i].set_ylim(-0.01*units, 0.01*units)
         plt.suptitle('Sample Average & Confidence Interval for Inquiries')
 
         # plt.plot(range(len(mean_delta[0, :])), mean_delta[0, :], label=f'Mean Inquiry Left_x', c='r')

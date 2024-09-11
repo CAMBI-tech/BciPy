@@ -11,14 +11,6 @@ from sklearn.utils.estimator_checks import check_estimator  # noqa
 import scipy.stats as stats
 from typing import List, Tuple
 from numpy.linalg import inv
-import matplotlib.pyplot as plt
-
-import warnings
-
-warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
-
-import matplotlib.pyplot as plt
-import numpy as np
 
 class GP(SignalModel):
     def __init__(self):
@@ -26,14 +18,7 @@ class GP(SignalModel):
         self.ready_to_predict = False
 
     def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
-        training_data = np.asarray(training_data)
-        # GPflow:
-        N = training_data.shape[0]
-        D = training_data.shape[1]
-        M = 15  # number of inducing points
-        L = 2  # number of latent GPs
-        P = 3  # number of observations = output dimensions
-
+        ...
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
@@ -52,73 +37,12 @@ class GP(SignalModel):
 
 class GPSampleAverage(SignalModel):
     reshaper = GazeReshaper()
-    window_length = 3
     
     def __init__(self):
         self.ready_to_predict = False
 
     def fit(self, training_data: np.ndarray):
-        # Multivariate Gaussian Process Solver
-
-        # # RBF kernel
-        # def mykernel(x1,x2):
-        #     a = 1
-        #     l = 2
-        #     return a*np.exp(-((x1-x2)**2)/(2*l**2))
-        
-        # # Another kernel function
-        # def mykernel2(x1,x2):
-        #     H = 0.3
-        #     return np.abs(x1)**(2*H) + np.abs(x2)**(2*H) - np.abs(x1-x2)**(2*H)
-        
-        def kernel(X1, X2, l=1.0, sigma_f=1.0):
-            """
-            Isotropic squared exponential kernel.
-            
-            Args:
-                X1: Array of m points (m x d).
-                X2: Array of n points (n x d).
-
-            Returns:
-                (m x n) matrix.
-            """
-            sqdist = np.sum(X1**2, 1).reshape(-1, 1) + np.sum(X2**2, 1) - 2 * np.dot(X1, X2.T)
-            return sigma_f**2 * np.exp(-0.5 / l**2 * sqdist)
-        
-        # # extract list to np array:
-        # training_data = np.asarray(training_data)
-
-        """
-        Computes the suffifient statistics of the posterior distribution 
-        from m training data X_train and Y_train and n new inputs X_s.
-        
-        Args:
-            X_s: New input locations (n x d).
-            X_train: Training locations (m x d).
-            Y_train: Training targets (m x 1).
-            l: Kernel length parameter.
-            sigma_f: Kernel vertical variation parameter.
-            sigma_y: Noise parameter.
-        
-        Returns:
-            Posterior mean vector (n x d) and covariance matrix (n x n).
-        """
-        X_train = training_data[0][:,0].reshape(-1, 1)
-        Y_train = np.array(range(len(X_train))).reshape(-1, 1)
-        # X_s = training_data[71][:,0]
-
-        # X = np.array(range(len(X_train))).reshape(-1, 1)
-        # # Mean and covariance of the prior
-        # mu = np.zeros(X.shape)
-        # cov = kernel(X, X)  
-
-        # samples = np.random.multivariate_normal(mu.ravel(), cov, 3)
-
-        # Plot GP mean, uncertainty region and samples 
-        # plot_gp(mu, cov, X, samples=samples) 
-
-        # Prediction from noise-free training data 
-    
+        ... 
     
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
@@ -170,7 +94,6 @@ class GPSampleAverage(SignalModel):
 class GMIndividual(SignalModel):
     """Gaze model that fits different Gaussians/Gaussian Mixtures for each symbol."""
     reshaper = GazeReshaper()
-    window_length = 3
 
     def __init__(self, num_components=2, random_state=0):
         self.num_components = num_components   # number of gaussians to fit
@@ -292,7 +215,6 @@ class GMIndividual(SignalModel):
 class GMCentralized(SignalModel):
     '''Gaze model that uses all symbols to fit a single Gaussian '''
     reshaper = GazeReshaper()
-    window_length = 3
 
     def __init__(self, num_components=1, random_state=0):
         self.num_components = num_components   # number of gaussians to fit

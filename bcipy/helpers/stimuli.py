@@ -298,8 +298,8 @@ class GazeReshaper:
 
         buffer = stimulus_duration / 5  # seconds, buffer for each inquiry
         # NOTE: This buffer is used to account for the screen downtime between each stimulus.
-        # There seems to be a duty cycle of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
-        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry # seconds
+        # There is a "duty cycle" of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
+        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry   # in seconds
 
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
