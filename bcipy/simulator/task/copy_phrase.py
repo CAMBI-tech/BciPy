@@ -22,9 +22,22 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
     return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
 
 
-class SimTask(RSVPCopyPhraseTask):
-    """"Task used for simulation. API differs from a regular task in its use of
-    data samplers."""
+class SimTask():
+    """Abstract class that marks a task as a simulation."""
+    def __init__(self, parameters: Parameters, file_save: str,
+                 signal_models: List[SignalModel],
+                 language_model: LanguageModel, samplers: Dict[SignalModel,
+                                                               Sampler]):
+        """Signature for a simulation task"""
+
+    def execute(self) -> str:
+        """Executes the task"""
+        raise NotImplementedError
+
+
+class SimulatorCopyPhraseTask(RSVPCopyPhraseTask, SimTask):
+    """CopyPhraseTask that simulates user interactions by sampling data
+    from a DataSampler."""
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
@@ -39,11 +52,6 @@ class SimTask(RSVPCopyPhraseTask):
                          fake=False)
         self.save_session_every_inquiry = False
         self.samplers = samplers
-
-
-class SimulatorCopyPhraseTask(SimTask):
-    """CopyPhraseTask that simulates user interactions by sampling data
-    from a DataSampler."""
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
@@ -99,8 +107,8 @@ class SimulatorCopyPhraseTask(SimTask):
 
         for model in self.signal_models:
             sampler = self.samplers[model]
-            # is sampling independent or do we need to provide the trial context of the last sample?
-            # TODO: if so, we need another sampler API method for sample_trials(current_state, trial_info)
+            # This assumes that sampling is independent. Changes to the sampler API are needed if 
+            # we need to provide the trial context of the last sample.
             sampled_data = sampler.sample_data(current_state)
             evidence = model.predict(sampled_data, self.current_symbols(),
                                      self.alp)
