@@ -7,7 +7,7 @@ from glob import glob
 from pathlib import Path
 
 from bcipy.simulator.helpers import artifact
-from bcipy.simulator.helpers.sampler import EEGByLetterSampler
+from bcipy.simulator.helpers.sampler import TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 
@@ -94,7 +94,7 @@ def main():
     task_factory = TaskFactory(params_path=sim_args['parameters'],
                                model_path=sim_args['model_path'],
                                source_dirs=sim_args['source_dirs'],
-                               sampling_strategy=EEGByLetterSampler,
+                               sampling_strategy=TargetNontargetSampler,
                                task=SimulatorCopyPhraseTask)
     runner = TaskRunner(save_dir=sim_dir,
                         task_factory=task_factory,

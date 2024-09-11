@@ -50,7 +50,7 @@ class SimulatorCopyPhrase(Simulator):
     """
 
     def __init__(self, data_engine: DataEngine, model_handler: ModelHandler, sampler: Sampler,
-                 state_manager: StateManager, referee: MetricReferee, parameters: Optional[Parameters] = None,
+                 state_manager: StateManager, referee: MetricReferee, parameters: Parameters,
                  save_dir: Optional[str] = None):
         super().__init__()
 
@@ -61,7 +61,7 @@ class SimulatorCopyPhrase(Simulator):
         self.state_manager = state_manager
         self.data_engine = data_engine
 
-        self.parameters = self.load_parameters(parameters)
+        self.parameters = parameters
 
         self.symbol_set = alphabet()
         self.write_output = False
@@ -161,13 +161,6 @@ class SimulatorCopyPhrase(Simulator):
                                                   evidences["lm"].symbol_set)
 
         return reshaped_evidence
-
-    def load_parameters(self, params: Optional[Parameters]):
-        # TODO validate parameters
-        if params:
-            return params
-        else:
-            return self.data_engine.get_parameters()
 
     def new_data_record(self, inquiry_state: SimState, inquiry_result: InquiryResult) -> Inquiry:
         """Construct a new inquiry data record.

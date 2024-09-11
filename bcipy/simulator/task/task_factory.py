@@ -1,5 +1,5 @@
 import logging
-from typing import List, Type
+from typing import Dict, List, Type
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
@@ -7,7 +7,7 @@ from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.data_process import init_data_processor
-from bcipy.simulator.helpers.sampler import EEGByLetterSampler, Sampler
+from bcipy.simulator.helpers.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimTask, SimulatorCopyPhraseTask
 
 logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
@@ -16,11 +16,12 @@ logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
 class TaskFactory():
     """Constructs the hierarchy of objects necessary for initializing a task."""
 
+    # TODO: sampling strategy per model type
     def __init__(self,
                  params_path: str,
                  model_path: str,
                  source_dirs: List[str],
-                 sampling_strategy: Type[Sampler] = EEGByLetterSampler,
+                 sampling_strategy: Type[Sampler] = TargetNontargetSampler,
                  task: Type[SimTask] = SimulatorCopyPhraseTask):
         self.params_path = params_path
         self.model_path = model_path
@@ -43,14 +44,14 @@ class TaskFactory():
         self.samplers = self.init_samplers(self.signal_models)
         logger.debug(self.samplers)
 
-    def init_samplers(self, signal_models: List[SignalModel]) -> List[Sampler]:
+    def init_samplers(self, signal_models: List[SignalModel]) -> Dict[SignalModel, Sampler]:
         """Initializes the evidence evaluators from the provided signal models.
 
         Returns a list of evaluators for active devices. Raises an exception if
         more than one evaluator provides the same type of evidence.
         """
 
-        samplers = []
+        samplers = {}
         for model in signal_models:
             processor = init_data_processor(model)
             logger.info(f"Creating data engine for {model}")
@@ -58,7 +59,7 @@ class TaskFactory():
                                    self.parameters,
                                    data_processor=processor)
             sampler = self.sampling_strategy(engine)
-            samplers.append(sampler)
+            samplers[model] = sampler
         return samplers
 
     def make_task(self, run_dir: str) -> SimTask:

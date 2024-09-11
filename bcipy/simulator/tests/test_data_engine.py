@@ -23,8 +23,8 @@ class TestRawDataEngine(unittest.TestCase):
         data_engine = RawDataEngine(source_dirs=[],
                                     parameters=self.parameters,
                                     data_processor=self.data_processor)
-        self.assertFalse(data_engine.get_data())
-        self.assertEqual(self.parameters, data_engine.get_parameters())
+
+        self.assertEqual(self.parameters, data_engine.parameters)
 
     def test_single_data_source(self):
         """Test loading data from a single directory."""
@@ -70,8 +70,7 @@ class TestRawDataEngine(unittest.TestCase):
         engine = RawDataEngine(source_dirs=['data-dir1'],
                                parameters=self.parameters,
                                data_processor=self.data_processor)
-        engine.transform()
-        data = engine.get_data()
+        data = engine.trials_df
 
         self.assertEqual(10, len(data))
 

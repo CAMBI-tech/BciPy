@@ -8,8 +8,8 @@ from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from bcipy.helpers.exceptions import TaskConfigurationException
-from bcipy.simulator.helpers.data_engine import RawDataEngine, Trial
+from bcipy.simulator.helpers.data_engine import (QueryFilter, RawDataEngine,
+                                                 Trial)
 from bcipy.simulator.helpers.log_utils import format_samples
 from bcipy.simulator.helpers.state_manager import SimState
 
@@ -42,7 +42,6 @@ class Sampler(ABC):
     def __init__(self, data_engine: RawDataEngine):
         self.data_engine: RawDataEngine = data_engine
         self.model_input_reshaper: Callable = default_reshaper
-        self.data: pd.DataFrame = self.data_engine.transform().get_data()
 
     def sample(self, state: SimState) -> List[Trial]:
         """
@@ -94,27 +93,24 @@ class Sampler(ABC):
         return f"<{self.__class__.__name__}>"
 
 
-class EEGByLetterSampler(Sampler):
+class TargetNontargetSampler(Sampler):
     """Sampler that that queries based on target/non-target label."""
 
     def sample(self, state: SimState) -> List[Trial]:
-        current_stimuli = state.display_alphabet
-        target_letter = state.target_symbol
         sample_rows = []
-        for symbol in current_stimuli:
-            is_target = int(symbol == target_letter)
-            # filtered_data = self.data.query(f'target == {is_target} and symbol == "{symbol}"')
-            filtered_data: pd.DataFrame = self.data.query(
-                f'target == {is_target}')
-            if filtered_data is None or len(filtered_data) == 0:
-                raise TaskConfigurationException(
-                    message="No eeg sample found with provided data and query")
+        for symbol in state.display_alphabet:
+            filters = self.query_filters(
+                symbol, is_target=(symbol == state.target_symbol))
+            filtered_data = self.data_engine.query(filters, samples=1)
+            sample_rows.append(filtered_data[0])
 
-            row = filtered_data.sample(1).iloc[0]
-            sample_rows.append(Trial(**row))
-
-        log.debug(f"EEG Samples:\n{format_samples(sample_rows)}")
+        log.debug(f"Samples:\n{format_samples(sample_rows)}")
         return sample_rows
+
+    def query_filters(self, symbol: str, is_target: bool) -> List[QueryFilter]:
+        """Expression used to query for a single sample."""
+        # QueryFilter('symbol', '==', symbol)
+        return [QueryFilter('target', '==', int(is_target))]
 
 
 class InquirySampler(Sampler):
@@ -124,6 +120,7 @@ class InquirySampler(Sampler):
         super().__init__(data_engine)
 
         # map source to inquiry numbers
+        self.data = self.data_engine.trials_df
         self.target_inquiries, self.no_target_inquiries = self.prepare_data(
             self.data)
 

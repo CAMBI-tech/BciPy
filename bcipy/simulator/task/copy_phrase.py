@@ -1,5 +1,5 @@
 """Simulates the Copy Phrase task"""
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
@@ -28,7 +28,8 @@ class SimTask(RSVPCopyPhraseTask):
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
-                 language_model: LanguageModel, samplers: List[Sampler]):
+                 language_model: LanguageModel, samplers: Dict[SignalModel,
+                                                               Sampler]):
         super().__init__(win=None,
                          daq=None,
                          parameters=parameters,
@@ -89,18 +90,23 @@ class SimulatorCopyPhraseTask(SimTask):
             self,
             stim_times: List[List],
             proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
-        # TODO: sample for each evidence type
+
+        current_state = self.get_sim_state()
         self.logger.info("Computing evidence with sim_state:")
-        self.logger.info(self.get_sim_state())
+        self.logger.info(current_state)
 
-        # sampled_trial = self.sampler.sample_trial(self.get_sim_state())
-        sampled_data = self.samplers[0].sample_data(self.get_sim_state())
+        evidences = []
 
-        # trial_info = (datasource, inquiry_n)
-        # eye_gaze_data = self.sampler['EYE'].sample(self.get_sim_state(), trial_info)
-        evidence = self.signal_model.predict(sampled_data,
-                                             self.current_symbols(), self.alp)
-        return [(EvidenceType.ERP, evidence)]
+        for model in self.signal_models:
+            sampler = self.samplers[model]
+            # is sampling independent or do we need to provide the trial context of the last sample?
+            # TODO: if so, we need another sampler API method for sample_trials(current_state, trial_info)
+            sampled_data = sampler.sample_data(current_state)
+            evidence = model.predict(sampled_data, self.current_symbols(),
+                                     self.alp)
+            evidence_type = model.metadata.evidence_type or EvidenceType.ERP
+            evidences.append((evidence_type, evidence))
+        return evidences
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""
