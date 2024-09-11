@@ -270,7 +270,7 @@ def analyze_multimodal(eeg_data,
     # we will extract the trials from the inquiries later
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    # erp_labels = eeg_inquiry_labels.flatten().tolist()
+    erp_labels = eeg_inquiry_labels.flatten().tolist()
 
     
     ## More gaze preprocessing:
@@ -509,7 +509,7 @@ def analyze_gaze(
     inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
-    inquiries_dict, inquiries_list, labels = model.reshaper(
+    inquiries_dict, inquiries_list, _ = model.reshaper(
         inq_start_times=inq_start,
         target_symbols=target_symbols,
         gaze_data=data,
@@ -518,6 +518,7 @@ def analyze_gaze(
         num_stimuli_per_inquiry=10,
         symbol_set=symbol_set
     )
+    
 
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
@@ -528,10 +529,11 @@ def analyze_gaze(
             continue
 
         for j in range(len(inquiries_dict[i])):
-            left_eye, right_eye, left_pupil, right_pupil, deleted_samples, all_samples = extract_eye_info(inquiries_dict[i][j])
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_dict[i][j])
             preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
              # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
+    # ---------------------------------------------------------------------------
     
     centralized_data_left = []
     centralized_data_right = []
@@ -672,7 +674,7 @@ def analyze_gaze(
 
         # Take the sample average of the centralized data: time_average
         # centralized_data_training_set.shape = (72,4,180)
-        
+
         # flatten the covariance to (72, 720)
         # cov_matrix = np.zeros((centralized_data_training_set.shape[0], centralized_data_training_set.shape[1]*centralized_data_training_set.shape[2]))
         
@@ -680,6 +682,7 @@ def analyze_gaze(
         reshaped_data = centralized_data_training_set.reshape((72,720))
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
+        # Accuracy vs time horizon
         
         for eye_coord_0 in range(4):
             for eye_coord_1 in range(4):
