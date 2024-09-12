@@ -36,8 +36,7 @@ class SessionOrchestrator:
     ready_to_execute: bool = False
     last_task_dir: Optional[str] = None
     copyphrases: List[str]
-    last_task_dir: str
-    copyphrases: List[str]
+    
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
