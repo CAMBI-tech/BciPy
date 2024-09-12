@@ -12,8 +12,6 @@ from bcipy.helpers.validate import validate_experiment
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
-from bcipy.signal.model import SignalModel
-from bcipy.language.main import LanguageModel
 from bcipy.helpers.load import load_json_parameters, load_txt_data
 
 """
@@ -36,7 +34,7 @@ class SessionOrchestrator:
     ready_to_execute: bool = False
     last_task_dir: Optional[str] = None
     copyphrases: List[str]
-    
+
     def __init__(
         self,
         experiment_id: str = DEFAULT_EXPERIMENT_ID,
@@ -134,7 +132,6 @@ class SessionOrchestrator:
         self.copyphrases = [phrase.strip() for phrase in phrases]
         if shuffle_phrases:
             shuffle(self.copyphrases)
-
 
     def save(self) -> None:
         # Save the protocol data
