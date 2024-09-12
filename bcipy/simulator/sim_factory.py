@@ -8,7 +8,7 @@ from bcipy.simulator.helpers.artifact import TOP_LEVEL_LOGGER_NAME
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.metrics import RefereeImpl, SimMetricsHandler
 from bcipy.simulator.helpers.model_handler import SigLmModelHandler1
-from bcipy.simulator.helpers.sampler import EEGByLetterSampler
+from bcipy.simulator.helpers.sampler import TargetNontargetSampler
 from bcipy.simulator.helpers.state_manager import StateManagerImpl
 from bcipy.simulator.sim import Simulator, SimulatorCopyPhrase
 
@@ -37,7 +37,7 @@ class SimulationFactory:
         data_engine = RawDataEngine(list(map(str, source_dirs)),
                                     base_parameters)
         state_manager = StateManagerImpl(base_parameters)
-        sampler = EEGByLetterSampler(data_engine)
+        sampler = TargetNontargetSampler(data_engine)
         model_handler = SigLmModelHandler1(model_file, base_parameters)
 
         referee = RefereeImpl(metric_handlers={'basic': SimMetricsHandler()})
