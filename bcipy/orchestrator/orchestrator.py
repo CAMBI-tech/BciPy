@@ -160,10 +160,3 @@ class SessionOrchestrator:
                 'parameters': self.parameters_path,
                 'system_info': self.sys_info,
             }))
-
-
-if __name__ == '__main__':
-    orchestrator = SessionOrchestrator()
-    orchestrator.add_task(RSVPCopyPhraseTask)
-    orchestrator.execute()
-    orchestrator.save()
