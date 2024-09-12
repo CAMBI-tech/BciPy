@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Optional
 from bcipy.helpers.parameters import Parameters
 from abc import ABC, abstractmethod
+from enum import Enum
 
 
 @dataclass
@@ -24,6 +25,15 @@ class Task(ABC):
     parameters: Parameters
     data_save_location: str
     logger: logging.Logger
+
+    class Paradigm(Enum):
+        """Paradigm.
+
+        Enum for task paradigms.
+        """
+        RSVP = 'RSVP',
+        MATRIX = 'MATRIX',
+        VEP = 'VEP'
 
     def __init__(self, *args, **kwargs) -> None:
         super(Task, self).__init__()

@@ -105,7 +105,7 @@ class RSVPCopyPhraseTask(Task):
     """
 
     name = "RSVP Copy Phrase"
-    MODE = "RSVP"
+    PARADIGM = "RSVP"
     initalized = False
 
     PARAMETERS_USED = [
@@ -354,7 +354,7 @@ class RSVPCopyPhraseTask(Task):
         self.session = Session(
             save_location=self.file_save,
             task="Copy Phrase",
-            mode=self.MODE,
+            mode=self.PARADIGM,
             symbol_set=self.alp,
             decision_threshold=self.parameters["decision_threshold"],
         )

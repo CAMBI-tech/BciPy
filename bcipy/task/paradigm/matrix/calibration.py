@@ -1,7 +1,7 @@
 from typing import Any, Dict, Optional
 
 from psychopy import core, visual
-
+from bcipy.task import Task
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
@@ -32,7 +32,7 @@ class MatrixCalibrationTask(BaseCalibrationTask):
     fake (Boolean)
     """
     name = 'Matrix Calibration'
-    MODE = 'Matrix'
+    PARADIGM = Task.Paradigm.MATRIX
 
     @property
     def screen_info(self) -> Dict[str, Any]:

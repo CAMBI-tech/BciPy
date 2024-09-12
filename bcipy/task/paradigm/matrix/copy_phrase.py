@@ -1,5 +1,6 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
 
+from bcipy.task import Task
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
@@ -30,7 +31,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
             path location of where to save data from the session
     """
     name = 'Matrix Copy Phrase'
-    MODE = 'Matrix'
+    PARADIGM = Task.Paradigm.MATRIX
 
     def init_display(self) -> MatrixDisplay:
         """Initialize the Matrix display"""

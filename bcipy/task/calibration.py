@@ -68,7 +68,7 @@ class BaseCalibrationTask(Task):
         - cleanup ; perform any necessary cleanup (closing connections, etc.).
     """
 
-    MODE = 'Undefined'
+    PARADIGM = None
     initalized = False
 
     def __init__(self,
@@ -130,7 +130,7 @@ class BaseCalibrationTask(Task):
 
     def validate(self) -> None:
         """Validate the task."""
-        assert self.MODE != 'Undefined', 'MODE must be defined in subclass.'
+        assert self.PARADIGM is not None, 'PARADIGM must be defined in subclass.'
 
     def cleanup(self) -> None:
         """Any cleanup code to run after the last inquiry is complete."""
@@ -199,7 +199,7 @@ class BaseCalibrationTask(Task):
         """Initialize the session data."""
         return session_data.Session(save_location=self.file_save,
                                     task='Calibration',
-                                    mode=self.MODE,
+                                    mode=self.PARADIGM,
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 

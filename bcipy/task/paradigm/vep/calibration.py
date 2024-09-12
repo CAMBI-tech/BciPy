@@ -4,6 +4,7 @@ from typing import Any, Dict, Iterator, List, Optional
 
 from psychopy import visual  # type: ignore
 
+from bcipy.task import Task
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -33,7 +34,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
     fake (Boolean)
     """
     name = 'VEP Calibration'
-    MODE = 'VEP'
+    PARADIGM = Task.Paradigm.VEP
 
     def __init__(self,
                  parameters: Parameters,
