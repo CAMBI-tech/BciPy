@@ -23,10 +23,6 @@ class FileDialog(QWidget):
         frame_geom.moveCenter(QtGui.QGuiApplication.primaryScreen().availableGeometry().center())
         self.move(frame_geom.topLeft())
 
-        # The native dialog may prevent the selection from closing after a
-        # directory is selected.
-        self.options = QFileDialog.Option(3)
-
     def ask_file(self, file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
         """Opens a file dialog window.
         Returns
@@ -36,8 +32,7 @@ class FileDialog(QWidget):
         filename, _ = QFileDialog.getOpenFileName(self,
                                                   "Select File",
                                                   directory,
-                                                  file_types,
-                                                  options=self.options)
+                                                  file_types)
         return filename
 
     def ask_directory(self, directory: str = "") -> str:
@@ -49,8 +44,7 @@ class FileDialog(QWidget):
         """
         return QFileDialog.getExistingDirectory(self,
                                                 "Select Directory",
-                                                directory=directory,
-                                                options=self.options)
+                                                directory=directory)
 
 
 def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
