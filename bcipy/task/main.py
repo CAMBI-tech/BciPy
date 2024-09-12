@@ -26,7 +26,8 @@ class Task(ABC):
     data_save_location: str
     logger: logging.Logger
 
-    class Paradigm(Enum):
+    # Inherits from str so that it is automatically json serializable
+    class Paradigm(str, Enum):
         """Paradigm.
 
         Enum for task paradigms.

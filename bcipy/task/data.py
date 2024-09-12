@@ -2,6 +2,7 @@
 from collections import Counter
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
+from bcipy.task import Task
 
 EVIDENCE_SUFFIX = "_evidence"
 
@@ -215,13 +216,13 @@ class Session:
                  save_location: str,
                  symbol_set: List[str],
                  task: str = 'Copy Phrase',
-                 mode: str = 'RSVP',
+                 paradigm: Task.Paradigm = Task.Paradigm.RSVP,
                  decision_threshold: Optional[float] = None,
                  task_data: Optional[Dict[str, Any]] = None) -> None:
         super().__init__()
         self.save_location = save_location
         self.task = task
-        self.mode = mode
+        self.paradigm = paradigm
         self.series: List[List[Inquiry]] = [[]]
         self.total_time_spent: float = 0.0
         self.time_spent_precision = 2
@@ -315,7 +316,7 @@ class Session:
         task_info: Dict = {
             'session': self.save_location,
             'task': self.task,
-            'mode': self.mode,
+            'paradigm': self.paradigm,
             'symbol_set': self.symbol_set,
             'decision_threshold': self.decision_threshold
         }
@@ -349,7 +350,7 @@ class Session:
         """
         session = cls(save_location=data['session'],
                       task=data['task'],
-                      mode=data['mode'],
+                      paradigm=data['paradigm'],
                       symbol_set=data['symbol_set'],
                       decision_threshold=data['decision_threshold'])
         session.total_time_spent = data['total_time_spent']

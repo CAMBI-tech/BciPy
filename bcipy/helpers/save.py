@@ -147,7 +147,7 @@ def _save_session_related_data(save_path: str, session_dictionary: dict) -> Any:
                         "7": {
                             ... ,
                   },
-                  "mode": "RSVP",
+                  "paradigm": "RSVP",
                   "session": "data/demo_user/demo_user",
                   "task": "Copy Phrase",
                   "total_time_spent": 83.24798703193665

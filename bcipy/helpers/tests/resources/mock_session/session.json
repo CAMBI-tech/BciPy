@@ -1,7 +1,7 @@
 {
   "session": "data/default/test_user_001/test_user_001_RSVP_Copy_Phrase_Wed_17_Mar_2021_17hr11min05sec_-0700",
   "task": "Copy Phrase",
-  "mode": "RSVP",
+  "paradigm": "RSVP",
   "symbol_set": [
     "A",
     "B",

@@ -68,7 +68,7 @@ class BaseCalibrationTask(Task):
         - cleanup ; perform any necessary cleanup (closing connections, etc.).
     """
 
-    PARADIGM = None
+    PARADIGM: Task.Paradigm
     initalized = False
 
     def __init__(self,
@@ -199,7 +199,7 @@ class BaseCalibrationTask(Task):
         """Initialize the session data."""
         return session_data.Session(save_location=self.file_save,
                                     task='Calibration',
-                                    mode=self.PARADIGM,
+                                    paradigm=self.PARADIGM,
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 
