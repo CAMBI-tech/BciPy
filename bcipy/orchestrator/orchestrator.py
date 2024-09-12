@@ -13,6 +13,8 @@ from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.helpers.load import load_json_parameters, load_txt_data
+from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
+from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 """
 Session Orchestrator
@@ -75,31 +77,45 @@ class SessionOrchestrator:
             raise Exception(msg)
 
         for task in self.tasks:
-            try:
-                #  initialize the task save folder and logger
-                data_save_location = self.init_task_save_folder(task)
-                session_logger = configure_logger(
-                    data_save_location,
-                    log_level=logging.DEBUG,
-                    version=self.sys_info['bcipy_version'])
-
-                #  initialize the task and execute it
-                initialized_task: Task = task(
-                    self.parameters,
-                    data_save_location,
-                    session_logger,
-                    fake=self.fake,
-                    experiment_id=self.experiment_id,
-                    parameters_path=self.parameters_path,
-                    last_task_dir=self.last_task_dir)
-                task_data = initialized_task.execute()
-                self.session_data.append(task_data)
-                self.logger.info(f"Task {task.name} completed successfully")
-                # some tasks may need access to the previous task's data
-                self.last_task_dir = data_save_location
-            except Exception as e:
-                self.logger.exception(e)
+            # Load copyphrases if necessary
+            if self.task_is_copyphrase(task) and self.copyphrases is None:
+                if self.parameters['multi_phrase_input']:
+                    self.load_copyphrases_from_file()
+                else:
+                    self.copyphrases = [self.parameters['task_text']]
+            if self.task_is_copyphrase(task):
+                for phrase in self.copyphrases:
+                    self.parameters['task_text'] = phrase
+                    self.init_and_execute_task(task)
+            else:
+                self.init_and_execute_task(task)
         self.save()
+
+    def init_and_execute_task(self, task: Type[Task]) -> None:
+        try:
+            #  initialize the task save folder and logger
+            data_save_location = self.init_task_save_folder(task)
+            session_logger = configure_logger(
+                data_save_location,
+                log_level=logging.DEBUG,
+                version=self.sys_info['bcipy_version'])
+
+            #  initialize the task and execute it
+            initialized_task: Task = task(
+                self.parameters,
+                data_save_location,
+                session_logger,
+                fake=self.fake,
+                experiment_id=self.experiment_id,
+                parameters_path=self.parameters_path,
+                last_task_dir=self.last_task_dir)
+            task_data = initialized_task.execute()
+            self.session_data.append(task_data)
+            self.logger.info(f"Task {task.name} completed successfully")
+            # some tasks may need access to the previous task's data
+            self.last_task_dir = data_save_location
+        except Exception as e:
+            self.logger.exception(e)
 
     def init_orchestrator_save_folder(self, save_path: str) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -109,6 +125,9 @@ class SessionOrchestrator:
         os.makedirs(path)
         os.makedirs(os.path.join(path, 'logs'), exist_ok=True)
         self.save_folder = path
+
+    def task_is_copyphrase(self, task: Type[Task]) -> bool:
+        return task in [RSVPCopyPhraseTask, MatrixCopyPhraseTask]
 
     def init_task_save_folder(self, task: Type[Task]) -> str:
         assert self.save_folder is not None, "Orchestrator save folder not initialized"
@@ -141,3 +160,10 @@ class SessionOrchestrator:
                 'parameters': self.parameters_path,
                 'system_info': self.sys_info,
             }))
+
+
+if __name__ == '__main__':
+    orchestrator = SessionOrchestrator()
+    orchestrator.add_task(RSVPCopyPhraseTask)
+    orchestrator.execute()
+    orchestrator.save()
