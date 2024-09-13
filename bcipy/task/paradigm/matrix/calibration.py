@@ -27,9 +27,11 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    parameters (Parameters Object)
-    file_save (String)
-    fake (Boolean)
+    parameters (dict)
+    file_save (str)
+    logger (logging.Logger)
+    fake (bool)
+
     """
     name = 'Matrix Calibration'
     MODE = 'Matrix'
@@ -55,7 +57,6 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     def cleanup(self) -> None:
         assert isinstance(self.display, MatrixDisplay)
-        # TODO: refactor offline_analysis to use session data and and remove this.
         save_stimuli_position_info(self.display.stim_positions, self.file_save,
                                    self.screen_info)
         return super().cleanup()
@@ -78,7 +79,7 @@ def init_matrix_display(parameters: Parameters, window: visual.Window,
     )
     stimuli = StimuliProperties(stim_font=parameters['font'],
                                 stim_pos=(-0.6, 0.4),
-                                stim_height=0.1,
+                                stim_height=parameters['stim_height'],
                                 stim_inquiry=[''] * parameters['stim_length'],
                                 stim_colors=[parameters['stim_color']] *
                                 parameters['stim_length'],

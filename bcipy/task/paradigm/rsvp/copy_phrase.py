@@ -93,15 +93,12 @@ class RSVPCopyPhraseTask(Task):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_models : list of trained signal models.
-        language_model: object,
-            trained language model.
+        logger : logging.Logger,
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns
     -------
-        file_save : str,
-            path location of where to save data from the session
+        TaskData
     """
 
     name = "RSVP Copy Phrase"
@@ -250,7 +247,7 @@ class RSVPCopyPhraseTask(Task):
     def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
-            parameters, data_save_location, server=fake)
+            parameters, data_save_location, self.logger, server=fake)
 
         # Initialize Display
         display = init_display_window(parameters)

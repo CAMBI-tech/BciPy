@@ -178,7 +178,7 @@ def pyedf_convert(data_dir: str,
                                   value_cast=True)
     data = load_raw_data(str(Path(data_dir, f'{RAW_DATA_FILENAME}.csv')))
     fs = data.sample_rate
-    device_spec = preconfigured_device(data.daq_type)
+    device_spec = preconfigured_device(data.daq_type, logger=logger)
     if pre_filter:
         default_transform = get_default_transform(
             sample_rate_hz=data.sample_rate,

@@ -20,10 +20,11 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     Input:
         parameters (Parameters)
         file_save (str)
+        logger (logging.Logger)
         fake (bool)
 
     Output:
-        file_save (str)
+        TaskData
     """
     name = 'RSVP Timing Verification'
 

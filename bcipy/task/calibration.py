@@ -56,6 +56,7 @@ class BaseCalibrationTask(Task):
     ----------
     parameters (dict)
     file_save (str)
+    logger (logging.Logger)
     fake (bool)
 
     Subclasses should override the provided MODE and can specialize behavior by overriding
@@ -66,6 +67,10 @@ class BaseCalibrationTask(Task):
         - session_task_data ; provide task-specific session data
         - session_inquiry_data ; provide task-specific inquiry data to the session
         - cleanup ; perform any necessary cleanup (closing connections, etc.).
+
+    Returns:
+    -------
+    TaskData
     """
 
     MODE = 'Undefined'
@@ -120,7 +125,7 @@ class BaseCalibrationTask(Task):
     def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
-            parameters, data_save_location, server=fake)
+            parameters, data_save_location, self.logger, server=fake)
 
         # Initialize Display
         display = init_display_window(parameters)

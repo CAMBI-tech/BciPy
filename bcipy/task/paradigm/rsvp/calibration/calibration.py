@@ -25,8 +25,9 @@ class RSVPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    parameters (dict)
+     parameters (dict)
     file_save (str)
+    logger (logging.Logger)
     fake (bool)
     """
     name = 'RSVP Calibration'

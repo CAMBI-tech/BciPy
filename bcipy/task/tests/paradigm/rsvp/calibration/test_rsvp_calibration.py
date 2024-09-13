@@ -381,7 +381,7 @@ class TestRSVPCalibration(unittest.TestCase):
         save_session_mock.return_value = mock()
         handler_mock = Mock()
         trigger_handler_mock.return_value = handler_mock
-        when(bcipy.task.calibration).init_acquisition(any(), any(), server=self.fake).thenReturn(
+        when(bcipy.task.calibration).init_acquisition(any(), any(), any(), server=self.fake).thenReturn(
             (self.daq, self.servers))
         when(bcipy.task.calibration).init_display_window(self.parameters).thenReturn(
             self.win)
@@ -394,7 +394,7 @@ class TestRSVPCalibration(unittest.TestCase):
 
         self.assertTrue(task.initalized)
         verify(bcipy.task.calibration, times=1).init_acquisition(
-            self.parameters, self.temp_dir, server=self.fake)
+            self.parameters, self.temp_dir, self.logger, server=self.fake)
         verify(bcipy.task.calibration, times=1).init_display_window(
             self.parameters)
         self.assertEqual((self.daq, self.servers, self.win),

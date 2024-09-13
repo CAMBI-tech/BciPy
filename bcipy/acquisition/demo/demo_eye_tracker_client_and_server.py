@@ -1,9 +1,12 @@
 """Sample script to demonstrate usage of the LSL DataAcquisitionClient."""
 import time
+import logging
 
 from bcipy.acquisition import LslAcquisitionClient, await_start
 from bcipy.acquisition.datastream.mock.eye_tracker_server import (eye_tracker_device,
                                                                   eye_tracker_server)
+
+log = logging.getLogger(__name__)
 
 
 def main():
@@ -17,7 +20,8 @@ def main():
     client = LslAcquisitionClient(max_buffer_len=1,
                                   device_spec=device_spec,
                                   save_directory='.',
-                                  raw_data_file_name=raw_data_name)
+                                  raw_data_file_name=raw_data_name,
+                                  logger=log)
 
     server = eye_tracker_server()
     await_start(server)

@@ -1,8 +1,8 @@
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.orchestrator import SessionOrchestrator
+from bcipy.task.orchestrator import SessionOrchestrator
 from bcipy.task.actions import (OfflineAnalysisAction)
 from bcipy.task.paradigm.rsvp import RSVPCalibrationTask, RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.matrix import MatrixCalibrationTask
+from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
 
 
 def demo_orchestrator(parameters_path: str) -> None:
@@ -12,15 +12,14 @@ def demo_orchestrator(parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
-    # field_collection = ExperimentFieldCollectionAction(DEFAULT_EXPERIMENT_ID, data_path)
-    # offline_analysis = OfflineAnalysisAction(data_path, parameters_path)
-    tasks = [RSVPCalibrationTask, OfflineAnalysisAction]
-    orchestrator = SessionOrchestrator(parameters_path=parameters_path, fake=True)
-    orchestrator.add_task(RSVPTimingVerificationCalibration)
-    orchestrator.add_task(RSVPCalibrationTask)
-    orchestrator.add_task(MatrixCalibrationTask)
-    orchestrator.add_task(RSVPCopyPhraseTask)
-    orchestrator.add_task(OfflineAnalysisAction)
+    tasks = [
+        MatrixTimingVerificationCalibration,
+        RSVPTimingVerificationCalibration,
+        RSVPCalibrationTask,
+        OfflineAnalysisAction,
+        RSVPCopyPhraseTask]
+    orchestrator = SessionOrchestrator(user='time_test_orchestrator', parameters_path=parameters_path, alert=True)
+    orchestrator.add_tasks(tasks)
     orchestrator.execute()
 
 

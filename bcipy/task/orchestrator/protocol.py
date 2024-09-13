@@ -9,9 +9,9 @@ from bcipy.task.registry import TaskRegistry
 
 def parse_protocol(protocol: str) -> List[Type[Task]]:
     """
-    Parses a string of actions into a list of TaskType objects.
+    Parses a string of actions into a list of Task objects.
 
-    Converts a string of actions into a list of TaskType objects. The string is expected
+    Converts a string of actions into a list of Task objects. The string is expected
     to be in the format of 'Action1 -> Action2 -> ... -> ActionN'.
     Parameters
     ----------

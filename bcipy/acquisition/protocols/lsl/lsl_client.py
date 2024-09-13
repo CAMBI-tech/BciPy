@@ -17,8 +17,6 @@ from bcipy.config import MAX_PAUSE_SECONDS
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.helpers.clock import Clock
 
-log = logging.getLogger(__name__)
-
 LSL_TIMEOUT = 5.0  # seconds
 
 
@@ -71,13 +69,15 @@ class LslAcquisitionClient:
                  max_buffer_len: float = 1,
                  device_spec: Optional[DeviceSpec] = None,
                  save_directory: Optional[str] = None,
-                 raw_data_file_name: Optional[str] = None):
+                 raw_data_file_name: Optional[str] = None,
+                 logger: Optional[logging.Logger] = None):
         super().__init__()
 
         self.device_spec = device_spec
         self.max_buffer_len = max_buffer_len
         self.save_directory = save_directory
         self.raw_data_file_name = raw_data_file_name
+        self.logger = logger
         self._max_samples = None
 
     @property
@@ -112,8 +112,8 @@ class LslAcquisitionClient:
             stream_info,
             max_buflen=MAX_PAUSE_SECONDS,
             max_chunklen=1)
-        log.info("Acquiring data from data stream:")
-        log.info(self.inlet.info().as_xml())
+        self.logger.info("Acquiring data from data stream:")
+        self.logger.info(self.inlet.info().as_xml())
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -128,10 +128,10 @@ class LslAcquisitionClient:
                 device_spec=self.device_spec,
                 queue=msg_queue)
             self.recorder.start()
-            log.info("Waiting for first sample from lsl_recorder")
+            self.logger.info("Waiting for first sample from lsl_recorder")
             self._first_sample_time = msg_queue.get(block=True,
                                                     timeout=LSL_TIMEOUT)
-            log.info(f"First sample time: {self.first_sample_time}")
+            self.logger.info(f"First sample time: {self.first_sample_time}")
 
         self.inlet.open_stream(timeout=LSL_TIMEOUT)
         if self.max_buffer_len and self.max_buffer_len > 0:
@@ -142,16 +142,16 @@ class LslAcquisitionClient:
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        log.info(f"Stopping Acquisition from {self.device_spec.name} ...")
+        self.logger.info(f"Stopping Acquisition from {self.device_spec.name} ...")
         if self.recorder:
-            log.info(f"Closing  {self.device_spec.name} data recorder")
+            self.logger.info(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
         if self.inlet:
-            log.info("Closing LSL connection")
+            self.logger.info("Closing LSL connection")
             self.inlet.close_stream()
             self.inlet = None
-            log.info("Inlet closed")
+            self.logger.info("Inlet closed")
 
         self.buffer = None
 
@@ -202,16 +202,16 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.info(request_desc(start, end, limit))
+        self.logger.info(request_desc(start, end, limit))
 
         data = self.get_latest_data()
         if not data:
-            log.info('No records available')
+            self.logger.info('No records available')
             return []
 
         data_start = data[0].timestamp
         data_end = data[-1].timestamp
-        log.info(f'Available data: {self._data_stats(data)}')
+        self.logger.info(f'Available data: {self._data_stats(data)}')
 
         if start is None:
             start = data_start
@@ -224,7 +224,7 @@ class LslAcquisitionClient:
         data_slice = [
             record for record in data if start <= record.timestamp <= end
         ][0:limit]
-        log.info(f"Filtered records: {self._data_stats(data_slice)}")
+        self.logger.info(f"Filtered records: {self._data_stats(data_slice)}")
 
         return data_slice
 
@@ -247,12 +247,12 @@ class LslAcquisitionClient:
         """Pull a chunk of samples from LSL and record in the buffer.
         Returns the count of samples pulled.
         """
-        log.debug(f"\tPulling chunk (max_samples: {self.max_samples})")
+        self.logger.debug(f"\tPulling chunk (max_samples: {self.max_samples})")
         # A timeout of 0.0 gets currently available samples without blocking.
         samples, timestamps = self.inlet.pull_chunk(
             timeout=0.0, max_samples=self.max_samples)
         count = len(samples)
-        log.debug(f"\t-> received {count} samples: {time_range(timestamps)}")
+        self.logger.debug(f"\t-> received {count} samples: {time_range(timestamps)}")
         for sample, stamp in zip(samples, timestamps):
             self.buffer.append(Record(sample, stamp))
         return count
@@ -361,17 +361,17 @@ class LslAcquisitionClient:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
         offset_from_stim = first_stim_time - self.first_sample_time
-        log.info(f"Acquisition offset: {offset_from_stim}")
+        self.logger.info(f"Acquisition offset: {offset_from_stim}")
         return offset_from_stim
 
     def cleanup(self):
         """Perform any necessary cleanup."""
 
 
-def discover_device_spec(content_type: str) -> DeviceSpec:
+def discover_device_spec(content_type: str, logger: logging.Logger) -> DeviceSpec:
     """Finds the first LSL stream with the given content type and creates a
     device spec from the stream's metadata."""
-    log.info(f"Waiting for {content_type} data to be streamed over LSL.")
+    logger.info(f"Waiting for {content_type} data to be streamed over LSL.")
     streams = resolve_byprop('type', content_type, timeout=LSL_TIMEOUT)
     if not streams:
         raise Exception(

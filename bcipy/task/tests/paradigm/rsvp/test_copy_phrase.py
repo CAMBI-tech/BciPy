@@ -598,7 +598,7 @@ class TestCopyPhrase(unittest.TestCase):
     def test_setup(self):
         """Test setup"""
 
-        when(bcipy.task.paradigm.rsvp.copy_phrase).init_acquisition(any(), any(), server=self.fake).thenReturn(
+        when(bcipy.task.paradigm.rsvp.copy_phrase).init_acquisition(any(), any(), any(), server=self.fake).thenReturn(
             (self.daq, self.servers))
         when(bcipy.task.paradigm.rsvp.copy_phrase).init_display_window(self.parameters).thenReturn(
             self.win)
@@ -611,7 +611,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         self.assertTrue(task.initalized)
         verify(bcipy.task.paradigm.rsvp.copy_phrase, times=1).init_acquisition(
-            self.parameters, self.temp_dir, server=self.fake)
+            self.parameters, self.temp_dir, self.logger, server=self.fake)
         verify(bcipy.task.paradigm.rsvp.copy_phrase, times=1).init_display_window(
             self.parameters)
         self.assertEqual((self.daq, self.servers, self.win),

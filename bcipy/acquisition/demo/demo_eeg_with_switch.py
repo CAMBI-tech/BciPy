@@ -3,10 +3,13 @@ import subprocess
 import time
 
 from bcipy.config import BCIPY_ROOT
+import logging
 from bcipy.acquisition.datastream.mock.switch import switch_device
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition import LslAcquisitionClient, LslDataServer, await_start
 from bcipy.helpers.system_utils import log_to_stdout
+
+log = logging.getLogger(__name__)
 
 
 def start_switch():
@@ -26,13 +29,15 @@ def main(debug: bool = False):
         log_to_stdout()
 
     eeg_device = preconfigured_device('DSI-24')
-    eeg_server = LslDataServer(device_spec=eeg_device)
+    eeg_server = LslDataServer(device_spec=eeg_device, log=log)
 
     eeg_client = LslAcquisitionClient(device_spec=eeg_device,
-                                      save_directory='.')
+                                      save_directory='.',
+                                      logger=log)
     switch_client = LslAcquisitionClient(max_buffer_len=1024,
                                          device_spec=switch_device(),
-                                         save_directory='.')
+                                         save_directory='.',
+                                         logger=log)
     await_start(eeg_server)
 
     # Open the Demo Switch GUI.

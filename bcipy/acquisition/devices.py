@@ -8,6 +8,8 @@ from typing import Dict, List, NamedTuple, Optional, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
 
+log = logging.getLogger(__name__)
+
 IRREGULAR_RATE: int = 0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH
 _SUPPORTED_DEVICES: Dict[str, 'DeviceSpec'] = {}
@@ -233,7 +235,7 @@ def preconfigured_devices() -> Dict[str, DeviceSpec]:
     return _SUPPORTED_DEVICES
 
 
-def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
+def preconfigured_device(name: str, logger: logging.Logger = log, strict: bool = True) -> DeviceSpec:
     """Retrieve the DeviceSpec with the given name. An exception is raised
     if the device is not found."""
     device = preconfigured_devices().get(name, None)
@@ -247,6 +249,7 @@ def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
             "\n"
             "You may register new devices using the device module `register` function or in bulk"
             " using `load`.")
+        logger.error(msg)
         raise ValueError(msg)
     return device
 

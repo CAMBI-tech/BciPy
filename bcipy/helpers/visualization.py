@@ -666,7 +666,11 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
+def visualize_session_data(
+        session_path: str,
+        parameters: Union[dict, Parameters],
+        logger: logging.Logger = log,
+        show=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -694,7 +698,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
 
     devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(daq_type)
+    device_spec = devices.preconfigured_device(daq_type, logger=logger)
 
     # setup filtering
     default_transform = get_default_transform(

@@ -51,14 +51,12 @@ class OfflineAnalysisAction(Task):
             parameters: Parameters,
             data_directory: str,
             logger: logging.Logger,
-            alert=True,
             parameters_path: str = f'{DEFAULT_PARAMETERS_PATH}',
             last_task_dir: Optional[str] = None,
             **kwargs: Any) -> None:
         super().__init__()
         self.parameters = parameters
         self.parameters_path = parameters_path
-        self.alert = alert
         self.logger = logger
 
         if last_task_dir:

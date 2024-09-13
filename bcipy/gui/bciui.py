@@ -1,4 +1,3 @@
-import os
 from typing import Callable
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
@@ -30,9 +29,7 @@ class BCIUI(QWidget):
         ...
 
     def apply_stylesheet(self) -> None:
-        # gui_dir = os.path.dirname(os.path.realpath(__file__))
-        gui_dir = f'{BCIPY_ROOT}/gui/'
-        stylesheet_path = os.path.join(gui_dir, "bcipy_stylesheet.css")
+        stylesheet_path = f'{BCIPY_ROOT}/gui/bcipy_stylesheet.css'  # TODO: move to config
         with open(stylesheet_path, "r") as f:
             stylesheet = f.read()
         self.setStyleSheet(stylesheet)

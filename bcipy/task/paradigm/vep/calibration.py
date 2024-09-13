@@ -28,9 +28,10 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    parameters (Dictionary)
-    file_save (String)
-    fake (Boolean)
+    parameters (dict)
+    file_save (str)
+    logger (logging.Logger)
+    fake (bool)
     """
     name = 'VEP Calibration'
     MODE = 'VEP'

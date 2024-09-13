@@ -2,6 +2,7 @@
 import shutil
 import unittest
 from pathlib import Path
+import logging
 from unittest.mock import Mock, patch
 
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
@@ -39,9 +40,11 @@ class TestAcquisition(unittest.TestCase):
         """Test init_acquisition with LSL client."""
 
         params = self.parameters
+        logger = Mock(spec=logging.Logger)
+        logger.info = lambda x: x
         params['acq_mode'] = 'EEG:passive/DSI-24'
 
-        client, servers = init_acquisition(params, self.save, server=True)
+        client, servers = init_acquisition(params, self.save, logger, server=True)
 
         client.stop_acquisition()
         client.cleanup()
@@ -100,10 +103,13 @@ class TestAcquisition(unittest.TestCase):
         discover_spec_mock.return_value = device_mock
         preconfigured_device_mock.return_value = None
 
-        device_spec = init_device(device_type)
+        logger = Mock()
+        logger.info = lambda x: x
 
-        discover_spec_mock.assert_called_with(device_type)
-        preconfigured_device_mock.assert_called_with(device_name, strict=False)
+        device_spec = init_device(device_type, logger=logger)
+
+        discover_spec_mock.assert_called_with(device_type, logger)
+        preconfigured_device_mock.assert_called_with(device_name, logger, strict=False)
         self.assertEqual(device_spec, device_mock)
 
     @patch('bcipy.helpers.acquisition.discover_device_spec')
@@ -119,14 +125,16 @@ class TestAcquisition(unittest.TestCase):
         discovery_device_mock.name = device_name
 
         device_mock = Mock()
+        logger = Mock()
+        logger.info = lambda x: x
 
         discover_spec_mock.return_value = discovery_device_mock
         preconfigured_device_mock.return_value = device_mock
 
-        device_spec = init_device(device_type)
+        device_spec = init_device(device_type, logger=logger)
 
-        discover_spec_mock.assert_called_with(device_type)
-        preconfigured_device_mock.assert_called_with(device_name, strict=False)
+        discover_spec_mock.assert_called_with(device_type, logger)
+        preconfigured_device_mock.assert_called_with(device_name, logger, strict=False)
         self.assertEqual(device_spec, device_mock)
 
     @patch('bcipy.helpers.acquisition.discover_device_spec')
@@ -138,11 +146,13 @@ class TestAcquisition(unittest.TestCase):
 
         device_mock = Mock()
         preconfigured_device_mock.return_value = device_mock
+        logger = Mock()
+        logger.info = lambda x: x
 
-        device_spec = init_device('EEG', 'DSI-24')
+        device_spec = init_device('EEG', logger, 'DSI-24')
 
         discover_spec_mock.assert_not_called()
-        preconfigured_device_mock.assert_called_with('DSI-24', strict=True)
+        preconfigured_device_mock.assert_called_with('DSI-24', logger, strict=True)
         self.assertEqual(device_spec, device_mock)
 
     def test_parse_stream_type(self):

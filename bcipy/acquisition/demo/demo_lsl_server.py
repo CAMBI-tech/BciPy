@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     device_spec = preconfigured_device(args.name)
     try:
-        server = LslDataServer(device_spec=device_spec)
+        server = LslDataServer(device_spec=device_spec, log=log)
 
         log.info("New server created")
         server.start()
@@ -29,7 +29,7 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Keyboard Interrupt")
+        log.info("Keyboard Interrupt")
         server.stop()
 
 

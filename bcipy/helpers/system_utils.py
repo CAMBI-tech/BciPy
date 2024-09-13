@@ -208,21 +208,21 @@ def configure_logger(
     logfile = os.path.join(save_folder, 'logs', log_name)
 
     # configure it
-    root_logger = logging.getLogger()
-    root_logger.setLevel(log_level)
+    custom_logger = logging.getLogger(name=save_folder)
+    custom_logger.setLevel(log_level)
     handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
     handler.setFormatter(logging.Formatter(
         '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
-    root_logger.addHandler(handler)
+    custom_logger.addHandler(handler)
 
     # print to console the absolute path of the log file to aid in debugging
     path_to_logs = os.path.abspath(logfile)
     print(f'Printing all BciPy logs to: {path_to_logs}')
 
     if version:
-        root_logger.info(f'Start of Session for BciPy Version: ({version})')
+        custom_logger.info(f'Start of Session for BciPy Version: ({version})')
 
-    return root_logger
+    return custom_logger
 
 
 def import_submodules(package, recursive=True):

@@ -59,9 +59,10 @@ class ClientManager():
         default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, default_content_type: ContentType = ContentType.EEG) -> None:
+    def __init__(self, logger: logging.Logger = log, default_content_type: ContentType = ContentType.EEG) -> None:
         self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
+        self.logger = logger
 
     @property
     def clients(self) -> List[LslAcquisitionClient]:
@@ -111,7 +112,7 @@ class ClientManager():
     def start_acquisition(self):
         """Start acquiring data for all clients"""
         for client in self.clients:
-            log.info(f"Connecting to {client.device_spec.name}...")
+            self.logger.info(f"Connecting to {client.device_spec.name}...")
             client.start_acquisition()
 
     def stop_acquisition(self):
@@ -150,7 +151,7 @@ class ClientManager():
             adjusted_start = start + client.device_spec.static_offset
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
-                log.info(f'Need {count} records for processing {name} data')
+                self.logger.info(f'Need {count} records for processing {name} data')
                 output[content_type] = client.get_data(start=adjusted_start,
                                                        limit=count)
                 data_count = len(output[content_type])
