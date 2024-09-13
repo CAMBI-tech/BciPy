@@ -261,14 +261,11 @@ def load_users(data_save_loc: str) -> List[str]:
         return saved_users
 
     # grab all experiments in the directory and iterate over them to get the users
-    experiments = fast_scandir(path, return_path=True)
+    users = fast_scandir(path, return_path=True)
 
-    for experiment in experiments:
-        users = fast_scandir(experiment, return_path=False)
-        # If it is a new user, append it to the saved_user list
-        for user in users:
-            if user not in saved_users:
-                saved_users.append(user)
+    for user in users:
+        if user not in saved_users:
+            saved_users.append(user.split('/')[-1])
 
     return saved_users
 
