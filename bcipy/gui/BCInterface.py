@@ -408,7 +408,7 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.INFO,
                 message_response=AlertMessageResponse.OTE,
                 message_timeout=self.task_start_timeout)
-            if self.task:
+            if self.task != BCInterface.default_text:
                 cmd = (
                     f'bcipy '
                     f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
