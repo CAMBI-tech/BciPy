@@ -84,7 +84,7 @@ class ExperimentFieldCollectionAction(Task):
 
     name = "Experiment Field Collection Action"
     mode = Task.Mode.ACTION
-    
+
     def __init__(
             self,
             parameters: Parameters,

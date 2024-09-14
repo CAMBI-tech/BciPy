@@ -13,8 +13,6 @@ from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
 from bcipy.helpers.load import load_json_parameters, load_txt_data
-from bcipy.task.paradigm.matrix.copy_phrase import MatrixCopyPhraseTask
-from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 """
 Session Orchestrator

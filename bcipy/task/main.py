@@ -26,7 +26,7 @@ class Task(ABC):
         COPYPHRASE = 'COPYPHRASE'
         CALIBRATION = 'CALIBRATION'
         ACTION = 'ACTION'
-    
+
     # Inherits from str so that it is automatically json serializable
     class Paradigm(str, Enum):
         """Paradigm.
@@ -48,10 +48,10 @@ class Task(ABC):
 
     def is_copyphrase(self) -> bool:
         return self.mode == Task.Mode.COPYPHRASE
-        
+
     def is_action(self) -> bool:
         return self.mode == Task.Mode.ACTION
-    
+
     def __init__(self, *args, **kwargs) -> None:
         super(Task, self).__init__()
         assert getattr(self, 'name', None) is not None, "Task must have a `name` attribute defined"

@@ -70,7 +70,7 @@ class BaseCalibrationTask(Task):
 
     PARADIGM: Task.Paradigm
     mode = Task.Mode.CALIBRATION
-    
+
     initalized = False
 
     def __init__(self,
