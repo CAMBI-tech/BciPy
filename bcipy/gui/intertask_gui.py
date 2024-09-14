@@ -58,6 +58,7 @@ class IntertaskGUI(BCIUI):
 
 class IntertaskAction(Task):
     name = "Intertask Action"
+    mode = Task.Mode.ACTION
     protocol: List[Task]
     current_task_index: int
 

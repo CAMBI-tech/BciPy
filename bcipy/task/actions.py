@@ -16,6 +16,7 @@ class CodeHookAction(Task):
     """
 
     name = "Code Hook Action"
+    mode = Task.Mode.ACTION
 
     def __init__(
             self,
@@ -45,6 +46,7 @@ class OfflineAnalysisAction(Task):
     """
 
     name = "Offline Analysis Action"
+    mode = Task.Mode.ACTION
 
     def __init__(
             self,
@@ -81,7 +83,8 @@ class ExperimentFieldCollectionAction(Task):
     """
 
     name = "Experiment Field Collection Action"
-
+    mode = Task.Mode.ACTION
+    
     def __init__(
             self,
             parameters: Parameters,

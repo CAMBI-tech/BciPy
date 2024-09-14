@@ -105,6 +105,7 @@ class RSVPCopyPhraseTask(Task):
     """
 
     name = "RSVP Copy Phrase"
+    mode = Task.Mode.COPYPHRASE
     PARADIGM = Task.Paradigm.RSVP
     initalized = False
 

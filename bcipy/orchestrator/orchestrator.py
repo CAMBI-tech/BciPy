@@ -79,7 +79,7 @@ class SessionOrchestrator:
 
         # load copyphrases if needed
         self.multi_phrase = self.parameters['multi_phrase_input']
-        if self.multi_phrase and any(self.task_is_copyphrase(task) for task in self.tasks):
+        if self.multi_phrase and any(task.mode == Task.Mode.COPYPHRASE for task in self.tasks):
             self.load_copyphrases_from_file()
 
         for task in self.tasks:
@@ -93,7 +93,7 @@ class SessionOrchestrator:
                     version=self.sys_info['bcipy_version'])
 
                 #  initialize the task and execute it
-                if self.multi_phrase and self.task_is_copyphrase(task):
+                if self.multi_phrase and task.mode == Task.Mode.COPYPHRASE:
                     copyphrase = self.copyphrases.pop(0)
                     self.parameters['task_text'] = copyphrase[0]
                     self.parameters['spelled_letters_count'] = copyphrase[1]
@@ -122,9 +122,6 @@ class SessionOrchestrator:
         os.makedirs(path)
         os.makedirs(os.path.join(path, 'logs'), exist_ok=True)
         self.save_folder = path
-
-    def task_is_copyphrase(self, task: Type[Task]) -> bool:
-        return task in [RSVPCopyPhraseTask, MatrixCopyPhraseTask]
 
     def init_task_save_folder(self, task: Type[Task]) -> str:
         assert self.save_folder is not None, "Orchestrator save folder not initialized"

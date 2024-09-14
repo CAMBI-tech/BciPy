@@ -21,24 +21,41 @@ class Task(ABC):
 
     Base class for BciPy tasks.
     """
-    name: str
-    parameters: Parameters
-    data_save_location: str
-    logger: logging.Logger
 
+    class Mode(str, Enum):
+        COPYPHRASE = 'COPYPHRASE'
+        CALIBRATION = 'CALIBRATION'
+        ACTION = 'ACTION'
+    
     # Inherits from str so that it is automatically json serializable
     class Paradigm(str, Enum):
         """Paradigm.
 
         Enum for task paradigms.
         """
-        RSVP = 'RSVP',
-        MATRIX = 'MATRIX',
+        RSVP = 'RSVP'
+        MATRIX = 'MATRIX'
         VEP = 'VEP'
 
+    name: str
+    parameters: Parameters
+    data_save_location: str
+    logger: logging.Logger
+    mode: 'Task.Mode'
+
+    def is_calibration(self) -> bool:
+        return self.mode == Task.Mode.CALIBRATION
+
+    def is_copyphrase(self) -> bool:
+        return self.mode == Task.Mode.COPYPHRASE
+        
+    def is_action(self) -> bool:
+        return self.mode == Task.Mode.ACTION
+    
     def __init__(self, *args, **kwargs) -> None:
         super(Task, self).__init__()
         assert getattr(self, 'name', None) is not None, "Task must have a `name` attribute defined"
+        assert getattr(self, 'mode', None) is not None, "Task must have a valid `mode` attribute defined"
 
     @abstractmethod
     def execute(self) -> TaskData:
