@@ -5,7 +5,7 @@ from datetime import datetime
 from random import shuffle
 import logging
 from logging import Logger
-from typing import List, Type, Optional
+from typing import List, Tuple, Type, Optional
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.validate import validate_experiment
@@ -35,7 +35,8 @@ class SessionOrchestrator:
     session_data: List[TaskData]
     ready_to_execute: bool = False
     last_task_dir: Optional[str] = None
-    copyphrases: List[str]
+    copyphrases: List[Tuple[str, int]]
+    multi_phrase: bool
 
     def __init__(
         self,
@@ -76,46 +77,42 @@ class SessionOrchestrator:
             self.log.error(msg)
             raise Exception(msg)
 
+        # load copyphrases if needed
+        self.multi_phrase = self.parameters['multi_phrase_input']
+        if self.multi_phrase and any(self.task_is_copyphrase(task) for task in self.tasks):
+            self.load_copyphrases_from_file()
+
         for task in self.tasks:
             # Load copyphrases if necessary
-            if self.task_is_copyphrase(task) and self.copyphrases is None:
-                if self.parameters['multi_phrase_input']:
-                    self.load_copyphrases_from_file()
-                else:
-                    self.copyphrases = [self.parameters['task_text']]
-            if self.task_is_copyphrase(task):
-                for phrase in self.copyphrases:
-                    self.parameters['task_text'] = phrase
-                    self.init_and_execute_task(task)
-            else:
-                self.init_and_execute_task(task)
+            try:
+                #  initialize the task save folder and logger
+                data_save_location = self.init_task_save_folder(task)
+                session_logger = configure_logger(
+                    data_save_location,
+                    log_level=logging.DEBUG,
+                    version=self.sys_info['bcipy_version'])
+
+                #  initialize the task and execute it
+                if self.multi_phrase and self.task_is_copyphrase(task):
+                    copyphrase = self.copyphrases.pop(0)
+                    self.parameters['task_text'] = copyphrase[0]
+                    self.parameters['spelled_letters_count'] = copyphrase[1]
+                initialized_task: Task = task(
+                    self.parameters,
+                    data_save_location,
+                    session_logger,
+                    fake=self.fake,
+                    experiment_id=self.experiment_id,
+                    parameters_path=self.parameters_path,
+                    last_task_dir=self.last_task_dir)
+                task_data = initialized_task.execute()
+                self.session_data.append(task_data)
+                self.logger.info(f"Task {task.name} completed successfully")
+                # some tasks may need access to the previous task's data
+                self.last_task_dir = data_save_location
+            except Exception as e:
+                self.logger.exception(e)
         self.save()
-
-    def init_and_execute_task(self, task: Type[Task]) -> None:
-        try:
-            #  initialize the task save folder and logger
-            data_save_location = self.init_task_save_folder(task)
-            session_logger = configure_logger(
-                data_save_location,
-                log_level=logging.DEBUG,
-                version=self.sys_info['bcipy_version'])
-
-            #  initialize the task and execute it
-            initialized_task: Task = task(
-                self.parameters,
-                data_save_location,
-                session_logger,
-                fake=self.fake,
-                experiment_id=self.experiment_id,
-                parameters_path=self.parameters_path,
-                last_task_dir=self.last_task_dir)
-            task_data = initialized_task.execute()
-            self.session_data.append(task_data)
-            self.logger.info(f"Task {task.name} completed successfully")
-            # some tasks may need access to the previous task's data
-            self.last_task_dir = data_save_location
-        except Exception as e:
-            self.logger.exception(e)
 
     def init_orchestrator_save_folder(self, save_path: str) -> None:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -144,13 +141,24 @@ class SessionOrchestrator:
         return save_directory
 
     def load_copyphrases_from_file(self, shuffle_phrases: bool = True) -> None:
-        """Opens a file dialog to allow the user to select a file to load copy phrases from."""
+        """Opens a file dialog to allow the user to select a file to load
+        copy phrases from. File must copyphrases seperated by newlines where
+        a copyphrase is a phrase and spelled letter offset seperated by a comma.
+        Example:
+            HELLO_WORLD, 3
+            BCIPY, 0
+        """
+        self.copyphrases = []
         phrase_list_filename = load_txt_data()
         with open(phrase_list_filename, 'r') as f:
             phrases = f.readlines()
-        self.copyphrases = [phrase.strip() for phrase in phrases]
+        for phrase in phrases:
+            word = phrase.split(',')[0].strip()
+            spelled_letter_count = int(phrase.split(',')[1].strip())
+            self.copyphrases.append((word, spelled_letter_count))
         if shuffle_phrases:
             shuffle(self.copyphrases)
+        print(self.copyphrases)
 
     def save(self) -> None:
         # Save the protocol data
