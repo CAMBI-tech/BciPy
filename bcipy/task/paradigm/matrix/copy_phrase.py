@@ -47,9 +47,9 @@ def init_display(
     )
 
     stimuli = StimuliProperties(stim_font=parameters['font'],
-                                stim_pos=(parameters['stim_pos_x'],
-                                          parameters['stim_pos_y']),
-                                stim_height=parameters['stim_height'],
+                                stim_pos=(parameters['matrix_stim_pos_x'],
+                                          parameters['matrix_stim_pos_y']),
+                                stim_height=parameters['matrix_stim_height'],
                                 is_txt_stim=parameters['is_txt_stim'],
                                 prompt_time=parameters['time_prompt'])
 
@@ -58,8 +58,8 @@ def init_display(
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'],
-                                 padding=parameters['task_padding'])
+                                 height=parameters['matrix_task_height'],
+                                 padding=parameters['matrix_task_padding'])
 
     return MatrixDisplay(
         win,

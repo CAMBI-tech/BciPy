@@ -1,13 +1,13 @@
 """Defines helper methods and variables related to input symbols"""
 import os
 from string import ascii_uppercase
-from typing import Callable
+from typing import Callable, List
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
 
 
-def alphabet(parameters=None, include_path=True):
+def alphabet(parameters=None, include_path=True) -> List[str]:
     """Alphabet.
 
     Function used to standardize the symbols we use as alphabet.
@@ -36,7 +36,7 @@ def alphabet(parameters=None, include_path=True):
 
 def qwerty_order(is_txt_stim: bool = True,
                  space: str = SPACE_CHAR,
-                 backspace: str = BACKSPACE_CHAR) -> Callable:
+                 backspace: str = BACKSPACE_CHAR) -> List[str]:
     """Returns a function that can be used to sort the alphabet symbols
     in QWERTY order. Note that sorting only works for text stim.
     """
@@ -45,18 +45,18 @@ def qwerty_order(is_txt_stim: bool = True,
 
     row1 = "QWERTYUIOP"
     row2 = f"ASDFGHJKL{backspace}"
-    row3 = f" ZXCV{space}BNM "
-    return f"{row1}{row2}{row3}".index
+    row3 = f"ZXCV{space}BNM"
+    return f"{row1}{row2}{row3}"
 
 
-def frequency_order(is_txt_stim: bool = True) -> Callable:
+def frequency_order(is_txt_stim: bool = True) -> List[str]:
     """Returns a function that can be used to sort the alphabet symbols
     in most frequently used order in the English language.
     """
     if not is_txt_stim:
         raise NotImplementedError(
             'Frequency ordering not implemented for images')
-    return f"ETAOINSHRDLCUMWFGYPBVKJXQZ{BACKSPACE_CHAR}{SPACE_CHAR}".index
+    return f"ETAOINSHRDLCUMWFGYPBVKJXQZ{BACKSPACE_CHAR}{SPACE_CHAR}"
 
 
 DEFAULT_SYMBOL_SET = alphabet()

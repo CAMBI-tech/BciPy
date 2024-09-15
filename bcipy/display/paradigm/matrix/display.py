@@ -11,7 +11,7 @@ from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.symbols import alphabet, qwerty_order, frequency_order
 from bcipy.helpers.triggers import _calibration_trigger
 
 
@@ -76,7 +76,7 @@ class MatrixDisplay(Display):
         """
         self.window = window
 
-        self.logger = logging.getLogger(__name__)
+        self.logger = logging.getLogger(__name__) # TODO - remove this line and pass a logger
 
         self.stimuli_inquiry = []
         self.stimuli_timing = []
@@ -85,7 +85,7 @@ class MatrixDisplay(Display):
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
-        self.symbol_set = symbol_set or alphabet()
+        self.symbol_set = self.build_symbol_set(stimuli)
         self.sort_order = sort_order or self.symbol_set.index
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = 0.17  # stimuli.stim_height
@@ -118,6 +118,18 @@ class MatrixDisplay(Display):
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
         )
         self.logger.info(f"Matrix center position: {display_container.center}")
+
+    def build_symbol_set(self, stimuli: StimuliProperties) -> List[str]:
+        """Build the symbol set for the display."""
+        # TODO pass space and other symbols as parameters
+        if stimuli.layout == 'ALP':
+            return alphabet()
+        elif stimuli.layout == 'QWERTY':
+            return qwerty_order()
+        elif stimuli.layout == 'FREQ':
+            return frequency_order()
+        else:
+            raise ValueError(f"Unknown layout: {stimuli.layout}")
 
     @property
     def stim_positions(self) -> Dict[str, Tuple[float, float]]:

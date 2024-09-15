@@ -1,11 +1,11 @@
 {
   "fake_data": {
     "value": "false",
-    "section": "bci_config",
+    "section": "acq_config",
     "name": "Fake EEG Data",
     "helpTip": "If ‘true’, fake EEG data will be used instead of real EEG data. Useful for testing by software development team.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "acq_mode": {
@@ -20,7 +20,7 @@
       "EEG+Eyetracker",
       "EEG+Eyetracker:passive"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "trigger_type": {
@@ -32,21 +32,21 @@
       "image",
       "text"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "k_folds": {
     "value": "10",
-    "section": "signal_config",
+    "section": "model_config",
     "name": "Number of Cross-Validation Folds",
     "helpTip": "Specifies the number of folds used for cross-validation when calculating AUC. Default: 10",
     "recommended": "[10]",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "trial_window": {
     "value": "0.0:0.5",
-    "section": "bci_config",
+    "section": "signal_config",
     "name": "Trial Classification Window Length",
     "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
     "recommended": [
@@ -54,34 +54,34 @@
       "0.0:0.8",
       "0.2:0.8"
     ],
-    "editable": true,
+    "editable": false,
     "type": "range"
   },
   "prestim_length": {
     "value": "1",
-    "section": "bci_config",
+    "section": "signal_config",
     "name": "Prestimulus Window Length",
     "helpTip": "Specifies the length (in seconds) of the EEG data window to return before inquiry presentation. Default: 1",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "alert_sound_file": {
     "value": "beep.wav",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Alert Tone",
     "helpTip": "Specifies the path to an audio file to be played as an alert tone when experiments or offline analysis is complete. Default: beep.wav",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "filepath"
   },
   "signal_model_path": {
     "value": "",
-    "section": "bci_config",
+    "section": "model_config",
     "name": "Signal Model Path",
     "helpTip": "Directory of the pre-trained signal model. This is often the the calibration session directory.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "directorypath"
   },
   "filter_high": {
@@ -94,7 +94,7 @@
       "45",
       "50"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "filter_low": {
@@ -106,7 +106,7 @@
       "1",
       "2"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "filter_order": {
@@ -118,7 +118,7 @@
       "2",
       "3"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "notch_filter_frequency": {
@@ -130,7 +130,7 @@
       "59",
       "60"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "down_sampling_rate": {
@@ -139,27 +139,27 @@
     "name": "Downsampling Rate",
     "helpTip": "Specifies the decimation factor (integer only) for downsampling of EEG data. Default: 2",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "summarize_session": {
     "value": "true",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Summarize Session Data",
     "helpTip": "If 'true', writes an Excel file which summarizes the session data by charting evidence per inquiry.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "parameter_location": {
     "value": "bcipy/parameters/parameters.json",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Parameter File",
     "helpTip": "Specifies the file containing the current system parameters. Default: bcipy/parameters/parameters.json",
     "recommended": [
       "parameters/parameters.json"
     ],
-    "editable": true,
+    "editable": false,
     "type": "filepath"
   },
   "data_save_loc": {
@@ -170,70 +170,70 @@
     "recommended": [
       "data/"
     ],
-    "editable": true,
+    "editable": false,
     "type": "directorypath"
   },
   "full_screen": {
     "value": "false",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Full Screen Mode",
     "helpTip": "If ‘true’, the task will be displayed in full screen mode. If ‘false’, the task will be displayed in a window.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "window_height": {
     "value": "500",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Task Window Height",
     "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "window_width": {
     "value": "500",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Task Window Width",
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "matrix_rows": {
     "value": "5",
-    "section": "bci_config",
+    "section": "matrix_task_config",
     "name": "Matrix Rows",
     "helpTip": "Specifies the number of rows to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "matrix_columns": {
     "value": "6",
-    "section": "bci_config",
+    "section": "matrix_task_config",
     "name": "Matrix Columns",
     "helpTip": "Specifies the number of columns to use in the Matrix task. Rows * columns should be greater than or equal to the number of symbols.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "matrix_width": {
     "value": "0.7",
-    "section": "bci_config",
+    "section": "matrix_task_config",
     "name": "Matrix Width (%)",
     "helpTip": "Specifies the max percentage of the display that the matrix grid should utilize. Must be between 0 and 1",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "acq_show_viewer": {
     "value": "false",
     "section": "acq_config",
     "name": " EEG Viewer",
-    "helpTip": "If ‘true’, the EEG signal viewer will be displayed along with the Task.",
+    "helpTip": "If ‘true’, the EEG signal viewer will be displayed along with the Task. Note: This has not been throughly tested and could cause timing issues. Use with caution.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "stim_screen": {
@@ -242,16 +242,16 @@
     "name": "Task Display Monitor",
     "helpTip": "Specifies which monitor to use for task display when two monitors are in use. If ‘0’, the task will be displayed on the primary monitor (with the EEG signal viewer on the second monitor, if EEG Viewer On/Off is set to ‘true’). If ‘1’, the opposite monitor assignment will be used.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "task_buffer_length": {
     "value": "2",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Inter-inquiry Interval",
     "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "is_txt_stim": {
@@ -260,7 +260,7 @@
     "name": "Text Stimuli",
     "helpTip": "If ‘true’, text stimuli will be used. If ‘false’, image stimuli will be loaded from the folder specified in Image Stimulus Folder. Default: true",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "path_to_presentation_images": {
@@ -269,7 +269,7 @@
     "name": "Image Stimulus Folder",
     "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "directorypath"
   },
   "stim_space_char": {
@@ -283,7 +283,7 @@
       "‒",
       "□"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "stim_order": {
@@ -295,7 +295,7 @@
       "alphabetical",
       "random"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "target_positions": {
@@ -307,61 +307,61 @@
       "distributed",
       "random"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "nontarget_inquiries": {
-    "value": "10",
+    "value": "0",
     "section": "bci_config",
     "name": "Percentage of Nontarget Inquiries",
-    "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 10 percent.",
+    "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 0 percent.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "stim_length": {
     "value": "10",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Stimuli Per inquiry",
     "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "time_flash": {
     "value": "0.25",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "time_prompt": {
     "value": "1",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Time Prompt Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "time_fixation": {
     "value": "0.5",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "time_vep_animation": {
     "value": "1.0",
-    "section": "bci_config",
+    "section": "vep_task_config",
     "name": "Time VEP Animation (sec)",
     "helpTip": "The amount of time in seconds for the animation moving symbols to boxes.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "stim_jitter": {
@@ -370,30 +370,48 @@
     "name": "Stimulus Presentation Jitter (sec)",
     "helpTip": "Specifies the time (sec) to jitter presentation rates. Default: 0.0",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
-  "stim_pos_x": {
+  "rsvp_stim_pos_x": {
     "value": "0",
-    "section": "bci_config",
+    "section": "rsvp_task_config",
     "name": "Stimulus Position Horizontal",
     "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
-  "stim_pos_y": {
+  "rsvp_stim_pos_y": {
     "value": "0",
-    "section": "bci_config",
+    "section": "rsvp_task_config",
     "name": "Stimulus Position Vertical",
     "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
-    "editable": true,
+    "editable": false,
+    "type": "float"
+  },
+  "matrix_stim_pos_x": {
+    "value": "-0.6",
+    "section": "matrix_task_config",
+    "name": "Stimulus Starting Position Horizontal",
+    "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: -0.6",
+    "recommended": "",
+    "editable": false,
+    "type": "float"
+  },
+  "matrix_stim_pos_y": {
+    "value": "0.4",
+    "section": "matrix_task_config",
+    "name": "Stimulus Starting Position Vertical",
+    "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0.4",
+    "recommended": "",
+    "editable": false,
     "type": "float"
   },
   "font": {
-    "value": "Overpass Mono Medium",
-    "section": "bci_config",
+    "value": "Consolas",
+    "section": "task_config",
     "name": "Font",
     "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
     "recommended": [
@@ -401,17 +419,39 @@
       "Lucida Sans",
       "Consolas"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
-  "stim_height": {
+  "rsvp_stim_height": {
     "value": "0.5",
-    "section": "bci_config",
+    "section": "rsvp_task_config",
     "name": "Stimulus Size",
     "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
+  },
+  "matrix_stim_height": {
+    "value": "0.17",
+    "section": "matrix_task_config",
+    "name": "Stimulus Size",
+    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.17",
+    "recommended": "",
+    "editable": false,
+    "type": "float"
+  },
+  "matrix_keyboard_layout": {
+    "value": "QWERTY",
+    "section": "matrix_task_config",
+    "name": "Keyboard Layout",
+    "helpTip": "Specifies the keyboard layout to use for the Matrix task. Default: ALP (Alphabetical)",
+    "recommended": [
+      "ALP",
+      "QWERTY",
+      "FREQ"
+    ],
+    "editable": false,
+    "type": "str"
   },
   "stim_color": {
     "value": "white",
@@ -419,7 +459,7 @@
     "name": "Stimulus Color",
     "helpTip": "Specifies the color of text stimuli within the RSVP stream. Default: white",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "target_color": {
@@ -428,7 +468,7 @@
     "name": "Target Color",
     "helpTip": "Specifies the color of target characters during calibration. Default: white",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "fixation_color": {
@@ -437,43 +477,43 @@
     "name": "Fixation Cross Color",
     "helpTip": "Specifies the color of the fixation cross that appears before each inquiry. Default: red",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "background_color": {
     "value": "black",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Task Background Color",
     "helpTip": "Specifies the color of the task background. Default: black",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "info_pos_x": {
     "value": "0",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Position Text (X)",
     "helpTip": "Position Text (X)",
     "recommended": [
       "0"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "info_pos_y": {
     "value": "-0.75",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Position Text (Y)",
     "helpTip": "Position Text (Y)",
     "recommended": [
       "-0.75"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "info_text": {
     "value": "",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Text below main presentation",
     "helpTip": "Text below main presentation",
     "recommended": [
@@ -481,23 +521,23 @@
       "Demo Text",
       "DEMO"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "info_height": {
     "value": "0.1",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Text below main presentation height",
     "helpTip": "Specifies the height of info text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended": [
       "0.1"
     ],
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "info_color": {
     "value": "white",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Color Text",
     "helpTip": "Color Text",
     "recommended": [
@@ -505,19 +545,19 @@
       "black",
       "blue"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "task_text": {
     "value": "HELLO_WORLD",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Target Phrase",
     "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
     "recommended": "",
     "editable": true,
     "type": "str"
   },
-  "task_height": {
+  "rsvp_task_height": {
     "value": "0.1",
     "section": "bci_config",
     "name": "Task Text Size",
@@ -525,7 +565,18 @@
     "recommended": [
       "0.1"
     ],
-    "editable": true,
+    "editable": false,
+    "type": "float"
+  },
+  "matrix_task_height": {
+    "value": "0.1",
+    "section": "bci_config",
+    "name": "Task Text Size",
+    "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended": [
+      "0.1"
+    ],
+    "editable": false,
     "type": "float"
   },
   "task_color": {
@@ -534,18 +585,29 @@
     "name": "Task Text Color",
     "helpTip": "Specifies the color of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. Default: white",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
-  "task_padding": {
+  "rsvp_task_padding": {
     "value": "0.05",
     "section": "bci_config",
     "name": "Task Bar Padding",
-    "helpTip": "Specifies the padding around the task bar text. Default: 0.05",
+    "helpTip": "Specifies the padding around the task bar text for RSVP tasks. Default: 0.05",
     "recommended": [
       "0.05"
     ],
-    "editable": true,
+    "editable": false,
+    "type": "float"
+  },
+  "matrix_task_padding": {
+    "value": "0.05",
+    "section": "bci_config",
+    "name": "Task Bar Padding",
+    "helpTip": "Specifies the padding around the task bar text for Matrix Tasks. Default: 0.05",
+    "recommended": [
+      "0.05"
+    ],
+    "editable": false,
     "type": "float"
   },
   "stim_number": {
@@ -554,7 +616,7 @@
     "name": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "enable_breaks": {
@@ -563,7 +625,7 @@
     "name": "Automatic Calibration Breaks",
     "helpTip": "If ‘true’, automatic breaks will be added to the calibration session. If ‘false’, automatic breaks will not occur, but the session can still be paused by pressing Space.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "break_len": {
@@ -572,7 +634,7 @@
     "name": "Automatic Calibration Break Length",
     "helpTip": "Specifies the length (in seconds) of automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "trials_before_break": {
@@ -581,7 +643,7 @@
     "name": "Automatic Calibration Break Timing",
     "helpTip": "Specifies the number of inquiries between automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "break_message": {
@@ -590,87 +652,87 @@
     "name": "Automatic Calibration Break Message",
     "helpTip": "Specifies the message displayed during automatic calibration breaks (Automatic Calibration Breaks On/Off must be set to ‘true’).",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "max_inq_len": {
     "value": "50",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Maximum Inquiry Length",
     "helpTip": "Specifies the maximum number of inquiries to present in copy/spelling tasks. The task will end if this number is reached.",
     "recommended": [
       "20",
       "25"
     ],
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "max_minutes": {
     "value": "20",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Maximum Task Length (Time)",
     "helpTip": "Specifies the time limit (in minutes) for copy/spelling tasks. The task will end if this time limit is reached.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "max_selections": {
     "value": "25",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Maximum Number of Selections",
     "helpTip": "The maximum number of selections for copy/spelling tasks. The task will end if this number is reached.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "decision_threshold": {
     "value": "0.8",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Decision Threshold",
     "helpTip": "Specifies the decision threshold for stimulus selection in copy/spelling class. If the posterior probability (combining EEG and language model evidence) for a stimulus reaches this threshold, it will be selected. Possible value range: 0.0-1.0. Default: 0.8",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "min_inq_per_series": {
     "value": "1",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Minimum Inquiries Per Series",
     "helpTip": "Specifies the minimum number of inquiries to present before making a decision in copy/spelling tasks. Default: 1",
     "recommended": [
       "1"
     ],
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "max_inq_per_series": {
     "value": "11",
-    "section": "bci_config",
+    "section": "online_config",
     "name": "Maximum Inquiries Per Series",
     "helpTip": "Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks.",
     "recommended": [
       "10",
       "15"
     ],
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "backspace_always_shown": {
     "value": "true",
-    "section": "bci_config",
+    "section": "lang_model_config",
     "name": "Always Show Backspace",
     "helpTip": "If ‘true’, the backspace character will be included in every inquiry in text-stimuli copy/spelling tasks. If ‘false’, the backspace character will be treated the same as other characters, appearing in inquiries only when warranted by EEG/language model evidence.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "spelled_letters_count": {
     "value": "0",
-    "section": "bci_config",
+    "section": "lang_model_config",
     "name": "Pre-Selected Letters Count",
     "helpTip": "Specifies the number of letters in the target phrase that are already typed when the task begins, e.g. if the target phrase is “THE_DOG”, setting this parameter to ‘4’ would display “THE_” as the typed string, and the user would begin typing with D. If ‘0’, the typed string will be blank.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "lang_model_type": {
@@ -685,25 +747,25 @@
       "MIXTURE",
       "ORACLE"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "lm_backspace_prob": {
     "value": "0.0",
-    "section": "bci_config",
+    "section": "lang_model_config",
     "name": "Backspace Probability",
     "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
     "recommended": "0.05",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "show_preview_inquiry": {
     "value": "false",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Preview Inquiry Display",
     "helpTip": "If ‘true’, the inquiry will be previewed as applicable for the Task. *Note* Not all tasks will have this enabled!",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "preview_inquiry_error_prob": {
@@ -717,7 +779,7 @@
   },
   "preview_inquiry_progress_method": {
     "value": "0",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Preview Inquiry Progression Method",
     "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 0 = preview only; 1 = press to confirm; 2 = press to skip to another inquiry",
     "recommended": [
@@ -725,21 +787,21 @@
       "1",
       "2"
     ],
-    "editable": true,
+    "editable": false,
     "type": "int"
   },
   "preview_inquiry_length": {
     "value": "5",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Preview Inquiry Display Length",
     "helpTip": "Length of time in seconds to present an inquiry preview to the user.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "preview_inquiry_key_input": {
     "value": "return",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Preview Inquiry Display Key Input Method",
     "helpTip": "Defines the key used to engage with inquiry preview.",
     "recommended": [
@@ -747,46 +809,46 @@
       "escape",
       "return"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   },
   "preview_inquiry_isi": {
     "value": "1",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Preview Inquiry Inter-Stimulus Interval",
     "helpTip": "The time between previewing an inquiry and the start of an inquiry.",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "show_feedback": {
     "value": "true",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Feedback Display",
     "helpTip": "If ‘true’, feedback will be shown after each inquiry. If ‘false’, feedback will not be shown. *Note* Not all tasks will have this enabled!",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "bool"
   },
   "feedback_duration": {
     "value": "2",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Feedback Time (seconds)",
     "helpTip": "Specifies the length in time (seconds) feedback will be displayed after each inquiry in registered tasks (ex. RSVP Copy Phrase). Default: 2",
     "recommended": "",
-    "editable": true,
+    "editable": false,
     "type": "float"
   },
   "psd_method": {
     "value": "Welch",
-    "section": "bci_config",
+    "section": "signal_config",
     "name": "Power Spectral Density Method",
     "helpTip": "Specifies the method used to approximate power spectral density bands (Welch or MultiTaper). Default: Welch",
     "recommended": [
       "Welch",
       "MutliTaper"
     ],
-    "editable": true,
+    "editable": false,
     "type": "str"
   }
 }

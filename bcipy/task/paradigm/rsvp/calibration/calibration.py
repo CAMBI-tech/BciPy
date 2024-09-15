@@ -64,8 +64,8 @@ def init_calibration_display_task(
     )
     stimuli = StimuliProperties(
         stim_font=parameters['font'],
-        stim_pos=(parameters['stim_pos_x'], parameters['stim_pos_y']),
-        stim_height=parameters['stim_height'],
+        stim_pos=(parameters['rsvp_stim_pos_x'], parameters['rsvp_stim_pos_y']),
+        stim_height=parameters['rsvp_stim_height'],
         stim_inquiry=[''] * parameters['stim_length'],
         stim_colors=[parameters['stim_color']] * parameters['stim_length'],
         stim_timing=[10] * parameters['stim_length'],
@@ -76,8 +76,8 @@ def init_calibration_display_task(
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'],
-                                  padding=parameters['task_padding'])
+                                  height=parameters['rsvp_task_height'],
+                                  padding=parameters['rsvp_task_padding'])
 
     preview_inquiry = PreviewInquiryProperties(
         preview_on=parameters['show_preview_inquiry'],

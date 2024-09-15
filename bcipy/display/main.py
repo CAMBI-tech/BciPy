@@ -126,7 +126,7 @@ def init_display_window(parameters):
 class StimuliProperties:
     """"Stimuli Properties.
 
-    An encapsulation of properties relevant to core stimuli presentation in an RSVP or Matrix paradigm.
+    An encapsulation of properties relevant to core stimuli presentation in a paradigm.
     """
 
     def __init__(
@@ -138,7 +138,8 @@ class StimuliProperties:
             stim_colors: Optional[List[str]] = None,
             stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: Optional[float] = None):
+            prompt_time: Optional[float] = None,
+            layout: Optional[str] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
@@ -150,6 +151,7 @@ class StimuliProperties:
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
         prompt_time(float): Time to display target prompt for at the beginning of inquiry
+        layout(str): Layout of stimuli on the screen (ex. 'ALPHABET' or 'QWERTY'). This is only used for matrix displays.
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
@@ -161,6 +163,7 @@ class StimuliProperties:
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
         self.prompt_time = prompt_time
+        self.layout = layout
 
     def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
         """"Build Initial Stimuli.
