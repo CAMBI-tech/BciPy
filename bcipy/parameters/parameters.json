@@ -686,6 +686,14 @@
     "recommended_values": "",
     "type": "bool"
   },
+  "preview_inquiry_error_prob": {
+    "value": "0.05",
+    "section": "bci_config",
+    "readableName": "Preview Inquiry Button Error Probability",
+    "helpTip": "Specifies the probability of a button error during inquiry preview. Default: 0.05",
+    "recommended_values": "",
+    "type": "float"
+  },
   "preview_inquiry_progress_method": {
     "value": "0",
     "section": "bci_config",
