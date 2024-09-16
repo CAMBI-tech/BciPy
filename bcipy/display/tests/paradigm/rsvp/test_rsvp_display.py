@@ -88,6 +88,7 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
         self.preview_inquiry_progress_method = 1  # preview only = 0; press to accept == 1; press to skip == 2
         self.preview_inquiry_key_input = 'space'
         self.preview_inquiry = PreviewInquiryProperties(
+            preview_on=False,
             preview_only=False,
             preview_inquiry_length=self.preview_inquiry_length,
             preview_inquiry_isi=self.preview_inquiry_isi,

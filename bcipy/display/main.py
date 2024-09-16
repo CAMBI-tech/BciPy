@@ -245,12 +245,15 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
+            preview_on: bool,
             preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+
+        preview_on(bool): If True, display an inquiry preview before the main inquiry.
         preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
@@ -258,6 +261,7 @@ class PreviewInquiryProperties:
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
+        self.preview_on = preview_on
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False

@@ -905,6 +905,7 @@ def _init_copy_phrase_display(
         experiment_clock: Clock,
         starting_spelled_text) -> CopyPhraseDisplay:
     preview_inquiry = PreviewInquiryProperties(
+        preview_on=parameters['show_preview_inquiry'],
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
         preview_inquiry_key_input=parameters['preview_inquiry_key_input'],

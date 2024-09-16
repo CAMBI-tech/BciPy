@@ -80,6 +80,7 @@ def init_calibration_display_task(
                                   padding=parameters['task_padding'])
 
     preview_inquiry = PreviewInquiryProperties(
+        preview_on=parameters['show_preview_inquiry'],
         preview_only=True,
         preview_inquiry_length=parameters['preview_inquiry_length'],
         preview_inquiry_progress_method=parameters[
