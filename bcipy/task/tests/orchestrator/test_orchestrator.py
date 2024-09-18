@@ -66,7 +66,6 @@ class TestSessionOrchestrator(unittest.TestCase):
             experiment_id=any(),
             parameters_path=any(),
             last_task_dir=None).thenReturn(task)
-        when(self.logger).info(any()).thenReturn()
         orchestrator = SessionOrchestrator()
         orchestrator.add_task(task)
         orchestrator.execute()
@@ -74,11 +73,10 @@ class TestSessionOrchestrator(unittest.TestCase):
         verify(task, times=1).__call__(
             any(), any(),
             fake=False, experiment_id=any(), parameters_path=any(), last_task_dir=None)
-        verify(self.logger, times=1).info(any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_save_folder(any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_logger(any())
         verify(SessionOrchestrator, times=1)._init_task_save_folder(any())
-        verify(SessionOrchestrator, times=1)._init_task_logger()
+        verify(SessionOrchestrator, times=1)._init_task_logger(any())
         verify(SessionOrchestrator, times=1)._save_protocol_data()
 
 
