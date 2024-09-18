@@ -3,7 +3,7 @@ import logging
 import multiprocessing
 from typing import Type, Optional
 
-from bcipy.config import (DEFAULT_PARAMETERS_PATH)
+from bcipy.config import (DEFAULT_PARAMETERS_PATH, CUSTOM_TASK_EXPERIMENT_ID)
 from bcipy.helpers.load import (load_experiments, load_json_parameters)
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.task import TaskRegistry, Task
@@ -57,7 +57,7 @@ def bci_main(
         tasks = parse_protocol(experiment['protocol'])
     elif task:
         tasks = [task]
-        experiment_id = "Custom Task Execution"  # TODO: move to config
+        experiment_id = CUSTOM_TASK_EXPERIMENT_ID
     else:
         log.exception('No experiment or task provided.')
         raise Exception('No experiment or task provided to BciPy Client.')
