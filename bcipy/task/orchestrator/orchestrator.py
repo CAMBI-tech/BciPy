@@ -9,7 +9,13 @@ from typing import List, Type, Optional
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData
-from bcipy.config import DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID
+from bcipy.config import (
+    DEFAULT_EXPERIMENT_ID,
+    DEFAULT_PARAMETERS_PATH,
+    DEFAULT_USER_ID,
+    PROTOCOL_LOG_FILENAME,
+    SESSION_LOG_FILENAME
+)
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.visualization import visualize_session_data
 
@@ -61,8 +67,10 @@ class SessionOrchestrator:
 
         self.alert = alert
         self.visualize = visualize
+        self.progress = 0
 
         self.ready_to_execute = True
+        self.logger.info("Session Orchestrator initialized successfully")
 
     def add_task(self, task: Type[Task]) -> None:
         self.tasks.append(task)
@@ -80,17 +88,19 @@ class SessionOrchestrator:
             self.log.error(msg)
             raise Exception(msg)
 
+        self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
         for task in self.tasks:
+            self.progress += 1
             try:
-                #  initialize the task save folder and logger
+                # initialize the task save folder and logger
+                self.logger.info(f"Initializing task {self.progress}/{len(self.tasks)} {task.name}")
                 data_save_location = self._init_task_save_folder(task)
-                session_logger = self._init_task_logger(data_save_location)
+                self._init_task_logger(data_save_location)
 
                 #  initialize the task and execute it
                 initialized_task: Task = task(
                     self.parameters,
                     data_save_location,
-                    session_logger,
                     fake=self.fake,
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
@@ -121,9 +131,8 @@ class SessionOrchestrator:
     def _init_orchestrator_logger(self, save_folder: str) -> Logger:
         return configure_logger(
             save_folder,
-            'orchestrator_log.txt',
-            logging.DEBUG,
-            self.sys_info['bcipy_version'])
+            PROTOCOL_LOG_FILENAME,
+            logging.DEBUG)
 
     def _init_orchestrator_save_folder(self, save_path: str) -> str:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
@@ -150,12 +159,11 @@ class SessionOrchestrator:
                 raise error
         return save_directory
 
-    def _init_task_logger(self, save_folder: str) -> Logger:
-        return configure_logger(
+    def _init_task_logger(self, save_folder: str) -> None:
+        configure_logger(
             save_folder,
-            'task_log.txt',
-            logging.DEBUG,
-            self.sys_info['bcipy_version'])
+            SESSION_LOG_FILENAME,
+            logging.DEBUG)
 
     def _save_protocol_data(self) -> None:
         # Save the protocol data

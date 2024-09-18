@@ -19,7 +19,6 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        logger : logging.Logger,
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns

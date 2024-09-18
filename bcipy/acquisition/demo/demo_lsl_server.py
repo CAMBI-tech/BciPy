@@ -21,7 +21,7 @@ def main():
     args = parser.parse_args()
     device_spec = preconfigured_device(args.name)
     try:
-        server = LslDataServer(device_spec=device_spec, log=log)
+        server = LslDataServer(device_spec=device_spec)
 
         log.info("New server created")
         server.start()

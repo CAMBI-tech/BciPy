@@ -1,6 +1,5 @@
 # mypy: disable-error-code="assignment"
 from itertools import cycle, islice, repeat
-import logging
 from typing import Any, Iterator, List
 
 from bcipy.helpers.parameters import Parameters
@@ -20,7 +19,6 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     Input:
         parameters (Parameters)
         file_save (str)
-        logger (logging.Logger)
         fake (bool)
 
     Output:
@@ -31,13 +29,12 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     def __init__(self,
                  parameters: Parameters,
                  file_save: str,
-                 logger: logging.Logger,
                  fake: bool = False,
                  **kwargs: Any) -> None:
         parameters['stim_height'] = 0.8
         parameters['stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
-              self).__init__(parameters, file_save, logger, fake=fake)
+              self).__init__(parameters, file_save, fake=fake)
 
     @property
     def symbol_set(self) -> List[str]:

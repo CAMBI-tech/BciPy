@@ -29,7 +29,6 @@ class MatrixCalibrationTask(BaseCalibrationTask):
     ----------
     parameters (dict)
     file_save (str)
-    logger (logging.Logger)
     fake (bool)
 
     """

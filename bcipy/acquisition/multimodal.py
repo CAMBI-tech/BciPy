@@ -9,8 +9,9 @@ from bcipy.acquisition.exceptions import (InsufficientDataException,
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.helpers.system_utils import AutoNumberEnum
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class ContentType(AutoNumberEnum):
@@ -59,10 +60,9 @@ class ClientManager():
         default_content_type - used for dispatching calls to an LslClient.
     """
 
-    def __init__(self, logger: logging.Logger = log, default_content_type: ContentType = ContentType.EEG) -> None:
+    def __init__(self, default_content_type: ContentType = ContentType.EEG) -> None:
         self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
-        self.logger = logger
 
     @property
     def clients(self) -> List[LslAcquisitionClient]:
@@ -112,11 +112,12 @@ class ClientManager():
     def start_acquisition(self):
         """Start acquiring data for all clients"""
         for client in self.clients:
-            self.logger.info(f"Connecting to {client.device_spec.name}...")
+            logger.info(f"Connecting to {client.device_spec.name}...")
             client.start_acquisition()
 
     def stop_acquisition(self):
         """Stop acquiring data for all clients"""
+        logger.info("Stopping acquisition...")
         for client in self.clients:
             client.stop_acquisition()
 
@@ -151,12 +152,13 @@ class ClientManager():
             adjusted_start = start + client.device_spec.static_offset
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
-                self.logger.info(f'Need {count} records for processing {name} data')
+                logger.info(f'Need {count} records for processing {name} data')
                 output[content_type] = client.get_data(start=adjusted_start,
                                                        limit=count)
                 data_count = len(output[content_type])
                 if strict and data_count < count:
                     msg = f'Needed {count} {name} records but received {data_count}'
+                    logger.error(msg)
                     raise InsufficientDataException(msg)
             else:
                 # Markers have an IRREGULAR_RATE.
@@ -175,4 +177,6 @@ class ClientManager():
         client = self.default_client
         if client:
             return client.__getattribute__(name)
+
+        logger.error(f"Missing attribute: {name}")
         raise AttributeError(f"Missing attribute: {name}")

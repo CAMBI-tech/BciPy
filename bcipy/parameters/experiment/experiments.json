@@ -2,6 +2,6 @@
   "default": {
     "fields": [],
     "summary": "Default experiment to test various BciPy features without registering a full experiment.",
-    "protocol": "RSVP Calibration"
+    "protocol": "RSVP Calibration -> Matrix Calibration"
   }
 }

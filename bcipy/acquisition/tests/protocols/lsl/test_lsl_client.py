@@ -4,7 +4,6 @@ import tempfile
 import time
 import unittest
 from pathlib import Path
-import logging
 
 import pytest
 
@@ -15,10 +14,8 @@ from bcipy.acquisition.protocols.lsl.lsl_client import (LslAcquisitionClient,
                                                         discover_device_spec)
 from bcipy.helpers.clock import Clock
 
-log = logging.getLogger(__name__)
-
 DEVICE_NAME = 'DSI-24'
-DEVICE = preconfigured_device(DEVICE_NAME, log)
+DEVICE = preconfigured_device(DEVICE_NAME)
 
 
 class TestDataAcquisitionClient(unittest.TestCase):
@@ -30,7 +27,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Set up a mock LSL data server that is streaming for all tests."""
-        cls.eeg_server = LslDataServer(device_spec=DEVICE, log=log)
+        cls.eeg_server = LslDataServer(device_spec=DEVICE)
         cls.eeg_server.start()
 
     @classmethod
@@ -41,14 +38,14 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_discover_device_spec(self):
         """Test utility function for creating a DeviceSpec based on the
         content_type."""
-        spec = discover_device_spec(content_type='EEG', logger=log)
+        spec = discover_device_spec(content_type='EEG')
         self.assertEqual(spec.name, DEVICE.name)
         self.assertEqual(spec.sample_rate, DEVICE.sample_rate)
         self.assertListEqual(spec.channels, DEVICE.channels)
 
     def test_with_specified_device(self):
         """Test functionality with a provided device_spec"""
-        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         self.assertEqual(client.max_samples, DEVICE.sample_rate)
         client.start_acquisition()
         time.sleep(1)
@@ -63,7 +60,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_specified_device_wrong_channels(self):
         """Should throw an exception if channels don't match metadata."""
         client = LslAcquisitionClient(
-            max_buffer_len=1, device_spec=preconfigured_device('DSI-VR300'), logger=log)
+            max_buffer_len=1, device_spec=preconfigured_device('DSI-VR300'))
 
         with self.assertRaises(Exception):
             client.start_acquisition()
@@ -75,7 +72,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             sample_rate=DEVICE.sample_rate + 100,
                             content_type=DEVICE.content_type,
                             data_type=DEVICE.data_type)
-        client = LslAcquisitionClient(max_buffer_len=1, device_spec=device, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=device)
         with self.assertRaises(Exception):
             client.start_acquisition()
 
@@ -87,12 +84,12 @@ class TestDataAcquisitionClient(unittest.TestCase):
                             content_type='Markers',
                             data_type='string')
 
-        client = LslAcquisitionClient(max_buffer_len=1024, device_spec=device, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1024, device_spec=device)
         self.assertEqual(1024, client.max_samples)
 
     def test_with_unspecified_device(self):
         """Test with unspecified device."""
-        client = LslAcquisitionClient(max_buffer_len=1, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1)
         client.start_acquisition()
 
         self.assertEqual(DEVICE.name, client.device_spec.name)
@@ -106,7 +103,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     @pytest.mark.slow
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
-        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         client.start_acquisition()
 
         experiment_clock = Clock(start_at_zero=True)
@@ -132,7 +129,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
     def test_event_offset(self):
         """Test the offset in seconds of a given event relative to the first
         sample time."""
-        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE, logger=log)
+        client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
         experiment_clock = Clock(start_at_zero=True)
 
         client.start_acquisition()
@@ -160,8 +157,7 @@ class TestDataAcquisitionClient(unittest.TestCase):
 
         client = LslAcquisitionClient(max_buffer_len=1,
                                       save_directory=temp_dir,
-                                      raw_data_file_name=filename,
-                                      logger=log)
+                                      raw_data_file_name=filename)
         client.start_acquisition()
         time.sleep(0.1)
         client.stop_acquisition()

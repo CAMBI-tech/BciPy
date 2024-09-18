@@ -13,9 +13,9 @@ from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME
+from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME, SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 # pylint: disable=too-many-arguments
 
 
@@ -48,7 +48,6 @@ class LslDataServer(StoppableThread):
 
     def __init__(self,
                  device_spec: DeviceSpec,
-                 log: logging.Logger = log,
                  generator: Optional[Generator] = None,
                  include_meta: bool = True,
                  add_markers: bool = False,
@@ -58,9 +57,8 @@ class LslDataServer(StoppableThread):
 
         self.device_spec = device_spec
         self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
-        self.logger = log
 
-        self.logger.debug("Starting LSL server for device: %s", device_spec.name)
+        log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
         print(f"Chunk size: {chunk_size}")
         info = StreamInfo(device_spec.name,
@@ -89,7 +87,7 @@ class LslDataServer(StoppableThread):
             # "gUSBamp_" + boost::lexical_cast<std::string>(deviceNumber) +
             # "_" + boost::lexical_cast<std::string>(serialNumber) +
             # "_markers");
-            self.logger.debug("Creating marker stream")
+            log.debug("Creating marker stream")
             print(f"Marker channel name: {marker_stream_name}")
             markers_info = StreamInfo(marker_stream_name,
                                       "Markers", 1, 0, 'string',
@@ -100,7 +98,7 @@ class LslDataServer(StoppableThread):
     def stop(self):
         """Stop the thread and cleanup resources."""
 
-        self.logger.debug("[*] Stopping data server")
+        log.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
 
         # Allows pylsl to cleanup; The outlet will no longer be discoverable

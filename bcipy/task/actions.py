@@ -6,8 +6,10 @@ from bcipy.gui.experiments.ExperimentField import start_experiment_field_collect
 from bcipy.task import Task
 from bcipy.helpers.parameters import Parameters
 from bcipy.task.main import TaskData
-from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME
 from bcipy.signal.model.offline_analysis import offline_analysis
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class CodeHookAction(Task):
@@ -21,13 +23,12 @@ class CodeHookAction(Task):
             self,
             parameters: Parameters,
             data_directory: str,
-            logger: logging.Logger,
             code_hook: Optional[str] = None,
-            subprocess: bool = True, **kwargs) -> None:
+            subprocess: bool = True,
+            **kwargs) -> None:
         super().__init__()
         self.code_hook = code_hook
         self.subprocess = subprocess
-        self.logger = logger
 
     def execute(self) -> TaskData:
         if self.code_hook:
@@ -50,14 +51,14 @@ class OfflineAnalysisAction(Task):
             self,
             parameters: Parameters,
             data_directory: str,
-            logger: logging.Logger,
             parameters_path: str = f'{DEFAULT_PARAMETERS_PATH}',
             last_task_dir: Optional[str] = None,
+            alert: bool = False,
             **kwargs: Any) -> None:
         super().__init__()
         self.parameters = parameters
         self.parameters_path = parameters_path
-        self.logger = logger
+        self.alert_finished = alert
 
         if last_task_dir:
             self.data_directory = last_task_dir
@@ -65,7 +66,7 @@ class OfflineAnalysisAction(Task):
             self.data_directory = data_directory
 
     def execute(self) -> TaskData:
-        response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert)
+        response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
         return TaskData(
             save_path=self.data_directory,
             task_dict={"parameters": self.parameters_path,
@@ -84,17 +85,15 @@ class ExperimentFieldCollectionAction(Task):
             self,
             parameters: Parameters,
             save_path: str,
-            logger: logging.Logger,
             experiment_id: str = 'default',
             **kwargs: Any) -> None:
         super().__init__()
         self.experiment_id = experiment_id
         self.save_folder = save_path
         self.parameters = parameters
-        self.logger = logger
 
     def execute(self) -> TaskData:
-        self.logger.info(
+        logger.info(
             f"Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}"
         )
         start_experiment_field_collection_gui(self.experiment_id, self.save_folder)

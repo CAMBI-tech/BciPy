@@ -23,9 +23,6 @@ class TestClientManager(unittest.TestCase):
         self.eeg_client_mock.get_data = MagicMock(
             return_value=self.eeg_data_mock)
 
-        self.logger = Mock()
-        self.logger.info = lambda x: None
-
         self.gaze_device_mock = Mock()
         self.gaze_device_mock.content_type = 'Eyetracker'
         self.gaze_device_mock.sample_rate = 60
@@ -36,7 +33,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_add_client(self):
         """Test adding a client"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         self.assertEqual(manager.get_client(ContentType.EEG), None)
         manager.add_client(self.eeg_client_mock)
         self.assertEqual(manager.get_client(ContentType.EEG),
@@ -44,7 +41,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_start_acquisition(self):
         """Test that manager can start acquisition in clients"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
         manager.add_client(self.gaze_client_mock)
 
@@ -54,7 +51,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_stop_acquisition(self):
         """Test that manager can stop acquisition in clients"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
         manager.add_client(self.gaze_client_mock)
 
@@ -65,7 +62,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_default_client(self):
         """Test default client property."""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
         manager.add_client(self.gaze_client_mock)
 
@@ -77,7 +74,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_device_specs(self):
         """Test the device_specs property"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
 
         self.assertEqual(1, len(manager.device_specs))
@@ -89,7 +86,7 @@ class TestClientManager(unittest.TestCase):
 
     def test_device_content_types(self):
         """Test properties related to content types"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
         manager.add_client(self.gaze_client_mock)
         self.assertTrue(ContentType.EEG in manager.device_content_types)
@@ -100,13 +97,13 @@ class TestClientManager(unittest.TestCase):
 
     def test_dispatching_properties(self):
         """Test that property calls may be dispatched to the default client"""
-        manager = ClientManager(self.logger)
+        manager = ClientManager()
         manager.add_client(self.eeg_client_mock)
         self.assertEqual(manager.device_spec, self.eeg_device_mock)
 
     def test_dispatching_methods(self):
         """Test that method calls may be dispatched to the default client"""
-        daq = ClientManager(self.logger)
+        daq = ClientManager()
         daq.add_client(self.eeg_client_mock)
         daq.get_data(start=100, limit=1000)
 
@@ -134,7 +131,7 @@ class TestClientManager(unittest.TestCase):
 
         self.eeg_data_mock.__len__ = lambda self: 1500
 
-        daq = ClientManager(self.logger)
+        daq = ClientManager()
         daq.add_client(self.eeg_client_mock)
         daq.add_client(self.gaze_client_mock)
         daq.add_client(switch_client_mock)
@@ -164,7 +161,7 @@ class TestClientManager(unittest.TestCase):
         gaze_data_mock.__len__ = lambda self: 299
         self.gaze_client_mock.get_data = MagicMock(return_value=gaze_data_mock)
 
-        daq = ClientManager(self.logger)
+        daq = ClientManager()
         daq.add_client(self.gaze_client_mock)
 
         with self.assertRaises(InsufficientDataException):
@@ -177,7 +174,7 @@ class TestClientManager(unittest.TestCase):
         gaze_data_mock.__len__ = lambda self: 299
         self.gaze_client_mock.get_data = MagicMock(return_value=gaze_data_mock)
 
-        daq = ClientManager(self.logger)
+        daq = ClientManager()
         daq.add_client(self.gaze_client_mock)
 
         results = daq.get_data_by_device(start=100, seconds=5, strict=False)

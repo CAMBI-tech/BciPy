@@ -1,10 +1,7 @@
 """Demo for the LslAcquisitionClient"""
 
 import time
-import logging
 from bcipy.acquisition import LslAcquisitionClient
-
-log = logging.getLogger(__name__)
 
 
 def main():
@@ -16,7 +13,7 @@ def main():
     # Start the server with the command:
     # python bcipy/acquisition/datastream/lsl_server.py --name 'DSI-24'
 
-    client = LslAcquisitionClient(max_buffer_len=1, save_directory='.', logger=log)
+    client = LslAcquisitionClient(max_buffer_len=1, save_directory='.')
 
     try:
         seconds = 3

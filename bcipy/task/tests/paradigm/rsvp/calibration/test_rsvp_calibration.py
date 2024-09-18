@@ -71,7 +71,6 @@ class TestRSVPCalibration(unittest.TestCase):
         self.parameters = Parameters.from_cast_values(**parameters)
 
         self.win = mock({'size': [500, 500], 'units': 'height'})
-        self.logger = mock()
 
         device_spec = DeviceSpec(name='Testing',
                                  channels=['a', 'b', 'c'],
@@ -143,7 +142,6 @@ class TestRSVPCalibration(unittest.TestCase):
 
         RSVPCalibrationTask(parameters=self.parameters,
                             file_save=self.temp_dir,
-                            logger=self.logger,
                             fake=self.fake)
 
         verify(bcipy.task.paradigm.rsvp.calibration.calibration,
@@ -160,7 +158,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
@@ -188,7 +185,6 @@ class TestRSVPCalibration(unittest.TestCase):
         with self.assertRaises(Exception):
             RSVPCalibrationTask(parameters=parameters,
                                 file_save=self.temp_dir,
-                                logger=self.logger,
                                 fake=self.fake)
 
     @patch('bcipy.task.calibration.TriggerHandler')
@@ -202,7 +198,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         # non-target
@@ -232,7 +227,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         # fixation
@@ -254,7 +248,6 @@ class TestRSVPCalibration(unittest.TestCase):
         trigger_handler_mock.return_value = mock()
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         # prompt, index = 0, otherwise it would be a target
@@ -276,7 +269,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         # preview, index > 0, otherwise it would be a prompt
@@ -299,7 +291,6 @@ class TestRSVPCalibration(unittest.TestCase):
         trigger_handler_mock.return_value = handler_mock
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
@@ -333,7 +324,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         timing_mock = mock()
@@ -357,7 +347,6 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(
@@ -381,7 +370,7 @@ class TestRSVPCalibration(unittest.TestCase):
         save_session_mock.return_value = mock()
         handler_mock = Mock()
         trigger_handler_mock.return_value = handler_mock
-        when(bcipy.task.calibration).init_acquisition(any(), any(), any(), server=self.fake).thenReturn(
+        when(bcipy.task.calibration).init_acquisition(any(), any(), server=self.fake).thenReturn(
             (self.daq, self.servers))
         when(bcipy.task.calibration).init_display_window(self.parameters).thenReturn(
             self.win)
@@ -389,12 +378,11 @@ class TestRSVPCalibration(unittest.TestCase):
         self.assertFalse(RSVPCalibrationTask.initalized)
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
 
         self.assertTrue(task.initalized)
         verify(bcipy.task.calibration, times=1).init_acquisition(
-            self.parameters, self.temp_dir, self.logger, server=self.fake)
+            self.parameters, self.temp_dir, server=self.fake)
         verify(bcipy.task.calibration, times=1).init_display_window(
             self.parameters)
         self.assertEqual((self.daq, self.servers, self.win),
@@ -422,7 +410,6 @@ class TestRSVPCalibration(unittest.TestCase):
         when(self.win).close().thenReturn(None)
         task = RSVPCalibrationTask(parameters=self.parameters,
                                    file_save=self.temp_dir,
-                                   logger=self.logger,
                                    fake=self.fake)
         # because the task is not initialized via setup, we need to set it to True here
         task.initalized = True

@@ -11,6 +11,9 @@ class TestSessionOrchestrator(unittest.TestCase):
 
     def setUp(self) -> None:
         self.logger = mock(spec=logging.Logger)
+        self.logger.info = lambda x: x
+        self.logger.error = lambda x: x
+        self.logger.exception = lambda x: x
 
     def tearDown(self) -> None:
         unstub()
@@ -54,10 +57,9 @@ class TestSessionOrchestrator(unittest.TestCase):
         when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_task_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
         when(SessionOrchestrator)._save_protocol_data().thenReturn()
         when(task).__call__(
-            any(),
             any(),
             any(),
             fake=False,
@@ -70,13 +72,13 @@ class TestSessionOrchestrator(unittest.TestCase):
         orchestrator.execute()
 
         verify(task, times=1).__call__(
-            any(), any(), any(),
+            any(), any(),
             fake=False, experiment_id=any(), parameters_path=any(), last_task_dir=None)
         verify(self.logger, times=1).info(any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_save_folder(any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_logger(any())
         verify(SessionOrchestrator, times=1)._init_task_save_folder(any())
-        verify(SessionOrchestrator, times=1)._init_task_logger(any())
+        verify(SessionOrchestrator, times=1)._init_task_logger()
         verify(SessionOrchestrator, times=1)._save_protocol_data()
 
 

@@ -19,7 +19,7 @@ import pyglet
 import torch
 from cpuinfo import get_cpu_info
 
-from bcipy.config import DEFAULT_ENCODING, LOG_FILENAME
+from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
 
 
 class ScreenInfo(NamedTuple):
@@ -197,32 +197,32 @@ def get_system_info() -> dict:
 
 def configure_logger(
         save_folder: str,
-        log_name=LOG_FILENAME,
-        log_level=logging.INFO,
-        version=None) -> logging.Logger:
+        log_name=SESSION_LOG_FILENAME,
+        log_level=logging.INFO) -> logging.Logger:
     """Configure Logger.
 
-    Does what it says.
+    Configures a logger to print to a file in the save_folder directory.
     """
     # create the log file
     logfile = os.path.join(save_folder, 'logs', log_name)
 
     # configure it
-    custom_logger = logging.getLogger(name=save_folder)
-    custom_logger.setLevel(log_level)
+    logger = logging.getLogger(name=log_name)
+    logger.setLevel(log_level)
+    for hdlr in logger.handlers[:]:  # remove all old handlers
+        logger.removeHandler(hdlr)
     handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
     handler.setFormatter(logging.Formatter(
         '[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s'))
-    custom_logger.addHandler(handler)
+    logger.addHandler(handler)
 
     # print to console the absolute path of the log file to aid in debugging
     path_to_logs = os.path.abspath(logfile)
-    print(f'Printing all BciPy logs to: {path_to_logs}')
+    msg = f'Writing logs to: {path_to_logs}'
+    logger.info(msg)
+    print(msg)
 
-    if version:
-        custom_logger.info(f'Start of Session for BciPy Version: ({version})')
-
-    return custom_logger
+    return logger
 
 
 def import_submodules(package, recursive=True):

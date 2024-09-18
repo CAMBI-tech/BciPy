@@ -17,7 +17,6 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
     Input:
         parameters (Dictionary)
         file_save (String)
-        logger (Logger)
         fake (Boolean)
 
     Output:

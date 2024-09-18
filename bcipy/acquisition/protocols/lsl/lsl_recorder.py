@@ -13,9 +13,10 @@ from bcipy.acquisition.protocols.lsl.connect import (device_from_metadata,
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.util import StoppableProcess
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.raw_data import RawDataWriter
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class LslRecorder:

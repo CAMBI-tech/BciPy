@@ -11,7 +11,7 @@ from typing import List, Optional
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
-                          SIGNAL_MODEL_FILE_SUFFIX)
+                          SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.helpers.exceptions import (BciPyCoreException,
                                       InvalidExperimentException)
@@ -20,7 +20,7 @@ from bcipy.helpers.raw_data import RawData
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
