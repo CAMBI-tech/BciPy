@@ -1,39 +1,14 @@
-# GUI Refactor
-
-- Create new `BCIUI` class for simpler more straightforward UI creation.
-- Create dedicated external stylesheet for global styling
-- Rewrite Experiment Registry to use new GUI code
-- Create intertask action UI
-
-# Task Return Object
-- Create `TaskData` dataclass to be returned from tasks
-- updates task `execute` methods to return an instance of `TaskData`
-- Allows for optional storage of a save path and task dictionary in `TaskData`
-
-# Experiment Refactor
-- Refactors the Experiment Field Collection GUI to be an action
-- Allows task protocol to be defined in the orchestrator
-
-# Orchestrator Parameters
-Adds parsing functions for action sequences required for the Session Orchestrator
-
-## Contributions
-- Adds function for parsing string of actions into a list of tasks (actions are not defined as anything beyond task types as of now)
-- Adds function for validating that string of actions is in the correct format
-- Adds function for converting a list of tasks into an action string
-- Adds unit test for parsing a single action, multiple actions, and invalid actions
-- Adds unit test for serializing a single action and multiple actions
-- Adds task for validating valid and invalid action strings
-
 # 2.0.0-rc.4
 
-Our last release candidate before the official 2.0 release!
+Our final release candidate before the official 2.0 release!
 
 ## Contributions
 
 - Multimodal Acquisition and Querying
     - Support for multiple devices in online querying #286
     - Support for trigger handling relative to a given device #293
+- Session Orchestrator
+    - New task protocol for orchestrating tasks in a session. This refactors several Task and Cli functionality #339
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
 - Stimuli
@@ -45,14 +20,25 @@ Our last release candidate before the official 2.0 release!
 - Offset Support
   - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
 - Parameters
-    - Add a Range type parameter #285
+    - Add a Range type parameter #285 Add editable fields #340
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
     - Fix GitHub actions build issues with macOS
     - Fix occasionally failing test in `test_stimuli` #326
-
+- GUI Refactor
+  - Create new `BCIUI` class for simpler more straightforward UI creation.
+  - Create dedicated external stylesheet for global styling
+  - Rewrite Experiment Registry to use new GUI code
+  - Create intertask action UI
+- Task Return Object
+  - Create `TaskData` dataclass to be returned from tasks
+  - updates task `execute` methods to return an instance of `TaskData`
+  - Allows for optional storage of a save path and task dictionary in `TaskData`
+-Experiment Refactor
+  - Refactors the Experiment Field Collection GUI to be an action
+  - Allows task protocol to be defined in the orchestrator
 
 # 2.0.0-rc.3
 
