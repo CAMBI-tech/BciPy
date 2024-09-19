@@ -135,6 +135,7 @@ class RSVPCopyPhraseTask(Task):
         "show_preview_inquiry",
         "preview_inquiry_isi",
         "preview_inquiry_key_input",
+        "preview_inquiry_error_prob",
         "preview_inquiry_length",
         "preview_inquiry_progress_method",
         "spelled_letters_count",
@@ -185,7 +186,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.alp = alphabet(self.parameters)
 
-        self.button_press_error_prob = 0.05
+        self.button_press_error_prob = parameters['preview_inquiry_error_prob']
 
         self.language_model = self.get_language_model()
         signal_models = self.get_signal_models()
@@ -1063,12 +1064,13 @@ def _init_copy_phrase_display(
     starting_spelled_text,
 ) -> CopyPhraseDisplay:
     preview_inquiry = PreviewInquiryProperties(
-        preview_only=parameters["preview_only"],
-        preview_inquiry_length=parameters["preview_inquiry_length"],
-        preview_inquiry_key_input=parameters["preview_inquiry_key_input"],
-        preview_inquiry_progress_method=parameters["preview_inquiry_progress_method"],
-        preview_inquiry_isi=parameters["preview_inquiry_isi"],
-    )
+        preview_on=parameters['show_preview_inquiry'],
+        preview_only=parameters['preview_only'],
+        preview_inquiry_length=parameters['preview_inquiry_length'],
+        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
+        preview_inquiry_progress_method=parameters[
+            'preview_inquiry_progress_method'],
+        preview_inquiry_isi=parameters['preview_inquiry_isi'])
     info = InformationProperties(
         info_color=[parameters["info_color"]],
         info_pos=[(parameters["info_pos_x"], parameters["info_pos_y"])],

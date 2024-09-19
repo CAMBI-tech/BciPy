@@ -73,6 +73,7 @@ class TestCopyPhrase(unittest.TestCase):
             'task_color': 'white',
             'task_height': 0.1,
             'task_text': 'HELLO_WORLD',
+            "preview_inquiry_error_prob": 0.05,
             'info_pos_x': 0.0,
             'info_pos_y': -0.75,
             'time_fixation': 0.5,

@@ -82,7 +82,7 @@ class Parameters(dict):
         self.required_keys = set([
             'value', 'section', 'name', 'helpTip',
             'recommended', 'editable', 'type'
-        ])  # TODO pull from Parameter
+        ])
         self.conversions = {
             'int': int,
             'float': float,
@@ -223,7 +223,7 @@ class Parameters(dict):
             "name": "Fake Data Sessions",
             "helpTip": "If true, fake data server used",
             "recommended": "",
-            "editable": "true",
+            "editable": true,
             "type": "bool"
         }
 
