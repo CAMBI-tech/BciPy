@@ -5,7 +5,7 @@ from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 from psychopy import core, visual
 
 import bcipy.display.components.layout as layout
-from bcipy.config import MATRIX_IMAGE_FILENAME
+from bcipy.config import MATRIX_IMAGE_FILENAME, SESSION_LOG_FILENAME
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
@@ -13,6 +13,8 @@ from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet, qwerty_order, frequency_order
 from bcipy.helpers.triggers import _calibration_trigger
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class SymbolDuration(NamedTuple):
@@ -76,8 +78,6 @@ class MatrixDisplay(Display):
         """
         self.window = window
 
-        self.logger = logging.getLogger(__name__) # TODO - remove this line and pass a logger
-
         self.stimuli_inquiry = []
         self.stimuli_timing = []
         self.stimuli_colors = []
@@ -114,10 +114,10 @@ class MatrixDisplay(Display):
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
 
-        self.logger.info(
+        logger.info(
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
         )
-        self.logger.info(f"Matrix center position: {display_container.center}")
+        logger.info(f"Matrix center position: {display_container.center}")
 
     def build_symbol_set(self, stimuli: StimuliProperties) -> List[str]:
         """Build the symbol set for the display."""
@@ -345,7 +345,7 @@ class MatrixDisplay(Display):
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
         # Draw and flip the screen.

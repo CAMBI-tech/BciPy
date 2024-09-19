@@ -1,6 +1,6 @@
 from typing import Any, Dict, Optional, List
 
-from psychopy import core, visual
+from psychopy import visual
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar

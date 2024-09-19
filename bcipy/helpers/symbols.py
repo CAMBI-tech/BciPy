@@ -1,7 +1,7 @@
 """Defines helper methods and variables related to input symbols"""
 import os
 from string import ascii_uppercase
-from typing import Callable, List
+from typing import List
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
@@ -36,7 +36,7 @@ def alphabet(parameters=None, include_path=True) -> List[str]:
 
 def qwerty_order(is_txt_stim: bool = True,
                  space: str = SPACE_CHAR,
-                 backspace: str = BACKSPACE_CHAR) -> List[str]:
+                 backspace: str = BACKSPACE_CHAR) -> str:
     """Returns a function that can be used to sort the alphabet symbols
     in QWERTY order. Note that sorting only works for text stim.
     """
@@ -49,7 +49,7 @@ def qwerty_order(is_txt_stim: bool = True,
     return f"{row1}{row2}{row3}"
 
 
-def frequency_order(is_txt_stim: bool = True) -> List[str]:
+def frequency_order(is_txt_stim: bool = True) -> str:
     """Returns a function that can be used to sort the alphabet symbols
     in most frequently used order in the English language.
     """

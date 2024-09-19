@@ -140,18 +140,19 @@ class RSVPCopyPhraseTask(Task):
         "preview_inquiry_progress_method",
         "spelled_letters_count",
         "stim_color",
-        "stim_height",
+        "rsvp_stim_height",
         "stim_jitter",
         "stim_length",
         "stim_number",
         "stim_order",
-        "stim_pos_x",
-        "stim_pos_y",
+        "rsvp_stim_pos_x",
+        "rsvp_stim_pos_y",
         "stim_space_char",
         "target_color",
         "task_buffer_length",
+        "rsvp_task_padding",
         "task_color",
-        "task_height",
+        "rsvp_task_height",
         "task_text",
         "info_pos_x",
         "info_pos_y",
@@ -269,7 +270,7 @@ class RSVPCopyPhraseTask(Task):
                 logger.exception(f'Cannot load signal model. Exiting. {error}')
                 raise error
             return signal_models
-        return None
+        return []
 
     def cleanup(self):
         self.exit_display()
