@@ -1,20 +1,7 @@
 """Task Registry ; used to provide task options to the GUI and command line
 tools. User defined tasks can be added to the Registry."""
-from typing import Dict
+from typing import Dict, List, Type
 from bcipy.task import Task
-
-# NOTE:
-# In the future we may want to consider dynamically retrieving all subclasses
-# of Task and use these to populate a registry. We could also provide
-# functionality for bcipy users to define their own tasks and register them so
-# they would appear as options in the GUI.
-#
-# However, this approach is currently problematic for the GUI interface. Due
-# to the tight coupling of the display code with the Tasks, importing any of
-# the Task subclasses causes pygame (a psychopy dependency) to create a GUI,
-# which seems to prevent our other GUI code from working.
-
-from typing import List, Type
 
 
 class TaskRegistry:

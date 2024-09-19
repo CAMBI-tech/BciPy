@@ -5,14 +5,13 @@ from pathlib import Path
 from typing import Union, List, Tuple, Optional
 from logging import getLogger
 
-log = getLogger(__name__)
-
 from bcipy.config import (
     DEFAULT_PARAMETER_FILENAME,
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME,
-    BCIPY_ROOT
+    BCIPY_ROOT,
+    SESSION_LOG_FILENAME
 )
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (
@@ -29,6 +28,7 @@ import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 
 import mne
+log = getLogger(SESSION_LOG_FILENAME)
 mne.set_log_level('WARNING')
 from mne import Annotations
 

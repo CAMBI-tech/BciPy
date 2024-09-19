@@ -1,5 +1,4 @@
 """VEP Calibration task-related code"""
-import logging
 from typing import Any, Dict, Iterator, List, Optional
 
 from psychopy import visual  # type: ignore
@@ -28,9 +27,9 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    parameters (Dictionary)
-    file_save (String)
-    fake (Boolean)
+    parameters (dict)
+    file_save (str)
+    fake (bool)
     """
     name = 'VEP Calibration'
     MODE = 'VEP'
@@ -38,14 +37,13 @@ class VEPCalibrationTask(BaseCalibrationTask):
     def __init__(self,
                  parameters: Parameters,
                  file_save: str,
-                 logger: logging.Logger,
                  fake: bool = False,
                  **kwargs: Any) -> None:
         self.box_colors = [
             '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
         ]
         self.num_boxes = 6
-        super().__init__(parameters, file_save, logger, fake=fake, **kwargs)
+        super().__init__(parameters, file_save, fake=fake, **kwargs)
 
     def init_display(self) -> VEPDisplay:
         """Initialize the display"""

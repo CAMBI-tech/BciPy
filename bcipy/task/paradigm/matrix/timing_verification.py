@@ -20,7 +20,7 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
         fake (Boolean)
 
     Output:
-        file_save (String)
+        TaskData
     """
     name = 'Matrix Timing Verification'
 

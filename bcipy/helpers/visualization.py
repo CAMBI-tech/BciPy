@@ -18,7 +18,7 @@ from scipy import linalg
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_GAZE_IMAGE_PATH, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.convert import convert_to_mne
 from bcipy.helpers.load import choose_csv_file, load_raw_data
@@ -29,7 +29,7 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def clip_to_display(data, screen_limits):
@@ -597,7 +597,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    log.info('Press Ctrl + C to exit!')
+    logger.info('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()
@@ -666,7 +666,10 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
+def visualize_session_data(
+        session_path: str,
+        parameters: Union[dict, Parameters],
+        show=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -683,6 +686,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     Output:
         Figure of Session Data
     """
+    logger.info(f"Visualizing session data at {session_path}")
     # extract all relevant parameters
     trial_window = parameters.get("trial_window")
 

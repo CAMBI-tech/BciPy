@@ -1,6 +1,5 @@
 # mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
-from logging import Logger
 from typing import Any, List, Optional, Tuple, Union
 
 from psychopy import visual
@@ -18,7 +17,6 @@ class Display(ABC):
     window: visual.Window = None
     timing_clock: Clock = None
     experiment_clock: Clock = None
-    logger: Logger = None
     stimuli_inquiry: List[str] = None
     stimuli_colors: List[str] = None
     stimuli_timing: List[float] = None

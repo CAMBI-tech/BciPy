@@ -1,6 +1,4 @@
 """Base calibration task."""
-
-import logging
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
@@ -10,7 +8,7 @@ from psychopy.visual import Window
 import bcipy.task.data as session_data
 from bcipy.acquisition import ClientManager
 from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
-                          WAIT_SCREEN_MESSAGE)
+                          WAIT_SCREEN_MESSAGE, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import init_acquisition, LslDataServer
 from bcipy.display import init_display_window, Display
 from bcipy.helpers.clock import Clock
@@ -26,6 +24,9 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
 from bcipy.task import Task, TaskData
+
+import logging
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class Inquiry(NamedTuple):
@@ -66,6 +67,10 @@ class BaseCalibrationTask(Task):
         - session_task_data ; provide task-specific session data
         - session_inquiry_data ; provide task-specific inquiry data to the session
         - cleanup ; perform any necessary cleanup (closing connections, etc.).
+
+    Returns:
+    -------
+    TaskData
     """
 
     MODE = 'Undefined'
@@ -74,13 +79,11 @@ class BaseCalibrationTask(Task):
     def __init__(self,
                  parameters: Parameters,
                  file_save: str,
-                 logger: logging.Logger,
                  fake: bool = False,
                  **kwargs: Any) -> None:
         super().__init__()
 
         self.fake = fake
-        self.logger = logger
         self.validate()
         daq, servers, win = self.setup(parameters, file_save, fake)
         self.window = win
@@ -156,7 +159,7 @@ class BaseCalibrationTask(Task):
                 self.initalized = False
 
             except Exception as e:
-                self.logger.exception(str(e))
+                logger.exception(str(e))
 
     def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
@@ -260,12 +263,12 @@ class BaseCalibrationTask(Task):
                                          self.wait_screen_message_color,
                                          first_run=first_inquiry)
         if not should_continue:
-            self.logger.info('User wants to exit.')
+            logger.info('User wants to exit.')
         return should_continue
 
     def execute(self) -> TaskData:
         """Task run loop."""
-        self.logger.info(f'Starting {self.name}!')
+        logger.info(f'Starting {self.name}!')
         self.wait()
 
         inq_index = 0
@@ -374,4 +377,4 @@ class BaseCalibrationTask(Task):
 
     def session_inquiry_data(self, inquiry: Inquiry) -> Optional[Dict[str, Any]]:
         """Defines task-specific session data for each inquiry."""
-        return None
+        ...

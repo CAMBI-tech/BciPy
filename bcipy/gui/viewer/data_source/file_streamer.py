@@ -2,8 +2,10 @@
 import logging
 import time
 from bcipy.acquisition.util import StoppableThread
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.raw_data import RawDataReader
-log = logging.getLogger(__name__)
+
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class FileStreamer(StoppableThread):

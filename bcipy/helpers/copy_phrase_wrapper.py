@@ -5,6 +5,7 @@ from typing import List, Tuple
 
 import numpy as np
 
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import histogram, with_min_prob
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
@@ -18,7 +19,7 @@ from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
 from bcipy.task.control.query import NBestStimuliAgent
 from bcipy.task.data import EvidenceType
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class CopyPhraseWrapper:

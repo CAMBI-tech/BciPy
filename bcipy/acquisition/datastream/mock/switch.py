@@ -6,8 +6,9 @@ from pylsl import StreamInfo, StreamOutlet
 
 from bcipy.acquisition.devices import DeviceSpec, IRREGULAR_RATE
 from bcipy.gui.main import BCIGui, app
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def switch_device() -> DeviceSpec:

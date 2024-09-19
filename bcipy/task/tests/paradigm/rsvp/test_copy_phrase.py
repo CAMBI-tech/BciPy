@@ -106,7 +106,6 @@ class TestCopyPhrase(unittest.TestCase):
                     ContentType.EEG: self.eeg_client_mock
                 }
             })
-        self.logger = mock()
         self.servers = [mock()]
         when(self.daq).get_client(ContentType.EEG).thenReturn(self.eeg_client_mock)
         self.temp_dir = tempfile.mkdtemp()
@@ -155,7 +154,6 @@ class TestCopyPhrase(unittest.TestCase):
         RSVPCopyPhraseTask(
             parameters=self.parameters,
             file_save=self.temp_dir,
-            logger=self.logger,
             fake=self.fake)
 
     def test_validate_parameters(self):
@@ -164,7 +162,6 @@ class TestCopyPhrase(unittest.TestCase):
         task = RSVPCopyPhraseTask(
             parameters=self.parameters,
             file_save=self.temp_dir,
-            logger=self.logger,
             fake=self.fake)
 
         task.validate_parameters()
@@ -178,7 +175,7 @@ class TestCopyPhrase(unittest.TestCase):
             RSVPCopyPhraseTask(
                 parameters=parameters,
                 file_save=self.temp_dir,
-                logger=self.logger,
+
                 fake=self.fake)
 
     def test_validate_parameters_throws_task_exception_excess_prestim_length(self):
@@ -190,7 +187,7 @@ class TestCopyPhrase(unittest.TestCase):
             RSVPCopyPhraseTask(
                 parameters=self.parameters,
                 file_save=self.temp_dir,
-                logger=self.logger,
+
                 fake=self.fake)
 
     def test_validate_parameters_throws_task_exception_excess_trial_window(self):
@@ -202,7 +199,7 @@ class TestCopyPhrase(unittest.TestCase):
             RSVPCopyPhraseTask(
                 parameters=self.parameters,
                 file_save=self.temp_dir,
-                logger=self.logger,
+
                 fake=self.fake)
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.get_user_input')
@@ -214,7 +211,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         user_input_mock.return_value = False
@@ -244,7 +241,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         # Execute a single inquiry then `escape` to stop
@@ -282,7 +279,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         # Don't provide any `escape` input from the user
@@ -321,7 +318,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         # Don't provide any `escape` input from the user
@@ -357,7 +354,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         self.assertEqual(task.starting_spelled_letters(), 0)
@@ -368,7 +365,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
         timings1 = [['calibration_trigger', 2.0539278959913645],
                     ['+', 3.7769652379938634], ['Y', 4.247819707990857],
@@ -417,7 +414,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.parameters['task_text'] = 'Hello'
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
         task.spelled_text = 'H'
         self.assertEqual(task.next_target(), 'e')
@@ -445,7 +442,7 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         # Execute a single inquiry then `escape` to stop
@@ -570,7 +567,7 @@ class TestCopyPhrase(unittest.TestCase):
 
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=False)
 
         # Execute a single inquiry then `escape` to stop
@@ -606,7 +603,7 @@ class TestCopyPhrase(unittest.TestCase):
         self.assertFalse(RSVPCopyPhraseTask.initalized)
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
 
         self.assertTrue(task.initalized)
@@ -635,7 +632,7 @@ class TestCopyPhrase(unittest.TestCase):
         when(self.win).close().thenReturn(None)
         task = RSVPCopyPhraseTask(parameters=self.parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
+
                                   fake=self.fake)
         # because the task is not initialized via setup, we need to set it to True here
         task.initalized = True

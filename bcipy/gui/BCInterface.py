@@ -333,17 +333,18 @@ class BCInterface(BCIGui):
         try:
             if not self.check_user_id():
                 return False
-            if self.experiment == BCInterface.default_text:
+
+            if self.experiment == BCInterface.default_text and self.task == BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select or create an Experiment',
+                    message='Please select an Experiment or Task for execution',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
-            if self.task == BCInterface.default_text:
+            if self.experiment != BCInterface.default_text and self.task != BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select a Task',
+                    message='Please select only an Experiment or Task',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
@@ -407,10 +408,16 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.INFO,
                 message_response=AlertMessageResponse.OTE,
                 message_timeout=self.task_start_timeout)
-            cmd = (
-                f'bcipy -e "{self.experiment}" '
-                f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
-            )
+            if self.task != BCInterface.default_text:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
+                )
+            else:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -e "{self.experiment}" -p "{self.parameter_location}"'
+                )
             if self.alert:
                 cmd += ' -a'
             subprocess.Popen(cmd, shell=True)

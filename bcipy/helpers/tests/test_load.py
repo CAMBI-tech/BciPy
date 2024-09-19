@@ -164,6 +164,12 @@ class TestUserLoad(unittest.TestCase):
         self.directory_name = 'test_data_load_user'
         self.data_save_loc = f'{self.directory_name}/'
 
+    def tearDown(self):
+        try:
+            shutil.rmtree(self.data_save_loc)
+        except FileNotFoundError:
+            pass
+
     def test_user_load_with_no_directory_written(self):
         """Use defined data save location without writing anything"""
         response = load_users(self.data_save_loc)
@@ -172,7 +178,7 @@ class TestUserLoad(unittest.TestCase):
 
     def test_user_load_with_valid_directory(self):
         user = 'user_001'
-        file_path = f'{self.directory_name}/experiment/{user}'
+        file_path = f'{self.directory_name}/{user}/experiment'
         os.makedirs(file_path)
 
         response = load_users(self.data_save_loc)
@@ -183,36 +189,33 @@ class TestUserLoad(unittest.TestCase):
 
         # assert user returned is user defined above
         self.assertEqual(response[0], user)
-        shutil.rmtree(self.data_save_loc)
 
     def test_user_load_with_invalid_directory(self):
         # create an invalid save structure and assert expected behavior.
-        user = 'user_001'
-        file_path = f'{self.directory_name}/experiment{user}'
+        file_path = f'{self.directory_name}/'
         os.makedirs(file_path)
 
         response = load_users(self.data_save_loc)
         length_of_users = len(response)
         self.assertTrue(length_of_users == 0)
-        shutil.rmtree(self.data_save_loc)
 
 
 class TestExtractMode(unittest.TestCase):
 
     def test_extract_mode_calibration(self):
-        data_save_path = 'data/default/user/user_RSVP_Calibration_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        data_save_path = 'data/user/default/user_RSVP_Calibration_Mon_01_Mar_2021_11hr19min49sec_-0800'
         expected_mode = 'calibration'
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 
     def test_extract_mode_copy_phrase(self):
-        data_save_path = 'data/default/user/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        data_save_path = 'data/user/default/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
         expected_mode = 'copy_phrase'
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 
     def test_extract_mode_without_mode_defined(self):
-        invalid_data_save_dir = 'data/default/user/user_bad_dir'
+        invalid_data_save_dir = 'data/user/default/user_bad_dir'
         with self.assertRaises(BciPyCoreException):
             extract_mode(invalid_data_save_dir)
 

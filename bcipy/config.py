@@ -13,6 +13,7 @@ DIODE_TRIGGER = '\u25A0'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
+CUSTOM_TASK_EXPERIMENT_ID = "CustomTaskExecution"
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
 EXPERIMENT_DATA_FILENAME = 'experiment_data.json'
@@ -51,7 +52,8 @@ EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
 TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
-LOG_FILENAME = 'session_log.txt'
+SESSION_LOG_FILENAME = 'session_log.txt'
+PROTOCOL_LOG_FILENAME = 'protocol_log.txt'
 STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
 
 # misc configuration

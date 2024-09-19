@@ -12,6 +12,7 @@ from bcipy.config import (
     SESSION_SUMMARY_FILENAME,
     TRIGGER_FILENAME,
     WAIT_SCREEN_MESSAGE,
+    SESSION_LOG_FILENAME
 )
 from bcipy.display import (
     InformationProperties,
@@ -59,6 +60,8 @@ from bcipy.task.control.evidence import EvidenceEvaluator, init_evidence_evaluat
 from bcipy.task.data import EvidenceType, Inquiry, Session
 from bcipy.task.exceptions import DuplicateModelEvidence
 
+logger = logging.getLogger(SESSION_LOG_FILENAME)
+
 
 class Decision(NamedTuple):
     """Represents the result of evaluating evidence.
@@ -93,15 +96,11 @@ class RSVPCopyPhraseTask(Task):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_models : list of trained signal models.
-        language_model: object,
-            trained language model.
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns
     -------
-        file_save : str,
-            path location of where to save data from the session
+        TaskData
     """
 
     name = "RSVP Copy Phrase"
@@ -167,12 +166,10 @@ class RSVPCopyPhraseTask(Task):
         self,
         parameters: Parameters,
         file_save: str,
-        logger: logging.Logger,
         fake: bool = False,
         **kwargs: Any
     ) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
-        self.logger = logger
         self.fake = fake
         daq, servers, win = self.setup(parameters, file_save, fake)
         self.servers = servers
@@ -268,7 +265,7 @@ class RSVPCopyPhraseTask(Task):
                 signal_models = load_signal_models(directory=model_dir)
                 assert signal_models, f"No signal models found in {model_dir}"
             except Exception as error:
-                self.logger.exception(f'Cannot load signal model. Exiting. {error}')
+                logger.exception(f'Cannot load signal model. Exiting. {error}')
                 raise error
             return signal_models
         return None
@@ -300,7 +297,7 @@ class RSVPCopyPhraseTask(Task):
                 self.initalized = False
 
             except Exception as e:
-                self.logger.exception(str(e))
+                logger.exception(str(e))
 
     def save_session_data(self) -> None:
         self.session.task_summary = TaskSummary(
@@ -340,7 +337,7 @@ class RSVPCopyPhraseTask(Task):
                     )
                 evidence_types.append(evidence_type)
             else:
-                self.logger.info(
+                logger.info(
                     f"SignalModel not used: there is no active device of type: {content_type}"
                 )
         return evaluators
@@ -404,7 +401,7 @@ class RSVPCopyPhraseTask(Task):
         """Number of letters already spelled at the start of the task."""
         spelled_letters_count = self.parameters["spelled_letters_count"]
         if spelled_letters_count > len(self.copy_phrase):
-            self.logger.info("Already spelled letters exceeds phrase length.")
+            logger.info("Already spelled letters exceeds phrase length.")
             spelled_letters_count = 0
         return spelled_letters_count
 
@@ -458,7 +455,7 @@ class RSVPCopyPhraseTask(Task):
             first_run=self.first_run,
         )
         if not should_continue:
-            self.logger.info("User wants to exit.")
+            logger.info("User wants to exit.")
         return should_continue
 
     def wait(self, seconds: Optional[float] = None) -> None:
@@ -536,11 +533,11 @@ class RSVPCopyPhraseTask(Task):
         should continue.
         """
         if self.copy_phrase == self.spelled_text:
-            self.logger.info("Spelling complete")
+            logger.info("Spelling complete")
             return False
 
         if (self.inq_counter + 1) >= self.parameters["max_inq_len"]:
-            self.logger.info(
+            logger.info(
                 "Max tries exceeded: to allow for more tries"
                 " adjust the Maximum inquiry Length "
                 "(max_inq_len) parameter."
@@ -548,14 +545,14 @@ class RSVPCopyPhraseTask(Task):
             return False
 
         if self.session.total_time_spent >= (self.parameters["max_minutes"] * 60):
-            self.logger.info(
+            logger.info(
                 "Max time exceeded. To allow for more time "
                 "adjust the max_minutes parameter."
             )
             return False
 
         if self.session.total_number_decisions >= self.parameters["max_selections"]:
-            self.logger.info(
+            logger.info(
                 "Max number of selections reached "
                 "(configured with the max_selections parameter)"
             )
@@ -577,7 +574,7 @@ class RSVPCopyPhraseTask(Task):
         -------
         data save location (triggers.txt, session.json)
         """
-        self.logger.info("Starting Copy Phrase Task!")
+        logger.info("Starting Copy Phrase Task!")
         run = True
         self.wait()  # buffer for data processing
 
@@ -979,7 +976,7 @@ class TaskSummary:
         self.show_preview = show_preview
         self.preview_mode = preview_mode
         self.trigger_path = trigger_path
-        self.logger = logging.getLogger(__name__)
+        logger = logging.getLogger(__name__)
 
     def as_dict(self) -> dict:
         """Computes the task summary data to append to the session."""
@@ -1039,7 +1036,7 @@ class TaskSummary:
             if (preview.type != TriggerType.PREVIEW) or (
                 keypress.type != TriggerType.EVENT
             ):
-                self.logger.info("Could not compute switch_response_time")
+                logger.info("Could not compute switch_response_time")
                 return None
 
         response_times = [keypress.time - preview.time for preview, keypress in pairs]

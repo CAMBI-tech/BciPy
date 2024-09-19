@@ -70,7 +70,6 @@ class TestMatrixCalibration(unittest.TestCase):
             'trigger_type': 'image',
         }
         self.parameters = Parameters.from_cast_values(**parameters)
-        self.logger = mock()
         self.win = mock({'size': np.array([500, 500]), 'units': 'height'})
         self.servers = [mock()]
 
@@ -144,7 +143,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         MatrixCalibrationTask(parameters=self.parameters,
                               file_save=self.temp_dir,
-                              logger=self.logger,
                               fake=self.fake)
 
         verify(bcipy.task.paradigm.matrix.calibration,
@@ -161,7 +159,6 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
@@ -190,7 +187,6 @@ class TestMatrixCalibration(unittest.TestCase):
         with self.assertRaises(Exception):
             MatrixCalibrationTask(parameters=parameters,
                                   file_save=self.temp_dir,
-                                  logger=self.logger,
                                   fake=self.fake)
 
     @patch('bcipy.task.calibration.TriggerHandler')
@@ -205,7 +201,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
@@ -235,7 +230,6 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         # non-target
@@ -265,7 +259,6 @@ class TestMatrixCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         # fixation
@@ -288,7 +281,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         # prompt, index = 0, otherwise it would be a target
@@ -312,7 +304,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
@@ -347,7 +338,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
 
         timing_mock = mock()
@@ -372,7 +362,6 @@ class TestMatrixCalibration(unittest.TestCase):
 
         task = MatrixCalibrationTask(parameters=self.parameters,
                                      file_save=self.temp_dir,
-                                     logger=self.logger,
                                      fake=self.fake)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(

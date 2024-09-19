@@ -2,6 +2,7 @@
 import shutil
 import unittest
 from pathlib import Path
+import logging
 from unittest.mock import Mock, patch
 
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
@@ -39,6 +40,8 @@ class TestAcquisition(unittest.TestCase):
         """Test init_acquisition with LSL client."""
 
         params = self.parameters
+        logger = Mock(spec=logging.Logger)
+        logger.info = lambda x: x
         params['acq_mode'] = 'EEG:passive/DSI-24'
 
         client, servers = init_acquisition(params, self.save, server=True)

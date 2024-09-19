@@ -19,15 +19,11 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_models : list of trained signal models.
-        language_model: object,
-            trained language model.
         fake : boolean, optional
             boolean to indicate whether this is a fake session or not.
     Returns
     -------
-        file_save : str,
-            path location of where to save data from the session
+        TaskData
     """
     name = 'Matrix Copy Phrase'
     MODE = 'Matrix'

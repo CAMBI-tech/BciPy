@@ -20,9 +20,9 @@ from bcipy.config import (
     FIELD_FILENAME,
     BCIPY_ROOT,
 )
-from bcipy.task.task_registry import TaskRegistry
+from bcipy.task.registry import TaskRegistry
 import subprocess
-from bcipy.orchestrator.config import serialize_protocol
+from bcipy.task.orchestrator.protocol import serialize_protocol
 import json
 
 
