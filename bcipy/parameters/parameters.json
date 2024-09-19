@@ -441,7 +441,7 @@
     "type": "float"
   },
   "matrix_keyboard_layout": {
-    "value": "QWERTY",
+    "value": "ALP",
     "section": "matrix_task_config",
     "name": "Keyboard Layout",
     "helpTip": "Specifies the keyboard layout to use for the Matrix task. Default: ALP (Alphabetical)",
