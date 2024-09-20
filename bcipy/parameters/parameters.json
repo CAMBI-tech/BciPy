@@ -274,9 +274,9 @@
   },
   "stim_space_char": {
     "value": "–",
-    "section": "bci_config",
+    "section": "task_config",
     "name": "Space Character",
-    "helpTip": "Specifies the text or Unicode character which represents a space during text-stimuli tasks. Default: –",
+    "helpTip": "Specifies the text or Unicode character which represents a space during text-stimuli tasks. *Note* This only applies to RSVP Tasks. Default: –",
     "recommended": [
       "_",
       "–",

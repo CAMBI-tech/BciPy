@@ -19,12 +19,14 @@ class TestMatrixLayout(unittest.TestCase):
                              top=1.0,
                              right=1.0,
                              bottom=-1.0)
+        self.symbols = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
 
     def test_regular_grid(self):
         """Test basic properties of a regular grid"""
         row_count = 4
         col_count = 5
         positions = symbol_positions(self.layout,
+                                     symbol_set=self.symbols,
                                      rows=row_count,
                                      columns=col_count)
         self.assertEqual(len(positions), 20)
@@ -37,7 +39,11 @@ class TestMatrixLayout(unittest.TestCase):
     def test_single_row(self):
         """Test position calculations for a single row"""
 
-        positions = symbol_positions(self.layout, rows=1, columns=10)
+        positions = symbol_positions(
+            self.layout,
+            symbol_set=self.symbols,
+            rows=1,
+            columns=10)
         self.assertEqual(len(positions), 10)
 
         y_coord = positions[0][1]
@@ -59,7 +65,11 @@ class TestMatrixLayout(unittest.TestCase):
 
     def test_single_column(self):
         """Test position calculations for a single column"""
-        positions = symbol_positions(self.layout, rows=10, columns=1)
+        positions = symbol_positions(
+            self.layout,
+            symbol_set=self.symbols,
+            rows=10,
+            columns=1)
         self.assertEqual(len(positions), 10)
 
         x_coord = positions[0][0]
@@ -80,7 +90,11 @@ class TestMatrixLayout(unittest.TestCase):
 
     def test_spacing(self):
         """Test grid spacing"""
-        positions = symbol_positions(self.layout, rows=2, columns=2)
+        positions = symbol_positions(
+            self.layout,
+            symbol_set=['A', 'B', 'C', 'D'],
+            rows=2,
+            columns=2)
         self.assertEqual(len(positions), 4)
 
         top_left = positions[0]
@@ -107,6 +121,7 @@ class TestMatrixLayout(unittest.TestCase):
         """Test max_spacing parameter"""
         max_spacing = 0.1
         positions = symbol_positions(self.layout,
+                                     symbol_set=['A', 'B', 'C', 'D'],
                                      rows=2,
                                      columns=2,
                                      max_spacing=max_spacing)
@@ -120,6 +135,14 @@ class TestMatrixLayout(unittest.TestCase):
         self.assertEqual(row_spacing, max_spacing)
         self.assertEqual(column_spacing, max_spacing)
 
+    def test_symbol_position_throws_error_with_too_many_symbols(self):
+        """Test that an error is thrown if there are too many symbols for the grid"""
+        with self.assertRaises(AssertionError):
+            symbol_positions(self.layout,
+                             symbol_set=self.symbols,
+                             rows=2,
+                             columns=2,
+                             max_spacing=0.1)
 
 if __name__ == '__main__':
     unittest.main()

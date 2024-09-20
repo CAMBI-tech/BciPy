@@ -1,6 +1,6 @@
 """Display for presenting stimuli in a grid."""
 import logging
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -34,7 +34,7 @@ class MatrixDisplay(Display):
     time_fixation: 2
     stim_pos_x: -0.6
     stim_pos_y: 0.4
-    stim_height: 0.1
+    stim_height: 0.17
     """
 
     def __init__(self,
@@ -43,14 +43,13 @@ class MatrixDisplay(Display):
                  stimuli: StimuliProperties,
                  task_bar: TaskBar,
                  info: InformationProperties,
+                 symbol_set: List[str] = alphabet(),
                  rows: int = 5,
                  columns: int = 6,
                  width_pct: float = 0.75,
                  height_pct: float = 0.8,
                  trigger_type: str = 'text',
-                 symbol_set: Optional[List[str]] = None,
-                 should_prompt_target: bool = True,
-                 sort_order: Optional[Callable] = None):
+                 should_prompt_target: bool = True):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -73,8 +72,6 @@ class MatrixDisplay(Display):
         symbol_set default = none : subset of stimuli to be highlighted during an inquiry
         should_prompt_target(bool): when True prompts for the target symbol. Assumes that this is
             the first symbol of each inquiry. For example: [target, fixation, *stim].
-        sort_order - optional function to define the position index for each
-            symbol. Using a custom function it is possible to skip a position.
         """
         self.window = window
 
@@ -85,15 +82,16 @@ class MatrixDisplay(Display):
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
 
-        self.symbol_set = self.build_symbol_set(stimuli)
-        self.sort_order = sort_order or self.symbol_set.index
+        self.symbol_set = symbol_set
+        self.sort_order = self.build_sort_order(stimuli)
         # Set position and parameters for grid of alphabet
-        self.grid_stimuli_height = 0.17  # stimuli.stim_height
+        self.grid_stimuli_height = stimuli.stim_height
 
         display_container = layout.centered(parent=window,
                                             width_pct=width_pct,
                                             height_pct=height_pct)
-        self.positions = symbol_positions(display_container, rows, columns)
+        self.positions = symbol_positions(
+            display_container, rows, columns, symbol_set)
 
         self.grid_color = 'white'
         self.start_opacity = 0.15
@@ -119,17 +117,18 @@ class MatrixDisplay(Display):
         )
         logger.info(f"Matrix center position: {display_container.center}")
 
-    def build_symbol_set(self, stimuli: StimuliProperties) -> List[str]:
+    def build_sort_order(self, stimuli: StimuliProperties) -> List[str]:
         """Build the symbol set for the display."""
-        # TODO pass space and other symbols as parameters
         if stimuli.layout == 'ALP':
-            return alphabet()
+            return self.symbol_set.index
         elif stimuli.layout == 'QWERTY':
+            logger.info('Using QWERTY layout')
             return qwerty_order()
         elif stimuli.layout == 'FREQ':
+            logger.info('Using frequency layout')
             return frequency_order()
         else:
-            raise ValueError(f"Unknown layout: {stimuli.layout}")
+            raise ValueError(f'Unknown layout: {stimuli.layout}')
 
     @property
     def stim_positions(self) -> Dict[str, Tuple[float, float]]:
@@ -214,6 +213,7 @@ class MatrixDisplay(Display):
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
         """Build the text stimuli to populate the grid."""
+
         grid = {}
         for sym in self.symbol_set:
             pos_index = self.sort_order(sym)
@@ -269,7 +269,7 @@ class MatrixDisplay(Display):
              grid_color: Optional[str] = None,
              duration: Optional[float] = None,
              highlight: Optional[str] = None,
-             highlight_color: Optional[str] = None):
+             highlight_color: Optional[str] = None) -> None:
         """Draw all screen elements and flip the window.
 
         Parameters
@@ -291,7 +291,7 @@ class MatrixDisplay(Display):
             core.wait(duration)
 
     def animate_scp(self, fixation: SymbolDuration,
-                    stimuli: List[SymbolDuration]):
+                    stimuli: List[SymbolDuration]) -> None:
         """Animate the given stimuli using single character presentation.
 
         Flashes each stimuli in stimuli_inquiry for their respective flash
@@ -365,7 +365,7 @@ class MatrixDisplay(Display):
         for info in self.info_text:
             info.draw()
 
-    def update_task_bar(self, text: str = ''):
+    def update_task_bar(self, text: str = '') -> None:
         """Update Task.
 
         Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
