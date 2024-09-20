@@ -144,5 +144,6 @@ class TestMatrixLayout(unittest.TestCase):
                              columns=2,
                              max_spacing=0.1)
 
+
 if __name__ == '__main__':
     unittest.main()
