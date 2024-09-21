@@ -11,7 +11,7 @@ import pandas as pd
 from bcipy.simulator.helpers.data_engine import (QueryFilter, RawDataEngine,
                                                  Trial)
 from bcipy.simulator.helpers.log_utils import format_samples
-from bcipy.simulator.helpers.state_manager import SimState
+from bcipy.simulator.helpers.state import SimState
 
 log = logging.getLogger(__name__)
 

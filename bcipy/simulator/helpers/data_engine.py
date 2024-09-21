@@ -1,7 +1,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, NamedTuple, Optional, Union
+from typing import Any, List, NamedTuple, Union
 
 import numpy as np
 import pandas as pd
@@ -10,9 +10,8 @@ from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.helpers import data_process
 from bcipy.simulator.helpers.artifact import TOP_LEVEL_LOGGER_NAME
-from bcipy.simulator.helpers.signal_helpers import (EegRawDataProcessor,
-                                                    ExtractedExperimentData,
-                                                    RawDataProcessor)
+from bcipy.simulator.helpers.data_process import (ExtractedExperimentData,
+                                                  RawDataProcessor)
 
 log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
@@ -88,10 +87,7 @@ class DataEngine(ABC):
         """Query the data."""
 
 
-def convert_trials(
-    data_source: Union[ExtractedExperimentData,
-                       data_process.ExtractedExperimentData]
-) -> List[Trial]:
+def convert_trials(data_source: ExtractedExperimentData) -> List[Trial]:
     """Convert extracted data from a single data source to a list of Trials."""
     trials = []
     symbols_by_inquiry = data_source.symbols_by_inquiry
@@ -122,16 +118,12 @@ class RawDataEngine(DataEngine):
     a queryable data structure.
     """
 
-    def __init__(
-        self,
-        source_dirs: List[str],
-        parameters: Parameters,
-        data_processor: Optional[Union[RawDataProcessor,
-                                       data_process.RawDataProcessor]] = None):
+    def __init__(self, source_dirs: List[str], parameters: Parameters,
+                 data_processor: RawDataProcessor):
         self.source_dirs: List[str] = source_dirs
         self.parameters: Parameters = parameters
 
-        self.data_processor = data_processor or EegRawDataProcessor()
+        self.data_processor = data_processor
         self.data: List[Union[ExtractedExperimentData,
                               data_process.ExtractedExperimentData]] = []
         self._trials_df = pd.DataFrame()
@@ -208,18 +200,3 @@ class RawDataEngine(DataEngine):
         if (isinstance(value, str)):
             value = f"'{value}'"
         return f"{query_filter.field} {query_filter.operator} {value}"
-
-
-class RawDataEngineWrapper(RawDataEngine):
-    """
-    Data engine that assumes all data is stored within single data folder
-        - single data folder contains dataDir1, dataDir2, ...
-        - each data dir contains its raw_data and triggers
-    """
-
-    def __init__(self,
-                 source_dir: str,
-                 parameters: Parameters,
-                 data_processor: Optional[RawDataProcessor] = None):
-        data_paths = [str(d) for d in Path(source_dir).iterdir() if d.is_dir()]
-        super().__init__(data_paths, parameters, data_processor)

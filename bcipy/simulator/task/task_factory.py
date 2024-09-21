@@ -8,7 +8,7 @@ from bcipy.simulator.helpers import artifact
 from bcipy.simulator.helpers.data_engine import RawDataEngine
 from bcipy.simulator.helpers.data_process import init_data_processor
 from bcipy.simulator.helpers.sampler import Sampler, TargetNontargetSampler
-from bcipy.simulator.task.copy_phrase import SimTask, SimulatorCopyPhraseTask
+from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 
 logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
 
@@ -22,7 +22,7 @@ class TaskFactory():
                  model_path: str,
                  source_dirs: List[str],
                  sampling_strategy: Type[Sampler] = TargetNontargetSampler,
-                 task: Type[SimTask] = SimulatorCopyPhraseTask):
+                 task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask):
         self.params_path = params_path
         self.model_path = model_path
         self.source_dirs = source_dirs
@@ -62,7 +62,7 @@ class TaskFactory():
             samplers[model] = sampler
         return samplers
 
-    def make_task(self, run_dir: str) -> SimTask:
+    def make_task(self, run_dir: str) -> SimulatorCopyPhraseTask:
         """Construct a new task"""
         return self.simulation_task(self.parameters,
                                     file_save=run_dir,

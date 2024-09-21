@@ -8,7 +8,7 @@ from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.helpers.sampler import Sampler
-from bcipy.simulator.helpers.state_manager import SimState
+from bcipy.simulator.helpers.state import SimState
 from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
@@ -22,20 +22,7 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
     return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
 
 
-class SimTask():
-    """Abstract class that marks a task as a simulation."""
-    def __init__(self, parameters: Parameters, file_save: str,
-                 signal_models: List[SignalModel],
-                 language_model: LanguageModel, samplers: Dict[SignalModel,
-                                                               Sampler]):
-        """Signature for a simulation task"""
-
-    def execute(self) -> str:
-        """Executes the task"""
-        raise NotImplementedError
-
-
-class SimulatorCopyPhraseTask(RSVPCopyPhraseTask, SimTask):
+class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     """CopyPhraseTask that simulates user interactions by sampling data
     from a DataSampler."""
 
@@ -140,9 +127,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask, SimTask):
             display_alphabet=self.current_symbols(),
             # TODO:
             inquiry_n=0,
-            series_n=0,
-            series_results=[],
-            decision_criterion=[])
+            series_n=0)
 
     def current_symbols(self) -> List[str]:
         """Get the list of symbols from the current inquiry."""

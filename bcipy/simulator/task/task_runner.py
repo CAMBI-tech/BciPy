@@ -70,7 +70,7 @@ def main():
                         "--model_path",
                         type=Path,
                         required=True,
-                        help="Signal model to be used")
+                        help="Signal models to be used")
     parser.add_argument("-p",
                         "--parameters",
                         type=Path,
