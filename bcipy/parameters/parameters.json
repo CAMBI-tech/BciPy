@@ -337,7 +337,7 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.2",
+    "value": "0.25",
     "section": "bci_config",
     "readableName": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
