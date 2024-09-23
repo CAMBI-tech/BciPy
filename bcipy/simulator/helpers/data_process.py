@@ -1,4 +1,4 @@
-"""This defines functionality related to pre-processing simulation data.
+"""This module defines functionality related to pre-processing simulation data.
 Processed data can be subsequently sampled and provided to a SignalModel
 for classification."""
 
@@ -187,6 +187,10 @@ class RawDataProcessor():
     """Processes raw data for a given device and converts it to
     ExtractedExperimentData for use in the simulator.
 
+    The main API method, `process`, provides a template method that can be
+    specialized by subclasses. This method performs the following for a given
+    data directory.
+
     1. Loads the data file as a RawData object
     2. Extract timing information from trigger file based on the device of interest.
     3. Reshape and label the data.
@@ -253,7 +257,7 @@ class RawDataProcessor():
 
     def process(self, data_folder: str,
                 parameters: Parameters) -> ExtractedExperimentData:
-        """Load and process the data
+        """Load and process the data.
 
         Parameters
         ----------
@@ -422,6 +426,7 @@ class EegRawDataProcessor(RawDataProcessor):
         )
 
 
+## Module functions for matching a model to the correct processor.
 def get_processor(
         data_source: ContentType,
         evidence_type: Optional[EvidenceType] = None

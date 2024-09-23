@@ -1,3 +1,4 @@
+"""Classes and functions for building a simulation."""
 import logging
 from typing import Dict, List, Type
 

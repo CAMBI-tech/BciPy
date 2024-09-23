@@ -1,3 +1,4 @@
+"""Classes and functions related to loading and querying data to be used in a simulation."""
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
@@ -18,8 +19,6 @@ log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
 class Trial(NamedTuple):
     """Data for a given trial (a symbol within an Inquiry).
-
-    TODO: add series to facilitate easier lookup in session data.
 
     Attrs
     -----
@@ -51,7 +50,7 @@ class Trial(NamedTuple):
 
 
 class QueryFilter(NamedTuple):
-    """Used to query for data."""
+    """Provides an API used to query a data engine for data."""
     field: str
     operator: str
     value: Any
