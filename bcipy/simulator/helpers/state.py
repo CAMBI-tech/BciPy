@@ -30,14 +30,11 @@ def get_inquiry(session_dir: str, n: int) -> Dict[str, Any]:
 def main():
     """Command line program to get data from a single inquiry within a session."""
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-d",
-        "--data_folder",
-        type=Path,
-        required=True,
-        help=
-        "Session data folder to be processed. Singular wrapper dir with data folders"
-    )
+    parser.add_argument("-d",
+                        "--data_folder",
+                        type=Path,
+                        required=True,
+                        help="Folder with the session.json file")
     parser.add_argument("-n",
                         type=int,
                         required=False,
