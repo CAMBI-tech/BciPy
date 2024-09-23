@@ -4,6 +4,7 @@ from typing import Dict, List, Type
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
 from bcipy.simulator.data.data_process import init_data_processor
@@ -33,6 +34,9 @@ class TaskFactory():
         logger.info("Loading parameters")
         self.parameters = load_json_parameters(self.params_path,
                                                value_cast=True)
+        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+        # TODO: log which parameters were added
+        self.parameters.add_missing_items(default_params)
 
         logger.info("Loading signal models")
         self.signal_models = load_signal_models(directory=self.model_path)
