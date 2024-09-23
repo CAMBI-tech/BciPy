@@ -87,6 +87,7 @@ clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = Clock()
 task_bar = CopyPhraseTaskBar(win, task_text='COPY_PHRASE', font='Menlo')
 preview_inquiry = PreviewInquiryProperties(
+    preview_on=show_preview_inquiry,
     preview_only=True,
     preview_inquiry_length=preview_inquiry_length,
     preview_inquiry_key_input=preview_inquiry_key_input,

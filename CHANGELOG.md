@@ -20,7 +20,7 @@ Our final release candidate before the official 2.0 release!
 - Offset Support
   - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
 - Parameters
-    - Add a Range type parameter #285 Add editable fields #340
+    - Add a Range type parameter #285 Add editable fields #340 Update parameters.json to seperate relevant parameters by task
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
