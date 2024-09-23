@@ -8,10 +8,8 @@ from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from bcipy.simulator.helpers.data_engine import (QueryFilter, RawDataEngine,
-                                                 Trial)
-from bcipy.simulator.helpers.log_utils import format_samples
-from bcipy.simulator.helpers.state_manager import SimState
+from bcipy.simulator.data.data_engine import QueryFilter, RawDataEngine, Trial
+from bcipy.simulator.helpers.state import SimState
 
 log = logging.getLogger(__name__)
 
@@ -223,3 +221,8 @@ class InquirySampler(Sampler):
         ]
         log.debug(f"EEG Samples:\n{format_samples(rows)}")
         return rows
+
+
+def format_samples(sample_rows: List[Trial]) -> str:
+    """Returns a tabular representation of the sample rows."""
+    return '\n'.join([str(row) for row in sample_rows])

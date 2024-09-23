@@ -6,8 +6,8 @@ import os
 from glob import glob
 from pathlib import Path
 
+from bcipy.simulator.data.sampler import TargetNontargetSampler
 from bcipy.simulator.helpers import artifact
-from bcipy.simulator.helpers.sampler import TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 
@@ -70,7 +70,7 @@ def main():
                         "--model_path",
                         type=Path,
                         required=True,
-                        help="Signal model to be used")
+                        help="Signal models to be used")
     parser.add_argument("-p",
                         "--parameters",
                         type=Path,

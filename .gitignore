@@ -37,4 +37,4 @@ bcipy/language/out/
 
 
 bcipy/simulator/tests/resource/
-bcipy/simulator/generated/SIM_*
+!bcipy/simulator/data
