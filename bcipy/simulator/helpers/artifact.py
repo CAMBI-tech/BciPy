@@ -5,14 +5,14 @@ import os
 import sys
 from typing import Optional
 
-from bcipy.config import BCIPY_ROOT
+from bcipy.config import ROOT
 
 # For a simulation, two loggers are configured: a top level logger summarizing
 # setup and progress, and a logger for each simulation run. The root logger is
 # re-configured for each simulation run.
 TOP_LEVEL_LOGGER_NAME = 'sim_logger'
 DEFAULT_LOGFILE_NAME = 'sim.log'
-DEFAULT_SAVE_LOCATION = f"{BCIPY_ROOT}/simulator/generated"
+DEFAULT_SAVE_LOCATION = f"{ROOT}/data/simulator"
 
 
 def configure_logger(log_path: str,

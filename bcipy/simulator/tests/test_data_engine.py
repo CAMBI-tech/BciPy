@@ -4,9 +4,9 @@ from unittest.mock import Mock
 
 import numpy as np
 
-from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.data_process import (DecodedTriggers,
-                                                  ExtractedExperimentData)
+from bcipy.simulator.data.data_engine import RawDataEngine
+from bcipy.simulator.data.data_process import (DecodedTriggers,
+                                               ExtractedExperimentData)
 
 
 def mock_data() -> ExtractedExperimentData:

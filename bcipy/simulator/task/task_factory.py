@@ -5,10 +5,10 @@ from typing import Dict, List, Type
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_json_parameters, load_signal_models
 from bcipy.signal.model.base_model import SignalModel
+from bcipy.simulator.data.data_engine import RawDataEngine
+from bcipy.simulator.data.data_process import init_data_processor
+from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.helpers import artifact
-from bcipy.simulator.helpers.data_engine import RawDataEngine
-from bcipy.simulator.helpers.data_process import init_data_processor
-from bcipy.simulator.helpers.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 
 logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)

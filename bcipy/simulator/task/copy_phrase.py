@@ -7,7 +7,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
-from bcipy.simulator.helpers.sampler import Sampler
+from bcipy.simulator.data.sampler import Sampler
 from bcipy.simulator.helpers.state import SimState
 from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.task.control.evidence import EvidenceEvaluator
