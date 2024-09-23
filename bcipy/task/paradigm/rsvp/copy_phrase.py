@@ -96,7 +96,7 @@ class RSVPCopyPhraseTask(Task):
         'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
         'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'min_inq_len',
         'show_feedback', 'feedback_duration',
-        'show_preview_inquiry', 'preview_inquiry_isi',
+        'show_preview_inquiry', 'preview_inquiry_isi', 'preview_inquiry_error_prob',
         'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
         'spelled_letters_count',
         'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
@@ -133,7 +133,7 @@ class RSVPCopyPhraseTask(Task):
 
         self.alp = alphabet(self.parameters)
 
-        self.button_press_error_prob = 0.05
+        self.button_press_error_prob = parameters['preview_inquiry_error_prob']
 
         self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
         self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
@@ -922,6 +922,7 @@ def _init_copy_phrase_display(
         experiment_clock: Clock,
         starting_spelled_text) -> CopyPhraseDisplay:
     preview_inquiry = PreviewInquiryProperties(
+        preview_on=parameters['show_preview_inquiry'],
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
         preview_inquiry_key_input=parameters['preview_inquiry_key_input'],

@@ -411,21 +411,37 @@ def update_inquiry_timing(timing: List[List[int]], downsample: int) -> List[List
 
 
 def mne_epochs(mne_data: RawArray,
-               trigger_timing: List[float],
                trial_length: float,
-               trigger_labels: List[int],
-               baseline: Optional[Tuple[Any, float]] = None) -> Epochs:
+               trigger_timing: Optional[List[float]] = None,
+               trigger_labels: Optional[List[int]] = None,
+               baseline: Optional[Tuple[Any, float]] = None,
+               reject_by_annotation: bool = False,
+               preload: bool = False) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
     each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
     """
-    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
-    mne_data.set_annotations(annotations)
-    events_from_annot, _ = mne.events_from_annotations(mne_data)
-    if not baseline:
-        baseline = (None, 0.0)
-    return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
+    old_annotations = mne_data.annotations
+    if trigger_timing and trigger_labels:
+        new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+        all_annotations = new_annotations + old_annotations
+    else:
+        all_annotations = old_annotations
+
+    tmp_data = mne_data.copy()
+    tmp_data.set_annotations(all_annotations)
+
+    events_from_annot, _ = mne.events_from_annotations(tmp_data)
+    return Epochs(
+        mne_data,
+        events_from_annot,
+        baseline=baseline,
+        tmax=trial_length,
+        tmin=-0.05,
+        proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
+        reject_by_annotation=reject_by_annotation,
+        preload=preload)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:
