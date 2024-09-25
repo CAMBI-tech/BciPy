@@ -12,16 +12,49 @@ log = logging.getLogger(__name__)
 DEFAULT_FLICKER_RATES = [4, 5, 6, 10, 12, 15]
 
 
-def create_vep_codes(length=32, count=4) -> List[List[int]]:
-    """Create a list of random VEP codes.
+def mseq(seed, taps):
+    """
+    Generate an LFSR sequence.
+
+    :param seed: Initial state of the LFSR as a list of bits (0 or 1).
+    :param taps: Positions in the LFSR to be XORed, given as a list of indices.
+    :return: List representing the generated LFSR sequence.
+    """
+    state = seed.copy()
+    sequence = []
+
+    for _ in range(2 ** (len(seed)) - 1):
+        # Output the first bit of the state
+        sequence.append(state[0])
+
+        # Calculate the feedback bit
+        feedback = 0
+        for tap in taps:
+            feedback ^= state[tap]
+
+        # Shift the register and insert the feedback bit at the end
+        state = state[1:] + [feedback]
+
+    return sequence
+
+
+def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4]) -> List[List[int]]:
+    """Create a list of VEP codes using m-sequence (LFSR sequence).
 
     length - how many bits in each code. This should be greater than or equal to the refresh rate
         if using these to flicker. For example, if the refresh rate is 60Hz, then the length should
         be at least 60.
     count - how many codes to generate, each will be unique.
+    seed - Initial state of the LFSR.
+    taps - Tap positions in the LFSR to generate feedback.
     """
-    np.random.seed(1)
-    return [np.random.randint(2, size=length) for _ in range(count)]
+    codes = []
+    for _ in range(count):
+        code = mseq(seed, taps)
+        #padding in case sequence is longer than length
+        codes.append(code[:length])
+    #contains unique mseq, each at the specific length needed
+    return codes
 
 
 def ssvep_to_code(refresh_rate: int = 60, flicker_rate: int = 10) -> List[int]:

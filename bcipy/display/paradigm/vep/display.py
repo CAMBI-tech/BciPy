@@ -53,7 +53,7 @@ class VEPDisplay(Display):
                  frame_rate: Optional[float] = None):
         assert len(
             flicker_rates
-        ) >= box_config.num_boxes, 'Not enough flicker rates provided'
+        ) <= box_config.num_boxes, 'Not enough flicker rates provided'
         self.window = window
         if not frame_rate:
             frame_rate = self.window.getActualFrameRate()
@@ -120,12 +120,11 @@ class VEPDisplay(Display):
             ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
             for hz in flicker_rates
         ]
-        vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
-                      ('orange', 'green')]
+        vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
                                           codes=codes,
-                                          colors=cycle(vep_colors),
+                                          colors=cycle([('red', 'green')]),
                                           stim_size=vep_stim_size,
                                           num_squares=25)
         self.box_border_width = 4
@@ -155,7 +154,7 @@ class VEPDisplay(Display):
                    ) == stim_num, "Each box should have its own color"
 
         return [
-            StimProps(*props) for props in zip(
+            StimProps(symbol=props[0], duration=props[1], color='white') for props in zip(
                 self.stimuli_inquiry,
                 expanded(list(self.stimuli_timing), length=stim_num),
                 self.stimuli_colors)
@@ -220,33 +219,10 @@ class VEPDisplay(Display):
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
-        # Show all symbols in the matrix at reduced opacity
-        for sym in self.symbol_set:
-            pos_index = self.sort_order(sym)
-            sti = self.sti[sym]
-            sti.pos = self.starting_positions[pos_index]
-            sti.setOpacity(0.5)
-            sti.draw()
-        self.draw_static()
-        self.draw_boxes()
-
-        # pause for a time
-        self.window.flip()
-        core.wait(target.duration / 2)
-
-        # highlight target
-        self.window.callOnFlip(self.add_timing, target.symbol)
-        target_stim = self.sti[target.symbol]
-        target_stim.setOpacity(1)
-
-        for sti in self.sti.values():
-            sti.draw()
-
         if target_box_index is not None:
             self.highlight_target_box(target_box_index)
 
         self.draw_static()
-        self.draw_boxes()
 
         self.window.flip()
         core.wait(target.duration / 2)
@@ -268,23 +244,10 @@ class VEPDisplay(Display):
     def do_fixation(self, fixation: StimProps) -> None:
         """Show all symbols before animating."""
         duration = fixation.duration or self.timing_fixation
-
-        starting_opacity = {}
-        for sym in self.symbol_set:
-            sti = self.sti[sym]
-            starting_opacity[sym] = sti.opacity
-            sti.setOpacity(1.0)
-            sti.draw()
         self.draw_static()
         self.draw_boxes()
         self.window.flip()
         core.wait(duration / 2)
-
-        # reset to starting opacity
-        for sym in self.symbol_set:
-            sti = self.sti[sym]
-            sti.setOpacity(starting_opacity[sym])
-            sti.draw()
         self.draw_static()
         self.draw_boxes()
         self.window.flip()
@@ -299,11 +262,10 @@ class VEPDisplay(Display):
         self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
         self.set_stimuli_colors(stimuli)
-        self.draw_animation(stimuli)
         self._set_inquiry(stimuli)
 
         self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
-        # display the inquiry
+        # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
         self.window.flip()
@@ -313,7 +275,7 @@ class VEPDisplay(Display):
         reflect which box it will be placed in."""
         for group in stim_groups:
             for sym in group.symbol:
-                self.sti[sym].color = group.color
+                self.sti[sym].color = 'white'
 
     def draw_animation(self, stimuli: List[StimProps]) -> None:
         """Draw the stimuli animation.
@@ -413,17 +375,30 @@ class VEPDisplay(Display):
             pos_index = self.sort_order(sym)
             grid[sym] = visual.TextStim(win=self.window,
                                         text=sym,
-                                        color=self.starting_color,
+                                        color='white',
                                         pos=self.starting_positions[pos_index],
                                         height=self.stimuli_height)
         return grid
 
     def reset_symbol_positions(self) -> None:
         """Reset the position of each symbol to its starting position"""
-        for sym in self.symbol_set:
-            pos_index = self.sort_order(sym)
-            self.sti[sym].pos = self.starting_positions[pos_index]
+        #box layout
+        layout = [
+            ['A', 'B', 'C', 'D', 'E', 'F'],
+            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R', 'S'],
+            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+        ]
 
+        position_index = 0
+        for row in layout:
+            for sym in row:
+                if sym in self.symbol_set:
+                    #Set position of symbol based on place in layout
+                    pos = self.starting_positions[position_index]
+                    self.sti[sym].pos = pos
+                    position_index += 1
+                    
     def build_vep_stimuli(self, positions: List[Tuple[float, float]],
                           codes: List[List[int]], colors: Iterable[Tuple[str,
                                                                          str]],
@@ -480,13 +455,13 @@ class VEPDisplay(Display):
                             font=self.stimuli_font,
                             pos=pos,
                             units=box_config.units,
-                            color=color,
+                            color='white',
                             colorSpace='rgb',
                             size=size,
                             alignment='center',
                             anchor='center',
                             borderWidth=self.box_border_width,
-                            borderColor=color,
+                            borderColor='white',
                             letterHeight=self.stimuli_height)
             for pos, color in zip(positions, cycle(self.box_colors))
         ]
@@ -504,11 +479,20 @@ class VEPDisplay(Display):
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
         """Set the correct inquiry text for each text boxes.
         """
-        for i, sti in enumerate(stimuli):
-            box = self.text_boxes[i]
-            text = ' '.join(sti.symbol)
+        #box layout
+        layout = [
+            ['A', 'B', 'C', 'D', 'E', 'F'],
+            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R', 'S'],
+            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+        ]
+    
+        for box_index, symbols in enumerate(layout):
+            box = self.text_boxes[box_index]
+            text = ' '.join(symbols)
             box.text = text
-            box.color = sti.color
+            box.color = 'white'
+            box.borderColor = 'white'
         return self.text_boxes
 
     def wait_screen(self, message: str, color: str) -> None:
