@@ -109,7 +109,7 @@ class BoxConfiguration():
         self.validate()
 
         self.spacing_pct = spacing_pct
-        self._num_boxes = 6
+        self._num_boxes = 8
         self._row_count = 2
 
     def validate(self):
@@ -165,16 +165,18 @@ class BoxConfiguration():
         left = right_of(layout.left, width / 2)
         right = left_of(layout.right, width / 2)
 
-        middle = layout.horizontal_middle
-        return [(left, top), (middle, top), (right, top), (left, bottom),
-                (middle, bottom), (right, bottom)]
+        middle_left = right_of(left, width + (self.spacing_pct * self.layout.width))
+        middle_right = left_of(right, width + (self.spacing_pct * self.layout.width))
+
+        return [(left, top), (middle_left, top), (middle_right, top), (right, top),
+            (left, bottom), (middle_left, bottom), (middle_right, bottom), (right, bottom)]
 
     @property
     def names(self) -> List[str]:
         """Box names for each position."""
         return [
-            'LEFT_TOP', 'MIDDLE_TOP', 'RIGHT_TOP', 'LEFT_BOTTOM',
-            'MIDDLE_BOTTOM', 'RIGHT_BOTTOM'
+            'LEFT_TOP', 'MIDDLE_LEFT_TOP', 'MIDDLE_RIGHT_TOP' , 'RIGHT_TOP', 'LEFT_BOTTOM',
+            'MIDDLE_LEFT_BOTTOM', 'MIDDLE_RIGHT_BOTTOM' 'RIGHT_BOTTOM'
         ]
 
 

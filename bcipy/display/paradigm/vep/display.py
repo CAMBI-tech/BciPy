@@ -53,7 +53,7 @@ class VEPDisplay(Display):
                  frame_rate: Optional[float] = None):
         assert len(
             flicker_rates
-        ) >= box_config.num_boxes, 'Not enough flicker rates provided'
+        ) <= box_config.num_boxes, 'Not enough flicker rates provided'
         self.window = window
         if not frame_rate:
             frame_rate = self.window.getActualFrameRate()
