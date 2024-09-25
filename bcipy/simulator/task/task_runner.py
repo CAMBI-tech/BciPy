@@ -2,29 +2,17 @@
 
 import argparse
 import logging
-import os
 from glob import glob
 from pathlib import Path
 
 from bcipy.simulator.data.sampler import TargetNontargetSampler
-from bcipy.simulator.helpers import artifact
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
+from bcipy.simulator.util.artifact import (TOP_LEVEL_LOGGER_NAME,
+                                           configure_run_directory,
+                                           init_simulation_dir)
 
-logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
-
-
-def configure_run_directory(sim_dir: str, run: int) -> str:
-    """Create the necessary directories and configure the logger.
-    Returns the run directory.
-    """
-    run_name = f"run_{run}"
-    path = f"{sim_dir}/{run_name}"
-    os.mkdir(path)
-    artifact.configure_logger(log_path=path,
-                              file_name=f"{run_name}.log",
-                              use_stdout=False)
-    return path
+logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
 
 class TaskRunner():
@@ -39,7 +27,7 @@ class TaskRunner():
         self.sim_dir = save_dir
         self.runs = runs
 
-    def run(self):
+    def run(self) -> None:
         """Run one or more simulations"""
         self.task_factory.parameters.save(self.sim_dir)
         for i in range(self.runs):
@@ -89,7 +77,7 @@ def main():
         if Path(d).is_dir()
     ]
 
-    sim_dir = artifact.init_simulation_dir()
+    sim_dir = init_simulation_dir()
     logger.info(sim_dir)
     task_factory = TaskFactory(params_path=sim_args['parameters'],
                                model_path=sim_args['model_path'],

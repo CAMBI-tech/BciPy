@@ -74,6 +74,19 @@ def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
     return save_dir
 
 
+def configure_run_directory(sim_dir: str, run: int) -> str:
+    """Create the necessary directories and configure the logger.
+    Returns the run directory.
+    """
+    run_name = f"run_{run}"
+    path = f"{sim_dir}/{run_name}"
+    os.mkdir(path)
+    configure_logger(log_path=path,
+                     file_name=f"{run_name}.log",
+                     use_stdout=False)
+    return path
+
+
 def directory_name() -> str:
     """Name of the directory for a new simulation run."""
     return datetime.datetime.now().strftime("SIM_%m-%d-%Y_%H_%M_%S")

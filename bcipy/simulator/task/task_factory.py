@@ -9,10 +9,10 @@ from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
 from bcipy.simulator.data.data_process import init_data_processor
 from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
-from bcipy.simulator.helpers import artifact
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
+from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 
-logger = logging.getLogger(artifact.TOP_LEVEL_LOGGER_NAME)
+logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
 
 class TaskFactory():

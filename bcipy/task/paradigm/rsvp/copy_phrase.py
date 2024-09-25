@@ -126,8 +126,6 @@ class RSVPCopyPhraseTask(Task):
         self.validate_parameters()
 
         self.static_clock = None
-        # self.static_clock = core.StaticPeriod(
-        #     screenHz=self.window.getActualFrameRate())
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
 
@@ -141,7 +139,7 @@ class RSVPCopyPhraseTask(Task):
         self.file_save = file_save
         self.save_session_every_inquiry = True
 
-        self.trigger_handler = TriggerHandler(self.file_save, TRIGGER_FILENAME, FlushFrequency.EVERY)
+        self.trigger_handler = self.default_trigger_handler()
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters['task_text']
 
@@ -203,6 +201,11 @@ class RSVPCopyPhraseTask(Task):
         if self.parameters['show_preview_inquiry']:
             evidence_types.append(EvidenceType.BTN)
         return evidence_types
+
+    def default_trigger_handler(self) -> TriggerHandler:
+        """Default trigger handler"""
+        return TriggerHandler(self.file_save, TRIGGER_FILENAME,
+                              FlushFrequency.EVERY)
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""

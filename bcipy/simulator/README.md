@@ -66,5 +66,5 @@ The simulator is structured to support evidence from multiple devices (multimoda
 
 * Only provides EEG support
 * Only one sampler maybe provided for all devices. Ideally we should support a different sampling strategy for each device.
-* Only the RSVP Copy Phrase may be simulated
+* Only Copy Phrase is currently supported.
 * Metrics are collected per run, but not summarized across all runs.

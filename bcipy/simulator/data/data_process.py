@@ -3,6 +3,7 @@ Processed data can be subsequently sampled and provided to a SignalModel
 for classification."""
 
 import logging as logger
+from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from typing import List, NamedTuple, Optional, Tuple, Type
@@ -299,6 +300,7 @@ class RawDataProcessor():
             decoded_triggers=decoded_triggers,
             trials_per_inquiry=timing_params.trials_per_inquiry)
 
+    @abstractmethod
     def reshape_data(self, raw_data: RawData,
                      decoded_triggers: DecodedTriggers,
                      timing_params: TimingParams) -> ReshapedData:

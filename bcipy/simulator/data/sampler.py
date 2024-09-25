@@ -1,6 +1,6 @@
 import logging
 import random
-from abc import ABC
+from abc import ABC, abstractmethod
 from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Dict, List, Tuple
@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 
 from bcipy.simulator.data.data_engine import QueryFilter, RawDataEngine, Trial
-from bcipy.simulator.helpers.state import SimState
+from bcipy.simulator.util.state import SimState
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +41,7 @@ class Sampler(ABC):
         self.data_engine: RawDataEngine = data_engine
         self.model_input_reshaper: Callable = default_reshaper
 
+    @abstractmethod
     def sample(self, state: SimState) -> List[Trial]:
         """
         Query the data engine for a list of trials corresponding to each
@@ -132,8 +133,6 @@ class InquirySampler(Sampler):
         target_inquiries = defaultdict(list)
         no_target_inquiries = defaultdict(list)
 
-        # TODO: there is probably a more optimal way to use pandas to compute.
-        # Look into groupby.
         for source in data['source'].unique():
             source_df = data[data['source'] == source]
             for n in source_df['inquiry_n'].unique():
@@ -152,7 +151,9 @@ class InquirySampler(Sampler):
         """Samples a random inquiry for a random data source.
 
         Ensures that if a target is shown in the current inquiry the sampled
-        data will be from an inquiry where the target was presented.
+        data will be from an inquiry where the target was presented. Note that
+        the inquiry may need to be re-ordered to ensure that the target is in
+        the correct position.
 
         Parameters
         ----------

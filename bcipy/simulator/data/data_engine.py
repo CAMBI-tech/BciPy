@@ -12,7 +12,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,
                                                RawDataProcessor)
-from bcipy.simulator.helpers.artifact import TOP_LEVEL_LOGGER_NAME
+from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 
 log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
@@ -30,7 +30,6 @@ class Trial(NamedTuple):
         eeg - EEG data associated with this trial
     """
     source: str
-    # series_n: int
     inquiry_n: int
     inquiry_pos: int
     symbol: str

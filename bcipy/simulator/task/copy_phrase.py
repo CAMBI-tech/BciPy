@@ -8,8 +8,8 @@ from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
-from bcipy.simulator.helpers.state import SimState
 from bcipy.simulator.task.null_display import NullDisplay
+from bcipy.simulator.util.state import SimState
 from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
@@ -74,11 +74,9 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def show_feedback(self, selection: str, correct: bool = True) -> None:
         """Override to do nothing"""
-        # TODO: consider tracking metrics
 
     def compute_button_press_evidence(
             self, proceed: bool) -> Optional[Tuple[EvidenceType, List[float]]]:
-        # TODO: consider adding a sampler for this
         return None
 
     def compute_device_evidence(
@@ -107,7 +105,6 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
         """Close the UI and cleanup."""
 
     def elapsed_seconds(self) -> float:
-        # TODO: estimate this
         return 0.0
 
     def write_offset_trigger(self) -> None:
@@ -120,14 +117,12 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     def get_sim_state(self) -> SimState:
         """Get the current state in the format expected by the simulation tools."""
 
-        return SimState(
-            target_symbol=self.next_target(),
-            current_sentence=self.spelled_text,
-            target_sentence=self.copy_phrase,
-            display_alphabet=self.current_symbols(),
-            # TODO:
-            inquiry_n=0,
-            series_n=0)
+        return SimState(target_symbol=self.next_target(),
+                        current_sentence=self.spelled_text,
+                        target_sentence=self.copy_phrase,
+                        display_alphabet=self.current_symbols(),
+                        inquiry_n=len(self.session.series[-1]),
+                        series_n=len(self.session.series))
 
     def current_symbols(self) -> List[str]:
         """Get the list of symbols from the current inquiry."""
