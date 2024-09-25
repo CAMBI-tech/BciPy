@@ -18,13 +18,13 @@ logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 class TaskFactory():
     """Constructs the hierarchy of objects necessary for initializing a task."""
 
-    # TODO: sampling strategy per model type
-    def __init__(self,
-                 params_path: str,
-                 model_path: str,
-                 source_dirs: List[str],
-                 sampling_strategy: Type[Sampler] = TargetNontargetSampler,
-                 task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask):
+    def __init__(
+            self,
+            params_path: str,
+            model_path: str,
+            source_dirs: List[str],
+            sampling_strategy: Type[Sampler] = TargetNontargetSampler,
+            task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask):
         self.params_path = params_path
         self.model_path = model_path
         self.source_dirs = source_dirs
@@ -34,8 +34,16 @@ class TaskFactory():
         logger.info("Loading parameters")
         self.parameters = load_json_parameters(self.params_path,
                                                value_cast=True)
-        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
-        # TODO: log which parameters were added
+        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH,
+                                              value_cast=True)
+
+        added_params = [
+            key
+            for key, change in default_params.diff(self.parameters).items()
+            if change.original_value is None
+        ]
+        logger.info(
+            f"Added missing parameters using default values: {added_params}")
         self.parameters.add_missing_items(default_params)
 
         logger.info("Loading signal models")
@@ -49,7 +57,9 @@ class TaskFactory():
         self.samplers = self.init_samplers(self.signal_models)
         logger.debug(self.samplers)
 
-    def init_samplers(self, signal_models: List[SignalModel]) -> Dict[SignalModel, Sampler]:
+    def init_samplers(
+            self,
+            signal_models: List[SignalModel]) -> Dict[SignalModel, Sampler]:
         """Initializes the evidence evaluators from the provided signal models.
 
         Returns a list of evaluators for active devices. Raises an exception if
