@@ -78,6 +78,16 @@ from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
 
+#### Simulator Usage
+
+The simulator can be run using the command line utility `bcipy-sim`.
+
+Ex. 
+`bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+Run `bcipy-sim --help` for documentation or see the README in the simulator module.
+
+
 ## Glossary
 -----------
 
@@ -115,6 +125,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `main`: executor of experiments. Main entry point into the application
 - `config`: configuration parameters for the application, including paths and data filenames.
+- `simulator`: provides support for running simulations based off of previously collected data.
 
 
 ## Paradigms

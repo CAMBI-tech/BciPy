@@ -25,6 +25,9 @@ optional arguments:
   -n N                  Number of times to run the simulation
 ```
 
+For example,
+`$ python bcipy/simulator -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
 #### Program Args
 
 - `d` : the data wrapper folder argument is necessary. This folder is expected to contain 1 or more session folders. Each session folder should contain
