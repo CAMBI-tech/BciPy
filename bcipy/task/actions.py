@@ -3,7 +3,7 @@ from typing import Any, Optional
 import logging
 
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
-from bcipy.task import Task
+from bcipy.task import Task, TaskData, TaskMode
 from bcipy.helpers.parameters import Parameters
 from bcipy.task.main import TaskData
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME
@@ -18,6 +18,7 @@ class CodeHookAction(Task):
     """
 
     name = "Code Hook Action"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
@@ -46,6 +47,7 @@ class OfflineAnalysisAction(Task):
     """
 
     name = "Offline Analysis Action"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
@@ -80,6 +82,7 @@ class ExperimentFieldCollectionAction(Task):
     """
 
     name = "Experiment Field Collection Action"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,

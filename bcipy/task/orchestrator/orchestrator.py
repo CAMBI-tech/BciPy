@@ -8,7 +8,7 @@ from typing import List, Type, Optional
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.system_utils import get_system_info, configure_logger
-from bcipy.task import Task, TaskData
+from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
     DEFAULT_PARAMETERS_PATH,
@@ -55,6 +55,14 @@ class SessionOrchestrator:
             # This allows for the parameters to be passed in directly and modified before executions
             self.parameters = parameters
 
+        if self.parameters.get('copy_phrases_location') != "":
+            self.copyphrases = self.load_copy_phrases(self.parameters['copy_phrases_location'])
+            self.next_phrase = None
+        else:
+            self.copyphrases = None
+            self.next_phrase = self.parameters['task_text']
+            self.starting_index = self.parameters['spelled_letters_count']
+
         self.user = user
         self.fake = fake
         self.experiment_id = experiment_id
@@ -80,6 +88,34 @@ class SessionOrchestrator:
         for task in tasks:
             self.add_task(task)
 
+    def set_next_phrase(self) -> None:
+        if self.copyphrases:
+            if len(self.copyphrases) > 0:
+                text, index = self.copyphrases.pop(0)
+                self.next_phrase = text
+                self.starting_index = index
+            else:
+                self.next_phrase = [self.parameters['task_text']]
+        self.parameters['task_text'] = self.next_phrase
+        self.parameters['spelled_letters_count'] = self.starting_index
+    
+    def load_copy_phrases(self, copy_phrases_location: str):
+        """Load copy phrases from a json file.
+        
+        Expects a json file structured as follows:
+        {
+            "Phrases": [
+                [string, int],
+                [string, int],
+                ...
+            ]
+        }
+        """
+        # load copy phrases from json file
+        with open(copy_phrases_location, 'r') as f:
+            copy_phrases = json.load(f)
+        return copy_phrases['Phrases']
+
     def execute(self) -> None:
         """Executes queued tasks in order"""
 
@@ -91,6 +127,8 @@ class SessionOrchestrator:
         self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
         for task in self.tasks:
             self.progress += 1
+            if task.mode == TaskMode.COPYPHRASE:
+                self.set_next_phrase()
             try:
                 # initialize the task save folder and logger
                 self.logger.info(f"Initializing task {self.progress}/{len(self.tasks)} {task.name}")
@@ -126,7 +164,7 @@ class SessionOrchestrator:
                 self.logger.error(f"Task {task.name} failed to execute")
                 self.logger.exception(e)
 
-        self._save_protocol_data()
+        self._save_data()
 
     def _init_orchestrator_logger(self, save_folder: str) -> Logger:
         return configure_logger(
@@ -165,12 +203,24 @@ class SessionOrchestrator:
             SESSION_LOG_FILENAME,
             logging.DEBUG)
 
-    def _save_protocol_data(self) -> None:
-        # Save the protocol data
-        with open(f'{self.save_folder}/protocol.json', 'w') as f:  # TODO: move to config
+    def _save_data(self) -> None:
+        # TODO: used the helpers/save.py to save the data and move filenames to config
+        # Save the protocol data to a json file
+        with open(f'{self.save_folder}/protocol.json', 'w') as f:
             f.write(json.dumps({
                 'tasks': self.task_names,
                 'parameters': self.parameters_path,
                 'system_info': self.sys_info,
             }))
             self.logger.info("Protocol data successfully saved")
+
+        # Save the remaining phrase data to a json file to be used in the next session
+        if self.copyphrases and len(self.copyphrases) > 0:
+            with open(f'{self.save_folder}/phrases.json', 'w') as f:
+                f.write(json.dumps({
+                    'Phrases': self.copyphrases
+                }))
+                self.logger.info("Copy phrases data successfully saved")
+        else:
+            self.logger.info("No copy phrases data to save all phrases used")
+

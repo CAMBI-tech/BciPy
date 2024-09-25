@@ -33,7 +33,7 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     """
     name = 'Matrix Calibration'
-    MODE = 'Matrix'
+    paradigm = 'Matrix'
 
     @property
     def screen_info(self) -> Dict[str, Any]:

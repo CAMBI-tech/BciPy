@@ -552,7 +552,16 @@
     "value": "HELLO_WORLD",
     "section": "online_config",
     "name": "Target Phrase",
-    "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
+    "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks. If copy_phrases_location is provided, this parameter will be ignored and overwritten in parameter saving.",
+    "recommended": "",
+    "editable": true,
+    "type": "str"
+  },
+  "copy_phrases_location": {
+    "value": "/Users/scitab/Desktop/scitab/CAMBI/BciPy/bcipy/parameters/experiment/phrases.json",
+    "section": "online_config",
+    "name": "Copy Phrases Location",
+    "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
     "recommended": "",
     "editable": true,
     "type": "str"

@@ -32,7 +32,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
     fake (bool)
     """
     name = 'VEP Calibration'
-    MODE = 'VEP'
+    paradigm = 'VEP'
 
     def __init__(self,
                  parameters: Parameters,
