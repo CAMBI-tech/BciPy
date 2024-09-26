@@ -1,29 +1,28 @@
 """Script that will replay sessions and allow us to simulate new model predictions on that data."""
 import json
 import logging as logger
-from typing import Tuple
-from pathlib import Path
 import pickle
+from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from bcipy.config import (
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME,
-)
-from bcipy.helpers.acquisition import analysis_channels
+
 import bcipy.acquisition.devices as devices
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          SESSION_DATA_FILENAME, TRIGGER_FILENAME)
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
+from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
+                                  get_default_transform)
 
 logger.getLogger().setLevel(logger.INFO)
 
