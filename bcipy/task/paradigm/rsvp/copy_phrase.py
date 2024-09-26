@@ -22,7 +22,8 @@ from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
-from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
+from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
+                                fake_copy_phrase_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
                                 trial_complete_message)
@@ -94,7 +95,8 @@ class RSVPCopyPhraseTask(Task):
         'font', 'fixation_color', 'trigger_type',
         'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
         'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
-        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'min_inq_len',
+        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'max_incorrect',
+        'min_inq_len',
         'show_feedback', 'feedback_duration',
         'show_preview_inquiry', 'preview_inquiry_isi', 'preview_inquiry_error_prob',
         'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
@@ -414,6 +416,15 @@ class RSVPCopyPhraseTask(Task):
         if self.session.total_number_decisions >= self.parameters['max_selections']:
             self.logger.info('Max number of selections reached '
                              '(configured with the max_selections parameter)')
+            return False
+
+        if consecutive_incorrect(
+                target_text=self.copy_phrase,
+                spelled_text=self.spelled_text) >= self.parameters.get(
+                    'max_incorrect', 3):
+            self.logger.info(
+                'Max number of consecutive incorrect selections reached '
+                '(configured with the max_incorrect parameter)')
             return False
 
         return True

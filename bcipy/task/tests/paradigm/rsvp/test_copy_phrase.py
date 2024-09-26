@@ -50,6 +50,7 @@ class TestCopyPhrase(unittest.TestCase):
             'max_minutes': 20,
             'min_inq_len': 1,
             'max_selections': 50,
+            'max_incorrect': 10,
             'notch_filter_frequency': 60.0,
             'preview_inquiry_isi': 1.0,
             'preview_inquiry_key_input': 'space',

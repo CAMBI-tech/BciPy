@@ -535,7 +535,7 @@
     "type": "float"
   },
   "stim_number": {
-    "value": "100",
+    "value": "55",
     "section": "bci_config",
     "readableName": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
@@ -608,6 +608,14 @@
     "section": "bci_config",
     "readableName": "Maximum Number of Selections",
     "helpTip": "The maximum number of selections for copy/spelling tasks. The task will end if this number is reached.",
+    "recommended_values": "",
+    "type": "int"
+  },
+  "max_incorrect": {
+    "value": "3",
+    "section": "bci_config",
+    "readableName": "Maximum Number of Incorrect Selections",
+    "helpTip": "The maximum number of consecutive incorrect selections for copy/spelling tasks. The task will end if this number is reached.",
     "recommended_values": "",
     "type": "int"
   },
