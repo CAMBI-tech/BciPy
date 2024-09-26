@@ -17,7 +17,7 @@ class CodeHookAction(Task):
     Action for running generic code hooks.
     """
 
-    name = "Code Hook Action"
+    name = "CodeHookAction"
     mode = TaskMode.ACTION
 
     def __init__(
@@ -46,7 +46,7 @@ class OfflineAnalysisAction(Task):
     Action for running offline analysis.
     """
 
-    name = "Offline Analysis Action"
+    name = "OfflineAnalysisAction"
     mode = TaskMode.ACTION
 
     def __init__(
@@ -68,7 +68,20 @@ class OfflineAnalysisAction(Task):
             self.data_directory = data_directory
 
     def execute(self) -> TaskData:
-        response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
+        """Execute the offline analysis.
+        
+        Note: This function is called by the orchestrator to execute the offline analysis task. Some of the
+            exceptions that can be raised by this function are not recoverable and will cause the orchestrator
+            to stop execution. For example, if Exception is thrown in cross_validation due to the # of folds being
+            inconsistent.
+            
+        """
+        logger.info(f"Running offline analysis on data in {self.data_directory}")
+        try:
+            response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
+        except Exception as e:
+            logger.exception(f"Error running offline analysis: {e}")
+            raise e
         return TaskData(
             save_path=self.data_directory,
             task_dict={"parameters": self.parameters_path,
