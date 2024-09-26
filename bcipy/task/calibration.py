@@ -138,6 +138,7 @@ class BaseCalibrationTask(Task):
 
     def cleanup(self) -> None:
         """Any cleanup code to run after the last inquiry is complete."""
+        logger.info('Cleaning up task acquisition and display.')
         self.exit_display()
         self.write_offset_trigger()
         self.wait()
@@ -203,7 +204,7 @@ class BaseCalibrationTask(Task):
         """Initialize the session data."""
         return session_data.Session(save_location=self.file_save,
                                     task=self.name,
-                                    mode=self.mode,
+                                    mode=str(self.mode),
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 

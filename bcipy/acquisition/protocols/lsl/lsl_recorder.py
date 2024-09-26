@@ -145,9 +145,9 @@ class LslRecordingThread(StoppableProcess):
 
     def _cleanup(self) -> None:
         """Performs cleanup tasks."""
-        assert self.writer, "Writer not initialized"
-        self.writer.__exit__()
-        self.writer = None
+        if self.writer:
+            self.writer.__exit__()
+            self.writer = None
 
     def _write_chunk(self, data: List, timestamps: List) -> None:
         """Persists the data resulting from pulling a chunk from the inlet.

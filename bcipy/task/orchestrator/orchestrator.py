@@ -54,14 +54,12 @@ class SessionOrchestrator:
         else:
             # This allows for the parameters to be passed in directly and modified before executions
             self.parameters = parameters
+        
+        self.copyphrases = None
+        self.next_phrase = None
+        self.starting_index = 0
 
-        if self.parameters.get('copy_phrases_location') != "":
-            self.copyphrases = self.load_copy_phrases(self.parameters['copy_phrases_location'])
-            self.next_phrase = None
-        else:
-            self.copyphrases = None
-            self.next_phrase = self.parameters['task_text']
-            self.starting_index = self.parameters['spelled_letters_count']
+        self.initialize_copy_phrases()
 
         self.user = user
         self.fake = fake
@@ -77,30 +75,38 @@ class SessionOrchestrator:
         self.visualize = visualize
         self.progress = 0
 
-        self.ready_to_execute = True
+        self.ready_to_execute = False
         self.logger.info("Session Orchestrator initialized successfully")
 
     def add_task(self, task: Type[Task]) -> None:
+        """Add a task to the orchestrator"""
         self.tasks.append(task)
         self.task_names.append(task.name)
+        self.ready_to_execute = True
 
     def add_tasks(self, tasks: List[Type[Task]]) -> None:
+        """Add a list of tasks to the orchestrator"""
         for task in tasks:
             self.add_task(task)
+        self.ready_to_execute = True
 
     def set_next_phrase(self) -> None:
+        """Set the next phrase to be copied from the list of copy phrases loaded or the parameters directly.
+        
+        If there are no more phrases to copy, the task text and spelled letters from parameters will be used.
+        """
         if self.copyphrases:
             if len(self.copyphrases) > 0:
                 text, index = self.copyphrases.pop(0)
                 self.next_phrase = text
                 self.starting_index = index
             else:
-                self.next_phrase = [self.parameters['task_text']]
+                self.next_phrase = self.parameters['task_text']
         self.parameters['task_text'] = self.next_phrase
         self.parameters['spelled_letters_count'] = self.starting_index
     
-    def load_copy_phrases(self, copy_phrases_location: str):
-        """Load copy phrases from a json file.
+    def initialize_copy_phrases(self) -> None:
+        """Load copy phrases from a json file or take the task text if no file is provided.
         
         Expects a json file structured as follows:
         {
@@ -111,20 +117,26 @@ class SessionOrchestrator:
             ]
         }
         """
-        # load copy phrases from json file
-        with open(copy_phrases_location, 'r') as f:
-            copy_phrases = json.load(f)
-        return copy_phrases['Phrases']
+        # load copy phrases from json file or take the task text if no file is provided
+        if self.parameters.get('copy_phrases_location') != "":
+            with open(self.parameters['copy_phrases_location'], 'r') as f:
+                copy_phrases = json.load(f)
+            self.copyphrases = copy_phrases['Phrases']
+        else:
+            self.copyphrases = None
+            self.next_phrase = self.parameters['task_text']
+            self.starting_index = self.parameters['spelled_letters_count']
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
 
         if not self.ready_to_execute:
-            msg = "Orchestrator not ready to execute tasks"
+            msg = "Orchestrator not ready to execute. No tasks have been added."
             self.log.error(msg)
             raise Exception(msg)
 
         self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
+        initialized_task = None
         for task in self.tasks:
             self.progress += 1
             if task.mode == TaskMode.COPYPHRASE:
@@ -159,12 +171,25 @@ class SessionOrchestrator:
                         pass
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
+                
+                # cleanup the task from memory
+                initialized_task = None
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
                 self.logger.exception(e)
-
+                try:
+                    initialized_task.cleanup()
+                    initialized_task = None
+                except:
+                    pass
+        
+        # Save the protocol data and reset the orchestrator
         self._save_data()
+        self.ready_to_execute = False
+        self.tasks = []
+        self.task_names = []
+        self.progress = 0
 
     def _init_orchestrator_logger(self, save_folder: str) -> Logger:
         return configure_logger(
@@ -222,5 +247,5 @@ class SessionOrchestrator:
                 }))
                 self.logger.info("Copy phrases data successfully saved")
         else:
-            self.logger.info("No copy phrases data to save all phrases used")
+            self.logger.info("No copy phrases data to save, all phrases used")
 

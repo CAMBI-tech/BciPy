@@ -89,7 +89,8 @@ class VEPDisplay(Display):
         display_container = layout.centered(parent=self.window, width_pct=0.7)
         self.starting_positions = symbol_positions(display_container,
                                                    rows=3,
-                                                   columns=10)
+                                                   columns=10,
+                                                   symbol_set=self.symbol_set)
         self.logger.info(
             f"Symbol starting positions ({str(display_container.units)} units): {self.starting_positions}"
         )
@@ -112,6 +113,8 @@ class VEPDisplay(Display):
         self.task_bar = task_bar
         self.info_text = info.build_info_text(window)
 
+        self.box_stim_height = 0.24
+
         # build the VEP stimuli
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
@@ -122,7 +125,7 @@ class VEPDisplay(Display):
         ]
         vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
                       ('orange', 'green')]
-        vep_stim_size = scaled_size(0.24, self.window_size)
+        vep_stim_size = scaled_size(self.box_stim_height, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
                                           codes=codes,
                                           colors=cycle(vep_colors),
@@ -336,10 +339,10 @@ class VEPDisplay(Display):
         while self.static_clock.getTime() < self.timing_animation:
             for frame in range(frames):
                 self.draw_boxes()
+                self.draw_static()
                 for sym, sti in self.sti.items():
                     sti.pos = animation_paths[sym][frame]
                     sti.draw()
-                self.draw_static()
                 self.window.flip()
                 counter += 1
         self.logger.debug(
@@ -381,8 +384,6 @@ class VEPDisplay(Display):
         if self.task_bar:
             self.task_bar.draw()
 
-        for info in self.info_text:
-            info.draw()
 
     def update_task_bar(self, text: str = ''):
         """Update any task related display items not related to the inquiry.
@@ -412,6 +413,7 @@ class VEPDisplay(Display):
         for sym in self.symbol_set:
             pos_index = self.sort_order(sym)
             grid[sym] = visual.TextStim(win=self.window,
+                                        font=self.stimuli_font,
                                         text=sym,
                                         color=self.starting_color,
                                         pos=self.starting_positions[pos_index],

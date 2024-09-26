@@ -13,6 +13,7 @@ DIODE_TRIGGER = '\u25A0'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
+DEFAULT_FRAME_RATE = 60
 CUSTOM_TASK_EXPERIMENT_ID = "CustomTaskExecution"
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
