@@ -5,7 +5,6 @@ import logging
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task, TaskData, TaskMode
 from bcipy.helpers.parameters import Parameters
-from bcipy.task.main import TaskData
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME
 from bcipy.signal.model.offline_analysis import offline_analysis
 
@@ -69,12 +68,12 @@ class OfflineAnalysisAction(Task):
 
     def execute(self) -> TaskData:
         """Execute the offline analysis.
-        
+
         Note: This function is called by the orchestrator to execute the offline analysis task. Some of the
             exceptions that can be raised by this function are not recoverable and will cause the orchestrator
             to stop execution. For example, if Exception is thrown in cross_validation due to the # of folds being
             inconsistent.
-            
+
         """
         logger.info(f"Running offline analysis on data in {self.data_directory}")
         try:

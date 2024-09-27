@@ -1,9 +1,10 @@
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.task.actions import (OfflineAnalysisAction)
-from bcipy.task.paradigm.rsvp import RSVPCalibrationTask, RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
+# from bcipy.task.actions import (OfflineAnalysisAction)
+from bcipy.task.paradigm.rsvp import RSVPCalibrationTask, RSVPCopyPhraseTask
+# from bcipy.task.paradigm.rsvp import RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.matrix import MatrixCalibrationTask
-from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
+# from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
 from bcipy.task.paradigm.vep import VEPCalibrationTask
 
 
@@ -14,6 +15,8 @@ def demo_orchestrator(parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
+    fake_data = True
+    alert_finished = True
     tasks = [
         VEPCalibrationTask,
         MatrixCalibrationTask,
@@ -23,9 +26,9 @@ def demo_orchestrator(parameters_path: str) -> None:
         RSVPCopyPhraseTask,
         RSVPCopyPhraseTask,
         RSVPCopyPhraseTask
-        ]
+    ]
     orchestrator = SessionOrchestrator(
-        user='demo_orchestrator', parameters_path=parameters_path, alert=True, fake=True)
+        user='demo_orchestrator', parameters_path=parameters_path, alert=alert_finished, fake=fake_data)
     orchestrator.add_tasks(tasks)
     orchestrator.execute()
 

@@ -54,7 +54,7 @@ class SessionOrchestrator:
         else:
             # This allows for the parameters to be passed in directly and modified before executions
             self.parameters = parameters
-        
+
         self.copyphrases = None
         self.next_phrase = None
         self.starting_index = 0
@@ -92,7 +92,7 @@ class SessionOrchestrator:
 
     def set_next_phrase(self) -> None:
         """Set the next phrase to be copied from the list of copy phrases loaded or the parameters directly.
-        
+
         If there are no more phrases to copy, the task text and spelled letters from parameters will be used.
         """
         if self.copyphrases:
@@ -104,10 +104,10 @@ class SessionOrchestrator:
                 self.next_phrase = self.parameters['task_text']
         self.parameters['task_text'] = self.next_phrase
         self.parameters['spelled_letters_count'] = self.starting_index
-    
+
     def initialize_copy_phrases(self) -> None:
         """Load copy phrases from a json file or take the task text if no file is provided.
-        
+
         Expects a json file structured as follows:
         {
             "Phrases": [
@@ -136,7 +136,6 @@ class SessionOrchestrator:
             raise Exception(msg)
 
         self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
-        initialized_task = None
         for task in self.tasks:
             self.progress += 1
             if task.mode == TaskMode.COPYPHRASE:
@@ -171,19 +170,15 @@ class SessionOrchestrator:
                         pass
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
-                
-                # cleanup the task from memory
-                initialized_task = None
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
                 self.logger.exception(e)
                 try:
                     initialized_task.cleanup()
-                    initialized_task = None
-                except:
+                except BaseException:
                     pass
-        
+
         # Save the protocol data and reset the orchestrator
         self._save_data()
         self.ready_to_execute = False
@@ -248,4 +243,3 @@ class SessionOrchestrator:
                 self.logger.info("Copy phrases data successfully saved")
         else:
             self.logger.info("No copy phrases data to save, all phrases used")
-

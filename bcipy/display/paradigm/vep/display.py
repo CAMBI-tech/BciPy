@@ -384,7 +384,6 @@ class VEPDisplay(Display):
         if self.task_bar:
             self.task_bar.draw()
 
-
     def update_task_bar(self, text: str = ''):
         """Update any task related display items not related to the inquiry.
         Ex. stimuli count 1/200.

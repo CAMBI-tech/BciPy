@@ -17,6 +17,7 @@ class TaskData():
     save_path: Optional[str] = None
     task_dict: Optional[dict] = None
 
+
 class TaskMode(Enum):
     CALIBRATION = "calibration"
     COPYPHRASE = "copy phrase"
@@ -26,7 +27,7 @@ class TaskMode(Enum):
 
     def __str__(self) -> str:
         return self.value
-    
+
     def __repr__(self) -> str:
         return self.value
 
