@@ -21,6 +21,7 @@ class TestSessionOrchestrator(unittest.TestCase):
     def test_orchestrator_add_task(self) -> None:
         task = mock(spec=Task)
         task.name = "test task"
+        task.mode = "test mode"
         when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
         orchestrator = SessionOrchestrator()
@@ -34,8 +35,10 @@ class TestSessionOrchestrator(unittest.TestCase):
     def test_orchestrator_add_tasks(self) -> None:
         task1 = mock(spec=Task)
         task1.name = "test task"
+        task1.mode = "test mode"
         task2 = mock(spec=Task)
         task2.name = "test task"
+        task2.mode = "test mode"
         tasks = [task1, task2]
         when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
@@ -53,12 +56,13 @@ class TestSessionOrchestrator(unittest.TestCase):
     def test_orchestrator_execute(self) -> None:
         task = mock(spec=Task)
         task.name = "test task"
+        task.mode = "test mode"
         task.execute = lambda: TaskData()
         when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
-        when(SessionOrchestrator)._save_protocol_data().thenReturn()
+        when(SessionOrchestrator)._save_data().thenReturn()
         when(task).__call__(
             any(),
             any(),
@@ -77,7 +81,7 @@ class TestSessionOrchestrator(unittest.TestCase):
         verify(SessionOrchestrator, times=1)._init_orchestrator_logger(any())
         verify(SessionOrchestrator, times=1)._init_task_save_folder(any())
         verify(SessionOrchestrator, times=1)._init_task_logger(any())
-        verify(SessionOrchestrator, times=1)._save_protocol_data()
+        verify(SessionOrchestrator, times=1)._save_data()
 
 
 if __name__ == '__main__':
