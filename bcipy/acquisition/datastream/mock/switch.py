@@ -42,7 +42,7 @@ class Switch:
         self.outlet = None
 
 
-class SwitchGui(BCIGui): # pragma: no cover
+class SwitchGui(BCIGui):  # pragma: no cover
     """GUI to emulate a switch."""
 
     def __init__(self, switch: Switch, *args, **kwargs):
@@ -71,7 +71,7 @@ class SwitchGui(BCIGui): # pragma: no cover
             font_size=16)
 
 
-def main(switch: Switch): # pragma: no cover
+def main(switch: Switch):  # pragma: no cover
     """Creates a PyQt5 GUI with a single button in the middle. Performs the
     switch action when clicked."""
     gui = app(sys.argv)

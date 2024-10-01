@@ -51,7 +51,6 @@ class TestBCIMain(unittest.TestCase):
                 fake=self.fake
             )
 
-
     def test_bci_main_runs_with_valid_experiment(self) -> None:
         when(main).validate_bcipy_session(any(), any()).thenReturn(True)  # Mock the validate_bcipy_session function
         when(main).load_json_parameters(

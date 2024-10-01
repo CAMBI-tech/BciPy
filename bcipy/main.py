@@ -104,7 +104,7 @@ def bci_main(
     return True
 
 
-def bcipy_main() -> None: # pragma: no cover
+def bcipy_main() -> None:  # pragma: no cover
     """BciPy Main.
 
     Command line interface used for running a registered experiment task in BciPy. To see what

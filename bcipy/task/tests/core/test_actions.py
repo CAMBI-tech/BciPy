@@ -9,9 +9,9 @@ from bcipy.task.actions import CodeHookAction, OfflineAnalysisAction, Experiment
 class TestActions(unittest.TestCase):
 
     def setUp(self) -> None:
-       self.parameters = mock()
-       self.parameters_path = 'parameters_path'
-       self.data_directory = 'data/'
+        self.parameters = mock()
+        self.parameters_path = 'parameters_path'
+        self.data_directory = 'data/'
 
     def tearDown(self) -> None:
         unstub()
@@ -26,7 +26,7 @@ class TestActions(unittest.TestCase):
             subprocess=True
         )
         response = action.execute()
-        self.assertIsInstance(response, TaskData)  
+        self.assertIsInstance(response, TaskData)
         verify(subprocess, times=1).Popen(code_hook, shell=True)
 
     def test_code_hook_action_no_subprocess(self) -> None:
