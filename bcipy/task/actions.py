@@ -99,12 +99,12 @@ class ExperimentFieldCollectionAction(Task):
     def __init__(
             self,
             parameters: Parameters,
-            save_path: str,
+            data_directory: str,
             experiment_id: str = 'default',
             **kwargs: Any) -> None:
         super().__init__()
         self.experiment_id = experiment_id
-        self.save_folder = save_path
+        self.save_folder = data_directory
         self.parameters = parameters
 
     def execute(self) -> TaskData:

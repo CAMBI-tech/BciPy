@@ -13,6 +13,8 @@ from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
     DEFAULT_PARAMETERS_PATH,
     DEFAULT_USER_ID,
+    MULTIPHRASE_FILENAME,
+    PROTOCOL_FILENAME,
     PROTOCOL_LOG_FILENAME,
     SESSION_LOG_FILENAME
 )
@@ -64,7 +66,7 @@ class SessionOrchestrator:
         self.user = user
         self.fake = fake
         self.experiment_id = experiment_id
-        self.sys_info = get_system_info()
+        self.sys_info = self.get_system_info()
         self.tasks = []
         self.task_names = []
         self.session_data = []
@@ -224,9 +226,15 @@ class SessionOrchestrator:
             logging.DEBUG)
 
     def _save_data(self) -> None:
-        # TODO: used the helpers/save.py to save the data and move filenames to config
+
+        self._save_procotol_data()
+        # Save the remaining phrase data to a json file to be used in the next session
+        if self.copyphrases and len(self.copyphrases) > 0:
+            self._save_copy_phrases()
+
+    def _save_procotol_data(self) -> None:
         # Save the protocol data to a json file
-        with open(f'{self.save_folder}/protocol.json', 'w') as f:
+        with open(f'{self.save_folder}/{PROTOCOL_FILENAME}', 'w') as f:
             f.write(json.dumps({
                 'tasks': self.task_names,
                 'parameters': self.parameters_path,
@@ -234,12 +242,13 @@ class SessionOrchestrator:
             }))
             self.logger.info("Protocol data successfully saved")
 
-        # Save the remaining phrase data to a json file to be used in the next session
-        if self.copyphrases and len(self.copyphrases) > 0:
-            with open(f'{self.save_folder}/phrases.json', 'w') as f:
-                f.write(json.dumps({
-                    'Phrases': self.copyphrases
-                }))
-                self.logger.info("Copy phrases data successfully saved")
-        else:
-            self.logger.info("No copy phrases data to save, all phrases used")
+    def _save_copy_phrases(self) -> None:
+        # Save the copy phrases data to a json file
+        with open(f'{self.save_folder}/{MULTIPHRASE_FILENAME}', 'w') as f:
+            f.write(json.dumps({
+                'Phrases': self.copyphrases
+            }))
+            self.logger.info("Copy phrases data successfully saved")
+
+    def get_system_info(self) -> dict:
+        return get_system_info()

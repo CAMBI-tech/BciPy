@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 from bcipy.helpers.load import load_signal_models
 from bcipy.helpers.save import save_model
 from bcipy.helpers.symbols import alphabet

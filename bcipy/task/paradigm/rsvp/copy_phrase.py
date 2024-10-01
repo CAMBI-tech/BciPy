@@ -26,7 +26,7 @@ from bcipy.helpers.acquisition import init_acquisition, LslDataServer
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.display import init_display_window
-from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_signal_models
 from bcipy.helpers.list import destutter

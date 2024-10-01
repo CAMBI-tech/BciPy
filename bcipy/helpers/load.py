@@ -13,8 +13,8 @@ from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
                           SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.helpers.exceptions import (BciPyCoreException,
-                                      InvalidExperimentException)
+from bcipy.exceptions import (BciPyCoreException,
+                              InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.preferences import preferences
