@@ -150,7 +150,8 @@ class SessionOrchestrator:
             # make a directory to save task data to
             os.makedirs(save_directory)
             os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
-            # save parameters to save directory
+            # save parameters to save directory with task name
+            self.parameters.add_entry('task', task.name)
             self.parameters.save(save_directory)
 
         except OSError as error:
