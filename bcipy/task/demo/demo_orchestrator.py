@@ -21,8 +21,8 @@ def demo_orchestrator(parameters_path: str) -> None:
     orchestrator = SessionOrchestrator(
         user='time_test_orchestrator',
         parameters_path=parameters_path,
-        alert=True,
-        fake=True)
+        alert=alert_finished,
+        fake=fake_data)
     orchestrator.add_tasks(tasks)
     orchestrator.execute()
 
