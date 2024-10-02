@@ -8,7 +8,10 @@ import bcipy.display.components.layout as layout
 from bcipy.config import MATRIX_IMAGE_FILENAME
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
+from bcipy.display.components.button_press_handler import (
+    ButtonPressHandler, get_button_handler_class)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
@@ -48,7 +51,8 @@ class MatrixDisplay(Display):
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
                  should_prompt_target: bool = True,
-                 sort_order: Optional[Callable] = None):
+                 sort_order: Optional[Callable] = None,
+                 preview_config: Optional[PreviewParams] = None):
         """Initialize Matrix display parameters and objects.
 
         PARAMETERS:
@@ -73,6 +77,7 @@ class MatrixDisplay(Display):
             the first symbol of each inquiry. For example: [target, fixation, *stim].
         sort_order - optional function to define the position index for each
             symbol. Using a custom function it is possible to skip a position.
+        preview_config - optional configuration for previewing inquiries
         """
         self.window = window
 
@@ -114,6 +119,9 @@ class MatrixDisplay(Display):
         self.stim_registry = self.build_grid()
         self.should_prompt_target = should_prompt_target
 
+        self.preview_params = preview_config
+        self._preview_button_handler = self.init_preview_button_handler()
+
         self.logger.info(
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
         )
@@ -127,6 +135,11 @@ class MatrixDisplay(Display):
             sym: tuple(stim.pos)
             for sym, stim in self.stim_registry.items()
         }
+
+    @property
+    def preview_enabled(self) -> bool:
+        """Should the inquiry preview be enabled."""
+        return self.preview_params and self.preview_params.show_preview_inquiry
 
     def capture_grid_screenshot(self, file_path: str) -> None:
         """Capture Grid Screenshot.
@@ -171,12 +184,13 @@ class MatrixDisplay(Display):
             for sti in zip(self.stimuli_inquiry, self.stimuli_timing, self.stimuli_colors)
         ]
 
-    def add_timing(self, stimuli: str):
+    def add_timing(self, stimuli: str, stamp: Optional[float] = None):
         """Add a new timing entry using the stimuli as a label.
 
         Useful as a callback function to register a marker at the time it is
         first displayed."""
-        self._timing.append((stimuli, self.experiment_clock.getTime()))
+        stamp = stamp or self.experiment_clock.getTime()
+        self._timing.append((stimuli, stamp))
 
     def reset_timing(self):
         """Reset the trigger timing."""
@@ -196,7 +210,12 @@ class MatrixDisplay(Display):
         else:
             [fixation, *stim] = symbol_durations
 
-        self.animate_scp(fixation, stim)
+        should_proceed = True
+        if self.preview_enabled:
+            should_proceed = self.preview_inquiry(stim)
+
+        if should_proceed:
+            self.animate_scp(fixation, stim)
 
         return self._timing
 
@@ -217,7 +236,7 @@ class MatrixDisplay(Display):
     def draw_grid(self,
                   opacity: float = 1,
                   color: Optional[str] = 'white',
-                  highlight: Optional[str] = None,
+                  highlight: Optional[List[str]] = None,
                   highlight_color: Optional[str] = None):
         """Draw the grid.
 
@@ -225,16 +244,16 @@ class MatrixDisplay(Display):
         ----------
             opacity - opacity for each item in the matrix
             color - optional color for each item in the matrix
-            highlight - optional stim label for the item to be highlighted
+            highlight - optional list of stim labels to be highlighted
                 (rendered using the highlight_opacity).
             highlight_color - optional color to use for rendering the
               highlighted stim.
         """
         for symbol, stim in self.stim_registry.items():
-            stim.setOpacity(self.highlight_opacity if highlight ==
-                            symbol else opacity)
+            should_highlight = highlight and (symbol in highlight)
+            stim.setOpacity(self.highlight_opacity if should_highlight else opacity)
             stim.setColor(highlight_color if highlight_color and
-                          highlight == symbol else color)
+                          should_highlight else color)
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
@@ -249,14 +268,57 @@ class MatrixDisplay(Display):
         self.window.callOnFlip(self.add_timing, target.symbol)
         self.draw(grid_opacity=self.start_opacity,
                   duration=target.duration,
-                  highlight=target.symbol,
+                  highlight=[target.symbol],
                   highlight_color=target.color)
+
+    def init_preview_button_handler(self) -> Optional[ButtonPressHandler]:
+        """"Returns a button press handler for inquiry preview."""
+        if not self.preview_enabled:
+            return None
+
+        params = self.preview_params
+        make_handler = get_button_handler_class(params.button_press_mode)
+        return make_handler(max_wait=params.preview_inquiry_length,
+                            key_input=params.preview_inquiry_key_input,
+                            clock=self.experiment_clock)
+
+    def preview_inquiry(self, stimuli: List[SymbolDuration]) -> bool:
+        """"Preview the inquiry and handle any button presses.
+        Parameters
+        ----------
+            stimuli - list of stimuli to highlight (will be flashed in next inquiry)
+
+        Returns
+        -------
+            boolean indicating whether the participant would like to proceed
+                with the inquiry (True) or reject the inquiry (False) and
+                go on to the next one.
+        """
+        assert self.preview_enabled, "Preview feature not enabled."
+
+        handler = self._preview_button_handler
+        self.window.callOnFlip(self.add_timing, 'inquiry_preview')
+
+        self.draw_preview(stimuli)
+        handler.await_response()
+
+        if handler.has_response():
+            self.add_timing(handler.response_label, handler.response_timestamp)
+
+        self.draw(grid_opacity=self.start_opacity, duration=self.preview_params.preview_inquiry_isi)
+        return handler.accept_result()
+
+    def draw_preview(self, stimuli: List[SymbolDuration]) -> None:
+        """Draw the inquiry preview by highlighting all of the symbols in the
+        list."""
+        self.draw(grid_opacity=self.start_opacity,
+                  highlight=[stim.symbol for stim in stimuli])
 
     def draw(self,
              grid_opacity: float,
              grid_color: Optional[str] = None,
              duration: Optional[float] = None,
-             highlight: Optional[str] = None,
+             highlight: Optional[List[str]] = None,
              highlight_color: Optional[str] = None):
         """Draw all screen elements and flip the window.
 
@@ -265,7 +327,7 @@ class MatrixDisplay(Display):
             grid_opacity - opacity value to use on all grid symbols
             grid_color - optional color to use for all grid symbols
             duration - optional seconds to wait after flipping the window.
-            highlight - optional symbol to highlight in the grid.
+            highlight - optional list of symbols to highlight in the grid.
             highlight_color - optional color to use for rendering the
               highlighted stim.
         """
@@ -299,7 +361,7 @@ class MatrixDisplay(Display):
             self.window.callOnFlip(self.add_timing, stim.symbol)
             self.draw(grid_opacity=self.start_opacity,
                       duration=stim.duration,
-                      highlight=stim.symbol,
+                      highlight=[stim.symbol],
                       highlight_color=stim.color)
         self.draw(self.start_opacity)
 

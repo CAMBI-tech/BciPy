@@ -5,6 +5,7 @@ from psychopy import core
 from bcipy.display import (InformationProperties, StimuliProperties,
                            init_display_window)
 from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
 info = InformationProperties(
@@ -34,11 +35,17 @@ win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
 task_bar = CalibrationTaskBar(win, inquiry_count=4, current_index=0, font='Arial')
+preview_config = PreviewParams(show_preview_inquiry=True,
+                               preview_inquiry_length=2,
+                               preview_inquiry_key_input='return',
+                               preview_inquiry_progress_method=2,
+                               preview_inquiry_isi=1)
 matrix_display = MatrixDisplay(win,
                                experiment_clock,
                                stim_properties,
                                task_bar=task_bar,
-                               info=info)
+                               info=info,
+                               preview_config=preview_config)
 
 time_target = 1
 time_fixation = 0.5
