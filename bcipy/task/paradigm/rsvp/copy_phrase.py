@@ -527,7 +527,7 @@ class RSVPCopyPhraseTask(Task):
                 target_text=self.copy_phrase,
                 spelled_text=self.spelled_text) >= self.parameters.get(
                     'max_incorrect'):
-            self.logger.info(
+            logger.info(
                 'Max number of consecutive incorrect selections reached '
                 '(configured with the max_incorrect parameter)')
             return False

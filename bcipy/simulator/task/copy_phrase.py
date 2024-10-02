@@ -1,5 +1,6 @@
 """Simulates the Copy Phrase task"""
 from typing import Dict, List, Optional, Tuple
+import logging
 
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
@@ -39,6 +40,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
                          fake=False)
         self.save_session_every_inquiry = False
         self.samplers = samplers
+        self.logger = logging.getLogger(__name__)
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
