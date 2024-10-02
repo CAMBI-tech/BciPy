@@ -106,7 +106,8 @@ class OfflineAnalysisAction(Task):
 
 
 class IntertaskAction(Task):
-    name = "Intertask Action"
+    name = "IntertaskAction"
+    mode = TaskMode.ACTION
     tasks: List[Task]
     current_task_index: int
 
@@ -179,6 +180,7 @@ class BciPyCalibrationReportAction(Task):
     """
 
     name = "BciPy Report Action"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
