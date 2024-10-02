@@ -31,8 +31,8 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
                  file_save: str,
                  fake: bool = False,
                  **kwargs: Any) -> None:
-        parameters['stim_height'] = 0.8
-        parameters['stim_pos_y'] = 0.0
+        parameters['rsvp_stim_height'] = 0.8
+        parameters['rsvp_stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
               self).__init__(parameters, file_save, fake=fake)
 

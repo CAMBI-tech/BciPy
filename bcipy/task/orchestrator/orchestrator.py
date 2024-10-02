@@ -14,7 +14,7 @@ from bcipy.config import (
     DEFAULT_PARAMETERS_PATH,
     DEFAULT_USER_ID,
     PROTOCOL_LOG_FILENAME,
-    SESSION_LOG_FILENAME
+    SESSION_LOG_FILENAME,
 )
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.visualization import visualize_session_data
@@ -104,7 +104,9 @@ class SessionOrchestrator:
                     fake=self.fake,
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
-                    last_task_dir=self.last_task_dir)
+                    last_task_dir=self.last_task_dir,
+                    progress=self.progress,
+                    tasks=self.tasks)
                 task_data = initialized_task.execute()
                 self.session_data.append(task_data)
                 self.logger.info(f"Task {task.name} completed successfully")
@@ -121,6 +123,10 @@ class SessionOrchestrator:
                         pass
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
+
+                # if not self.continue_experiment:
+                #     self.logger.info("User indicates that the session should not continue")
+                #     break
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
@@ -151,7 +157,18 @@ class SessionOrchestrator:
             os.makedirs(save_directory)
             os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
             # save parameters to save directory with task name
-            self.parameters.add_entry('task', task.name)
+            self.parameters.add_entry(
+                "task",
+                {
+                    "value": task.name,
+                    "section": "task_congig",
+                    "name": "BciPy Task",
+                    "helpTip": "A string representing the task that was executed",
+                    "recommended": "",
+                    "editable": "false",
+                    "type": "str",
+                }
+            )
             self.parameters.save(save_directory)
 
         except OSError as error:

@@ -1,6 +1,4 @@
-from typing import List
 from bcipy.gui.bciui import BCIUI, run_bciui
-from bcipy.task import Task
 from PyQt6.QtWidgets import (
     QApplication,
     QLabel,
@@ -8,9 +6,6 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QProgressBar,
 )
-
-from bcipy.task.main import TaskData
-
 
 class IntertaskGUI(BCIUI):
 
@@ -20,7 +15,7 @@ class IntertaskGUI(BCIUI):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
         self.next_task_name = next_task_name
-        super().__init__("Progress", 400, 100)
+        super().__init__("Progress", 800, 150)
 
     def app(self):
         self.contents.addLayout(BCIUI.centered(QLabel("Experiment Progress")))
@@ -52,19 +47,12 @@ class IntertaskGUI(BCIUI):
         self.contents.addLayout(buttons_layout)
 
         self.next_button.clicked.connect(self.close)
-        # This should be replaced with a method that stops orchestrator execution
-        self.stop_button.clicked.connect(QApplication.instance().quit)
+        self.stop_button.clicked.connect(self.stop_orchestrator)
+    
+    def stop_orchestrator(self):
+        # This should stop the orchestrator execution
+        self.close()
 
-
-class IntertaskAction(Task):
-    name = "Intertask Action"
-    protocol: List[Task]
-    current_task_index: int
-
-    def execute(self) -> TaskData:
-        task = self.protocol[self.current_task_index]
-        run_bciui(IntertaskGUI, task.name, self.current_task_index, len(self.protocol))
-        return TaskData()
 
 
 if __name__ == "__main__":

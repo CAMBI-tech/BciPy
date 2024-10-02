@@ -1,9 +1,11 @@
 import subprocess
-from typing import Any, Optional
+from typing import Any, Optional, List
 import logging
 from pathlib import Path
 import glob
 
+from bcipy.gui.bciui import run_bciui
+from bcipy.gui.intertask_gui import IntertaskGUI
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task
 from bcipy.helpers.triggers import trigger_decoder, TriggerType
@@ -85,6 +87,41 @@ class OfflineAnalysisAction(Task):
             task_dict={"parameters": self.parameters_path,
                        "response": response},
         )
+
+class IntertaskAction(Task):
+    name = "Intertask Action"
+    tasks: List[Task]
+    current_task_index: int
+
+    def __init__(
+            self,
+            parameters: Parameters,
+            save_path: str,
+            progress: Optional[int] = None,
+            tasks: Optional[List[Task]] = None,
+            **kwargs: Any) -> None:
+        super().__init__()
+        self.save_folder = save_path
+        self.parameters = parameters
+        assert progress is not None or tasks is not None, "Either progress or tasks must be provided"
+        self.next_task_index = progress # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        assert self.next_task_index >= 0, "Progress must be greater than 1 "
+        self.tasks = tasks
+        self.task_name = self.tasks[self.next_task_index].name
+
+    def execute(self) -> TaskData:
+        run_bciui(IntertaskGUI, self.task_name, self.next_task_index, len(self.tasks) - 1)
+        return TaskData(
+            save_path=self.save_folder,
+            task_dict={
+                "next_task_index": self.next_task_index,
+                "tasks": self.tasks,
+                "task_name": self.task_name,
+            },
+        )
+    
+    def alert(self):
+        ...
 
 
 class ExperimentFieldCollectionAction(Task):

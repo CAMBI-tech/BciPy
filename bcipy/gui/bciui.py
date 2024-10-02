@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Type
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import (
     QLayout,
     QSizePolicy,
     QMessageBox,
+    QApplication,
 )
 from typing import Optional, List
 from bcipy.config import BCIPY_ROOT
@@ -221,3 +222,10 @@ class DynamicList(QWidget):
             A list of values for the given property.
         """
         return [widget.data[prop] for widget in self.widgets]
+
+
+def run_bciui(ui: Type[BCIUI], *args, **kwargs):
+    app = QApplication([])
+    ui_instance = ui(*args, **kwargs)
+    ui_instance.display()
+    app.exec()
