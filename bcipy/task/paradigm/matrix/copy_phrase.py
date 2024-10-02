@@ -53,7 +53,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
         "max_minutes",
         "max_selections",
         "max_incorrect",
-        "min_inq_per_series",
+        "min_inq_len",
         "show_feedback",
         "feedback_duration",
         "show_preview_inquiry",

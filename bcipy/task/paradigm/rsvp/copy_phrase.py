@@ -110,9 +110,9 @@ class RSVPCopyPhraseTask(Task):
         'show_preview_inquiry', 'preview_inquiry_isi', 'preview_inquiry_error_prob',
         'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
         'spelled_letters_count',
-        'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
-        'stim_order', 'stim_pos_x', 'stim_pos_y', 'stim_space_char', 'target_color',
-        'task_buffer_length', 'task_color', 'task_height', 'task_text',
+        'stim_color', 'rsvp_stim_height', 'stim_jitter', 'stim_length', 'stim_number',
+        'stim_order', 'rsvp_stim_pos_x', 'rsvp_stim_pos_y', 'stim_space_char', 'target_color',
+        'task_buffer_length', 'task_color', 'rsvp_task_height', 'task_text', 'rsvp_task_padding',
         'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
@@ -130,8 +130,6 @@ class RSVPCopyPhraseTask(Task):
         self.window = win
         self.daq = daq
         self.parameters = parameters
-        self.signal_models = signal_models
-        self.language_model = language_model
         self.fake = fake
 
         self.validate_parameters()
@@ -145,9 +143,9 @@ class RSVPCopyPhraseTask(Task):
         self.button_press_error_prob = parameters['preview_inquiry_error_prob']
 
         self.language_model = self.get_language_model()
-        signal_models = self.get_signal_models()
-        self.signal_model = signal_models[0] if signal_models else None
-        self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
+        self.signal_models = self.get_signal_models()
+        self.signal_model = self.signal_models[0] if self.signal_models else None
+        self.evidence_evaluators = self.init_evidence_evaluators(self.signal_models)
         self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
 
         self.file_save = file_save
@@ -157,12 +155,11 @@ class RSVPCopyPhraseTask(Task):
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters["task_text"]
 
-        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
         self.feedback = self.init_feedback()
 
-        self.setup_copyphrase()
+        self.set()
 
         # set a preview_only parameter
         self.parameters.add_entry(
@@ -298,7 +295,7 @@ class RSVPCopyPhraseTask(Task):
         return TriggerHandler(self.file_save, TRIGGER_FILENAME,
                               FlushFrequency.EVERY)
 
-    def setup(self) -> None:
+    def set(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 
         self.spelled_text = str(self.copy_phrase[0: self.starting_spelled_letters()])
@@ -389,7 +386,7 @@ class RSVPCopyPhraseTask(Task):
         """
 
         self.copy_phrase_task = CopyPhraseWrapper(
-            self.parameters["min_inq_per_series"],
+            self.parameters["min_inq_len"],
             self.parameters["max_inq_per_series"],
             lmodel=self.language_model,
             alp=self.alp,
@@ -529,7 +526,7 @@ class RSVPCopyPhraseTask(Task):
         if consecutive_incorrect(
                 target_text=self.copy_phrase,
                 spelled_text=self.spelled_text) >= self.parameters.get(
-                    'max_incorrect', 3):
+                    'max_incorrect'):
             self.logger.info(
                 'Max number of consecutive incorrect selections reached '
                 '(configured with the max_incorrect parameter)')

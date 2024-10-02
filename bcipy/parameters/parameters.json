@@ -733,7 +733,7 @@
     "editable": false,
     "type": "float"
   },
-  "min_inq_per_series": {
+  "min_inq_len": {
     "value": "1",
     "section": "online_config",
     "name": "Minimum Inquiries Per Series",
