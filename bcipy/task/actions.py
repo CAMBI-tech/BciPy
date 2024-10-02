@@ -5,9 +5,11 @@ from pathlib import Path
 import glob
 
 from bcipy.gui.bciui import run_bciui
+from matplotlib.figure import Figure
+
 from bcipy.gui.intertask_gui import IntertaskGUI
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
-from bcipy.task import Task
+from bcipy.task import Task, TaskMode, TaskData
 from bcipy.helpers.triggers import trigger_decoder, TriggerType
 
 from bcipy.acquisition import devices
@@ -17,7 +19,6 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.load import load_raw_data
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report
-from bcipy.task.main import TaskData
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.helpers.visualization import visualize_erp
@@ -103,6 +104,7 @@ class OfflineAnalysisAction(Task):
                        "response": response},
         )
 
+
 class IntertaskAction(Task):
     name = "Intertask Action"
     tasks: List[Task]
@@ -118,8 +120,8 @@ class IntertaskAction(Task):
         super().__init__()
         self.save_folder = save_path
         self.parameters = parameters
-        assert progress is not None or tasks is not None, "Either progress or tasks must be provided"
-        self.next_task_index = progress # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        assert progress is not None and tasks is not None, "Either progress or tasks must be provided"
+        self.next_task_index = progress  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name
@@ -134,7 +136,7 @@ class IntertaskAction(Task):
                 "task_name": self.task_name,
             },
         )
-    
+
     def alert(self):
         ...
 
@@ -170,6 +172,7 @@ class ExperimentFieldCollectionAction(Task):
             },
         )
 
+
 class BciPyCalibrationReportAction(Task):
     """
     Action for generating a report.
@@ -200,7 +203,7 @@ class BciPyCalibrationReportAction(Task):
 
     def execute(self) -> TaskData:
         """Excute the report generation action.
-        
+
         This assumes all data were collected using the same protocol, device, and parameters.
         """
         logger.info(f"Generating report in save folder {self.save_folder}")
@@ -237,7 +240,7 @@ class BciPyCalibrationReportAction(Task):
         # Set the default transform if not already set
         if not self.default_transform:
             self.set_default_transform(sample_rate)
-        
+
         # get figure handles
         figure_handles = self.get_figure_handles(dir, raw_data, channel_map)
         artifact_detector = self.get_artifact_detector(raw_data, device_spec)
@@ -255,11 +258,11 @@ class BciPyCalibrationReportAction(Task):
         summary_dict.update(signal_model_metrics)
 
         return SessionReportSection(summary_dict)
-    
+
     def get_signal_model_metrics(self, data_directory: Path) -> dict:
         """Get the signal model metrics from the session folder.
-        
-        In the future, the model will save a ModelMetrics with the pkl file. 
+
+        In the future, the model will save a ModelMetrics with the pkl file.
         For now, we just look for the pkl file and extract the AUC from the filename.
         """
         pkl_file = None
@@ -298,7 +301,7 @@ class BciPyCalibrationReportAction(Task):
         if len(eye_channels) == 0:
             eye_channels = None
         return eye_channels
-    
+
     def get_triggers(self, session) -> tuple:
         trigger_type, trigger_timing, trigger_label = trigger_decoder(
             offset=self.static_offset,
@@ -306,22 +309,22 @@ class BciPyCalibrationReportAction(Task):
             exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         )
         return trigger_type, trigger_timing, trigger_label
-    
-    def get_figure_handles(self, session, raw_data, channel_map) -> None:
+
+    def get_figure_handles(self, session, raw_data, channel_map) -> List[Figure]:
         _, trigger_timing, trigger_label = self.get_triggers(session)
         figure_handles = visualize_erp(
-                raw_data,
-                channel_map,
-                trigger_timing,
-                trigger_label,
-                self.trial_window,
-                transform=self.default_transform,
-                plot_average=True,
-                plot_topomaps=True,
-                show=False,
-            )
+            raw_data,
+            channel_map,
+            trigger_timing,
+            trigger_label,
+            self.trial_window,
+            transform=self.default_transform,
+            plot_average=True,
+            plot_topomaps=True,
+            show=False,
+        )
         return figure_handles
-    
+
     def get_artifact_detector(self, raw_data, device_spec) -> ArtifactDetection:
         eye_channels = self.find_eye_channels(device_spec)
         artifact_detector = ArtifactDetection(
@@ -332,7 +335,6 @@ class BciPyCalibrationReportAction(Task):
         artifact_detector.detect_artifacts()
         return artifact_detector
 
+
 if __name__ == '__main__':
     pass
-
-

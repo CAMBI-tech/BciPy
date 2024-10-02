@@ -7,7 +7,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QScrollArea,
-    QApplication,
 )
 from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton, run_bciui
 from bcipy.helpers.load import load_fields, load_experiments
@@ -315,7 +314,6 @@ class ExperimentRegistry(BCIUI):
         create_experiment_button = QPushButton("Create experiment")
         create_experiment_button.clicked.connect(self.create_experiment)
         self.contents.addWidget(create_experiment_button)
-
 
 
 if __name__ == "__main__":

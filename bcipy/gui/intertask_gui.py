@@ -1,11 +1,11 @@
 from bcipy.gui.bciui import BCIUI, run_bciui
 from PyQt6.QtWidgets import (
-    QApplication,
     QLabel,
     QHBoxLayout,
     QPushButton,
     QProgressBar,
 )
+
 
 class IntertaskGUI(BCIUI):
 
@@ -48,11 +48,10 @@ class IntertaskGUI(BCIUI):
 
         self.next_button.clicked.connect(self.close)
         self.stop_button.clicked.connect(self.stop_orchestrator)
-    
+
     def stop_orchestrator(self):
         # This should stop the orchestrator execution
         self.close()
-
 
 
 if __name__ == "__main__":
