@@ -444,3 +444,22 @@ def generate_targets(alp, stim_number):
     targets = [target for sublist in lists for target in sublist]
 
     return targets
+
+
+def consecutive_incorrect(target_text: str, spelled_text: str) -> int:
+    """Function that computes the number of consecutive symbols that
+    are incorrectly spelled.
+
+    >>> consecutive_incorrect('WORLD', 'H')
+    1
+    >>> consecutive_incorrect('WORLD', 'W')
+    0
+    >>> consecutive_incorrect('WORLD', 'WOHL')
+    2
+    """
+    if not target_text:
+        return len(spelled_text)
+    for i, character in enumerate(spelled_text):
+        if character != target_text[i]:
+            return len(spelled_text[i:])
+    return 0

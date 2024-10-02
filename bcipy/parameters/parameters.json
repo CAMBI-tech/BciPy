@@ -715,6 +715,15 @@
     "editable": false,
     "type": "int"
   },
+  "max_incorrect": {
+    "value": "5",
+    "section": "bci_config",
+    "name": "Maximum Number of Incorrect Selections",
+    "helpTip": "The maximum number of consecutive incorrect selections for copy/spelling tasks. The task will end if this number is reached.",
+    "recommended": "",
+    "editable": false,
+    "type": "int"
+  },
   "decision_threshold": {
     "value": "0.8",
     "section": "online_config",
@@ -724,7 +733,7 @@
     "editable": false,
     "type": "float"
   },
-  "min_inq_per_series": {
+  "min_inq_len": {
     "value": "1",
     "section": "online_config",
     "name": "Minimum Inquiries Per Series",
