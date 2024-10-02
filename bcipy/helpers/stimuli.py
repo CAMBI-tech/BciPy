@@ -401,12 +401,11 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
-def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[List[float]]:
+def update_inquiry_timing(timing: List[List[int]], downsample: int) -> List[List[int]]:
     """Update inquiry timing to reflect downsampling."""
-
     for i, inquiry in enumerate(timing):
         for j, time in enumerate(inquiry):
-            timing[i][j] = time // downsample
+            timing[i][j] = int(time // downsample)
 
     return timing
 

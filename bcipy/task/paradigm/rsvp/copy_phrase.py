@@ -35,23 +35,14 @@ from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
-from bcipy.helpers.task import (
-    construct_triggers,
-    fake_copy_phrase_decision,
-    get_device_data_for_decision,
-    get_user_input,
-    relative_triggers,
-    target_info,
-    trial_complete_message,
-)
-from bcipy.helpers.triggers import (
-    FlushFrequency,
-    Trigger,
-    TriggerHandler,
-    TriggerType,
-    convert_timing_triggers,
-    offset_label,
-)
+from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
+                                fake_copy_phrase_decision,
+                                get_device_data_for_decision, get_user_input,
+                                relative_triggers, target_info,
+                                trial_complete_message)
+from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -109,60 +100,20 @@ class RSVPCopyPhraseTask(Task):
     initalized = False
 
     PARAMETERS_USED = [
-        "time_fixation",
-        "time_flash",
-        "time_prompt",
-        "trial_window",
-        "font",
-        "fixation_color",
-        "trigger_type",
-        "filter_high",
-        "filter_low",
-        "filter_order",
-        "notch_filter_frequency",
-        "down_sampling_rate",
-        "prestim_length",
-        "is_txt_stim",
-        "lm_backspace_prob",
-        "backspace_always_shown",
-        "decision_threshold",
-        "max_inq_len",
-        "max_inq_per_series",
-        "max_minutes",
-        "max_selections",
-        "min_inq_per_series",
-        "show_feedback",
-        "feedback_duration",
-        "show_preview_inquiry",
-        "preview_inquiry_isi",
-        "preview_inquiry_key_input",
-        "preview_inquiry_error_prob",
-        "preview_inquiry_length",
-        "preview_inquiry_progress_method",
-        "spelled_letters_count",
-        "stim_color",
-        "rsvp_stim_height",
-        "stim_jitter",
-        "stim_length",
-        "stim_number",
-        "stim_order",
-        "rsvp_stim_pos_x",
-        "rsvp_stim_pos_y",
-        "stim_space_char",
-        "target_color",
-        "task_buffer_length",
-        "rsvp_task_padding",
-        "task_color",
-        "rsvp_task_height",
-        "task_text",
-        "info_pos_x",
-        "info_pos_y",
-        "info_color",
-        "info_height",
-        "info_text",
-        "info_color",
-        "info_height",
-        "info_text",
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_window',
+        'font', 'fixation_color', 'trigger_type',
+        'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
+        'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
+        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'max_incorrect',
+        'min_inq_len',
+        'show_feedback', 'feedback_duration',
+        'show_preview_inquiry', 'preview_inquiry_isi', 'preview_inquiry_error_prob',
+        'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
+        'spelled_letters_count',
+        'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
+        'stim_order', 'stim_pos_x', 'stim_pos_y', 'stim_space_char', 'target_color',
+        'task_buffer_length', 'task_color', 'task_height', 'task_text',
+        'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
     def __init__(
@@ -179,10 +130,13 @@ class RSVPCopyPhraseTask(Task):
         self.window = win
         self.daq = daq
         self.parameters = parameters
+        self.signal_models = signal_models
+        self.language_model = language_model
+        self.fake = fake
 
         self.validate_parameters()
 
-        self.static_clock = core.StaticPeriod(screenHz=self.window.getActualFrameRate())
+        self.static_clock = None
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
 
@@ -194,36 +148,19 @@ class RSVPCopyPhraseTask(Task):
         signal_models = self.get_signal_models()
         self.signal_model = signal_models[0] if signal_models else None
         self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
-
-        self.evidence_types = [EvidenceType.LM]
-        self.evidence_types.extend(
-            [evaluator.produces for evaluator in self.evidence_evaluators]
-        )
-        if self.parameters["show_preview_inquiry"]:
-            self.evidence_types.append(EvidenceType.BTN)
+        self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
 
         self.file_save = file_save
+        self.save_session_every_inquiry = True
 
-        self.trigger_handler = TriggerHandler(
-            self.file_save, TRIGGER_FILENAME, FlushFrequency.EVERY
-        )
+        self.trigger_handler = self.default_trigger_handler()
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters["task_text"]
 
+        self.signal_model = signal_models[0] if signal_models else None
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
-        self.feedback = VisualFeedback(
-            self.window,
-            {
-                "feedback_font": self.parameters["font"],
-                "feedback_color": self.parameters["info_color"],
-                "feedback_pos_x": self.parameters["info_pos_x"],
-                "feedback_pos_y": self.parameters["info_pos_y"],
-                "feedback_stim_height": self.parameters["info_height"],
-                "feedback_duration": self.parameters["feedback_duration"],
-            },
-            self.experiment_clock,
-        )
+        self.feedback = self.init_feedback()
 
         self.setup_copyphrase()
 
@@ -345,7 +282,23 @@ class RSVPCopyPhraseTask(Task):
                 )
         return evaluators
 
-    def setup_copyphrase(self) -> None:
+    def init_evidence_types(
+            self, signal_models: List[SignalModel],
+            evidence_evaluators: List[EvidenceEvaluator]
+    ) -> List[EvidenceType]:
+        evidence_types = [EvidenceType.LM]
+        evidence_types.extend(
+            [evaluator.produces for evaluator in evidence_evaluators])
+        if self.parameters['show_preview_inquiry']:
+            evidence_types.append(EvidenceType.BTN)
+        return evidence_types
+
+    def default_trigger_handler(self) -> TriggerHandler:
+        """Default trigger handler"""
+        return TriggerHandler(self.file_save, TRIGGER_FILENAME,
+                              FlushFrequency.EVERY)
+
+    def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 
         self.spelled_text = str(self.copy_phrase[0: self.starting_spelled_letters()])
@@ -372,6 +325,18 @@ class RSVPCopyPhraseTask(Task):
             self.experiment_clock,
             self.spelled_text,
         )
+
+    def init_feedback(self) -> Optional[VisualFeedback]:
+        """Initialize visual feedback"""
+        return VisualFeedback(
+            self.window, {
+                'feedback_font': self.parameters['font'],
+                'feedback_color': self.parameters['info_color'],
+                'feedback_pos_x': self.parameters['info_pos_x'],
+                'feedback_pos_y': self.parameters['info_pos_y'],
+                'feedback_stim_height': self.parameters['info_height'],
+                'feedback_duration': self.parameters['feedback_duration']
+            }, self.experiment_clock)
 
     def validate_parameters(self) -> None:
         """Validate.
@@ -528,8 +493,8 @@ class RSVPCopyPhraseTask(Task):
         - selection : selected stimulus to display
         - correct : whether or not the correct stim was chosen
         """
-        if self.parameters["show_feedback"]:
-            self.feedback.administer(f"Selected: {selection}")
+        if self.parameters['show_feedback'] and self.feedback:
+            self.feedback.administer(f'Selected: {selection}')
 
     def check_stop_criteria(self) -> bool:
         """Returns True if experiment is currently within params and the task
@@ -559,6 +524,15 @@ class RSVPCopyPhraseTask(Task):
                 "Max number of selections reached "
                 "(configured with the max_selections parameter)"
             )
+            return False
+
+        if consecutive_incorrect(
+                target_text=self.copy_phrase,
+                spelled_text=self.spelled_text) >= self.parameters.get(
+                    'max_incorrect', 3):
+            self.logger.info(
+                'Max number of consecutive incorrect selections reached '
+                '(configured with the max_incorrect parameter)')
             return False
 
         return True
@@ -591,16 +565,14 @@ class RSVPCopyPhraseTask(Task):
             evidence_types = self.add_evidence(stim_times, proceed)
             decision = self.evaluate_evidence()
 
-            data = self.new_data_record(
-                stim_times,
-                target_stimuli,
-                current_text=self.spelled_text,
-                decision=decision,
-                evidence_types=evidence_types,
-            )
-            self.update_session_data(
-                data, save=True, decision_made=decision.decision_made
-            )
+            data = self.new_data_record(stim_times,
+                                        target_stimuli,
+                                        current_text=self.spelled_text,
+                                        decision=decision,
+                                        evidence_types=evidence_types)
+            self.update_session_data(data,
+                                     save=self.save_session_every_inquiry,
+                                     decision_made=decision.decision_made)
 
             if decision.decision_made:
                 self.show_feedback(
@@ -874,13 +846,15 @@ class RSVPCopyPhraseTask(Task):
         - self.session
         """
         self.session.add_sequence(data)
-        self.session.total_time_spent = (
-            self.experiment_clock.getTime() - self.start_time
-        )
+        self.session.total_time_spent = self.elapsed_seconds()
         if save:
             self.write_session_data()
         if decision_made:
             self.session.add_series()
+
+    def elapsed_seconds(self) -> float:
+        """Compute the number of seconds elapsed since the experiment start."""
+        return self.experiment_clock.getTime() - self.start_time
 
     def write_session_data(self) -> None:
         """Save session data to disk."""
