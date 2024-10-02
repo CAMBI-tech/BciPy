@@ -219,6 +219,7 @@ class MatrixDisplay(Display):
             pos_index = self.sort_order(sym)
             pos = self.positions[pos_index]
             grid[sym] = visual.TextStim(win=self.window,
+                                        font=self.stimuli_font,
                                         text=sym,
                                         color=self.grid_color,
                                         opacity=self.start_opacity,

@@ -410,23 +410,33 @@
     "type": "float"
   },
   "font": {
-    "value": "Consolas",
+    "value": "Courier New",
     "section": "task_config",
     "name": "Font",
-    "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
+    "helpTip": "Specifies the font used for all text stimuli. Default: Courier New",
     "recommended": [
       "Courier New",
       "Lucida Sans",
+      "Arial",
       "Consolas"
     ],
     "editable": false,
     "type": "str"
   },
   "rsvp_stim_height": {
-    "value": "0.5",
+    "value": "0.4",
     "section": "rsvp_task_config",
-    "name": "Stimulus Size",
-    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.5",
+    "name": "RSVP Stimulus Size",
+    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.4",
+    "recommended": "",
+    "editable": false,
+    "type": "float"
+  },
+  "vep_stim_height": {
+    "value": "0.1",
+    "section": "vep_task_config",
+    "name": "vep Stimulus Size",
+    "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended": "",
     "editable": false,
     "type": "float"
@@ -434,7 +444,7 @@
   "matrix_stim_height": {
     "value": "0.17",
     "section": "matrix_task_config",
-    "name": "Stimulus Size",
+    "name": "Matrix Stimulus Size",
     "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.17",
     "recommended": "",
     "editable": false,
@@ -552,15 +562,35 @@
     "value": "HELLO_WORLD",
     "section": "online_config",
     "name": "Target Phrase",
-    "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks.",
+    "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks. If copy_phrases_location is provided, this parameter will be ignored and overwritten in parameter saving.",
+    "recommended": "",
+    "editable": true,
+    "type": "str"
+  },
+  "copy_phrases_location": {
+    "value": "",
+    "section": "online_config",
+    "name": "Copy Phrases Location",
+    "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
     "recommended": "",
     "editable": true,
     "type": "str"
   },
   "rsvp_task_height": {
     "value": "0.1",
-    "section": "bci_config",
-    "name": "Task Text Size",
+    "section": "rsvp_task_config",
+    "name": "RSVP Task Text Size",
+    "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended": [
+      "0.1"
+    ],
+    "editable": false,
+    "type": "float"
+  },
+  "vep_task_height": {
+    "value": "0.1",
+    "section": "vep_task_config",
+    "name": "VEP Task Text Size",
     "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended": [
       "0.1"
@@ -570,8 +600,8 @@
   },
   "matrix_task_height": {
     "value": "0.1",
-    "section": "bci_config",
-    "name": "Task Text Size",
+    "section": "matrix_task_config",
+    "name": "Matrix Task Text Size",
     "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended": [
       "0.1"

@@ -7,10 +7,10 @@ from bcipy.config import (
     FIELD_FILENAME)
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.system_utils import is_battery_powered, is_connected, is_screen_refresh_rate_low
-from bcipy.helpers.exceptions import (InvalidFieldException,
-                                      InvalidExperimentException,
-                                      UnregisteredExperimentException,
-                                      UnregisteredFieldException)
+from bcipy.exceptions import (InvalidFieldException,
+                              InvalidExperimentException,
+                              UnregisteredExperimentException,
+                              UnregisteredFieldException)
 from bcipy.gui.alert import confirm
 from bcipy.task.orchestrator.protocol import validate_protocol_string
 

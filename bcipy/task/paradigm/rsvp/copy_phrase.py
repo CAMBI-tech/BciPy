@@ -26,7 +26,7 @@ from bcipy.helpers.acquisition import init_acquisition, LslDataServer
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.display import init_display_window
-from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.language_model import init_language_model
 from bcipy.helpers.load import load_signal_models
 from bcipy.helpers.list import destutter
@@ -55,7 +55,7 @@ from bcipy.helpers.triggers import (
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
-from bcipy.task import Task, TaskData
+from bcipy.task import Task, TaskData, TaskMode
 from bcipy.task.control.evidence import EvidenceEvaluator, init_evidence_evaluator
 from bcipy.task.data import EvidenceType, Inquiry, Session
 from bcipy.task.exceptions import DuplicateModelEvidence
@@ -104,7 +104,8 @@ class RSVPCopyPhraseTask(Task):
     """
 
     name = "RSVP Copy Phrase"
-    MODE = "RSVP"
+    paradigm = "RSVP"
+    mode = TaskMode.COPYPHRASE
     initalized = False
 
     PARAMETERS_USED = [
@@ -353,7 +354,7 @@ class RSVPCopyPhraseTask(Task):
         self.session = Session(
             save_location=self.file_save,
             task="Copy Phrase",
-            mode=self.MODE,
+            mode=str(self.mode),
             symbol_set=self.alp,
             decision_threshold=self.parameters["decision_threshold"],
         )

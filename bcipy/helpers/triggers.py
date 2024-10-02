@@ -7,7 +7,7 @@ from psychopy import core, visual
 
 from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import resize_image
 

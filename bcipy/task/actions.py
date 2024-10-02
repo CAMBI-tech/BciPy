@@ -3,9 +3,8 @@ from typing import Any, Optional
 import logging
 
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
-from bcipy.task import Task
+from bcipy.task import Task, TaskData, TaskMode
 from bcipy.helpers.parameters import Parameters
-from bcipy.task.main import TaskData
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME
 from bcipy.signal.model.offline_analysis import offline_analysis
 
@@ -17,7 +16,8 @@ class CodeHookAction(Task):
     Action for running generic code hooks.
     """
 
-    name = "Code Hook Action"
+    name = "CodeHookAction"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
@@ -45,7 +45,8 @@ class OfflineAnalysisAction(Task):
     Action for running offline analysis.
     """
 
-    name = "Offline Analysis Action"
+    name = "OfflineAnalysisAction"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
@@ -66,7 +67,20 @@ class OfflineAnalysisAction(Task):
             self.data_directory = data_directory
 
     def execute(self) -> TaskData:
-        response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
+        """Execute the offline analysis.
+
+        Note: This function is called by the orchestrator to execute the offline analysis task. Some of the
+            exceptions that can be raised by this function are not recoverable and will cause the orchestrator
+            to stop execution. For example, if Exception is thrown in cross_validation due to the # of folds being
+            inconsistent.
+
+        """
+        logger.info(f"Running offline analysis on data in {self.data_directory}")
+        try:
+            response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
+        except Exception as e:
+            logger.exception(f"Error running offline analysis: {e}")
+            raise e
         return TaskData(
             save_path=self.data_directory,
             task_dict={"parameters": self.parameters_path,
@@ -80,16 +94,17 @@ class ExperimentFieldCollectionAction(Task):
     """
 
     name = "Experiment Field Collection Action"
+    mode = TaskMode.ACTION
 
     def __init__(
             self,
             parameters: Parameters,
-            save_path: str,
+            data_directory: str,
             experiment_id: str = 'default',
             **kwargs: Any) -> None:
         super().__init__()
         self.experiment_id = experiment_id
-        self.save_folder = save_path
+        self.save_folder = data_directory
         self.parameters = parameters
 
     def execute(self) -> TaskData:

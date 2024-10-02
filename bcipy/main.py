@@ -4,13 +4,14 @@ import multiprocessing
 from typing import Type, Optional
 
 from bcipy.config import (DEFAULT_PARAMETERS_PATH, CUSTOM_TASK_EXPERIMENT_ID)
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.load import (load_experiments, load_json_parameters)
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.task import TaskRegistry, Task
 from bcipy.task.orchestrator import SessionOrchestrator
 from bcipy.task.orchestrator.protocol import parse_protocol
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 def bci_main(
@@ -48,7 +49,11 @@ def bci_main(
         task (Task): registered bcipy Task to execute. If None, the task will be determined by the
             experiment protocol.
     """
-
+    logger.info('Starting BciPy...')
+    logger.info(
+        f'User: {user} | Experiment: {experiment_id} | Task: {task} | '
+        f'Parameters: {parameter_location} | '
+        f'Alert: {alert} | Visualize: {visualize} | Fake: {fake}')
     # If no task is provided, extract the tasks from the experiment protocol. Otherwise, we will assume
     # the task is a custom task execution with no experiment attached.
     if not task and experiment_id:
@@ -59,8 +64,9 @@ def bci_main(
         tasks = [task]
         experiment_id = CUSTOM_TASK_EXPERIMENT_ID
     else:
-        log.exception('No experiment or task provided.')
-        raise Exception('No experiment or task provided to BciPy Client.')
+        msg = 'No experiment or task provided to BciPy.'
+        logger.exception(msg)
+        raise BciPyCoreException(msg)
 
     # Load parameters
     parameters = load_json_parameters(parameter_location, value_cast=True)
@@ -72,15 +78,10 @@ def bci_main(
     if not validate_bcipy_session(parameters, fake):
         return False
 
-    # Update property to reflect the parameter source: TODO: move to helpers/parameters.py
+    # Update property to reflect the parameter source:
     parameters['parameter_location'] = parameter_location
     if parameter_location != DEFAULT_PARAMETERS_PATH:
         parameters.save()
-        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
-        if parameters.add_missing_items(default_params):
-            msg = 'Parameters file out of date.'
-            log.exception(msg)
-            raise Exception(msg)
 
     # Initialize an orchestrator
     orchestrator = SessionOrchestrator(
@@ -97,13 +98,13 @@ def bci_main(
     try:
         orchestrator.execute()
     except Exception as e:
-        log.exception(f'Error executing task: {e}')
+        logger.exception(f'Error executing task: {e}')
         return False
 
     return True
 
 
-def bcipy_main() -> None:
+def bcipy_main() -> None:  # pragma: no cover
     """BciPy Main.
 
     Command line interface used for running a registered experiment task in BciPy. To see what

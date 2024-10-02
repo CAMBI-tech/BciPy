@@ -23,7 +23,7 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
-from bcipy.task import Task, TaskData
+from bcipy.task import Task, TaskData, TaskMode
 
 import logging
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -73,7 +73,8 @@ class BaseCalibrationTask(Task):
     TaskData
     """
 
-    MODE = 'Undefined'
+    mode = TaskMode.CALIBRATION
+    paradigm = 'Undefined'
     initalized = False
 
     def __init__(self,
@@ -133,10 +134,11 @@ class BaseCalibrationTask(Task):
 
     def validate(self) -> None:
         """Validate the task."""
-        assert self.MODE != 'Undefined', 'MODE must be defined in subclass.'
+        assert self.paradigm != 'Undefined', 'Paradigm must be defined in subclass.'
 
     def cleanup(self) -> None:
         """Any cleanup code to run after the last inquiry is complete."""
+        logger.info('Cleaning up task acquisition and display.')
         self.exit_display()
         self.write_offset_trigger()
         self.wait()
@@ -201,8 +203,8 @@ class BaseCalibrationTask(Task):
     def init_session(self) -> session_data.Session:
         """Initialize the session data."""
         return session_data.Session(save_location=self.file_save,
-                                    task='Calibration',
-                                    mode=self.MODE,
+                                    task=self.name,
+                                    mode=str(self.mode),
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 

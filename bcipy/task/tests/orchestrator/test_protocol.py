@@ -27,7 +27,7 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         assert parsed[1] is RSVPCopyPhraseTask
 
     def test_parses_actions_and_tasks(self) -> None:
-        sequence = 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
+        sequence = 'RSVP Calibration -> OfflineAnalysisAction -> RSVP Copy Phrase'
         parsed = parse_protocol(sequence)
         assert len(parsed) == 3
         assert parsed[0] is RSVPCalibrationTask
@@ -35,7 +35,7 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         assert parsed[2] is RSVPCopyPhraseTask
 
     def test_parses_sequence_with_extra_spaces(self) -> None:
-        actions = ' RSVP Calibration ->  Offline Analysis Action    -> RSVP Copy Phrase  '
+        actions = ' RSVP Calibration ->  OfflineAnalysisAction -> RSVP Copy Phrase  '
         parsed = parse_protocol(actions)
         assert len(parsed) == 3
         assert parsed[0] is RSVPCalibrationTask
@@ -69,4 +69,4 @@ class TestTaskProtocolProcessing(unittest.TestCase):
     def test_serializes_multiple_tasks(self) -> None:
         sequence = [RSVPCalibrationTask, OfflineAnalysisAction, RSVPCopyPhraseTask]
         serialized = serialize_protocol(sequence)
-        assert serialized == 'RSVP Calibration -> Offline Analysis Action -> RSVP Copy Phrase'
+        assert serialized == 'RSVP Calibration -> OfflineAnalysisAction -> RSVP Copy Phrase'

@@ -2,7 +2,7 @@ import unittest
 
 from bcipy.config import DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.validate import validate_experiment, validate_experiments
-from bcipy.helpers.exceptions import (
+from bcipy.exceptions import (
     InvalidExperimentException,
     InvalidFieldException,
     UnregisteredExperimentException,
