@@ -120,7 +120,7 @@ class SessionOrchestrator:
         }
         """
         # load copy phrases from json file or take the task text if no file is provided
-        if self.parameters.get('copy_phrases_location') != "":
+        if self.parameters.get('copy_phrases_location'):
             with open(self.parameters['copy_phrases_location'], 'r') as f:
                 copy_phrases = json.load(f)
             self.copyphrases = copy_phrases['Phrases']

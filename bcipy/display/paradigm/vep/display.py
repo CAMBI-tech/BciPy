@@ -339,10 +339,10 @@ class VEPDisplay(Display):
         while self.static_clock.getTime() < self.timing_animation:
             for frame in range(frames):
                 self.draw_boxes()
-                self.draw_static()
                 for sym, sti in self.sti.items():
                     sti.pos = animation_paths[sym][frame]
                     sti.draw()
+                self.draw_static()
                 self.window.flip()
                 counter += 1
         self.logger.debug(
