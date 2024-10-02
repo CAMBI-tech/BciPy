@@ -238,12 +238,14 @@ class InformationProperties:
                 opacity=1, depth=-6.0))
         return self.text_stim
 
+
 class ButtonPressMode(Enum):
     """Represents the possible meanings for a button press (when using an Inquiry Preview.)"""
     NOTHING = 0
     ACCEPT = 1
     REJECT = 2
-    
+
+
 class PreviewInquiryProperties:
     """"Preview Inquiry Properties.
     An encapsulation of properties relevant to preview_inquiry() operation.
@@ -274,10 +276,11 @@ class PreviewInquiryProperties:
         self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
 
+
 class PreviewParams(NamedTuple):
     """Parameters relevant for the Inquiry Preview functionality"""
     show_preview_inquiry: bool
-    preview_inquiry_length:float
+    preview_inquiry_length: float
     preview_inquiry_key_input: str
     preview_inquiry_progress_method: int
     preview_inquiry_isi: float
@@ -285,7 +288,7 @@ class PreviewParams(NamedTuple):
     @property
     def button_press_mode(self):
         return ButtonPressMode(self.preview_inquiry_progress_method)
-    
+
 
 class VEPStimuliProperties(StimuliProperties):
 
