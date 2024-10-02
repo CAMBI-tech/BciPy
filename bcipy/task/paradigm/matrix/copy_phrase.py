@@ -3,6 +3,7 @@
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
@@ -26,7 +27,8 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
         TaskData
     """
     name = 'Matrix Copy Phrase'
-    MODE = 'Matrix'
+    paradigm = 'Matrix'
+    mode = TaskMode.COPYPHRASE
 
     PARAMETERS_USED = [
         "time_fixation",

@@ -26,7 +26,7 @@ from bcipy.helpers.load import (
     load_users,
     copy_parameters)
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
 
 
 MOCK_EXPERIMENT = {

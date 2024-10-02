@@ -22,7 +22,7 @@ from PIL import Image
 from psychopy import core
 
 from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
 
 # Prevents pillow from filling the console with debug info

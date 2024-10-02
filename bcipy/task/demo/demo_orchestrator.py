@@ -12,6 +12,8 @@ def demo_orchestrator(parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
+    fake_data = True
+    alert_finished = True
     tasks = [
         MatrixTimingVerificationCalibration,
         IntertaskAction,

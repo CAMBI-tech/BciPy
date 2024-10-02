@@ -14,7 +14,7 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import DEFAULT_ENCODING
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.helpers.triggers import TriggerHandler

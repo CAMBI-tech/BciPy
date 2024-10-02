@@ -6,6 +6,7 @@ from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)
 from bcipy.task.calibration import Inquiry
+from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
 
@@ -25,6 +26,7 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
         TaskData
     """
     name = 'RSVP Timing Verification'
+    mode = TaskMode.TIMING_VERIFICATION
 
     def __init__(self,
                  parameters: Parameters,

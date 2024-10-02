@@ -30,7 +30,7 @@ class RSVPCalibrationTask(BaseCalibrationTask):
     fake (bool)
     """
     name = 'RSVP Calibration'
-    MODE = 'RSVP'
+    paradigm = 'RSVP'
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:

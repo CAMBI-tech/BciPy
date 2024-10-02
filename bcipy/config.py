@@ -13,10 +13,13 @@ DIODE_TRIGGER = '\u25A0'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
+DEFAULT_FRAME_RATE = 60
 CUSTOM_TASK_EXPERIMENT_ID = "CustomTaskExecution"
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
 EXPERIMENT_DATA_FILENAME = 'experiment_data.json'
+MULTIPHRASE_FILENAME = 'phrases.json'
+PROTOCOL_FILENAME = 'protocol.json'
 BCIPY_ROOT = Path(__file__).resolve().parent
 ROOT = BCIPY_ROOT.parent
 DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'

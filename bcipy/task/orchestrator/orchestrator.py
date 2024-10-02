@@ -8,11 +8,13 @@ from typing import List, Type, Optional
 
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.system_utils import get_system_info, configure_logger
-from bcipy.task import Task, TaskData
+from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
     DEFAULT_PARAMETERS_PATH,
     DEFAULT_USER_ID,
+    MULTIPHRASE_FILENAME,
+    PROTOCOL_FILENAME,
     PROTOCOL_LOG_FILENAME,
     SESSION_LOG_FILENAME,
 )
@@ -55,10 +57,16 @@ class SessionOrchestrator:
             # This allows for the parameters to be passed in directly and modified before executions
             self.parameters = parameters
 
+        self.copyphrases = None
+        self.next_phrase = None
+        self.starting_index = 0
+
+        self.initialize_copy_phrases()
+
         self.user = user
         self.fake = fake
         self.experiment_id = experiment_id
-        self.sys_info = get_system_info()
+        self.sys_info = self.get_system_info()
         self.tasks = []
         self.task_names = []
         self.session_data = []
@@ -69,28 +77,71 @@ class SessionOrchestrator:
         self.visualize = visualize
         self.progress = 0
 
-        self.ready_to_execute = True
+        self.ready_to_execute = False
         self.logger.info("Session Orchestrator initialized successfully")
 
     def add_task(self, task: Type[Task]) -> None:
+        """Add a task to the orchestrator"""
         self.tasks.append(task)
         self.task_names.append(task.name)
+        self.ready_to_execute = True
 
     def add_tasks(self, tasks: List[Type[Task]]) -> None:
+        """Add a list of tasks to the orchestrator"""
         for task in tasks:
             self.add_task(task)
+        self.ready_to_execute = True
+
+    def set_next_phrase(self) -> None:
+        """Set the next phrase to be copied from the list of copy phrases loaded or the parameters directly.
+
+        If there are no more phrases to copy, the task text and spelled letters from parameters will be used.
+        """
+        if self.copyphrases:
+            if len(self.copyphrases) > 0:
+                text, index = self.copyphrases.pop(0)
+                self.next_phrase = text
+                self.starting_index = index
+            else:
+                self.next_phrase = self.parameters['task_text']
+        self.parameters['task_text'] = self.next_phrase
+        self.parameters['spelled_letters_count'] = self.starting_index
+
+    def initialize_copy_phrases(self) -> None:
+        """Load copy phrases from a json file or take the task text if no file is provided.
+
+        Expects a json file structured as follows:
+        {
+            "Phrases": [
+                [string, int],
+                [string, int],
+                ...
+            ]
+        }
+        """
+        # load copy phrases from json file or take the task text if no file is provided
+        if self.parameters.get('copy_phrases_location'):
+            with open(self.parameters['copy_phrases_location'], 'r') as f:
+                copy_phrases = json.load(f)
+            self.copyphrases = copy_phrases['Phrases']
+        else:
+            self.copyphrases = None
+            self.next_phrase = self.parameters['task_text']
+            self.starting_index = self.parameters['spelled_letters_count']
 
     def execute(self) -> None:
         """Executes queued tasks in order"""
 
         if not self.ready_to_execute:
-            msg = "Orchestrator not ready to execute tasks"
+            msg = "Orchestrator not ready to execute. No tasks have been added."
             self.log.error(msg)
             raise Exception(msg)
 
         self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
         for task in self.tasks:
             self.progress += 1
+            if task.mode == TaskMode.COPYPHRASE:
+                self.set_next_phrase()
             try:
                 # initialize the task save folder and logger
                 self.logger.info(f"Initializing task {self.progress}/{len(self.tasks)} {task.name}")
@@ -131,8 +182,17 @@ class SessionOrchestrator:
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
                 self.logger.exception(e)
+                try:
+                    initialized_task.cleanup()
+                except BaseException:
+                    pass
 
-        self._save_protocol_data()
+        # Save the protocol data and reset the orchestrator
+        self._save_data()
+        self.ready_to_execute = False
+        self.tasks = []
+        self.task_names = []
+        self.progress = 0
 
     def _init_orchestrator_logger(self, save_folder: str) -> Logger:
         return configure_logger(
@@ -183,12 +243,30 @@ class SessionOrchestrator:
             SESSION_LOG_FILENAME,
             logging.DEBUG)
 
-    def _save_protocol_data(self) -> None:
-        # Save the protocol data
-        with open(f'{self.save_folder}/protocol.json', 'w') as f:  # TODO: move to config
+    def _save_data(self) -> None:
+
+        self._save_procotol_data()
+        # Save the remaining phrase data to a json file to be used in the next session
+        if self.copyphrases and len(self.copyphrases) > 0:
+            self._save_copy_phrases()
+
+    def _save_procotol_data(self) -> None:
+        # Save the protocol data to a json file
+        with open(f'{self.save_folder}/{PROTOCOL_FILENAME}', 'w') as f:
             f.write(json.dumps({
                 'tasks': self.task_names,
                 'parameters': self.parameters_path,
                 'system_info': self.sys_info,
             }))
             self.logger.info("Protocol data successfully saved")
+
+    def _save_copy_phrases(self) -> None:
+        # Save the copy phrases data to a json file
+        with open(f'{self.save_folder}/{MULTIPHRASE_FILENAME}', 'w') as f:
+            f.write(json.dumps({
+                'Phrases': self.copyphrases
+            }))
+            self.logger.info("Copy phrases data successfully saved")
+
+    def get_system_info(self) -> dict:
+        return get_system_info()

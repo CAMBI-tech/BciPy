@@ -4,7 +4,7 @@ from typing import List
 
 import numpy as np
 
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 
 log = logging.getLogger(__name__)
 
