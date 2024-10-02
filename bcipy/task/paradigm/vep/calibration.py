@@ -1,9 +1,10 @@
 """VEP Calibration task-related code"""
+import logging
 from typing import Any, Dict, Iterator, List, Optional
 
 from psychopy import visual  # type: ignore
 
-from bcipy.acquisition.multimodal import ClientManager
+from bcipy.config import DEFAULT_FRAME_RATE, SESSION_LOG_FILENAME
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -13,9 +14,11 @@ from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerType
-from bcipy.task.base_calibration import BaseCalibrationTask, Inquiry
+from bcipy.task.calibration import BaseCalibrationTask, Inquiry
 from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class VEPCalibrationTask(BaseCalibrationTask):
@@ -28,26 +31,30 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object)
-    parameters (Dictionary)
-    file_save (String)
+    parameters (dict)
+    file_save (str)
+    fake (bool)
     """
-    MODE = 'VEP'
+    name = 'VEP Calibration'
+    paradigm = 'VEP'
 
-    def __init__(self, win: visual.Window, daq: ClientManager,
-                 parameters: Parameters, file_save: str):
+    def __init__(self,
+                 parameters: Parameters,
+                 file_save: str,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
         self.box_colors = [
             '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
         ]
         self.num_boxes = 6
-        super().__init__(win, daq, parameters, file_save)
+        super().__init__(parameters, file_save, fake=fake, **kwargs)
 
     def init_display(self) -> VEPDisplay:
         """Initialize the display"""
         return init_vep_display(self.parameters, self.window,
                                 self.experiment_clock, self.symbol_set,
-                                self.box_colors)
+                                self.box_colors,
+                                fake=self.fake)
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
@@ -118,7 +125,7 @@ def target_box_index(inquiry: Inquiry) -> Optional[int]:
 
 def init_vep_display(parameters: Parameters, window: visual.Window,
                      experiment_clock: Clock, symbol_set: List[str],
-                     box_colors: List[str]) -> VEPDisplay:
+                     box_colors: List[str], fake: bool = False) -> VEPDisplay:
     """Initialize the display"""
     info = InformationProperties(
         info_color=[parameters['info_color']],
@@ -141,7 +148,7 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
     stim_props = VEPStimuliProperties(
         stim_font=parameters['font'],
         stim_pos=box_config.positions,
-        stim_height=0.1,
+        stim_height=parameters['vep_stim_height'],
         timing=timing,
         stim_color=colors,
         inquiry=[],
@@ -153,9 +160,15 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'])
+                                  height=parameters['vep_task_height'])
 
     # issue #186641183 ; determine a better configuration strategy for flicker
+    if fake:
+        frame_rate = window.getActualFrameRate()
+        if frame_rate is None:
+            frame_rate = DEFAULT_FRAME_RATE
+
+        logger.info(f"Frame rate set to: {frame_rate}")
 
     return VEPDisplay(window,
                       experiment_clock,
@@ -165,4 +178,5 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
                       symbol_set=symbol_set,
                       box_config=box_config,
                       flicker_rates=DEFAULT_FLICKER_RATES,
-                      should_prompt_target=True)
+                      should_prompt_target=True,
+                      frame_rate=frame_rate if fake else None)

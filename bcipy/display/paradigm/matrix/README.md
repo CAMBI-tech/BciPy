@@ -55,21 +55,6 @@ matrix_display = MatrixDisplay(win,
                                columns=7)
 ```
 
-## Sorting stimuli
-
-A sort order function for the symbols can specified. The sort function includes the ability to provide blank spaces within the grid.
-
-```
-from bcipy.helpers.symbols import qwerty_order
-matrix_display = MatrixDisplay(win,
-                               experiment_clock,
-                               stim_properties,
-                               task_bar=task_bar,
-                               info=info,
-                               rows=3,
-                               columns=10,
-                               sort_order=qwerty_order(is_txt_stim=True))
-```
 
 ## Layout
 

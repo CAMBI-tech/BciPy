@@ -8,12 +8,12 @@ from psychopy import core, event, visual
 
 from bcipy.acquisition.multimodal import ClientManager, ContentType
 from bcipy.acquisition.record import Record
-from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE
+from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE, SESSION_LOG_FILENAME
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def fake_copy_phrase_decision(copy_phrase: str, target_letter: str, text_task: str) -> Tuple[str, str, bool]:

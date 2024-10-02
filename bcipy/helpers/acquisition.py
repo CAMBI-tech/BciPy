@@ -11,21 +11,20 @@ from bcipy.acquisition import (ClientManager, LslAcquisitionClient,
                                discover_device_spec)
 from bcipy.acquisition.devices import (DeviceSpec, DeviceStatus,
                                        preconfigured_device, with_content_type)
-from bcipy.config import BCIPY_ROOT
+from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, SESSION_LOG_FILENAME
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
-from bcipy.config import RAW_DATA_FILENAME
 from bcipy.helpers.save import save_device_specs
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
-def init_eeg_acquisition(
+def init_acquisition(
         parameters: dict,
         save_folder: str,
         server: bool = False) -> Tuple[ClientManager, List[LslDataServer]]:
     """Initialize EEG Acquisition.
 
-    Initializes a client that connects with the EEG data source and begins
+    Initializes a client that connects with ta data source and begins
     data collection.
 
     Parameters
@@ -56,7 +55,7 @@ def init_eeg_acquisition(
 
         if server:
             server_device_spec = server_spec(content_type, device_name)
-            log.info(
+            logger.info(
                 f"Generating mock device data for {server_device_spec.name}")
             dataserver = LslDataServer(server_device_spec)
             servers.append(dataserver)
@@ -68,8 +67,7 @@ def init_eeg_acquisition(
             device_spec.status = status
         raw_data_name = raw_data_filename(device_spec)
 
-        client = init_lsl_client(parameters, device_spec, save_folder,
-                                 raw_data_name)
+        client = init_lsl_client(parameters, device_spec, save_folder, raw_data_name)
         manager.add_client(client)
 
     manager.start_acquisition()
@@ -187,7 +185,7 @@ def init_lsl_client(parameters: dict,
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
-    log.info(
+    logger.info(
         f"Setting an acquisition buffer for {device_spec.name} of {data_buffer_seconds} seconds"
     )
     return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,

@@ -264,11 +264,12 @@ def demo_matrix_positions(win: visual.Window):
     # norm_layout = centered(parent=win, width_pct=1., height_pct=0.5)
     task_bar = at_top(parent=win, height=0.25)
     win_layout = Layout(win)
+    symbols = alphabet()
 
     norm_layout = centered(parent=win, width_pct=0.7, height_pct=0.75)
-    positions = symbol_positions(norm_layout, rows=5, columns=6)
+    positions = symbol_positions(norm_layout, symbol_set=symbols, rows=5, columns=6)
 
-    for sym, pos in zip(alphabet(), positions):
+    for sym, pos in zip(symbols, positions):
         stim = visual.TextStim(win,
                                text=sym,
                                pos=pos,

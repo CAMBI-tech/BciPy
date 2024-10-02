@@ -6,7 +6,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional, Union
 
-from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
+from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH, SESSION_LOG_FILENAME
+
 
 IRREGULAR_RATE: int = 0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH
@@ -18,7 +19,7 @@ SUPPORTED_DATA_TYPES = [
 DEFAULT_DEVICE_TYPE = 'EEG'
 DEFAULT_STATIC_OFFSET = 0.1
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class ChannelSpec(NamedTuple):
@@ -182,7 +183,7 @@ class DeviceSpec:
         """Warn if excluded channels are not in the list of channels"""
         for channel in self.excluded_from_analysis:
             if channel not in self.channels:
-                log.warning(
+                logger.warning(
                     f"Excluded channel {channel} not found in spec for {self.name}"
                 )
 
@@ -247,6 +248,7 @@ def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
             "\n"
             "You may register new devices using the device module `register` function or in bulk"
             " using `load`.")
+        logger.error(msg)
         raise ValueError(msg)
     return device
 

@@ -14,9 +14,11 @@ Modules necessary for BciPy system operation. These range from system utilities 
 - `load`: methods for loading most BciPy data. For loading of triggers, see triggers.py
 - `parameters`: module for functionality related to system configuration via the parameters.json file
 - `raw_data`: functionality for reading and writing raw signal data
+- `report`: methods for generating BciPy PDF reports
 - `save`: methods for saving BciPy data in supported formats. For saving of triggers, see triggers.py
 - `session`: methods for managing and parsing session.json data
 - `stimuli`: methods for generating stimuli and inquiries for presentation
+- `symbols`: methods for working with symbols and symbol lists. Ex. Alphabet, QWERTY, etc.
 - `system_utils`: utilities for extracting git version, system information and handling of logging
 - `task`: common task methods and utilities, including Trial and InquiryReshaper.
 - `triggers`: methods and data classes defining BciPy internal triggering

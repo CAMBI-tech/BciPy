@@ -7,8 +7,9 @@ from typing import Dict, List
 import pylsl
 
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 LSL_TIMESTAMP = 'LSL_timestamp'
 LSL_TIMEOUT_SECONDS = 5.0

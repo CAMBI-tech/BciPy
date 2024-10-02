@@ -18,7 +18,8 @@ TEST_STIM = StimuliProperties(
     stim_inquiry=['A'],
     stim_colors=[],
     stim_timing=[0.1],
-    is_txt_stim=True)
+    is_txt_stim=True,
+    layout='QWERTY')
 
 TEST_INFO = InformationProperties(
     info_color=['White'],

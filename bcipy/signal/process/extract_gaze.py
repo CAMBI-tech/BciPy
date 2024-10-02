@@ -1,6 +1,6 @@
 import numpy as np
 
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 
 
 def extract_eye_info(data):

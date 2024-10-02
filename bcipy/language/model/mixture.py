@@ -4,7 +4,7 @@ from math import isclose
 
 from bcipy.language.main import LanguageModel, ResponseType
 
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
 
 # pylint: disable=unused-import
 # flake8: noqa

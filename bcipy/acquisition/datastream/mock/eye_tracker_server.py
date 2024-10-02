@@ -8,8 +8,9 @@ from numpy.random import uniform
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def eye_tracker_device() -> DeviceSpec:

@@ -3,7 +3,8 @@ import logging
 from typing import Dict, List
 from copy import copy
 
-log = logging.getLogger(__name__)
+from bcipy.config import SESSION_LOG_FILENAME
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class DecisionCriteria:

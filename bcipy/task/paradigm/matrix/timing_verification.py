@@ -3,7 +3,8 @@ from typing import Iterator, List
 
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)
-from bcipy.task.base_calibration import Inquiry
+from bcipy.task.calibration import Inquiry
+from bcipy.task import TaskMode
 from bcipy.task.paradigm.matrix.calibration import (MatrixCalibrationTask,
                                                     MatrixDisplay)
 
@@ -15,15 +16,15 @@ class MatrixTimingVerificationCalibration(MatrixCalibrationTask):
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
         parameters (Dictionary)
         file_save (String)
+        fake (Boolean)
 
     Output:
-        file_save (String)
+        TaskData
     """
-    TASK_NAME = 'Matrix Timing Verification Task'
+    name = 'Matrix Timing Verification'
+    mode = TaskMode.TIMING_VERIFICATION
 
     def init_display(self) -> MatrixDisplay:
         """Initialize the display"""

@@ -1,7 +1,7 @@
 import unittest
 
 from bcipy.display.paradigm.vep.codes import round_refresh_rate, ssvep_to_code
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 
 
 class SSVEPStimuli(unittest.TestCase):

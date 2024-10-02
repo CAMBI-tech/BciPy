@@ -1,26 +1,32 @@
-# This is a demo of the main bci system. It will run the task defined here
-#  using the parameters file passed to it.
+from bcipy.main import bci_main
+from bcipy.config import DEFAULT_PARAMETERS_PATH
+
+parameter_location = DEFAULT_PARAMETERS_PATH  # Path to a valid BciPy parameters file
+user = 'test_demo_user'  # User ID
+experiment_id = 'default'  # This will run two tasks: RSVP Calibration and Matrix Calibration
+alert = False  # Set to True to alert user when tasks are complete
+visualize = False  # Set to True to visualize data at the end of a task
+fake_data = True  # Set to True to use fake acquisition data during the session
+# A single task or experiment ID must be provided to run. If a task is provided, the experiment ID will be ignored.
+task = None
 
 
-def main():
-    from bcipy.main import bcipy_main
-    from bcipy.task import TaskType
-    from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
+def bcipy_main():
+    """BCI Main Demo.
 
-    # Load a parameters file
-    parameters = DEFAULT_PARAMETERS_PATH
-
-    # Task. Ex. `RSVP Calibration`
-    task = TaskType.by_value('RSVP Calibration')
-
-    # Experiment. Use the default registered experiment!
-    experiment = 'default'
-
-    # Define a user
-    user = 'bci_main_demo_user'
-
-    bcipy_main(parameters, user, task, experiment)
+    This function demonstrates how to use the BciPy main function outside of the client interface to execute tasks
+      or experiments.
+    """
+    bci_main(
+        parameter_location=parameter_location,
+        user=user,
+        experiment_id=experiment_id,
+        alert=alert,
+        visualize=visualize,
+        fake=fake_data,
+        task=task
+    )
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    bcipy_main()

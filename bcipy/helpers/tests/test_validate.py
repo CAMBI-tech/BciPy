@@ -2,8 +2,7 @@ import unittest
 
 from bcipy.config import DEFAULT_EXPERIMENT_ID
 from bcipy.helpers.validate import validate_experiment, validate_experiments
-from bcipy.helpers.save import save_experiment_data
-from bcipy.helpers.exceptions import (
+from bcipy.exceptions import (
     InvalidExperimentException,
     InvalidFieldException,
     UnregisteredExperimentException,
@@ -25,24 +24,6 @@ class TestValidateExperiment(unittest.TestCase):
         experiment_name = 'doesnotexist'
         with self.assertRaises(UnregisteredExperimentException):
             validate_experiment(experiment_name)
-
-    def test_save_experiment_data_throws_unregistered_exception_on_unregistered_fields(self):
-        # create a fake experiment to load
-        experiment_name = 'test'
-        fields = {
-            'registered_field': {
-                'help_text': 'test',
-                'type': 'int'
-            }
-        }
-        experiment = {
-            experiment_name: {
-                'fields': [{'does_not_exist': {'required': 'false', 'anonymize': 'true'}}], 'summary': ''}
-        }
-
-        # assert it raises the expected exception
-        with self.assertRaises(UnregisteredFieldException):
-            save_experiment_data(experiment, fields, '.', 'test_experiment.json')
 
     def test_validate_experiment_throws_file_not_found_with_incorrect_experiment_path(self):
         # define an invalid path
@@ -71,7 +52,9 @@ class TestValidateExperiments(unittest.TestCase):
     }
     experiments = {
         experiment_name: {
-            'fields': [{'registered_field': {'required': 'false', 'anonymize': 'true'}}], 'summary': ''}
+            'fields': [{'registered_field': {'required': 'false', 'anonymize': 'true'}}],
+            'summary': '',
+            'protocol': ''}
     }
 
     def test_validate_experiments_returns_true_on_valid_experiment(self):
@@ -82,7 +65,8 @@ class TestValidateExperiments(unittest.TestCase):
     def test_validate_experiments_throws_invalid_experiment_exception_on_invalid_experiment_no_field(self):
         experiments = {
             'invalid': {
-                'summary': ''}
+                'summary': '',
+                'protocol': ''}
         }
         with self.assertRaises(InvalidExperimentException):
             validate_experiments(experiments, self.fields)
@@ -91,7 +75,7 @@ class TestValidateExperiments(unittest.TestCase):
         experiments = {
             'invalid': {
                 'summary': '',
-                'fields': 'should_be_list!'}
+                'fields': 'should_be_list!', 'protocol': ''}
         }
         with self.assertRaises(InvalidExperimentException):
             validate_experiments(experiments, self.fields)
@@ -100,7 +84,7 @@ class TestValidateExperiments(unittest.TestCase):
         experiments = {
             'invalid': {
                 'summary': [],
-                'fields': []}
+                'fields': [], 'protocol': ''}
         }
         with self.assertRaises(InvalidExperimentException):
             validate_experiments(experiments, self.fields)
@@ -108,7 +92,7 @@ class TestValidateExperiments(unittest.TestCase):
     def test_validate_experiments_throws_invalid_experiment_exception_on_invalid_experiment_no_summary(self):
         experiments = {
             'invalid': {
-                'fields': []}
+                'fields': [], 'protocol': ''}
         }
         with self.assertRaises(InvalidExperimentException):
             validate_experiments(experiments, self.fields)
@@ -116,7 +100,7 @@ class TestValidateExperiments(unittest.TestCase):
     def test_validate_experiments_throws_invalid_field_exception_on_invalid_field_no_required(self):
         experiments = {
             self.experiment_name: {
-                'fields': [{'registered_field': {'anonymize': 'true'}}], 'summary': ''}
+                'fields': [{'registered_field': {'anonymize': 'true'}}], 'summary': '', 'protocol': ''}
         }
         with self.assertRaises(InvalidFieldException):
             validate_experiments(experiments, self.fields)
@@ -124,7 +108,7 @@ class TestValidateExperiments(unittest.TestCase):
     def test_validate_experiments_throws_invalid_field_exception_on_invalid_field_no_anonymize(self):
         experiments = {
             self.experiment_name: {
-                'fields': [{'registered_field': {'required': 'true'}}], 'summary': ''}
+                'fields': [{'registered_field': {'required': 'true'}}], 'summary': '', 'protocol': ''}
         }
         with self.assertRaises(InvalidFieldException):
             validate_experiments(experiments, self.fields)
@@ -132,7 +116,9 @@ class TestValidateExperiments(unittest.TestCase):
     def test_validate_experiments_throws_unregistered_exception_on_unregistered_fields(self):
         experiment = {
             self.experiment_name: {
-                'fields': [{'does_not_exist': {'required': 'false', 'anonymize': 'true'}}], 'summary': ''}
+                'fields': [{'does_not_exist': {'required': 'false', 'anonymize': 'true'}}],
+                'summary': '',
+                'protocol': ''}
         }
 
         # assert it raises the expected exception

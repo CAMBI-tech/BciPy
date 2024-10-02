@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 
 from bcipy.config import DEFAULT_ENCODING
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.signal.generator.generator import gen_random_data
 from bcipy.signal.process import Composition
 

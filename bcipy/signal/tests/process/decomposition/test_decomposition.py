@@ -1,7 +1,7 @@
 import unittest
 
 from bcipy.config import BCIPY_ROOT
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 from bcipy.signal.process.decomposition import continuous_wavelet_transform
 from bcipy.signal.process.decomposition.psd import power_spectral_density, PSD_TYPE
 import numpy as np

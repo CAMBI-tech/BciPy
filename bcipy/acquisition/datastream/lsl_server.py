@@ -13,10 +13,9 @@ from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME
+from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME, SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
-
+log = logging.getLogger(SESSION_LOG_FILENAME)
 # pylint: disable=too-many-arguments
 
 

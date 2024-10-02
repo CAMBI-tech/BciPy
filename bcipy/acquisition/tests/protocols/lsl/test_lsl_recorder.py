@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 import pytest
+import logging
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.mock.eye_tracker_server import \
@@ -13,8 +14,10 @@ from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 from bcipy.helpers.raw_data import TIMESTAMP_COLUMN, load
 
+log = logging.getLogger(__name__)
+
 DEVICE_NAME = 'DSI-24'
-DEVICE = preconfigured_device(DEVICE_NAME)
+DEVICE = preconfigured_device(DEVICE_NAME, log)
 
 
 @pytest.mark.slow

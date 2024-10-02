@@ -2,7 +2,7 @@ from collections import Counter
 from typing import Optional, List, Tuple
 from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidLanguageModelException, KenLMInstallationException
+from bcipy.exceptions import InvalidLanguageModelException, KenLMInstallationException
 from bcipy.config import LM_PATH
 try:
     import kenlm

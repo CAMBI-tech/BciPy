@@ -13,9 +13,10 @@ from bcipy.acquisition.protocols.lsl.connect import (device_from_metadata,
 from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
                                                            check_device)
 from bcipy.acquisition.util import StoppableProcess
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.raw_data import RawDataWriter
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class LslRecorder:
@@ -144,9 +145,9 @@ class LslRecordingThread(StoppableProcess):
 
     def _cleanup(self) -> None:
         """Performs cleanup tasks."""
-        assert self.writer, "Writer not initialized"
-        self.writer.__exit__()
-        self.writer = None
+        if self.writer:
+            self.writer.__exit__()
+            self.writer = None
 
     def _write_chunk(self, data: List, timestamps: List) -> None:
         """Persists the data resulting from pulling a chunk from the inlet.

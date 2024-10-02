@@ -5,7 +5,6 @@ import numpy as np
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
-import bcipy.task.base_calibration
 import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
@@ -48,31 +47,37 @@ class TestMatrixCalibration(unittest.TestCase):
             'show_feedback': False,
             'show_preview_inquiry': False,
             'stim_color': 'white',
-            'stim_height': 0.6,
+            'matrix_stim_height': 0.6,
             'stim_jitter': 0.0,
             'stim_length': 3,
             'stim_number': 10,
             'stim_order': 'random',
-            'stim_pos_x': 0.0,
-            'stim_pos_y': 0.0,
+            'matrix_stim_pos_x': 0.0,
+            'matrix_stim_pos_y': 0.0,
             'stim_space_char': '_',
             'target_color': 'white',
             'target_positions': 'distributed',
             'task_buffer_length': 2,
             'task_color': 'white',
-            'task_height': 0.1,
+            'matrix_task_height': 0.1,
+            'matrix_task_padding': 0.1,
             'task_text': 'HELLO_WORLD',
             'time_fixation': 0.1,
             'time_flash': 0.1,
             'time_prompt': 0.1,
             'trial_window': (0.0, 0.5),
             'trials_before_break': 100,
+            "preview_inquiry_error_prob": 0.05,
             'break_message': 'Take a break!',
             'trigger_type': 'image',
+            'matrix_keyboard_layout': 'QWERTY',
+            'matrix_rows': 3,
+            'matrix_columns': 3,
+            'matrix_width': 0.6,
         }
         self.parameters = Parameters.from_cast_values(**parameters)
-
         self.win = mock({'size': np.array([500, 500]), 'units': 'height'})
+        self.servers = [mock()]
 
         device_spec = DeviceSpec(name='Testing',
                                  channels=['a', 'b', 'c'],
@@ -99,6 +104,7 @@ class TestMatrixCalibration(unittest.TestCase):
             'transform': mock(),
             'evidence_type': 'ERP'
         })
+        self.fake = False
 
         self.display = mock(spec=MatrixDisplay)
         self.display.first_stim_time = 0.0
@@ -132,33 +138,34 @@ class TestMatrixCalibration(unittest.TestCase):
         """Override"""
         unstub()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_initialize(self, save_session_mock, trigger_handler_mock):
         """Test initialization"""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        MatrixCalibrationTask(win=self.win,
-                              daq=self.daq,
-                              parameters=self.parameters,
-                              file_save=self.temp_dir)
+        MatrixCalibrationTask(parameters=self.parameters,
+                              file_save=self.temp_dir,
+                              fake=self.fake)
 
         verify(bcipy.task.paradigm.matrix.calibration,
                times=1).init_matrix_display(self.parameters, self.win, any(),
                                             any())
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_execute(self, save_session_mock, trigger_handler_mock):
         """Test task execute"""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
         when(task).write_trigger_data(any(), any()).thenReturn(None)
@@ -172,33 +179,35 @@ class TestMatrixCalibration(unittest.TestCase):
             any(), any())
         verify(task, times=1).write_offset_trigger()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_validate_parameters_throws_task_exception_empty_parameter(
             self, save_session_mock, trigger_handler_mock):
         """Test validate parameters throws task exception when parameters is empty."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
         parameters = {}
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
         with self.assertRaises(Exception):
-            MatrixCalibrationTask(win=self.win,
-                                  daq=self.daq,
-                                  parameters=parameters,
-                                  file_save=self.temp_dir)
+            MatrixCalibrationTask(parameters=parameters,
+                                  file_save=self.temp_dir,
+                                  fake=self.fake)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_execute_save_stimuli_positions(self, save_session_mock,
                                             trigger_handler_mock):
         """Test execute save stimuli positions method is called as expected."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         when(task).write_offset_trigger().thenReturn(None)
         when(task).write_trigger_data(any(), any()).thenReturn(None)
@@ -215,18 +224,19 @@ class TestMatrixCalibration(unittest.TestCase):
             any(), any())
         verify(task, times=1).write_offset_trigger()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_targetness(self, save_session_mock,
                                      trigger_handler_mock):
         """Test trigger type targetness."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         # non-target
         symbol = 'N'
@@ -244,17 +254,18 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.TARGET)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_fixation(self, save_session_mock,
                                    trigger_handler_mock):
         """Test trigger type fixation."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         # fixation
         symbol = '+'
@@ -264,18 +275,19 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.FIXATION)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_trigger_type_prompt(self, save_session_mock,
                                  trigger_handler_mock):
         """Test trigger type prompt."""
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = mock()
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         # prompt, index = 0, otherwise it would be a target
         symbol = 'P'
@@ -285,19 +297,20 @@ class TestMatrixCalibration(unittest.TestCase):
         self.assertEqual(task.trigger_type(symbol, target, index),
                          TriggerType.PROMPT)
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_trigger_data_first_run(self, save_session_mock,
                                           trigger_handler_mock):
         """Test write trigger data when it is the first run of the task."""
         handler_mock = Mock()
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         timing_mock = mock()
@@ -305,66 +318,68 @@ class TestMatrixCalibration(unittest.TestCase):
         first_run = True
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label('EEG').thenReturn(
+        when(bcipy.task.calibration).offset_label('EEG').thenReturn(
             'starting_offset')
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
         self.assertEqual(2, handler_mock.add_triggers.call_count)
 
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration, times=1).offset_label('EEG')
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration, times=1).offset_label('EEG')
+        verify(bcipy.task.calibration,
                times=1).convert_timing_triggers(timing, timing[0][0], any())
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_trigger_data_not_first_run(self, save_session_mock,
                                               trigger_handler_mock):
         """Test write trigger data when it is not the first run of the task."""
         handler_mock = Mock()
         save_session_mock.return_value = mock()
         trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
 
         timing_mock = mock()
         timing = [('a', 0.0)]
         first_run = False
-        when(bcipy.task.base_calibration).convert_timing_triggers(
+        when(bcipy.task.calibration).convert_timing_triggers(
             timing, timing[0][0], any()).thenReturn(timing_mock)
 
         task.write_trigger_data(timing, first_run)
         handler_mock.add_triggers.assert_called_once()
 
-    @patch('bcipy.task.base_calibration.TriggerHandler')
-    @patch('bcipy.task.base_calibration._save_session_related_data')
+    @patch('bcipy.task.calibration.TriggerHandler')
+    @patch('bcipy.task.calibration._save_session_related_data')
     def test_write_offset_trigger(self, save_session_mock,
                                   trigger_handler_mock):
         """Test write offset trigger"""
         save_session_mock.return_value = mock()
         handler_mock = Mock()
         trigger_handler_mock.return_value = handler_mock
+        when(bcipy.task.calibration.BaseCalibrationTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
 
-        task = MatrixCalibrationTask(win=self.win,
-                                     daq=self.daq,
-                                     parameters=self.parameters,
-                                     file_save=self.temp_dir)
+        task = MatrixCalibrationTask(parameters=self.parameters,
+                                     file_save=self.temp_dir,
+                                     fake=self.fake)
         client_by_type_resp = {ContentType.EEG: self.eeg_client_mock}
         when(self.daq).client_by_type(
             ContentType.EEG).thenReturn(client_by_type_resp)
-        when(bcipy.task.base_calibration).offset_label(
+        when(bcipy.task.calibration).offset_label(
             'EEG', prefix='daq_sample_offset').thenReturn('daq_sample_offset')
 
         task.write_offset_trigger()
         handler_mock.close.assert_called_once()
         handler_mock.add_triggers.assert_called_once()
         verify(self.eeg_client_mock, times=1).offset(0.0)
-        verify(bcipy.task.base_calibration,
+        verify(bcipy.task.calibration,
                times=1).offset_label('EEG', prefix='daq_sample_offset')
 
 

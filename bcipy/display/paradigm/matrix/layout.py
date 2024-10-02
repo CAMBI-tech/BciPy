@@ -1,16 +1,16 @@
 """Functions for calculating matrix layouts"""
-import logging
 from typing import List, Optional, Tuple
 
 from bcipy.display.components.layout import (Layout, above, below, left_of,
                                              right_of, scaled_height,
                                              scaled_width)
 
-logger = logging.getLogger(__name__)
 
-
-def symbol_positions(container: Layout, rows: int,
-                     columns: int, max_spacing: Optional[float] = None) -> List[Tuple[float, float]]:
+def symbol_positions(container: Layout,
+                     rows: int,
+                     columns: int,
+                     symbol_set: List[str],
+                     max_spacing: Optional[float] = None) -> List[Tuple[float, float]]:
     """Compute the positions for arranging a number of symbols in a grid
     layout.
 
@@ -20,6 +20,7 @@ def symbol_positions(container: Layout, rows: int,
             visual.Window parent, which is used to determine the aspect ratio.
         rows - number of rows in the grid
         columns - number of columns in the grid
+        symbol_set - list of symbols to place in the grid
         max_spacing - optional max spacing (in layout units) in the height
             direction; width will be normalized to this value if provided
     Returns
@@ -28,6 +29,8 @@ def symbol_positions(container: Layout, rows: int,
     """
     assert container.parent, "Container must have a parent"
     assert rows >= 1 and columns >= 1, "There must be at least one row and one column"
+    assert rows * columns >= len(symbol_set), \
+        f"Not enough positions for symbols {len(symbol_set)}. Increase rows or columns."
 
     # compute the spacing (in container units) from the container width and height
     win_size = container.parent.size

@@ -62,21 +62,38 @@ Alternately, if [Make](http://www.mingw.org/) is installed, you may run the foll
 make dev-install
 ```
 
-#### Usage Locally
-
-Two ways to get started using BciPy for data collection:
-	1. Run `python bcipy/gui/BCInterface.py` in your command prompt or terminal from from base BciPy directory. This will execute the main BCI GUI. You may also use the command `make bci-gui`. 
-	2. Invoke the experiment directly using command line utility `bcipy`.
+#### Client Usage
+   	Invoke an experiment protocol or task directly using command line utility `bcipy`.
 		- You can pass it attributes with flags, if desired.
-				Ex. `bcipy --user "bci_user" --task "RSVP Calibration"`
+				Running with a User ID and Task: `bcipy --user "bci_user" --task "RSVP Calibration"`
+				Running with a User ID and Tasks with a registered Protocol: `bcipy --user "bci_user" --experiment "default"`
+				Running with fake data: `bcipy --fake`
+				Running without visualizations: `bcipy --noviz`
+				Running with alerts after each Task execution: `bcipy --alert`
+				Running with custom parameters: `bcipy --parameters "path/to/valid/parameters.json"`
+
 		- Use the help flag to see other available input options: `bcipy --help`
 
-##### Example usage as a package
+#####  Example Usage as a Package
 
 ```python
 from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
+
+#### Example Usage through the GUI
+
+Run the following command in your terminal to start the BciPy GUI:
+```sh
+python bcipy/gui/BCInterface.py
+```
+
+Alternately, if Make is installed, you may run the follow command to start the GUI from the BciPy root directory:
+
+```sh
+make bci-gui
+```
+
 
 #### Simulator Usage
 
@@ -100,6 +117,8 @@ Run `bcipy-sim --help` for documentation or see the README in the simulator modu
 ***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
 
 ***Session***: Data collected for a task. Comprised of metadata about the task and a list of Series.
+
+***Protocol***: A collection of tasks and actions to be executed in a session. This is defined as within experiments and can be registered using the BciPy GUI.
 
 ***Task***: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
 
@@ -130,6 +149,8 @@ This a list of the major modules and their functionality. Each module will conta
 
 ## Paradigms
 ------------
+
+See `bcipy/task/README.md` for more information on all supported paradigms and modes. The following are the supported and validated paradigms:
 
 
 > RSVPKeyboard
@@ -166,7 +187,7 @@ For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
+This demo will load in parameters and execute a demo task defined in the file. There are demo files contained in most modules, excepting gui, signal and parameters. Run them as a python script!
 
 
 ## Offset Determination and Correction
@@ -293,14 +314,14 @@ If you want to be added to the development team slack or have additional questio
 We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
 Other guidelines:
-- All features require tests and a demo.
+- All modules require tests and a demo.
 - All tests must pass to merge, even if they are seemingly unrelated to your work.
 - Use Spaces, not Tabs.
 - Use informative names for functions and classes.
 - Document the input and output of your functions / classes in the code. eg in-line commenting and typing.
 - Do not push IDE or other local configuration files.
 - All new modules or major functionality should be documented outside of the code with a README.md.
-	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
+	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing.
 
 See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
