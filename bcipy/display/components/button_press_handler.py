@@ -4,7 +4,6 @@ from typing import List, Optional, Type
 
 from psychopy import core, event
 
-from bcipy.display.main import ButtonPressMode
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.task import get_key_press
 
@@ -107,13 +106,3 @@ class PreviewOnlyButtonPressHandler(ButtonPressHandler):
     def accept_result(self) -> bool:
         """Should the result of a button press be affirmative"""
         return True
-
-
-def get_button_handler_class(
-        mode: ButtonPressMode) -> Type[ButtonPressHandler]:
-    """Get the appropriate handler constructor for the given button press mode."""
-    return {
-        ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
-        ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
-        ButtonPressMode.REJECT: RejectButtonPressHandler
-    }.get(mode)

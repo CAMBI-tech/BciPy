@@ -5,21 +5,7 @@ from unittest.mock import Mock, patch
 
 from bcipy.display.components.button_press_handler import (
     AcceptButtonPressHandler, PreviewOnlyButtonPressHandler,
-    RejectButtonPressHandler, get_button_handler_class)
-from bcipy.display.main import ButtonPressMode
-
-
-class TestButtonPressModule(unittest.TestCase):
-    """Test the module functions"""
-
-    def test_get_handler_class(self):
-        """Test get handler class"""
-        self.assertEqual(PreviewOnlyButtonPressHandler,
-                         get_button_handler_class(ButtonPressMode.NOTHING))
-        self.assertEqual(AcceptButtonPressHandler,
-                         get_button_handler_class(ButtonPressMode.ACCEPT))
-        self.assertEqual(RejectButtonPressHandler,
-                         get_button_handler_class(ButtonPressMode.REJECT))
+    RejectButtonPressHandler)
 
 
 class TestPreviewOnlyButtonPressHandler(unittest.TestCase):

@@ -8,10 +8,8 @@ import bcipy.display.components.layout as layout
 from bcipy.config import MATRIX_IMAGE_FILENAME
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
-from bcipy.display.components.button_press_handler import (
-    ButtonPressHandler, get_button_handler_class)
 from bcipy.display.components.task_bar import TaskBar
-from bcipy.display.main import PreviewParams
+from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
@@ -120,7 +118,8 @@ class MatrixDisplay(Display):
         self.should_prompt_target = should_prompt_target
 
         self.preview_params = preview_config
-        self._preview_button_handler = self.init_preview_button_handler()
+        self.preview_button_handler = init_preview_button_handler(
+            preview_config, experiment_clock) if self.preview_enabled else None
 
         self.logger.info(
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
@@ -171,7 +170,8 @@ class MatrixDisplay(Display):
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
         if colors:
-            assert len(stimuli) == len(colors), "each stimuli must have a color"
+            assert len(stimuli) == len(
+                colors), "each stimuli must have a color"
             self.stimuli_colors = colors
         else:
             self.stimuli_colors = [self.grid_color] * len(stimuli)
@@ -180,8 +180,8 @@ class MatrixDisplay(Display):
         """Symbols associated with their duration for the currently configured
         stimuli_inquiry."""
         return [
-            SymbolDuration(*sti)
-            for sti in zip(self.stimuli_inquiry, self.stimuli_timing, self.stimuli_colors)
+            SymbolDuration(*sti) for sti in zip(
+                self.stimuli_inquiry, self.stimuli_timing, self.stimuli_colors)
         ]
 
     def add_timing(self, stimuli: str, stamp: Optional[float] = None):
@@ -251,9 +251,10 @@ class MatrixDisplay(Display):
         """
         for symbol, stim in self.stim_registry.items():
             should_highlight = highlight and (symbol in highlight)
-            stim.setOpacity(self.highlight_opacity if should_highlight else opacity)
-            stim.setColor(highlight_color if highlight_color and
-                          should_highlight else color)
+            stim.setOpacity(
+                self.highlight_opacity if should_highlight else opacity)
+            stim.setColor(highlight_color
+                          if highlight_color and should_highlight else color)
             stim.draw()
 
     def prompt_target(self, target: SymbolDuration) -> float:
@@ -271,17 +272,6 @@ class MatrixDisplay(Display):
                   highlight=[target.symbol],
                   highlight_color=target.color)
 
-    def init_preview_button_handler(self) -> Optional[ButtonPressHandler]:
-        """"Returns a button press handler for inquiry preview."""
-        if not self.preview_enabled:
-            return None
-
-        params = self.preview_params
-        make_handler = get_button_handler_class(params.button_press_mode)
-        return make_handler(max_wait=params.preview_inquiry_length,
-                            key_input=params.preview_inquiry_key_input,
-                            clock=self.experiment_clock)
-
     def preview_inquiry(self, stimuli: List[SymbolDuration]) -> bool:
         """"Preview the inquiry and handle any button presses.
         Parameters
@@ -295,8 +285,9 @@ class MatrixDisplay(Display):
                 go on to the next one.
         """
         assert self.preview_enabled, "Preview feature not enabled."
+        assert self.preview_button_handler, "Button handler must be initialized"
 
-        handler = self._preview_button_handler
+        handler = self.preview_button_handler
         self.window.callOnFlip(self.add_timing, 'inquiry_preview')
 
         self.draw_preview(stimuli)
@@ -305,7 +296,8 @@ class MatrixDisplay(Display):
         if handler.has_response():
             self.add_timing(handler.response_label, handler.response_timestamp)
 
-        self.draw(grid_opacity=self.start_opacity, duration=self.preview_params.preview_inquiry_isi)
+        self.draw(grid_opacity=self.start_opacity,
+                  duration=self.preview_params.preview_inquiry_isi)
         return handler.accept_result()
 
     def draw_preview(self, stimuli: List[SymbolDuration]) -> None:
@@ -382,20 +374,17 @@ class MatrixDisplay(Display):
 
         # try adding the BciPy logo to the wait screen
         try:
-            wait_logo = visual.ImageStim(
-                self.window,
-                image=BCIPY_LOGO_PATH,
-                pos=(0, .25),
-                mask=None,
-                ori=0.0)
-            wait_logo.size = resize_image(
-                BCIPY_LOGO_PATH,
-                self.window.size,
-                1)
+            wait_logo = visual.ImageStim(self.window,
+                                         image=BCIPY_LOGO_PATH,
+                                         pos=(0, .25),
+                                         mask=None,
+                                         ori=0.0)
+            wait_logo.size = resize_image(BCIPY_LOGO_PATH, self.window.size, 1)
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            self.logger.exception(
+                f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
         # Draw and flip the screen.
@@ -436,10 +425,9 @@ class MatrixDisplay(Display):
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
             correction may be required.
         """
-        calibration_time = _calibration_trigger(
-            self.experiment_clock,
-            trigger_type=self.trigger_type,
-            display=self.window)
+        calibration_time = _calibration_trigger(self.experiment_clock,
+                                                trigger_type=self.trigger_type,
+                                                display=self.window)
 
         # set the first stim time if not present and first_run to False
         if not self.first_stim_time:

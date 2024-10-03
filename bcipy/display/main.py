@@ -2,10 +2,13 @@
 from abc import ABC, abstractmethod
 from enum import Enum
 from logging import Logger
-from typing import Any, List, NamedTuple, Optional, Tuple, Union
+from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
 
+from bcipy.display.components.button_press_handler import (
+    AcceptButtonPressHandler, ButtonPressHandler,
+    PreviewOnlyButtonPressHandler, RejectButtonPressHandler)
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_info
 
@@ -65,7 +68,7 @@ class Display(ABC):
         """
         ...
 
-    def preview_inquiry(self) -> List[float]:
+    def preview_inquiry(self, *args, **kwargs) -> List[float]:
         """Preview Inquiry.
 
         Display an inquiry or instruction beforehand to the user. This should be called before do_inquiry.
@@ -278,7 +281,11 @@ class PreviewInquiryProperties:
 
 
 class PreviewParams(NamedTuple):
-    """Parameters relevant for the Inquiry Preview functionality"""
+    """Parameters relevant for the Inquiry Preview functionality.
+
+    Create from an existing Parameters instance using:
+    >>> parameters.instantiate(PreviewParams)
+    """
     show_preview_inquiry: bool
     preview_inquiry_length: float
     preview_inquiry_key_input: str
@@ -287,7 +294,27 @@ class PreviewParams(NamedTuple):
 
     @property
     def button_press_mode(self):
+        """Mode indicated by the inquiry progress method."""
         return ButtonPressMode(self.preview_inquiry_progress_method)
+
+
+def get_button_handler_class(
+        mode: ButtonPressMode) -> Type[ButtonPressHandler]:
+    """Get the appropriate handler constructor for the given button press mode."""
+    return {
+        ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
+        ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
+        ButtonPressMode.REJECT: RejectButtonPressHandler
+    }.get(mode)
+
+
+def init_preview_button_handler(params: PreviewParams,
+                                experiment_clock: Clock) -> ButtonPressHandler:
+    """"Returns a button press handler for inquiry preview."""
+    make_handler = get_button_handler_class(params.button_press_mode)
+    return make_handler(max_wait=params.preview_inquiry_length,
+                        key_input=params.preview_inquiry_key_input,
+                        clock=experiment_clock)
 
 
 class VEPStimuliProperties(StimuliProperties):
