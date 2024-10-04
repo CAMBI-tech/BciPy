@@ -329,10 +329,10 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.2",
     "section": "task_config",
     "name": "Stimulus Presentation Duration",
-    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry. Default: 0.2",
     "recommended": "",
     "editable": false,
     "type": "float"
