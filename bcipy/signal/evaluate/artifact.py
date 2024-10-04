@@ -136,7 +136,7 @@ class ArtifactDetection:
 
     semi_automatic : bool
         Whether to use a semi-automatic approach to artifact detection. Defaults to False.
-    
+
     session_triggers : tuple
         A tuple of lists containing the trigger type, trigger timing, and trigger label for the session.
     """

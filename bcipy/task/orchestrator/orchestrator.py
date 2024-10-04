@@ -275,7 +275,7 @@ class SessionOrchestrator:
 
     def get_system_info(self) -> dict:
         return get_system_info()
-    
+
     def close_experiment_callback(self):
         """Callback to close the experiment."""
         self.logger.info("User has exited the experiment.")

@@ -197,7 +197,7 @@ class RSVPCopyPhraseTask(Task):
     def get_signal_models(self) -> Optional[List[SignalModel]]:
         if not self.fake:
             try:
-                model_dir = self.parameters['signal_model_path']
+                model_dir = self.parameters.get('signal_model_path', None)
                 signal_models = load_signal_models(directory=model_dir)
                 assert signal_models, f"No signal models found in {model_dir}"
             except Exception as error:

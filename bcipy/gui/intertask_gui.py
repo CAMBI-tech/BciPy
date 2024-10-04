@@ -9,7 +9,6 @@ from PyQt6.QtWidgets import (
 from bcipy.gui.bciui import BCIUI, run_bciui
 
 
-
 class IntertaskGUI(BCIUI):
 
     def __init__(

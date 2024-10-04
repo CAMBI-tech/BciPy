@@ -93,7 +93,7 @@ class OfflineAnalysisAction(Task):
             inconsistent.
 
         """
-        logger.info(f"Running offline analysis action")
+        logger.info("Running offline analysis action")
         try:
             response = offline_analysis(parameters=self.parameters, alert_finished=self.alert_finished)
         except Exception as e:
