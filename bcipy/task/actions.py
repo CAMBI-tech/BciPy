@@ -78,6 +78,7 @@ class OfflineAnalysisAction(Task):
         self.parameters_path = parameters_path
         self.alert_finished = alert
 
+        # TODO: add a feature to orchestrator to permit the user to select the last task directory or have it loaded.
         if last_task_dir:
             self.data_directory = last_task_dir
         else:
@@ -92,9 +93,9 @@ class OfflineAnalysisAction(Task):
             inconsistent.
 
         """
-        logger.info(f"Running offline analysis on data in {self.data_directory}")
+        logger.info(f"Running offline analysis action")
         try:
-            response = offline_analysis(self.data_directory, self.parameters, alert_finished=self.alert_finished)
+            response = offline_analysis(parameters=self.parameters, alert_finished=self.alert_finished)
         except Exception as e:
             logger.exception(f"Error running offline analysis: {e}")
             raise e

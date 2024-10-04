@@ -2,6 +2,7 @@ import errno
 import os
 import json
 from datetime import datetime
+import random
 import logging
 from logging import Logger
 from typing import List, Type, Optional
@@ -125,6 +126,8 @@ class SessionOrchestrator:
             with open(self.parameters['copy_phrases_location'], 'r') as f:
                 copy_phrases = json.load(f)
             self.copyphrases = copy_phrases['Phrases']
+            # randomize the order of the phrases
+            random.shuffle(self.copyphrases)
         else:
             self.copyphrases = None
             self.next_phrase = self.parameters['task_text']
