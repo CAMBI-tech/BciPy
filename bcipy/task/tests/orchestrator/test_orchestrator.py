@@ -72,14 +72,27 @@ class TestSessionOrchestrator(unittest.TestCase):
             fake=False,
             experiment_id=any(),
             parameters_path=any(),
-            last_task_dir=None).thenReturn(task)
+            last_task_dir=None,
+            protocol_path=any(),
+            progress=any(),
+            tasks=any(),
+            exit_callback=any(),
+            ).thenReturn(task)
         orchestrator = SessionOrchestrator()
         orchestrator.add_task(task)
         orchestrator.execute()
 
         verify(task, times=1).__call__(
-            any(), any(),
-            fake=False, experiment_id=any(), parameters_path=any(), last_task_dir=None)
+            any(),
+            any(),
+            fake=False,
+            experiment_id=any(),
+            parameters_path=any(),
+            last_task_dir=None,
+            protocol_path=any(),
+            progress=any(),
+            tasks=any(),
+            exit_callback=any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_save_folder(any())
         verify(SessionOrchestrator, times=1)._init_orchestrator_logger(any())
         verify(SessionOrchestrator, times=1)._init_task_save_folder(any())

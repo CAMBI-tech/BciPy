@@ -1,5 +1,6 @@
+# mypy: disable-error-code="assignment,arg-type"
 import subprocess
-from typing import Any, Optional, List, Callable
+from typing import Any, Optional, List, Callable, Tuple
 import logging
 from pathlib import Path
 import glob
@@ -17,8 +18,9 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.parameters import Parameters
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.load import load_raw_data
+from bcipy.helpers.raw_data import RawData
 from bcipy.signal.process import get_default_transform
-from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report
+from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report, ReportSection
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.helpers.visualization import visualize_erp
@@ -191,20 +193,20 @@ class BciPyCalibrationReportAction(Task):
             save_path: str,
             protocol_path: Optional[str] = None,
             last_task_dir: Optional[str] = None,
-            trial_window: Optional[tuple] = None,
+            trial_window: Optional[Tuple[float, float]] = None,
             **kwargs: Any) -> None:
         super().__init__()
         self.save_folder = save_path
         # Currently we assume all Tasks have the same parameters, this may change in the future.
         self.parameters = parameters
-        self.protocol_path = protocol_path
+        self.protocol_path = protocol_path or ''
         self.last_task_dir = last_task_dir
         self.default_transform = None
         self.trial_window = trial_window or (0, 1.0)
         self.static_offset = self.parameters.get("static_offset", 0)
-        self.report = Report(self.save_folder)
-        self.report_sections = []
-        self.all_raw_data = []
+        self.report = Report(self.protocol_path)
+        self.report_sections: List[ReportSection] = []
+        self.all_raw_data: List[RawData] = []
         self.type_amp = None
 
     def execute(self) -> TaskData:
@@ -223,19 +225,19 @@ class BciPyCalibrationReportAction(Task):
                 calibration_directories = glob.glob(
                     f"{self.protocol_path}/**/*Calibration*", recursive=True)
                 for data_dir in calibration_directories:
-                    data_dir = Path(data_dir)
+                    path_data_dir = Path(data_dir)
                     # pull out the last directory name
-                    task_name = data_dir.parts[-1].split('_')[0]
-                    data_directories.append(data_dir)
+                    task_name = path_data_dir.parts[-1].split('_')[0]
+                    data_directories.append(path_data_dir)
                     # For each calibration directory, attempt to load the raw data
-                    signal_report_section = self.create_signal_report(data_dir)
-                    session_report = self.create_session_report(data_dir, task_name)
+                    signal_report_section = self.create_signal_report(path_data_dir)
+                    session_report = self.create_session_report(path_data_dir, task_name)
                     self.report_sections.append(session_report)
                     self.report.add(session_report)
                     self.report_sections.append(signal_report_section)
                     self.report.add(signal_report_section)
             if data_directories:
-                logger.info(f"Saving report generated from: {data_directories}")
+                logger.info(f"Saving report generated from: {self.protocol_path}")
             else:
                 logger.info(f"No data found in {self.protocol_path}")
 
@@ -244,8 +246,12 @@ class BciPyCalibrationReportAction(Task):
 
         self.report.compile()
         self.report.save()
+        return TaskData(
+            save_path=self.save_folder,
+            task_dict={},
+        )
 
-    def create_signal_report(self, data_dir) -> SignalReportSection:
+    def create_signal_report(self, data_dir: Path) -> SignalReportSection:
         raw_data = load_raw_data(Path(data_dir, f'{RAW_DATA_FILENAME}.csv'))
         if not self.type_amp:
             self.type_amp = raw_data.daq_type

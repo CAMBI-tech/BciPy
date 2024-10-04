@@ -440,8 +440,6 @@ class ArtifactDetection:
 
         if len(onsets) > 0 and len(bad_channels) > 0:
             return mne.Annotations(onsets, durations, descriptions), bad_channels
-        elif len(onsets) > 0:
-            return mne.Annotations(onsets, durations, descriptions), None
         elif len(bad_channels) > 0:
             return None, bad_channels
 

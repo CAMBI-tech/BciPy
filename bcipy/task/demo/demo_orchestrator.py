@@ -1,8 +1,10 @@
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.task.actions import (OfflineAnalysisAction, IntertaskAction)
-from bcipy.task.paradigm.rsvp import RSVPCalibrationTask, RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
-from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
+from bcipy.task.actions import (OfflineAnalysisAction, IntertaskAction, BciPyCalibrationReportAction)
+from bcipy.task.paradigm.rsvp import RSVPCalibrationTask
+# from bcipy.task.paradigm.rsvp import RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
+from bcipy.task.paradigm.matrix import MatrixCalibrationTask
+# from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
 
 
 def demo_orchestrator(parameters_path: str) -> None:
@@ -15,11 +17,16 @@ def demo_orchestrator(parameters_path: str) -> None:
     fake_data = True
     alert_finished = True
     tasks = [
-        MatrixTimingVerificationCalibration,
+        RSVPCalibrationTask,
         IntertaskAction,
-        RSVPTimingVerificationCalibration]
+        OfflineAnalysisAction,
+        IntertaskAction,
+        MatrixCalibrationTask,
+        IntertaskAction,
+        OfflineAnalysisAction,
+        BciPyCalibrationReportAction]
     orchestrator = SessionOrchestrator(
-        user='time_test_orchestrator',
+        user='report_testing',
         parameters_path=parameters_path,
         alert=alert_finished,
         fake=fake_data)

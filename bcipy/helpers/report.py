@@ -156,7 +156,7 @@ class SessionReportSection(ReportSection):
     A class to handle the creation of a Session Report section in a BciPy Report using a summary dictionary.
     """
 
-    def __init__(self, summary: Optional[dict] = None) -> None:
+    def __init__(self, summary: dict) -> None:
         self.summary = summary
         if 'task' in self.summary:
             self.session_name = self.summary['task']
