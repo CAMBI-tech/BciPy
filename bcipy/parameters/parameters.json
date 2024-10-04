@@ -568,13 +568,13 @@
     "type": "str"
   },
   "copy_phrases_location": {
-    "value": "",
+    "value": "/Users/scitab/Desktop/scitab/CAMBI/BciPy/bcipy/parameters/experiment/phrases.json",
     "section": "online_config",
     "name": "Copy Phrases Location",
     "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
     "recommended": "",
     "editable": true,
-    "type": "str"
+    "type": "filepath"
   },
   "rsvp_task_height": {
     "value": "0.1",
