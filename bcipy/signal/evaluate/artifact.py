@@ -133,6 +133,12 @@ class ArtifactDetection:
 
     detect_voltage : bool
         Whether to detect voltage artifacts. Defaults to True.
+
+    semi_automatic : bool
+        Whether to use a semi-automatic approach to artifact detection. Defaults to False.
+    
+    session_triggers : tuple
+        A tuple of lists containing the trigger type, trigger timing, and trigger label for the session.
     """
 
     supported_units: List[str] = ['volts', 'microvolts']
@@ -237,13 +243,13 @@ class ArtifactDetection:
             voltage = self.label_voltage_events()
             if voltage:
                 voltage_annotations, bad_channels = voltage
-                log.info(f'Voltage violation events found: {len(voltage_annotations)}')
                 if bad_channels:
                     # add bad channel labels to the raw data
                     self.mne_data.info['bads'] = bad_channels
                     log.info(f'Bad channels detected: {bad_channels}')
 
                 if voltage_annotations:
+                    log.info(f'Voltage violation events found: {len(voltage_annotations)}')
                     annotations += voltage_annotations
                     self.voltage_annotations = voltage_annotations
 
@@ -251,8 +257,9 @@ class ArtifactDetection:
             eog = self.label_eog_events()
             if eog:
                 eog_annotations, eog_events = eog
-                log.info(f'EOG events found: {len(eog_events)}')
+
                 if eog_annotations:
+                    log.info(f'EOG events found: {len(eog_events)}')
                     annotations += eog_annotations
                     self.eog_annotations = eog_annotations
 
@@ -431,8 +438,12 @@ class ArtifactDetection:
         # combine the bad channels
         bad_channels = bad_channels1 + bad_channels2
 
-        if len(onsets) > 0 or len(bad_channels) > 0:
+        if len(onsets) > 0 and len(bad_channels) > 0:
             return mne.Annotations(onsets, durations, descriptions), bad_channels
+        elif len(onsets) > 0:
+            return mne.Annotations(onsets, durations, descriptions), None
+        elif len(bad_channels) > 0:
+            return None, bad_channels
 
         return None
 

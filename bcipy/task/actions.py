@@ -194,12 +194,13 @@ class BciPyCalibrationReportAction(Task):
             **kwargs: Any) -> None:
         super().__init__()
         self.save_folder = save_path
+        # Currently we assume all Tasks have the same parameters, this may change in the future.
         self.parameters = parameters
         self.protocol_path = protocol_path
         self.last_task_dir = last_task_dir
         self.default_transform = None
         self.trial_window = trial_window or (0, 1.0)
-        self.static_offset = self.parameters.get("static_trigger_offset")
+        self.static_offset = self.parameters.get("static_offset", 0)
         self.report = Report(self.save_folder)
         self.report_sections = []
         self.all_raw_data = []
@@ -213,21 +214,33 @@ class BciPyCalibrationReportAction(Task):
         logger.info(f"Generating report in save folder {self.save_folder}")
         # loop through all the files in the last_task_dir
 
+        data_directories = []
         # If a protocol is given, loop over and look for any calibration directories
-        if self.protocol_path:
-            # Use glob to find all directories with Calibration in the name
-            data_directories = []
-            for data_dir in glob.glob(f"{self.protocol_path}/**/Calibration", recursive=True):
-                data_directories.append(dir)
-                # For each calibration directory, attempt to load the raw data
-                session_report = self.create_session_report(data_dir)
-                self.report_sections.append(session_report)
-                signal_report_section = self.create_signal_report(data_dir)
-                self.report_sections.append(signal_report_section)
-                self.report.add(session_report)
-                self.report.add(signal_report_section)
+        try:
+            if self.protocol_path:
+                # Use glob to find all directories with Calibration in the name
+                calibration_directories = glob.glob(
+                    f"{self.protocol_path}/**/*Calibration*", recursive=True)
+                for data_dir in calibration_directories:
+                    data_dir = Path(data_dir)
+                    # pull out the last directory name
+                    task_name = data_dir.parts[-1].split('_')[0]
+                    data_directories.append(data_dir)
+                    # For each calibration directory, attempt to load the raw data
+                    signal_report_section = self.create_signal_report(data_dir)
+                    session_report = self.create_session_report(data_dir, task_name)
+                    self.report_sections.append(session_report)
+                    self.report.add(session_report)
+                    self.report_sections.append(signal_report_section)
+                    self.report.add(signal_report_section)
+            if data_directories:
+                logger.info(f"Saving report generated from: {data_directories}")
+            else:
+                logger.info(f"No data found in {self.protocol_path}")
 
-        logger.info(f"Saving report generated from: {data_directories}")
+        except Exception as e:
+            logger.exception(f"Error generating report: {e}")
+
         self.report.compile()
         self.report.save()
 
@@ -245,18 +258,18 @@ class BciPyCalibrationReportAction(Task):
         if not self.default_transform:
             self.set_default_transform(sample_rate)
 
+        triggers = self.get_triggers(data_dir)
         # get figure handles
-        figure_handles = self.get_figure_handles(dir, raw_data, channel_map)
-        artifact_detector = self.get_artifact_detector(raw_data, device_spec)
+        figure_handles = self.get_figure_handles(raw_data, channel_map, triggers)
+        artifact_detector = self.get_artifact_detector(raw_data, device_spec, triggers)
         return SignalReportSection(figure_handles, artifact_detector)
 
-    def create_session_report(self, data_dir) -> SessionReportSection:
+    def create_session_report(self, data_dir, task_name) -> SessionReportSection:
         # get task name
-        task = self.parameters.get("task", "Unknown")
         summary_dict = {
-            "task": task,
-            "data_dir": data_dir,
-            "type_amp": self.type_amp
+            "task": task_name,
+            "data_location": data_dir,
+            "amplifier": self.type_amp
         }
         signal_model_metrics = self.get_signal_model_metrics(data_dir)
         summary_dict.update(signal_model_metrics)
@@ -314,8 +327,8 @@ class BciPyCalibrationReportAction(Task):
         )
         return trigger_type, trigger_timing, trigger_label
 
-    def get_figure_handles(self, session, raw_data, channel_map) -> List[Figure]:
-        _, trigger_timing, trigger_label = self.get_triggers(session)
+    def get_figure_handles(self, raw_data, channel_map, triggers) -> List[Figure]:
+        _, trigger_timing, trigger_label = triggers
         figure_handles = visualize_erp(
             raw_data,
             channel_map,
@@ -329,13 +342,14 @@ class BciPyCalibrationReportAction(Task):
         )
         return figure_handles
 
-    def get_artifact_detector(self, raw_data, device_spec) -> ArtifactDetection:
+    def get_artifact_detector(self, raw_data, device_spec, triggers) -> ArtifactDetection:
         eye_channels = self.find_eye_channels(device_spec)
         artifact_detector = ArtifactDetection(
             raw_data,
             self.parameters,
             device_spec,
-            eye_channels=eye_channels)
+            eye_channels=eye_channels,
+            session_triggers=triggers)
         artifact_detector.detect_artifacts()
         return artifact_detector
 

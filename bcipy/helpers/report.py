@@ -111,7 +111,7 @@ class SignalReportSection(ReportSection):
         """
         # create a heatmap with the onset values
         fig, ax = plt.subplots()
-        fig.set_size_inches(6, 3)
+        fig.set_size_inches(4, 2)
         ax.hist(onsets, bins=100, range=range, color='red', alpha=0.7)
         ax.set_title(f'{type} Artifact Onsets')
         ax.set_xlabel('Time (s)')
@@ -158,6 +158,10 @@ class SessionReportSection(ReportSection):
 
     def __init__(self, summary: Optional[dict] = None) -> None:
         self.summary = summary
+        if 'task' in self.summary:
+            self.session_name = self.summary['task']
+        else:
+            self.session_name = 'Session Summary'
         self.style = getSampleStyleSheet()
         self.summary_table = None
 
@@ -203,7 +207,7 @@ class SessionReportSection(ReportSection):
 
         Creates a header for the Session Report section.
         """
-        header = Paragraph('<u>Session Summary</u>', self.style['Heading3'])
+        header = Paragraph(f'<u>{self.session_name}</u>', self.style['Heading3'])
         return header
 
 

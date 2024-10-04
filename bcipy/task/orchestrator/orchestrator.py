@@ -156,6 +156,7 @@ class SessionOrchestrator:
                     fake=self.fake,
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
+                    protocol_path=self.save_folder,
                     last_task_dir=self.last_task_dir,
                     progress=self.progress,
                     tasks=self.tasks,
