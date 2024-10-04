@@ -125,12 +125,13 @@ class RSVPCopyPhraseTask(Task):
     ) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
         self.fake = fake
+        self.parameters = parameters
+        self.language_model = self.get_language_model()
+        self.signal_models = self.get_signal_models()
         daq, servers, win = self.setup(parameters, file_save, fake)
         self.servers = servers
         self.window = win
         self.daq = daq
-        self.parameters = parameters
-        self.fake = fake
 
         self.validate_parameters()
 
@@ -142,8 +143,6 @@ class RSVPCopyPhraseTask(Task):
 
         self.button_press_error_prob = parameters['preview_inquiry_error_prob']
 
-        self.language_model = self.get_language_model()
-        self.signal_models = self.get_signal_models()
         self.signal_model = self.signal_models[0] if self.signal_models else None
         self.evidence_evaluators = self.init_evidence_evaluators(self.signal_models)
         self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
