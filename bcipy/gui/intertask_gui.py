@@ -17,12 +17,12 @@ class IntertaskGUI(BCIUI):
         next_task_name: str,
         current_task_index: int,
         total_tasks: int,
-        callback: Callable,
+        exit_callback: Callable,
     ):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
         self.next_task_name = next_task_name
-        self.callback = callback
+        self.callback = exit_callback
         super().__init__("Progress", 800, 150)
 
     def app(self):
