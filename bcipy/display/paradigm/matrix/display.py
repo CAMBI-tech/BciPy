@@ -120,6 +120,7 @@ class MatrixDisplay(Display):
         self.preview_params = preview_config
         self.preview_button_handler = init_preview_button_handler(
             preview_config, experiment_clock) if self.preview_enabled else None
+        self.preview_accepted = True
 
         self.logger.info(
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
@@ -198,6 +199,7 @@ class MatrixDisplay(Display):
 
     def do_inquiry(self) -> List[Tuple[str, float]]:
         """Animates an inquiry of stimuli and returns a list of stimuli trigger timing."""
+        self.preview_accepted = True
         self.reset_timing()
         symbol_durations = self.symbol_durations()
 
@@ -210,11 +212,10 @@ class MatrixDisplay(Display):
         else:
             [fixation, *stim] = symbol_durations
 
-        should_proceed = True
         if self.preview_enabled:
-            should_proceed = self.preview_inquiry(stim)
+            self.preview_accepted = self.preview_inquiry(stim)
 
-        if should_proceed:
+        if self.preview_accepted:
             self.animate_scp(fixation, stim)
 
         return self._timing
