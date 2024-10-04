@@ -1,20 +1,28 @@
-from bcipy.gui.bciui import BCIUI, run_bciui
+from typing import Callable
+
 from PyQt6.QtWidgets import (
     QLabel,
     QHBoxLayout,
     QPushButton,
     QProgressBar,
 )
+from bcipy.gui.bciui import BCIUI, run_bciui
+
 
 
 class IntertaskGUI(BCIUI):
 
     def __init__(
-        self, next_task_name: str, current_task_index: int, total_tasks: int
+        self,
+        next_task_name: str,
+        current_task_index: int,
+        total_tasks: int,
+        callback: Callable,
     ):
         self.total_tasks = total_tasks
         self.current_task_index = current_task_index
         self.next_task_name = next_task_name
+        self.callback = callback
         super().__init__("Progress", 800, 150)
 
     def app(self):
@@ -51,9 +59,10 @@ class IntertaskGUI(BCIUI):
 
     def stop_orchestrator(self):
         # This should stop the orchestrator execution
+        self.callback()
         self.close()
 
 
 if __name__ == "__main__":
     # test values
-    run_bciui(IntertaskGUI, "Placeholder Task Name", 1, 3)
+    run_bciui(IntertaskGUI, "Placeholder Task Name", 1, 3, lambda: print("Stopping orchestrator"))

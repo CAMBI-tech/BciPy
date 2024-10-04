@@ -1,5 +1,5 @@
 import subprocess
-from typing import Any, Optional, List
+from typing import Any, Optional, List, Callable
 import logging
 from pathlib import Path
 import glob
@@ -117,6 +117,7 @@ class IntertaskAction(Task):
             save_path: str,
             progress: Optional[int] = None,
             tasks: Optional[List[Task]] = None,
+            exit_callback: Optional[Callable] = None,
             **kwargs: Any) -> None:
         super().__init__()
         self.save_folder = save_path
@@ -128,7 +129,7 @@ class IntertaskAction(Task):
         self.task_name = self.tasks[self.next_task_index].name
 
     def execute(self) -> TaskData:
-        run_bciui(IntertaskGUI, self.task_name, self.next_task_index, len(self.tasks) - 1)
+        run_bciui(IntertaskGUI, self.task_name, self.next_task_index, len(self.tasks) - 1, self.exit_callback)
         return TaskData(
             save_path=self.save_folder,
             task_dict={
@@ -176,7 +177,7 @@ class ExperimentFieldCollectionAction(Task):
 
 class BciPyCalibrationReportAction(Task):
     """
-    Action for generating a report.
+    Action for generating a report after calibration Tasks.
     """
 
     name = "BciPy Report Action"
@@ -215,7 +216,6 @@ class BciPyCalibrationReportAction(Task):
         if self.protocol_path:
             # Use glob to find all directories with Calibration in the name
             data_directories = []
-            all_raw_data = []
             for data_dir in glob.glob(f"{self.protocol_path}/**/Calibration", recursive=True):
                 data_directories.append(dir)
                 # For each calibration directory, attempt to load the raw data
@@ -226,6 +226,7 @@ class BciPyCalibrationReportAction(Task):
                 self.report.add(session_report)
                 self.report.add(signal_report_section)
 
+        logger.info(f"Saving report generated from: {data_directories}")
         self.report.compile()
         self.report.save()
 

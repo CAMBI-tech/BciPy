@@ -78,6 +78,7 @@ class SessionOrchestrator:
         self.progress = 0
 
         self.ready_to_execute = False
+        self.user_exit = False
         self.logger.info("Session Orchestrator initialized successfully")
 
     def add_task(self, task: Type[Task]) -> None:
@@ -157,12 +158,16 @@ class SessionOrchestrator:
                     parameters_path=self.parameters_path,
                     last_task_dir=self.last_task_dir,
                     progress=self.progress,
-                    tasks=self.tasks)
+                    tasks=self.tasks,
+                    exit_callback=self.close_experiment_callback)
                 task_data = initialized_task.execute()
                 self.session_data.append(task_data)
                 self.logger.info(f"Task {task.name} completed successfully")
                 # some tasks may need access to the previous task's data
                 self.last_task_dir = data_save_location
+
+                if self.user_exit:
+                    break
 
                 if self.alert:
                     initialized_task.alert()
@@ -174,10 +179,6 @@ class SessionOrchestrator:
                         pass
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
-
-                # if not self.continue_experiment:
-                #     self.logger.info("User indicates that the session should not continue")
-                #     break
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
@@ -270,3 +271,8 @@ class SessionOrchestrator:
 
     def get_system_info(self) -> dict:
         return get_system_info()
+    
+    def close_experiment_callback(self):
+        """Callback to close the experiment."""
+        self.logger.info("User has exited the experiment.")
+        self.user_exit = True
