@@ -301,11 +301,12 @@ class PreviewParams(NamedTuple):
 def get_button_handler_class(
         mode: ButtonPressMode) -> Type[ButtonPressHandler]:
     """Get the appropriate handler constructor for the given button press mode."""
-    return {
+    mapping = {
         ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
         ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
         ButtonPressMode.REJECT: RejectButtonPressHandler
-    }.get(mode)
+    }
+    return mapping[mode]
 
 
 def init_preview_button_handler(params: PreviewParams,

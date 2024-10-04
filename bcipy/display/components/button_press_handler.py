@@ -2,7 +2,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Optional, Type
 
-from psychopy import core, event
+from psychopy import event
+from psychopy.core import CountdownTimer
 
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.task import get_key_press
@@ -15,7 +16,7 @@ class ButtonPressHandler(ABC):
                  max_wait: float,
                  key_input: str,
                  clock: Optional[Clock] = None,
-                 timer: Type[Clock] = core.CountdownTimer):
+                 timer: Type[CountdownTimer] = CountdownTimer):
         """
         Parameters
         ----------
@@ -28,7 +29,7 @@ class ButtonPressHandler(ABC):
         self.clock = clock or Clock()
         self.response: Optional[List] = None
 
-        self._timer = None
+        self._timer: Optional[CountdownTimer] = None
         self.make_timer = timer
 
     @property
@@ -48,7 +49,7 @@ class ButtonPressHandler(ABC):
         event.clearEvents(eventType='keyboard')
         self._timer.reset()
 
-    def await_response(self):
+    def await_response(self) -> None:
         """Wait for a button response for a maximum number of seconds. Wait
         period could end early if the class determines that some other
         criteria have been met (such as an acceptable response)."""
@@ -70,7 +71,7 @@ class ButtonPressHandler(ABC):
 
     def _within_wait_period(self) -> bool:
         """Check that we are within the allotted time for a response."""
-        return self._timer and self._timer.getTime() > 0
+        return (self._timer is not None) and (self._timer.getTime() > 0)
 
     def _should_keep_waiting(self) -> bool:
         """Check that we should keep waiting for responses."""
