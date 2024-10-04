@@ -58,7 +58,7 @@ class IntertaskGUI(BCIUI):
         self.stop_button.clicked.connect(self.stop_orchestrator)
 
     def stop_orchestrator(self):
-        # This should stop the orchestrator execution
+        # This should exit Task executions
         self.callback()
         self.close()
 

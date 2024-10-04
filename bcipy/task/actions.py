@@ -127,6 +127,7 @@ class IntertaskAction(Task):
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name
+        self.exit_callback = exit_callback
 
     def execute(self) -> TaskData:
         run_bciui(IntertaskGUI, self.task_name, self.next_task_index, len(self.tasks) - 1, self.exit_callback)
