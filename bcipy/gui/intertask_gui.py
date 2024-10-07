@@ -5,6 +5,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QProgressBar,
+    QApplication
 )
 from bcipy.gui.bciui import BCIUI, run_bciui
 
@@ -59,7 +60,10 @@ class IntertaskGUI(BCIUI):
     def stop_orchestrator(self):
         # This should exit Task executions
         self.callback()
-        self.close()
+        self.quit()
+
+    def quit(self):
+        QApplication.instance().quit()
 
 
 if __name__ == "__main__":

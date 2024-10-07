@@ -12,7 +12,7 @@ from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME, DEFAULT_DEVICES_PATH,
                           STATIC_AUDIO_PATH, TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
@@ -506,7 +506,7 @@ def offline_analysis(
         data_folder = load_experimental_data()
 
     devices_by_name = devices.load(
-        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+        Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
     active_devices = (spec for spec in devices_by_name.values()
                       if spec.is_active)
@@ -560,7 +560,7 @@ if __name__ == "__main__":
         args.data_folder,
         parameters,
         alert_finished=args.alert,
-        estimate_balanced_acc=args.balanced,
+        estimate_balanced_acc=False,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
     log.info("Offline Analysis complete.")
