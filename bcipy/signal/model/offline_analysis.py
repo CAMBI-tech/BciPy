@@ -204,7 +204,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
 
     except Exception as e:
         log.error(f"Error calculating balanced accuracy: {e}")
-    
+
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
     # this should have uncorrected trigger timing for display purposes
@@ -510,11 +510,11 @@ def offline_analysis(
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
-    
+
     # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
         Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
-    
+
     # Load the active devices used during a session; this will be used to exclude inactive devices
     active_devices_by_name = devices.load(
         Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
@@ -549,8 +549,9 @@ def offline_analysis(
     if alert_finished:
         results = [f"\n {model.name}: {model.auc} \n" for model in models]
         confirm(f"Offline analysis complete! \n Results={results}")
-    log.info(f"Offline analysis complete")
+    log.info("Offline analysis complete")
     return models, figure_handles
+
 
 def main():
     import argparse
@@ -582,6 +583,7 @@ def main():
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
+
 
 if __name__ == "__main__":
     main()

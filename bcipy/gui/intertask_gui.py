@@ -8,7 +8,6 @@ from PyQt6.QtWidgets import (
     QApplication
 )
 from bcipy.gui.bciui import BCIUI, run_bciui
-from bcipy.task import Task
 from bcipy.config import SESSION_LOG_FILENAME
 import logging
 
@@ -83,6 +82,5 @@ class IntertaskGUI(BCIUI):
 
 if __name__ == "__main__":
     tasks = ["RSVP Calibration", "IntertaskAction", "Matrix Calibration", "IntertaskAction"]
-
 
     run_bciui(IntertaskGUI, tasks=tasks, next_task_index=1, exit_callback=lambda: print("Stopping orchestrator"))

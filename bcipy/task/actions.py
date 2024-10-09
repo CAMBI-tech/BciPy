@@ -22,7 +22,6 @@ from bcipy.helpers.raw_data import RawData
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report, ReportSection
 from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
-from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.evaluate.artifact import ArtifactDetection
 
@@ -99,7 +98,7 @@ class OfflineAnalysisAction(Task):
         try:
             cmd = f"bcipy-train --parameters {self.parameters_path} -v"
             if self.alert_finished:
-                cmd += f" --alert"
+                cmd += " --alert"
             response = subprocess.run(
                 cmd,
                 shell=True,
@@ -133,7 +132,7 @@ class IntertaskAction(Task):
         self.save_folder = save_path
         self.parameters = parameters
         assert progress is not None and tasks is not None, "Either progress or tasks must be provided"
-        self.next_task_index = progress - 1 # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        self.next_task_index = progress - 1  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name
@@ -142,7 +141,11 @@ class IntertaskAction(Task):
 
     def execute(self) -> TaskData:
 
-        run_bciui(IntertaskGUI, tasks=self.task_names, next_task_index=self.next_task_index, exit_callback=self.exit_callback),
+        run_bciui(
+            IntertaskGUI,
+            tasks=self.task_names,
+            next_task_index=self.next_task_index,
+            exit_callback=self.exit_callback),
 
         return TaskData(
             save_path=self.save_folder,
