@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, List
 
 from PyQt6.QtWidgets import (
     QLabel,
@@ -8,20 +8,29 @@ from PyQt6.QtWidgets import (
     QApplication
 )
 from bcipy.gui.bciui import BCIUI, run_bciui
+from bcipy.task import Task
+from bcipy.config import SESSION_LOG_FILENAME
+import logging
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class IntertaskGUI(BCIUI):
 
+    action_name = "IntertaskAction"
+
     def __init__(
         self,
-        next_task_name: str,
-        current_task_index: int,
-        total_tasks: int,
+        next_task_index: int,
+        tasks: List[str],
         exit_callback: Callable,
     ):
-        self.total_tasks = total_tasks
-        self.current_task_index = current_task_index
-        self.next_task_name = next_task_name
+        # check if IntertaskGUI in tasks, if so, remove it
+        self.tasks = tasks
+        tasks = [task for task in tasks if task != self.action_name]
+        self.total_tasks = len(tasks)
+        self.current_task_index = next_task_index
+        self.next_task_name = tasks[self.current_task_index]
         self.callback = exit_callback
         super().__init__("Progress", 800, 150)
 
@@ -54,12 +63,18 @@ class IntertaskGUI(BCIUI):
         buttons_layout.addWidget(self.next_button)
         self.contents.addLayout(buttons_layout)
 
-        self.next_button.clicked.connect(self.close)
-        self.stop_button.clicked.connect(self.stop_orchestrator)
+        self.next_button.clicked.connect(self.next)
+        self.stop_button.clicked.connect(self.stop_tasks)
 
-    def stop_orchestrator(self):
+    def stop_tasks(self):
         # This should exit Task executions
+        logger.info(f"Stopping Tasks... user requested. Using callback: {self.callback}")
         self.callback()
+        self.quit()
+        logger.info("Tasks Stopped")
+
+    def next(self):
+        logger.info(f"Next Task=[{self.next_task_name}] requested")
         self.quit()
 
     def quit(self):
@@ -67,5 +82,7 @@ class IntertaskGUI(BCIUI):
 
 
 if __name__ == "__main__":
-    # test values
-    run_bciui(IntertaskGUI, "Placeholder Task Name", 1, 3, lambda: print("Stopping orchestrator"))
+    tasks = ["RSVP Calibration", "IntertaskAction", "Matrix Calibration", "IntertaskAction"]
+
+
+    run_bciui(IntertaskGUI, tasks=tasks, next_task_index=1, exit_callback=lambda: print("Stopping orchestrator"))

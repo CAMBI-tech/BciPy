@@ -73,12 +73,12 @@ class OfflineAnalysisAction(Task):
             data_directory: str,
             parameters_path: str = f'{DEFAULT_PARAMETERS_PATH}',
             last_task_dir: Optional[str] = None,
-            alert: bool = False,
+            alert_finished: bool = False,
             **kwargs: Any) -> None:
         super().__init__()
         self.parameters = parameters
         self.parameters_path = parameters_path
-        self.alert_finished = alert
+        self.alert_finished = alert_finished
 
         # TODO: add a feature to orchestrator to permit the user to select the last task directory or have it loaded.
         if last_task_dir:
@@ -97,7 +97,14 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
-            response = offline_analysis(parameters=self.parameters, alert_finished=self.alert_finished)
+            cmd = f"bcipy-train --parameters {self.parameters_path} -v"
+            if self.alert_finished:
+                cmd += f" --alert"
+            response = subprocess.run(
+                cmd,
+                shell=True,
+                check=True,
+            )
         except Exception as e:
             logger.exception(f"Error running offline analysis: {e}")
             raise e
@@ -126,19 +133,22 @@ class IntertaskAction(Task):
         self.save_folder = save_path
         self.parameters = parameters
         assert progress is not None and tasks is not None, "Either progress or tasks must be provided"
-        self.next_task_index = progress  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        self.next_task_index = progress - 1 # progress is 1-indexed, tasks is 0-indexed so we can use the same index
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name
+        self.task_names = [task.name for task in self.tasks]
         self.exit_callback = exit_callback
 
     def execute(self) -> TaskData:
-        run_bciui(IntertaskGUI, self.task_name, self.next_task_index, len(self.tasks) - 1, self.exit_callback)
+
+        run_bciui(IntertaskGUI, tasks=self.task_names, next_task_index=self.next_task_index, exit_callback=self.exit_callback),
+
         return TaskData(
             save_path=self.save_folder,
             task_dict={
                 "next_task_index": self.next_task_index,
-                "tasks": self.tasks,
+                "tasks": self.task_names,
                 "task_name": self.task_name,
             },
         )

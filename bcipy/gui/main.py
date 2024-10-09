@@ -1128,24 +1128,7 @@ def start_app() -> None:
                 height=650,
                 width=650,
                 background_color='white')
-
-    # ex.get_filename_dialog()
-    # ex.add_button(message='Test Button', position=[200, 300], size=[100, 100], id=1)
-    # ex.add_image(path='../static/images/gui/bci_cas_logo.png', position=[50, 50], size=200)
-    # ex.add_static_textbox(
-    #   text='Test static text',
-    #   background_color='black',
-    #   text_color='white',
-    #   position=[100, 20],
-    #   wrap_text=True)
-    # ex.add_combobox(position=[100, 100], size=[100, 100], items=['first', 'second', 'third'], editable=True)
-    # ex.add_text_input(position=[100, 100], size=[100, 100])
     ex.show_gui()
-    ex.throw_alert_message(title='title',
-                           message='test',
-                           message_response=AlertMessageResponse.OCE,
-                           message_timeout=5)
-
     sys.exit(bcipy_gui.exec())
 
 

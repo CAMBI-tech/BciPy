@@ -1,9 +1,10 @@
 import subprocess
 import sys
+import logging
 from typing import List
 
 from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
-                          STATIC_IMAGES_PATH)
+                          STATIC_IMAGES_PATH, PROTOCOL_LOG_FILENAME)
 from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
                             AlertResponse, BCIGui, app,
                             contains_special_characters, contains_whitespaces,
@@ -11,6 +12,8 @@ from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
 from bcipy.helpers.load import (copy_parameters, load_experiments,
                                 load_json_parameters, load_users)
 from bcipy.task import TaskRegistry
+
+logger = logging.getLogger(PROTOCOL_LOG_FILENAME)
 
 
 class BCInterface(BCIGui):
@@ -420,7 +423,13 @@ class BCInterface(BCIGui):
                 )
             if self.alert:
                 cmd += ' -a'
-            subprocess.Popen(cmd, shell=True)
+            output = subprocess.run(cmd, shell=True)
+            if output.returncode != 0:
+                self.throw_alert_message(
+                    title='BciPy Alert',
+                    message=f'Error: {output.stderr.decode()}',
+                    message_type=AlertMessageType.CRIT,
+                    message_response=AlertMessageResponse.OTE)
 
             if self.autoclose:
                 self.close()

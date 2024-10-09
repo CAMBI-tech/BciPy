@@ -76,6 +76,7 @@ class SessionOrchestrator:
         self.logger = self._init_orchestrator_logger(self.save_folder)
 
         self.alert = alert
+        self.logger.info("Alerts are on") if self.alert else self.logger.info("Alerts are off")
         self.visualize = visualize
         self.progress = 0
 
@@ -158,6 +159,7 @@ class SessionOrchestrator:
                     self.parameters,
                     data_save_location,
                     fake=self.fake,
+                    alert_finished=self.alert,
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
                     protocol_path=self.save_folder,

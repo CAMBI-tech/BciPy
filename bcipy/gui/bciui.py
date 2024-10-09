@@ -13,6 +13,7 @@ from PyQt6.QtWidgets import (
 )
 from typing import Optional, List
 from bcipy.config import BCIPY_ROOT
+import sys
 
 
 class BCIUI(QWidget):
@@ -107,6 +108,10 @@ class BCIUI(QWidget):
 
         on_button.clicked.connect(toggle_off)
         off_button.clicked.connect(toggle_on)
+
+    def hide(self) -> None:
+        """Close the UI window"""
+        self.hide()
 
 
 class SmallButton(QPushButton):
@@ -225,7 +230,8 @@ class DynamicList(QWidget):
 
 
 def run_bciui(ui: Type[BCIUI], *args, **kwargs):
-    app = QApplication([])
+    # add app to kwargs
+    app = QApplication(sys.argv)
     ui_instance = ui(*args, **kwargs)
     ui_instance.display()
     app.exec()

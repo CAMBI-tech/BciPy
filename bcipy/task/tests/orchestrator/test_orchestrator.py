@@ -77,7 +77,7 @@ class TestSessionOrchestrator(unittest.TestCase):
             progress=any(),
             tasks=any(),
             exit_callback=any(),
-            ).thenReturn(task)
+        ).thenReturn(task)
         orchestrator = SessionOrchestrator()
         orchestrator.add_task(task)
         orchestrator.execute()

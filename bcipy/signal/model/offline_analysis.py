@@ -1,5 +1,4 @@
 # mypy: disable-error-code="attr-defined"
-# needed for the ERPTransformParams
 import json
 import logging
 from pathlib import Path
@@ -13,13 +12,14 @@ from sklearn.model_selection import train_test_split
 import bcipy.acquisition.devices as devices
 from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME, DEFAULT_DEVICES_PATH,
-                          STATIC_AUDIO_PATH, TRIGGER_FILENAME, SESSION_LOG_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
+from bcipy.gui.alert import confirm
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
-from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
+from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
@@ -184,23 +184,29 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     model = PcaRdaKdeModel(k_folds=k_folds)
     model.fit(data, labels)
     model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform)
+                                         transform=default_transform,
+                                         evidence_type="ERP",
+                                         auc=model.auc)
     log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
 
+    try:
+        # Using an 80/20 split, report on balanced accuracy
+        if estimate_balanced_acc:
+            train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+            dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            dummy_model.fit(train_data, train_labels)
+            probs = dummy_model.predict_proba(test_data)
+            preds = probs.argmax(-1)
+            score = balanced_accuracy_score(test_labels, preds)
+            log.info(f"Balanced acc with 80/20 split: {score}")
+            model.metadata.balanced_accuracy = score
+            del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+
+    except Exception as e:
+        log.error(f"Error calculating balanced accuracy: {e}")
+    
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
-
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-
     # this should have uncorrected trigger timing for display purposes
     figure_handles = visualize_erp(
         erp_data,
@@ -504,18 +510,26 @@ def offline_analysis(
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
-
+    
+    # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
         Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
-
-    active_devices = (spec for spec in devices_by_name.values()
+    
+    # Load the active devices used during a session; this will be used to exclude inactive devices
+    active_devices_by_name = devices.load(
+        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+    active_devices = (spec for spec in active_devices_by_name.values()
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
+    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
+    assert len(data_file_paths) > 0, "No data files found for offline analysis."
+
     models = []
     figure_handles = []
+    log.info(f"Starting offline analysis for {data_file_paths}")
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
@@ -533,11 +547,12 @@ def offline_analysis(
             figure_handles.extend(et_figure_handles)
 
     if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
+        results = [f"\n {model.name}: {model.auc} \n" for model in models]
+        confirm(f"Offline analysis complete! \n Results={results}")
+    log.info(f"Offline analysis complete")
     return models, figure_handles
 
-
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -548,19 +563,25 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=True)
+    parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=False)
-    parser.set_defaults(show_figures=True)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
+    log.info(
+        f"Starting offline analysis client with the following: Data={args.data_folder} || "
+        f"Save Figures={args.save_figures} || Show Figures={args.show_figures} || "
+        f"Alert={args.alert} || Calculate Balanced Accuracy={args.balanced}")
 
     offline_analysis(
         args.data_folder,
         parameters,
         alert_finished=args.alert,
-        estimate_balanced_acc=False,
+        estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-    log.info("Offline Analysis complete.")
+
+if __name__ == "__main__":
+    main()
