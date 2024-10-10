@@ -21,7 +21,7 @@ from bcipy.helpers.list import expanded
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
-
+from bcipy.helpers.symbols import BACKSPACE_CHAR
 
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
@@ -58,6 +58,10 @@ class VEPDisplay(Display):
         if not frame_rate:
             frame_rate = self.window.getActualFrameRate()
             assert frame_rate, 'An accurate window frame rate could not be established'
+
+        #check if frame_rate is within a 10 hz buffer for either 60 or 120 hz
+        assert (55 <= frame_rate <= 65) or (115 <= frame_rate <= 125), \
+            f"The current refresh rate is {frame_rate} hz and must be either 60 or 120 hz"
 
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round_refresh_rate(frame_rate)
@@ -481,7 +485,11 @@ class VEPDisplay(Display):
             ['A', 'B', 'C', 'D', 'E', 'F'],
             ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R', 'S'],
-            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+            ['MODE   ', 'SWITCH'],
+            [],
+            [],
+            [BACKSPACE_CHAR]
         ]
     
         for box_index, symbols in enumerate(layout):
