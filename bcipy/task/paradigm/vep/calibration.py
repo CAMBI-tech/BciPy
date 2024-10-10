@@ -38,9 +38,9 @@ class VEPCalibrationTask(BaseCalibrationTask):
     def __init__(self, win: visual.Window, daq: ClientManager,
                  parameters: Parameters, file_save: str):
         self.box_colors = [
-            '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
+            '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232', '#FF8232', '#FF8232'
         ]
-        self.num_boxes = 6
+        self.num_boxes = 8
         super().__init__(win, daq, parameters, file_save)
 
     def init_display(self) -> VEPDisplay:

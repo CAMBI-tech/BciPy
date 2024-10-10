@@ -353,7 +353,7 @@
     "type": "float"
   },
   "time_fixation": {
-    "value": "0.5",
+    "value": "1",
     "section": "bci_config",
     "readableName": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
