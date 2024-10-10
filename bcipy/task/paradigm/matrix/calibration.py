@@ -4,6 +4,7 @@ from psychopy import core, visual
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
@@ -104,4 +105,5 @@ def init_matrix_display(parameters: Parameters, window: visual.Window,
                          width_pct=parameters['matrix_width'],
                          height_pct=1 - (2 * task_bar.height_pct),
                          trigger_type=parameters['trigger_type'],
-                         symbol_set=symbol_set)
+                         symbol_set=symbol_set,
+                         preview_config=parameters.instantiate(PreviewParams))

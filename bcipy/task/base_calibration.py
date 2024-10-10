@@ -167,6 +167,8 @@ class BaseCalibrationTask(Task):
         """
         if index == 0:
             return TriggerType.PROMPT
+        if symbol == 'inquiry_preview':
+            return TriggerType.PREVIEW
         if symbol == DEFAULT_TEXT_FIXATION:
             return TriggerType.FIXATION
         if target == symbol:

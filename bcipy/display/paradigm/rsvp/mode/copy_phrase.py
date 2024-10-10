@@ -1,7 +1,8 @@
 from psychopy import visual
-from bcipy.display.paradigm.rsvp.display import RSVPDisplay, BCIPY_LOGO_PATH
-from bcipy.helpers.symbols import SPACE_CHAR
+
+from bcipy.display.paradigm.rsvp.display import BCIPY_LOGO_PATH, RSVPDisplay
 from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.symbols import SPACE_CHAR
 
 """Note:
 
@@ -33,7 +34,7 @@ class CopyPhraseDisplay(RSVPDisplay):
             starting_spelled_text='',
             trigger_type='image',
             space_char=SPACE_CHAR,
-            preview_inquiry=None,
+            preview_config=None,
             full_screen=False):
         """ Initializes Copy Phrase Task Objects """
         self.starting_spelled_text = starting_spelled_text
@@ -46,8 +47,17 @@ class CopyPhraseDisplay(RSVPDisplay):
                          info,
                          trigger_type=trigger_type,
                          space_char=space_char,
-                         preview_inquiry=preview_inquiry,
+                         preview_config=preview_config,
                          full_screen=full_screen)
+
+    @property
+    def preview_index(self) -> int:
+        """Index within an inquiry at which the inquiry preview should be displayed.
+
+        For copy phrase there is no target prompt so it should display before
+        the fixation.
+        """
+        return 0
 
     def wait_screen(self, message: str, message_color: str) -> None:
         """Wait Screen.
