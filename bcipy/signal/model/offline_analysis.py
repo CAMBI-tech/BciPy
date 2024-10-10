@@ -547,7 +547,7 @@ def offline_analysis(
             figure_handles.extend(et_figure_handles)
 
     if alert_finished:
-        results = [f"\n {model.name}: {model.auc} \n" for model in models]
+        results = [f"{model.name}: {model.auc}" for model in models]
         confirm(f"Offline analysis complete! \n Results={results}")
     log.info("Offline analysis complete")
     return models, figure_handles

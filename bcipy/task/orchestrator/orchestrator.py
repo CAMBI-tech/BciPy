@@ -183,9 +183,10 @@ class SessionOrchestrator:
                     # Visualize session data and fail silently if it errors
                     try:
                         visualize_session_data(data_save_location, self.parameters)
-                        pass
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
+
+                initialized_task = None
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")

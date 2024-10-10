@@ -24,12 +24,13 @@ class IntertaskGUI(BCIUI):
         tasks: List[str],
         exit_callback: Callable,
     ):
-        # check if IntertaskGUI in tasks, if so, remove it
         self.tasks = tasks
-        tasks = [task for task in tasks if task != self.action_name]
-        self.total_tasks = len(tasks)
         self.current_task_index = next_task_index
         self.next_task_name = tasks[self.current_task_index]
+        self.task_progress = next_task_index - 1 
+        tasks = [task for task in tasks if task != self.action_name]
+        self.total_tasks = len(tasks)
+
         self.callback = exit_callback
         super().__init__("Progress", 800, 150)
 
@@ -38,10 +39,10 @@ class IntertaskGUI(BCIUI):
 
         progress_container = QHBoxLayout()
         progress_container.addWidget(
-            QLabel(f"({self.current_task_index}/{self.total_tasks})")
+            QLabel(f"({self.task_progress}/{self.total_tasks})")
         )
         self.progress = QProgressBar()
-        self.progress.setValue(int(self.current_task_index / self.total_tasks * 100))
+        self.progress.setValue(int(self.task_progress / self.total_tasks * 100))
         self.progress.setTextVisible(False)
         progress_container.addWidget(self.progress)
         self.contents.addLayout(progress_container)

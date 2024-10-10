@@ -40,7 +40,7 @@ class DefaultArtifactParameters(Enum):
     """
 
     # Voltage
-    PEAK_THRESHOLD = 100e-7
+    PEAK_THRESHOLD = 75e-7
     PEAK_MIN_DURATION = 0.005
     FLAT_THRESHOLD = 0.5e-6
     FLAT_MIN_DURATION = 0.1

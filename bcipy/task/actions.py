@@ -96,7 +96,7 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
-            cmd = f"bcipy-train --parameters {self.parameters_path} -v"
+            cmd = f"bcipy-train --parameters {self.parameters_path}"
             if self.alert_finished:
                 cmd += " --alert"
             response = subprocess.run(
@@ -132,7 +132,7 @@ class IntertaskAction(Task):
         self.save_folder = save_path
         self.parameters = parameters
         assert progress is not None and tasks is not None, "Either progress or tasks must be provided"
-        self.next_task_index = progress - 1  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        self.next_task_index = progress  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name

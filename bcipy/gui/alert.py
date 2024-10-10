@@ -15,7 +15,9 @@ def confirm(message: str) -> bool:
     -------
         users selection : True for selecting Ok, False for Cancel.
     """
-    app = QApplication(sys.argv)
+    app = QApplication(sys.argv).instance()
+    if not app:
+        app = QApplication(sys.argv)
     dialog = alert_message(message,
                            message_type=AlertMessageType.INFO,
                            message_response=AlertMessageResponse.OCE)
