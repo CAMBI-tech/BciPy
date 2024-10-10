@@ -4,10 +4,13 @@ import unittest
 from pathlib import Path
 from unittest.mock import Mock, patch
 
+from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.acquisition import (init_device, init_eeg_acquisition,
+from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, init_device,
+                                       init_eeg_acquisition,
                                        max_inquiry_duration, parse_stream_type,
-                                       server_spec, stream_types)
+                                       raw_data_filename, server_spec,
+                                       stream_types)
 from bcipy.helpers.load import load_json_parameters
 from bcipy.helpers.save import init_save_data_structure
 
@@ -36,7 +39,7 @@ class TestAcquisition(unittest.TestCase):
         """Test init_eeg_acquisition with LSL client."""
 
         params = self.parameters
-        params['acq_mode'] = 'EEG/DSI-24'
+        params['acq_mode'] = 'EEG:passive/DSI-24'
 
         client, servers = init_eeg_acquisition(params, self.save, server=True)
 
@@ -47,6 +50,7 @@ class TestAcquisition(unittest.TestCase):
 
         self.assertEqual(1, len(servers))
         self.assertEqual(client.device_spec.name, 'DSI-24')
+        self.assertFalse(client.device_spec.is_active)
 
         self.assertTrue(Path(self.save, 'devices.json').is_file())
 
@@ -142,9 +146,14 @@ class TestAcquisition(unittest.TestCase):
         self.assertEqual(device_spec, device_mock)
 
     def test_parse_stream_type(self):
-        """Test function to split the stream type into content_type, name"""
-        self.assertEqual(('EEG', 'DSI-24'), parse_stream_type('EEG/DSI-24'))
-        self.assertEqual(('Gaze', None), parse_stream_type('Gaze'))
+        """Test function to split the stream type into content_type, name,
+        and status"""
+        self.assertEqual(('EEG', 'DSI-24', None), parse_stream_type('EEG/DSI-24'))
+        self.assertEqual(('Gaze', None, None), parse_stream_type('Gaze'))
+        self.assertEqual(('Gaze', None, DeviceStatus.PASSIVE),
+                         parse_stream_type('Gaze:passive'))
+        self.assertEqual(('EEG', 'DSI-24', DeviceStatus.ACTIVE),
+                         parse_stream_type('EEG:active/DSI-24'))
 
     @patch('bcipy.helpers.acquisition.preconfigured_device')
     def test_server_spec_with_named_device(self, preconfigured_device_mock):
@@ -165,6 +174,24 @@ class TestAcquisition(unittest.TestCase):
         device_spec = server_spec(content_type='EEG')
         with_content_type_mock.assert_called_with('EEG')
         self.assertEqual(device_spec, device1)
+
+    def test_raw_data_filename_eeg(self):
+        """Test generation of filename for EEG devices"""
+        device = DeviceSpec(name='DSI-24',
+                            channels=[],
+                            sample_rate=300.0,
+                            content_type='EEG')
+        self.assertEqual(raw_data_filename(device), f'{RAW_DATA_FILENAME}.csv')
+
+    def test_raw_data_filename_eye_tracker(self):
+        """Test generation of filename for EyeTracker devices"""
+
+        device = DeviceSpec(name='Tobii-P0',
+                            channels=[],
+                            sample_rate=60,
+                            content_type='EYETRACKER')
+        self.assertEqual(raw_data_filename(device),
+                         'eyetracker_data_tobii-p0.csv')
 
 
 if __name__ == '__main__':

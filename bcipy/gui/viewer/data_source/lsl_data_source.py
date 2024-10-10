@@ -1,6 +1,7 @@
 """Streams data from pylsl and puts it into a Queue."""
 import pylsl
-from bcipy.acquisition.protocols.lsl.lsl_client import device_from_metadata
+
+from bcipy.acquisition.protocols.lsl.connect import device_from_metadata
 from bcipy.gui.viewer.data_source.data_source import DataSource
 
 

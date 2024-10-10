@@ -17,11 +17,11 @@ Release:
 """
 
 import os
-import sys
 import platform
+import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 # Package meta-data.
 NAME = 'bcipy'
@@ -31,7 +31,7 @@ EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
 REQUIRES_PYTHON = '>3.7,<3.10'
 
-VERSION = '2.0.1rc3'
+VERSION = '2.0.0rc4'
 
 REQUIRED = []
 
@@ -100,9 +100,14 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=('tests', 'demo', 'data', )),
+    packages=find_packages(exclude=(
+        'tests',
+        'demo',
+        'data',
+    )),
     entry_points={
-        'console_scripts': ['bcipy = bcipy.main:bcipy_main'],
+        'console_scripts':
+        ['bcipy = bcipy.main:bcipy_main', 'bcipy-sim = bcipy.simulator'],
     },
     install_requires=REQUIRED,
     include_package_data=True,

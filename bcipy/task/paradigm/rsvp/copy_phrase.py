@@ -1,33 +1,44 @@
+# mypy: disable-error-code="arg-type"
 import logging
 from typing import List, NamedTuple, Optional, Tuple
 
-from psychopy import core
+from psychopy import core, visual
 
-from bcipy.config import (
-    SESSION_DATA_FILENAME, TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE, SESSION_SUMMARY_FILENAME)
+from bcipy.acquisition import ClientManager
+from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
+                          SESSION_SUMMARY_FILENAME, TRIGGER_FILENAME,
+                          WAIT_SCREEN_MESSAGE)
 from bcipy.display import (InformationProperties, PreviewInquiryProperties,
                            StimuliProperties)
-from bcipy.display import Display
-from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
+from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.exceptions import TaskConfigurationException
 from bcipy.helpers.list import destutter
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
 from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.task import (construct_triggers,
-                                fake_copy_phrase_decision,
-                                get_data_for_decision, get_user_input,
-                                target_info, trial_complete_message)
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
+                                fake_copy_phrase_decision,
+                                get_device_data_for_decision, get_user_input,
+                                relative_triggers, target_info,
+                                trial_complete_message)
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers)
+                                    TriggerType, convert_timing_triggers,
+                                    offset_label)
+from bcipy.language.main import LanguageModel
+from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task
+from bcipy.task.control.evidence import (EvidenceEvaluator,
+                                         init_evidence_evaluator)
 from bcipy.task.data import EvidenceType, Inquiry, Session
+from bcipy.task.exceptions import DuplicateModelEvidence
 
 
 class Decision(NamedTuple):
@@ -66,8 +77,7 @@ class RSVPCopyPhraseTask(Task):
             configuration details regarding the experiment. See parameters.json
         file_save : str,
             path location of where to save data from the session
-        signal_model : loaded pickle file,
-            trained signal model.
+        signal_models : list of trained signal models.
         language_model: object,
             trained language model.
         fake : boolean, optional
@@ -82,63 +92,64 @@ class RSVPCopyPhraseTask(Task):
     MODE = 'RSVP'
 
     PARAMETERS_USED = [
-        'time_fixation', 'time_flash', 'time_prompt', 'trial_length',
+        'time_fixation', 'time_flash', 'time_prompt', 'trial_window',
         'font', 'fixation_color', 'trigger_type',
         'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
         'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
-        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'min_inq_len',
+        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'max_incorrect',
+        'min_inq_len',
         'show_feedback', 'feedback_duration',
-        'show_preview_inquiry', 'preview_inquiry_isi',
+        'show_preview_inquiry', 'preview_inquiry_isi', 'preview_inquiry_error_prob',
         'preview_inquiry_key_input', 'preview_inquiry_length', 'preview_inquiry_progress_method',
-        'spelled_letters_count', 'static_trigger_offset',
+        'spelled_letters_count',
         'stim_color', 'stim_height', 'stim_jitter', 'stim_length', 'stim_number',
         'stim_order', 'stim_pos_x', 'stim_pos_y', 'stim_space_char', 'target_color',
         'task_buffer_length', 'task_color', 'task_height', 'task_text',
         'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
     ]
 
-    def __init__(self, win, daq, parameters, file_save, signal_model,
-                 language_model, fake):
+    def __init__(
+            self,
+            win: visual.Window,
+            daq: ClientManager,
+            parameters: Parameters,
+            file_save: str,
+            signal_models: List[SignalModel],
+            language_model: LanguageModel,
+            fake: bool) -> None:
         super(RSVPCopyPhraseTask, self).__init__()
-
+        self.logger = logging.getLogger(__name__)
         self.window = win
         self.daq = daq
         self.parameters = parameters
+        self.signal_models = signal_models
+        self.language_model = language_model
+        self.fake = fake
 
         self.validate_parameters()
 
-        self.static_clock = core.StaticPeriod(
-            screenHz=self.window.getActualFrameRate())
+        self.static_clock = None
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
 
         self.alp = alphabet(self.parameters)
 
-        self.button_press_error_prob = 0.05
-        self.evidence_types = [EvidenceType.LM, EvidenceType.ERP]
-        if self.parameters['show_preview_inquiry']:
-            self.evidence_types.append(EvidenceType.BTN)
+        self.button_press_error_prob = parameters['preview_inquiry_error_prob']
+
+        self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
+        self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
 
         self.file_save = file_save
+        self.save_session_every_inquiry = True
 
-        self.trigger_handler = TriggerHandler(self.file_save, TRIGGER_FILENAME, FlushFrequency.EVERY)
+        self.trigger_handler = self.default_trigger_handler()
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters['task_text']
 
-        self.fake = fake
-        self.language_model = language_model
-        self.signal_model = signal_model
-        self.evidence_precision = 5
+        self.signal_model = signal_models[0] if signal_models else None
+        self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
-        self.feedback = VisualFeedback(
-            self.window,
-            {'feedback_font': self.parameters['font'],
-             'feedback_color': self.parameters['info_color'],
-             'feedback_pos_x': self.parameters['info_pos_x'],
-             'feedback_pos_y': self.parameters['info_pos_y'],
-             'feedback_stim_height': self.parameters['info_height'],
-             'feedback_duration': self.parameters['feedback_duration']},
-            self.experiment_clock)
+        self.feedback = self.init_feedback()
 
         self.setup()
 
@@ -156,6 +167,48 @@ class RSVPCopyPhraseTask(Task):
         )
 
         self.rsvp = self.init_display()
+
+    def init_evidence_evaluators(self,
+                                 signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
+        """Initializes the evidence evaluators from the provided signal models.
+
+        Returns a list of evaluators for active devices. Raises an exception if
+        more than one evaluator provides the same type of evidence.
+        """
+        evidence_types = []
+        evaluators = []
+        for model in signal_models:
+            evaluator = init_evidence_evaluator(self.alp, model)
+            content_type = evaluator.consumes
+            evidence_type = evaluator.produces
+            if content_type in self.daq.active_device_content_types:
+                evaluators.append(evaluator)
+                if evidence_type in evidence_types:
+                    raise DuplicateModelEvidence(
+                        f"More than one model produces {evidence_type} evidence"
+                    )
+                evidence_types.append(evidence_type)
+            else:
+                self.logger.info(
+                    f"SignalModel not used: there is no active device of type: {content_type}"
+                )
+        return evaluators
+
+    def init_evidence_types(
+            self, signal_models: List[SignalModel],
+            evidence_evaluators: List[EvidenceEvaluator]
+    ) -> List[EvidenceType]:
+        evidence_types = [EvidenceType.LM]
+        evidence_types.extend(
+            [evaluator.produces for evaluator in evidence_evaluators])
+        if self.parameters['show_preview_inquiry']:
+            evidence_types.append(EvidenceType.BTN)
+        return evidence_types
+
+    def default_trigger_handler(self) -> TriggerHandler:
+        """Default trigger handler"""
+        return TriggerHandler(self.file_save, TRIGGER_FILENAME,
+                              FlushFrequency.EVERY)
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -175,12 +228,24 @@ class RSVPCopyPhraseTask(Task):
         self.init_copy_phrase_task()
         self.current_inquiry = self.next_inquiry()
 
-    def init_display(self) -> Display:
+    def init_display(self) -> CopyPhraseDisplay:
         """Initialize the display"""
         return _init_copy_phrase_display(self.parameters, self.window,
                                          self.static_clock,
                                          self.experiment_clock,
                                          self.spelled_text)
+
+    def init_feedback(self) -> Optional[VisualFeedback]:
+        """Initialize visual feedback"""
+        return VisualFeedback(
+            self.window, {
+                'feedback_font': self.parameters['font'],
+                'feedback_color': self.parameters['info_color'],
+                'feedback_pos_x': self.parameters['info_pos_x'],
+                'feedback_pos_y': self.parameters['info_pos_y'],
+                'feedback_stim_height': self.parameters['info_height'],
+                'feedback_duration': self.parameters['feedback_duration']
+            }, self.experiment_clock)
 
     def validate_parameters(self) -> None:
         """Validate.
@@ -196,7 +261,7 @@ class RSVPCopyPhraseTask(Task):
         # ensure data / query parameters are set correctly
         buffer_len = self.parameters['task_buffer_length']
         prestim = self.parameters['prestim_length']
-        poststim = self.parameters['trial_length']
+        poststim = self.parameters['trial_window'][1] - self.parameters['trial_window'][0]
         if buffer_len < prestim:
             raise TaskConfigurationException(
                 f'task_buffer_length=[{buffer_len}] must be greater than prestim_length=[{prestim}]')
@@ -209,7 +274,7 @@ class RSVPCopyPhraseTask(Task):
         """Number of letters already spelled at the start of the task."""
         spelled_letters_count = self.parameters['spelled_letters_count']
         if spelled_letters_count > len(self.copy_phrase):
-            self.logger.debug('Already spelled letters exceeds phrase length.')
+            self.logger.info('Already spelled letters exceeds phrase length.')
             spelled_letters_count = 0
         return spelled_letters_count
 
@@ -232,9 +297,6 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['min_inq_len'],
             self.parameters['max_inq_per_series'],
             lmodel=self.language_model,
-            device_spec=self.daq.device_spec,
-            signal_model=self.signal_model,
-            k=self.parameters['down_sampling_rate'],
             alp=self.alp,
             evidence_names=self.evidence_types,
             task_list=[(str(self.copy_phrase), self.spelled_text)],
@@ -245,10 +307,6 @@ class RSVPCopyPhraseTask(Task):
             decision_threshold=self.parameters['decision_threshold'],
             backspace_prob=self.parameters['lm_backspace_prob'],
             backspace_always_shown=self.parameters['backspace_always_shown'],
-            filter_high=self.parameters['filter_high'],
-            filter_low=self.parameters['filter_low'],
-            filter_order=self.parameters['filter_order'],
-            notch_filter_frequency=self.parameters['notch_filter_frequency'],
             stim_length=self.parameters['stim_length'],
             stim_jitter=self.parameters['stim_jitter'],
             stim_order=StimuliOrder(self.parameters['stim_order']))
@@ -267,10 +325,10 @@ class RSVPCopyPhraseTask(Task):
             self.parameters['stim_color'],
             first_run=self.first_run)
         if not should_continue:
-            self.logger.debug('User wants to exit.')
+            self.logger.info('User wants to exit.')
         return should_continue
 
-    def wait(self, seconds: float = None):
+    def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
 
         Parameters
@@ -314,17 +372,11 @@ class RSVPCopyPhraseTask(Task):
                               colors=inquiry_schedule.colors[0]
                               if self.parameters['is_txt_stim'] else None)
 
-        if self.parameters['show_preview_inquiry']:
-            stim_times, proceed = self.rsvp.preview_inquiry()
-            if proceed:
-                stim_times.extend(self.rsvp.do_inquiry())
-        else:
-            stim_times = self.rsvp.do_inquiry()
-            proceed = True
-
+        stim_times = self.rsvp.do_inquiry()
+        proceed = not self.rsvp.preview_enabled or self.rsvp.preview_accepted
         return stim_times, proceed
 
-    def show_feedback(self, selection: str, correct: bool = True):
+    def show_feedback(self, selection: str, correct: bool = True) -> None:
         """Display the selection as feedback if the 'show_feedback'
         parameter is configured.
 
@@ -333,7 +385,7 @@ class RSVPCopyPhraseTask(Task):
         - selection : selected stimulus to display
         - correct : whether or not the correct stim was chosen
         """
-        if self.parameters['show_feedback']:
+        if self.parameters['show_feedback'] and self.feedback:
             self.feedback.administer(f'Selected: {selection}')
 
     def check_stop_criteria(self) -> bool:
@@ -341,24 +393,33 @@ class RSVPCopyPhraseTask(Task):
         should continue.
         """
         if self.copy_phrase == self.spelled_text:
-            self.logger.debug('Spelling complete')
+            self.logger.info('Spelling complete')
             return False
 
         if (self.inq_counter + 1) >= self.parameters['max_inq_len']:
-            self.logger.debug('Max tries exceeded: to allow for more tries'
-                              ' adjust the Maximum inquiry Length '
-                              '(max_inq_len) parameter.')
+            self.logger.info('Max tries exceeded: to allow for more tries'
+                             ' adjust the Maximum inquiry Length '
+                             '(max_inq_len) parameter.')
             return False
 
         if self.session.total_time_spent >= (self.parameters['max_minutes'] *
                                              60):
-            self.logger.debug('Max time exceeded. To allow for more time '
-                              'adjust the max_minutes parameter.')
+            self.logger.info('Max time exceeded. To allow for more time '
+                             'adjust the max_minutes parameter.')
             return False
 
         if self.session.total_number_decisions >= self.parameters['max_selections']:
-            self.logger.debug('Max number of selections reached '
-                              '(configured with the max_selections parameter)')
+            self.logger.info('Max number of selections reached '
+                             '(configured with the max_selections parameter)')
+            return False
+
+        if consecutive_incorrect(
+                target_text=self.copy_phrase,
+                spelled_text=self.spelled_text) >= self.parameters.get(
+                    'max_incorrect', 3):
+            self.logger.info(
+                'Max number of consecutive incorrect selections reached '
+                '(configured with the max_incorrect parameter)')
             return False
 
         return True
@@ -378,7 +439,7 @@ class RSVPCopyPhraseTask(Task):
         -------
         data save location (triggers.txt, session.json)
         """
-        self.logger.debug('Starting Copy Phrase Task!')
+        self.logger.info('Starting Copy Phrase Task!')
         run = True
         self.wait()  # buffer for data processing
 
@@ -399,7 +460,7 @@ class RSVPCopyPhraseTask(Task):
                                         decision=decision,
                                         evidence_types=evidence_types)
             self.update_session_data(data,
-                                     save=True,
+                                     save=self.save_session_every_inquiry,
                                      decision_made=decision.decision_made)
 
             if decision.decision_made:
@@ -469,6 +530,9 @@ class RSVPCopyPhraseTask(Task):
                      proceed: bool = True) -> List[EvidenceType]:
         """Add all evidence used to make a decision.
 
+        Evaluates evidence from various sources (button press, devices,
+        language model) and adds it to the CopyPhraseWrapper for evaluation.
+
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
@@ -483,9 +547,11 @@ class RSVPCopyPhraseTask(Task):
         - self.copy_phrase_task
         """
         evidences = [
-            self.compute_button_press_evidence(proceed),
-            self.compute_eeg_evidence(stim_times, proceed)
+            self.compute_button_press_evidence(proceed)
         ]
+        # evidence from one or more devices
+        evidences.extend(self.compute_device_evidence(stim_times, proceed))
+
         evidence_types = []
         for evidence in evidences:
             if evidence:
@@ -520,43 +586,63 @@ class RSVPCopyPhraseTask(Task):
                                             proceed)
         return (EvidenceType.BTN, probs)
 
-    def compute_eeg_evidence(self,
-                             stim_times: List[List],
-                             proceed: bool = True
-                             ) -> Optional[Tuple[EvidenceType, List[float]]]:
-        """Evaluate the EEG evidence and add it to the copy_phrase_task, but
+    def compute_device_evidence(
+            self,
+            stim_times: List[List],
+            proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
+        """Get inquiry data from all devices and evaluate the evidence, but
         don't yet attempt a decision.
 
         Parameters
         ----------
         - stim_times : list of stimuli returned from the display
         - proceed : whether or not to evaluate the evidence, if `False` returns
-        empty values.
+            an empty array.
 
         Returns
         -------
-        tuple of (evidence type, evidence)
+            list of (evidence type, evidence) tuples
         """
         if not proceed or self.fake:
-            return None
+            return []
 
-        # currently prestim_length is used as a buffer for filter application, use the same at the end of the inquiry
-        post_stim_buffer = self.parameters['prestim_length']
-        raw_data, triggers = get_data_for_decision(
-            inquiry_timing=self.stims_for_decision(stim_times),
+        # currently prestim_length is used as a buffer for filter application
+        post_stim_buffer = int(self.parameters.get("task_buffer_length") / 2)
+        prestim_buffer: float = self.parameters['prestim_length']
+        trial_window: Tuple[float, float] = self.parameters['trial_window']
+        window_length = trial_window[1] - trial_window[0]
+        inquiry_timing = self.stims_for_decision(stim_times)
+
+        # update the inquiry timing list (stim, time) based on the trial window first time value
+        inquiry_timing = [(stim, time + trial_window[0]) for stim, time in inquiry_timing]
+
+        # Get all data at once so we don't redundantly query devices which are
+        # used in more than one signal model.
+        device_data = get_device_data_for_decision(
+            inquiry_timing=inquiry_timing,
             daq=self.daq,
-            offset=self.parameters['static_trigger_offset'],
-            prestim=self.parameters['prestim_length'],
-            poststim=post_stim_buffer + self.parameters['trial_length'])
+            prestim=prestim_buffer,
+            poststim=post_stim_buffer + window_length)
 
+        triggers = relative_triggers(inquiry_timing, prestim_buffer)
         # we assume all are nontargets at this point
         labels = ['nontarget'] * len(triggers)
+        letters, times, filtered_labels = self.copy_phrase_task.letter_info(
+            triggers, labels)
 
-        probs = self.copy_phrase_task.evaluate_eeg_evidence(
-            raw_data, triggers, labels, self.parameters['trial_length'])
-        return (EvidenceType.ERP, probs)
+        evidences = []
+        for evidence_evaluator in self.evidence_evaluators:
+            probs = evidence_evaluator.evaluate(
+                raw_data=device_data[evidence_evaluator.consumes],
+                symbols=letters,
+                times=times,
+                target_info=filtered_labels,
+                window_length=window_length)
+            evidences.append((evidence_evaluator.produces, probs))
 
-    def stims_for_decision(self, stim_times: List[List]) -> List[List]:
+        return evidences
+
+    def stims_for_decision(self, stim_times: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
         """The stim_timings from the display may include non-letter stimuli
         such as calibration and inquiry_preview timings. This method extracts
         only the letter data used to process the data for a decision.
@@ -575,11 +661,11 @@ class RSVPCopyPhraseTask(Task):
         ]
 
     def new_data_record(self,
-                        stim_times: List[List],
+                        stim_times: List[Tuple[str, float]],
                         target_stimuli: str,
                         current_text: str,
                         decision: Decision,
-                        evidence_types: List[EvidenceType] = None) -> Inquiry:
+                        evidence_types: Optional[List[EvidenceType]] = None) -> Inquiry:
         """Construct a new inquiry data record.
 
         Parameters
@@ -620,7 +706,7 @@ class RSVPCopyPhraseTask(Task):
             data.likelihood = list(self.copy_phrase_task.conjugator.likelihood)
         return data
 
-    def exit_display(self):
+    def exit_display(self) -> None:
         """Close the UI and cleanup."""
         # Update task state and reset the static
         self.rsvp.update_task_bar(text=self.spelled_text)
@@ -649,11 +735,15 @@ class RSVPCopyPhraseTask(Task):
         - self.session
         """
         self.session.add_sequence(data)
-        self.session.total_time_spent = self.experiment_clock.getTime() - self.start_time
+        self.session.total_time_spent = self.elapsed_seconds()
         if save:
             self.write_session_data()
         if decision_made:
             self.session.add_series()
+
+    def elapsed_seconds(self) -> float:
+        """Compute the number of seconds elapsed since the experiment start."""
+        return self.experiment_clock.getTime() - self.start_time
 
     def write_session_data(self) -> None:
         """Save session data to disk."""
@@ -666,15 +756,15 @@ class RSVPCopyPhraseTask(Task):
     def write_offset_trigger(self) -> None:
         """Append the offset to the end of the triggers file.
         """
-        if self.daq.is_calibrated:
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'daq_sample_offset',
-                    TriggerType.SYSTEM,
-                    # to help support future refactoring or use of lsl timestamps only
-                    # we write only the sample offset here
-                    self.daq.offset(self.rsvp.first_stim_time)
-                )])
+        # To help support future refactoring or use of lsl timestamps only
+        # we write only the sample offset here.
+        triggers = []
+        for content_type, client in self.daq.clients_by_type.items():
+            label = offset_label(content_type.name, prefix='daq_sample_offset')
+            time = client.offset(self.rsvp.first_stim_time)
+            triggers.append(Trigger(label, TriggerType.SYSTEM, time))
+
+        self.trigger_handler.add_triggers(triggers)
         self.trigger_handler.close()
 
     def write_trigger_data(self, stim_times: List[Tuple[str, float]], target_stimuli: str) -> None:
@@ -685,16 +775,17 @@ class RSVPCopyPhraseTask(Task):
         - stim_times : list of (stim, clock_time) tuples
         - target_stimuli : current target stimuli
         """
-        if self.first_run and self.daq.is_calibrated:
-            # write offset first
-            self.trigger_handler.add_triggers(
-                [Trigger(
-                    'starting_offset',
-                    TriggerType.OFFSET,
-                    # offset will factor in true offset and time relative from beginning
-                    (self.daq.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time)
-                )]
-            )
+
+        if self.first_run:
+            # offset will factor in true offset and time relative from beginning
+            offset_triggers = []
+            for content_type, client in self.daq.clients_by_type.items():
+                label = offset_label(content_type.name)
+                time = client.offset(
+                    self.rsvp.first_stim_time) - self.rsvp.first_stim_time
+                offset_triggers.append(Trigger(label, TriggerType.OFFSET,
+                                               time))
+            self.trigger_handler.add_triggers(offset_triggers)
 
         triggers = convert_timing_triggers(stim_times, target_stimuli, self.trigger_type)
         self.trigger_handler.add_triggers(triggers)
@@ -743,7 +834,7 @@ class TaskSummary:
                  session: Session,
                  show_preview: bool = False,
                  preview_mode: int = 0,
-                 trigger_path: str = None):
+                 trigger_path: Optional[str] = None) -> None:
         assert preview_mode in range(3), 'Preview mode out of range'
         self.session = session
         self.show_preview = show_preview
@@ -833,8 +924,14 @@ class TaskSummary:
         ]
 
 
-def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, starting_spelled_text):
+def _init_copy_phrase_display(
+        parameters: Parameters,
+        win: visual.Window,
+        static_clock: core.StaticPeriod,
+        experiment_clock: Clock,
+        starting_spelled_text) -> CopyPhraseDisplay:
     preview_inquiry = PreviewInquiryProperties(
+        preview_on=parameters['show_preview_inquiry'],
         preview_only=parameters['preview_only'],
         preview_inquiry_length=parameters['preview_inquiry_length'],
         preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
@@ -862,15 +959,17 @@ def _init_copy_phrase_display(parameters, win, static_clock, experiment_clock, s
                                  spelled_text=starting_spelled_text,
                                  colors=[parameters['task_color']],
                                  font=parameters['font'],
-                                 height=parameters['task_height'])
+                                 height=parameters['task_height'],
+                                 padding=parameters['task_padding'])
 
-    return CopyPhraseDisplay(win,
-                             static_clock,
-                             experiment_clock,
-                             stimuli,
-                             task_bar,
-                             info,
-                             starting_spelled_text,
-                             trigger_type=parameters['trigger_type'],
-                             space_char=parameters['stim_space_char'],
-                             preview_inquiry=preview_inquiry)
+    return CopyPhraseDisplay(
+        win,
+        static_clock,
+        experiment_clock,
+        stimuli,
+        task_bar,
+        info,
+        starting_spelled_text,
+        trigger_type=parameters['trigger_type'],
+        space_char=parameters['stim_space_char'],
+        preview_config=parameters.instantiate(PreviewParams))

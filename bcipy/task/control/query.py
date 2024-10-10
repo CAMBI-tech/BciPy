@@ -1,7 +1,8 @@
-import numpy as np
 import random
-from typing import List, Optional
 from abc import ABC, abstractmethod
+from typing import List, Optional
+
+import numpy as np
 
 from bcipy.helpers.stimuli import best_selection
 
@@ -80,12 +81,26 @@ class NBestStimuliAgent(StimuliAgent):
     def reset(self):
         pass
 
-    def return_stimuli(self, list_distribution: np.ndarray, constants: Optional[List[str]] = None):
-        p = list_distribution[-1]
-        tmp = [i for i in self.alphabet]
-        query = best_selection(tmp, p, self.len_query, always_included=constants)
+    def return_stimuli(self,
+                       list_distribution: np.ndarray,
+                       constants: Optional[List[str]] = None) -> List[str]:
+        """Returns a list of the n most likely symbols based on the provided
+        probabilities, where n is self.len_query. Symbols of the same
+        probability will be ordered randomly.
 
-        return query
+        Parameters
+        ----------
+            list_distribution - list of lists of probabilities. Only the last list will
+                be used.
+            constants - optional list of symbols which should appear every result
+        """
+        symbol_probs = list(zip(self.alphabet, list_distribution[-1]))
+        randomized = random.sample(symbol_probs, len(symbol_probs))
+        symbols, probs = zip(*randomized)
+        return best_selection(selection_elements=list(symbols),
+                              val=list(probs),
+                              len_query=self.len_query,
+                              always_included=constants)
 
     def do_series(self):
         pass

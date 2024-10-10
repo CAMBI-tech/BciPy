@@ -1,6 +1,6 @@
 from collections import Counter
 import torch
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import itertools
 import heapq
@@ -22,8 +22,8 @@ class CausalLanguageModel(LanguageModel):
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
-                 lang_model_name: str = None,
-                 lm_path: str = None,
+                 lang_model_name: Optional[str] = None,
+                 lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
                  ):

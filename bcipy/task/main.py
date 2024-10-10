@@ -9,17 +9,14 @@ class Task(ABC):
     Base class for BciPy tasks.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(Task, self).__init__()
         self.logger = logging.getLogger(__name__)
 
-    def configure(self):
+    @abstractmethod
+    def execute(self) -> str:
         ...
 
     @abstractmethod
-    def execute(self):
-        ...
-
-    @abstractmethod
-    def name(self):
+    def name(self) -> str:
         ...

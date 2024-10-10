@@ -1,20 +1,16 @@
+import logging
 import unittest
-from mockito import any, unstub, when, mock, verify, verifyStubbedInvocationsAreUsed, verifyNoUnwantedInteractions
+
+from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
+                     verifyStubbedInvocationsAreUsed, when)
 
 from bcipy import main
-from bcipy.main import (
-    bci_main,
-    _clean_up_session,
-    execute_task
-)
-from bcipy.config import DEFAULT_PARAMETERS_PATH, DEFAULT_EXPERIMENT_ID, STATIC_AUDIO_PATH
-
-from bcipy.helpers.exceptions import (
-    UnregisteredExperimentException,
-)
+from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
+                          STATIC_AUDIO_PATH)
+from bcipy.helpers.exceptions import UnregisteredExperimentException
+from bcipy.main import _clean_up_session, bci_main, execute_task
 from bcipy.task import TaskType
 
-import logging
 logging.disable(logging.CRITICAL)
 
 
@@ -342,7 +338,7 @@ class TestExecuteTask(unittest.TestCase):
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -357,12 +353,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -379,12 +375,12 @@ class TestExecuteTask(unittest.TestCase):
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -399,12 +395,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -417,7 +413,7 @@ class TestExecuteTask(unittest.TestCase):
         signal_model = mock()
         language_model = mock()
         file_name = 'test'
-        load_model_response = (signal_model, file_name)
+        load_model_response = [signal_model]
         eeg_response = (self.daq, self.server)
         when(main).init_eeg_acquisition(
             self.parameters,
@@ -425,18 +421,16 @@ class TestExecuteTask(unittest.TestCase):
             server=self.fake).thenReturn(eeg_response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename=model_path).thenReturn(load_model_response)
+        when(main).load_signal_models(directory=model_path).thenReturn(load_model_response)
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -451,17 +445,15 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename=model_path)
+        verify(main, times=1).load_signal_models(directory=model_path)
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
     def test_execute_language_model_enabled(self) -> None:
@@ -472,7 +464,7 @@ class TestExecuteTask(unittest.TestCase):
         signal_model = mock()
         file_name = 'test'
         language_model = mock()
-        load_model_response = (signal_model, file_name)
+        load_model_response = [signal_model]
 
         # mock the behavior of execute task
         eeg_response = (self.daq, self.server)
@@ -483,17 +475,15 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename='').thenReturn(load_model_response)
+        when(main).load_signal_models(directory='').thenReturn(load_model_response)
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -508,17 +498,15 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=language_model,
-            signal_model=signal_model,
+            signal_models=[signal_model],
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_model(model_class=any(), model_kwargs={
-            'k_folds': self.parameters['k_folds']
-        }, filename='')
+        verify(main, times=1).load_signal_models(directory='')
         verify(main, times=1).init_language_model(self.parameters)
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
@@ -534,12 +522,12 @@ class TestExecuteTask(unittest.TestCase):
         when(main).print_message(self.display_mock, any())
         when(main).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         when(main)._clean_up_session(self.display_mock, self.daq, self.server)
@@ -555,12 +543,12 @@ class TestExecuteTask(unittest.TestCase):
         verify(main, times=1).print_message(self.display_mock, any())
         verify(main, times=1).start_task(
             self.display_mock,
-            self.eeg_client,
+            self.daq,
             self.task,
             self.parameters,
             self.save_folder,
             language_model=None,
-            signal_model=None,
+            signal_models=[],
             fake=self.fake,
         )
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)

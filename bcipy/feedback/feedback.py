@@ -14,7 +14,7 @@ class Feedback:
     def configure(self):
         raise NotImplementedError()
 
-    def administer(self):
+    def administer(self, *args, **kwargs):
         raise NotImplementedError()
 
     def _type(self):

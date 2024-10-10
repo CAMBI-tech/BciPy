@@ -1,7 +1,7 @@
 """GUI alert messages"""
 # pylint: disable=no-name-in-module
 import sys
-from PyQt5.QtWidgets import QApplication
+from PyQt6.QtWidgets import QApplication
 from bcipy.gui.main import alert_message, AlertMessageType, AlertResponse, AlertMessageResponse
 
 

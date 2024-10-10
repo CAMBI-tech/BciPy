@@ -142,7 +142,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
                 gamma and AUC values for each fold respectively.
             """
 
-    log.debug('Starting Cross Validation !')
+    log.info('Starting Cross Validation !')
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
     return arg_opt

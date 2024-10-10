@@ -1,9 +1,14 @@
+# mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
+from enum import Enum
 from logging import Logger
-from typing import List, Tuple, Union
+from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
 
+from bcipy.display.components.button_press_handler import (
+    AcceptButtonPressHandler, ButtonPressHandler,
+    PreviewOnlyButtonPressHandler, RejectButtonPressHandler)
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_info
 
@@ -22,9 +27,11 @@ class Display(ABC):
     stimuli_colors: List[str] = None
     stimuli_timing: List[float] = None
     task = None
+    info_text: List[Any] = None
+    first_stim_time: float = None
 
     @abstractmethod
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self) -> List[Tuple[str, float]]:
         """Do inquiry.
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
@@ -32,7 +39,7 @@ class Display(ABC):
         ...
 
     @abstractmethod
-    def wait_screen(self) -> None:
+    def wait_screen(self, *args, **kwargs) -> None:
         """Wait Screen.
 
         Define what happens on the screen when a user pauses a session.
@@ -61,7 +68,7 @@ class Display(ABC):
         """
         ...
 
-    def preview_inquiry(self) -> List[float]:
+    def preview_inquiry(self, *args, **kwargs) -> List[float]:
         """Preview Inquiry.
 
         Display an inquiry or instruction beforehand to the user. This should be called before do_inquiry.
@@ -131,17 +138,18 @@ class StimuliProperties:
     def __init__(
             self,
             stim_font: str,
-            stim_pos: Tuple[float, float],
+            stim_pos: Union[Tuple[float, float], List[Tuple[float, float]]],
             stim_height: float,
-            stim_inquiry: List[str] = None,
-            stim_colors: List[str] = None,
-            stim_timing: List[float] = None,
+            stim_inquiry: Optional[List[str]] = None,
+            stim_colors: Optional[List[str]] = None,
+            stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: float = None):
+            prompt_time: Optional[float] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
         stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
+            or a list of positions (ex. for matrix displays)
         stim_height(float): Height of all stimuli
         stim_inquiry(List[str]): Ordered list of text to build stimuli with
         stim_colors(List[str]): Ordered list of colors to apply to stimuli
@@ -234,6 +242,13 @@ class InformationProperties:
         return self.text_stim
 
 
+class ButtonPressMode(Enum):
+    """Represents the possible meanings for a button press (when using an Inquiry Preview.)"""
+    NOTHING = 0
+    ACCEPT = 1
+    REJECT = 2
+
+
 class PreviewInquiryProperties:
     """"Preview Inquiry Properties.
     An encapsulation of properties relevant to preview_inquiry() operation.
@@ -241,12 +256,15 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
+            preview_on: bool,
             preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+
+        preview_on(bool): If True, display an inquiry preview before the main inquiry.
         preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
@@ -254,6 +272,7 @@ class PreviewInquiryProperties:
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
+        self.preview_on = preview_on
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
@@ -261,17 +280,55 @@ class PreviewInquiryProperties:
         self.preview_inquiry_isi = preview_inquiry_isi
 
 
+class PreviewParams(NamedTuple):
+    """Parameters relevant for the Inquiry Preview functionality.
+
+    Create from an existing Parameters instance using:
+    >>> parameters.instantiate(PreviewParams)
+    """
+    show_preview_inquiry: bool
+    preview_inquiry_length: float
+    preview_inquiry_key_input: str
+    preview_inquiry_progress_method: int
+    preview_inquiry_isi: float
+
+    @property
+    def button_press_mode(self):
+        """Mode indicated by the inquiry progress method."""
+        return ButtonPressMode(self.preview_inquiry_progress_method)
+
+
+def get_button_handler_class(
+        mode: ButtonPressMode) -> Type[ButtonPressHandler]:
+    """Get the appropriate handler constructor for the given button press mode."""
+    mapping = {
+        ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
+        ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
+        ButtonPressMode.REJECT: RejectButtonPressHandler
+    }
+    return mapping[mode]
+
+
+def init_preview_button_handler(params: PreviewParams,
+                                experiment_clock: Clock) -> ButtonPressHandler:
+    """"Returns a button press handler for inquiry preview."""
+    make_handler = get_button_handler_class(params.button_press_mode)
+    return make_handler(max_wait=params.preview_inquiry_length,
+                        key_input=params.preview_inquiry_key_input,
+                        clock=experiment_clock)
+
+
 class VEPStimuliProperties(StimuliProperties):
 
-    def __init__(
-            self,
-            stim_font: str,
-            stim_pos: List[Tuple[float, float]],
-            stim_height: float,
-            timing: Tuple[float, float, float] = None,
-            stim_color: List[List[str]] = None,
-            inquiry: List[List[str]] = None,
-            stim_length: int = 1):
+    def __init__(self,
+                 stim_font: str,
+                 stim_pos: List[Tuple[float, float]],
+                 stim_height: float,
+                 timing: List[float],
+                 stim_color: List[str],
+                 inquiry: List[List[Any]],
+                 stim_length: int = 1,
+                 animation_seconds: float = 1.0):
         """Initialize VEP Stimuli Parameters.
         stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
         stim_font(str): Font to apply to all VEP stimuli
@@ -291,6 +348,7 @@ class VEPStimuliProperties(StimuliProperties):
         # dynamic properties, must be a a list of lists where each list is a different box
         self.stim_colors = stim_color
         self.stim_inquiry = inquiry
+        self.animation_seconds = animation_seconds
 
     def build_init_stimuli(self, window: visual.Window) -> None:
         """"Build Initial Stimuli."""

@@ -14,21 +14,24 @@ Currently, these are the supported paradigms and modes:
 
 ##### Mode: Calibration
 
-> Calibration
-
-> Time Test Calibration
+> Calibration: Used to calibrate the RSVP paradigm for a user
+> Time Test Calibration: Used to verify the timing of the RSVP paradigm
 
 ##### Mode: Copy Phrase
 
-> Copy Phrase
+> Copy Phrase: Used to copy a phrase using the RSVP paradigm (e.g. P300 Speller) on data from a P300 calibration
 
 ### *Paradigm: Matrix* 
 
 ##### Mode: Calibration
 
-> Calibration
+> Calibration: Used to calibrate the Matrix paradigm for a user
+> Time Test Calibration: Used to verify the timing of the Matrix paradigm
 
-> Time Test Calibration
+##### Mode: Copy Phrase
+
+> Copy Phrase: Used to copy a phrase using the Matrix paradigm (e.g. P300 Speller) on data from a P300 calibration
+
 
 
 ## Start Task

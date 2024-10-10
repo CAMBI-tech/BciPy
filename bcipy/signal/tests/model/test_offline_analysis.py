@@ -9,7 +9,7 @@ import numpy as np
 import random
 import gzip
 
-from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETER_FILENAME, TRIGGER_FILENAME
+from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETER_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
 from bcipy.helpers.load import load_json_parameters
 from bcipy.signal.model.offline_analysis import offline_analysis
 
@@ -46,11 +46,13 @@ class TestOfflineAnalysis(unittest.TestCase):
 
         # copy the other required inputs into tmp_dir
         shutil.copyfile(input_folder / TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
+        shutil.copyfile(input_folder / DEFAULT_DEVICE_SPEC_FILENAME, cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
 
         params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETER_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
-        cls.model, fig_handles = offline_analysis(
+        models, fig_handles = offline_analysis(
             str(cls.tmp_dir), cls.parameters, save_figures=True, show_figures=False, alert_finished=False)
+        cls.model = models[0]
         cls.mean_erp_fig_handle = fig_handles[0]
         cls.mean_nontarget_topomap_handle = fig_handles[1]
         cls.mean_target_topomap_handle = fig_handles[2]

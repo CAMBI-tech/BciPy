@@ -48,7 +48,7 @@ class UniformLanguageModel(LanguageModel):
 
 
 def equally_probable(alphabet: List[str],
-                     specified: Dict[str, float] = None) -> List[float]:
+                     specified: Optional[Dict[str, float]] = None) -> List[float]:
     """Returns a list of probabilities which correspond to the provided
     alphabet. Unless overridden by the specified values, all items will
     have the same probability. All probabilities sum to 1.0.

@@ -5,7 +5,7 @@ from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.main import ResponseType
 from math import log10
 from timeit import default_timer as timer
-from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR, alphabet
+from bcipy.helpers.symbols import SPACE_CHAR, alphabet
 import argparse
 import numpy as np
 import sys
@@ -14,13 +14,15 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--verbose', dest='verbose', type=int, required=True,
-        help='0: Only output model averages\n1: Output results from each phrase\n2: Output results from each character')
+                        help=('0: Only output model averages\n1: Output results from each phrase\n2: '
+                              'Output results from each character'))
 
     parser.add_argument('--model', dest='model', type=int, required=True,
-        help='1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: KenLM n-gram\n4: Causal Hugging Face')
+                        help=('1: Unigram\n2: Mixture (80/20 Causal GPT-2/Unigram)\n3: '
+                              'KenLM n-gram\n4: Causal Hugging Face'))
 
     parser.add_argument('--phrases', dest='phrases', type=str, required=True,
-        help='Phrase set filename')
+                        help='Phrase set filename')
 
     parser.add_argument('--model-name', dest='model_name')
     parser.add_argument('--model-dir',
@@ -41,11 +43,11 @@ if __name__ == "__main__":
     phrases = args.phrases
 
     if model == 3 and not args.model_dir:
-        print(f"ERROR: For KenLM n-gram model you must specify filename of model using --model-dir")
+        print("ERROR: For KenLM n-gram model you must specify filename of model using --model-dir")
         sys.exit(1)
 
     if model == 4 and not args.model_name:
-        print(f"ERROR: For causal model you must specify name of model using --model-name")
+        print("ERROR: For causal model you must specify name of model using --model-name")
         sys.exit(1)
 
     # Allow passing in of space characters in the context using <sp> word
@@ -65,7 +67,7 @@ if __name__ == "__main__":
     lm = None
 
     start = timer()
-    
+
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
     if model == 1:
@@ -122,7 +124,7 @@ if __name__ == "__main__":
                 correct_char = ""
 
                 # BciPy treats space as underscore
-                if(token == "<sp>"):
+                if (token == "<sp>"):
                     token = SPACE_CHAR
                     correct_char = SPACE_CHAR
                 else:
@@ -132,7 +134,8 @@ if __name__ == "__main__":
 
                 predict_time = timer() - start_predict
                 predict_time_arr = np.append(predict_time_arr, predict_time)
-                predict_details_arr = np.append(predict_details_arr, f"sentence = {sentence}, index = {i}, p( {token} | {prev_token} )")
+                predict_details_arr = np.append(predict_details_arr,
+                                                f"sentence = {sentence}, index = {i}, p( {token} | {prev_token} )")
 
                 # Find the probability for the correct character
                 p = next_char_pred[[c[0] for c in next_char_pred].index(correct_char)][1]
@@ -167,14 +170,17 @@ if __name__ == "__main__":
             if accum == 1:
                 if verbose >= 1:
                     print("Zero-prob event encountered, terminating phrase")
-                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
+                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, "
+                          f"{phrase_max:.6f}]\n")
             else:
                 per_symbol_logprob = accum / symbols
 
                 # Phrase-level output
                 if verbose >= 1:
-                    print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
-                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} [{phrase_min:.6f}, {phrase_max:.6f}]\n")
+                    print(f"sum logprob = {accum:.4f}, per-symbol logprob = {per_symbol_logprob:.4f}, "
+                          f"ppl = {pow(10,-1 * per_symbol_logprob):.4f}")
+                    print(f"per-symbol prediction time = {per_symbol_time:.6f} +/- {phrase_std:.6f} "
+                          f"[{phrase_min:.6f}, {phrase_max:.6f}]\n")
 
                 sum_per_symbol_logprob += per_symbol_logprob
                 phrase_count += 1
@@ -189,14 +195,14 @@ if __name__ == "__main__":
     ci_floor = overall_per_symbol_time - (3 * overall_std_time)
     ci_ceiling = overall_per_symbol_time + (3 * overall_std_time)
 
-
     # Model-level output
     print(f"OVERALL \
         \nphrases = {phrase_count}, \
         \naverage per symbol logprob = {average_per_symbol_logprob:.4f}, \
         \nppl = {pow(10,-1 * average_per_symbol_logprob):.4f}, \
         \nzero-prob events = {zero_prob} \
-        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} [{overall_min_time:.6f}, {overall_max_time:.6f}] \
+        \nper-symbol prediction time = {overall_per_symbol_time:.6f} +/- {overall_std_time:.6f} \
+        [{overall_min_time:.6f}, {overall_max_time:.6f}] \
         \n95% CI = [{ci_floor}, {ci_ceiling}]\n")
 
     print(f"Inference time = {timer() - start:.6f}")

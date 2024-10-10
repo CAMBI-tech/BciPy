@@ -51,7 +51,7 @@ def inlet_name(inlet) -> str:
 
 def channel_names(stream_info: pylsl.StreamInfo) -> List[str]:
     """Extracts the channel names from the LSL Stream metadata."""
-    channels = []
+    channels: List[str] = []
     if stream_info.type() == 'Markers':
         return ['Marker']
     if stream_info.desc().child("channels").empty():
@@ -59,7 +59,7 @@ def channel_names(stream_info: pylsl.StreamInfo) -> List[str]:
 
     channel = stream_info.desc().child("channels").child("channel")
     for _ in range(stream_info.channel_count()):
-        channel_name = channel.child_value("label")
+        channel_name: str = channel.child_value("label")
         channels.append(channel_name)
         channel = channel.next_sibling()
 

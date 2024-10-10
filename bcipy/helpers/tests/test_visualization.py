@@ -16,7 +16,7 @@ class TestVisualizeSessionData(unittest.TestCase):
     """Test Session Data Visualization."""
 
     def setUp(self):
-        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.tmp_dir = str(Path(tempfile.mkdtemp()))
         self.parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
         self.raw_data_mock = mock()
         self.raw_data_mock.daq_type = 'DSI-24'
@@ -35,7 +35,10 @@ class TestVisualizeSessionData(unittest.TestCase):
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
         when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
-            offset=any(), trigger_path=any(), exclusion=any()).thenReturn(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any()).thenReturn(
             (trigger_label_mock, trigger_timing_mock, []))
         when(visualization).visualize_erp(
             self.raw_data_mock,
@@ -55,7 +58,11 @@ class TestVisualizeSessionData(unittest.TestCase):
         self.assertTrue(resp)
         verify(RawData, times=1).load(any())
         verify(visualization, times=1).analysis_channels(any(), any())
-        verify(visualization, times=1).trigger_decoder(offset=any(), trigger_path=any(), exclusion=any())
+        verify(visualization, times=1).trigger_decoder(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any())
         verify(visualization, times=1).visualize_erp(
             self.raw_data_mock,
             self.channel_map_mock,
@@ -77,7 +84,10 @@ class TestVisualizeSessionData(unittest.TestCase):
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
         when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
-            offset=any(), trigger_path=any(), exclusion=any()).thenReturn(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any()).thenReturn(
             (trigger_label_mock, trigger_timing_mock, []))
 
         with self.assertRaises(AssertionError):
@@ -92,7 +102,10 @@ class TestVisualizeSessionData(unittest.TestCase):
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
         when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
-            offset=any(), trigger_path=any(), exclusion=any()).thenReturn(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any()).thenReturn(
             (trigger_label_mock, trigger_timing_mock, []))
 
         with self.assertRaises(AssertionError):
@@ -107,7 +120,10 @@ class TestVisualizeSessionData(unittest.TestCase):
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
         when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
-            offset=any(), trigger_path=any(), exclusion=any()).thenReturn(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any()).thenReturn(
             (trigger_label_mock, trigger_timing_mock, []))
 
         with self.assertRaises(AssertionError):
@@ -116,7 +132,10 @@ class TestVisualizeSessionData(unittest.TestCase):
         # in this case, add a third trigger time
         trigger_timing_mock = [1, 2, 3]
         when(visualization).trigger_decoder(
-            offset=any(), trigger_path=any(), exclusion=any()).thenReturn(
+            offset=any(),
+            trigger_path=any(),
+            exclusion=any(),
+            device_type=any()).thenReturn(
             (trigger_label_mock, trigger_timing_mock, []))
 
         with self.assertRaises(AssertionError):

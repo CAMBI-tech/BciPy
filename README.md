@@ -6,7 +6,7 @@
 [![Follow on Twitter](https://img.shields.io/twitter/follow/cambi_tech?label=Follow&style=social)](https://twitter.com/cambi_tech)
 
 
-BciPy is a library for conducting Brain-Computer Interface experiments in Python. It functions as a standalone application for experimental data collection or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/) (in progress).
+BciPy is a library for conducting Brain-Computer Interface experiments in Python. It functions as a standalone application for experimental data collection or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/).
 
 It will run on the latest windows (7, 10, 11), linux (ubuntu 22.04) and macos (Big Sur). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
 
@@ -18,7 +18,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python 3.8 or 3.9. Please see notes below for additional OS specific dependencies before installation can be completed.
+This project requires Python 3.8 or 3.9. Please see notes below for additional OS specific dependencies before installation can be completed and reference our documentation/FAQs for more information: https://bcipy.github.io/hardware-os-config/
 
 ### Linux
 
@@ -33,7 +33,9 @@ You will need to install pyWinhook manually. See [here](https://www.lfd.uci.edu/
 
 ### Mac
 
-If you are using a Mac, you will need to install XCode and enable command line tools. `xcode-select --install`. 
+If you are using a Mac, you will need to install XCode and enable command line tools. `xcode-select --install`. If using an m1/2 chip, you will need to use the install script in `scripts/shell/m2chip_install.sh` to install the prerequisites. You may also need to use the Rosetta terminal to run the install script, but this has not been necessary in our testing using m2 chips. 
+
+If using zsh, instead of bash, you may encounter a segementation fault when running BciPy. This is due to an issue in a dependeancy of psychopy with no known fix as of yet. Please use bash instead of zsh for now. 
 
 ## Installation
 ---------------
@@ -42,14 +44,15 @@ If you are using a Mac, you will need to install XCode and enable command line t
 
 In order to run BciPy on your computer, after following the dependencies above, you will need to install the BciPy package.
 
-To install for use locally,
+To install for use locally and use of the GUI:
 1. Git clone https://github.com/BciPy/BciPy.git
-2. Change directory in your terminal to the repo
-3. Run `pip install -e .`
-4. To use the KenLMLanguageModel class, you must manually install the kenlm package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+2. Change directory in your terminal to the repo directory.
+3. Install the kenlm language model package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+4. Install PsychoPy with no dependencies. `pip install psychopy==2023.2.1 --no-deps`.
+5. Install BciPy in development mode. `pip install -e .`
 
 
-If wanting the latest version from PyPi:
+If wanting the latest version from PyPi and to build using modules:
 1. `pip install bcipy`
 
 Alternately, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
@@ -74,6 +77,16 @@ Two ways to get started using BciPy for data collection:
 from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
+
+#### Simulator Usage
+
+The simulator can be run using the command line utility `bcipy-sim`.
+
+Ex. 
+`bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+Run `bcipy-sim --help` for documentation or see the README in the simulator module.
+
 
 ## Glossary
 -----------
@@ -102,7 +115,7 @@ This a list of the major modules and their functionality. Each module will conta
 
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
-- `signal`: eeg signal models, filters, processing, evaluators and viewers.
+- `signal`: eeg signal models, gaze signal models, filters, processing, evaluators and viewers.
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization.
 - `language`: gives probabilities of next symbols during typing.
@@ -112,6 +125,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `main`: executor of experiments. Main entry point into the application
 - `config`: configuration parameters for the application, including paths and data filenames.
+- `simulator`: provides support for running simulations based off of previously collected data.
 
 
 ## Paradigms
@@ -154,6 +168,38 @@ For example, you may run the main BciPy demo by:
 
 This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
 
+
+## Offset Determination and Correction
+--------------------------------------
+
+Static offset determination and correction are critical steps before starting an experiment. BciPy uses LSL to acquire EEG data and Psychopy to present stimuli. 
+
+[LSL synchronization documentation](https://labstreaminglayer.readthedocs.io/info/time_synchronization.html)
+[PsychoPy timing documentation](https://www.psychopy.org/general/timing/index.html)
+
+A static offset is the regular time difference between our signals and stimuli. This offset is determined through testing via a photodiode or other triggering mechanism. The offset correction is done by shifting the EEG signal by the determined offset using the `static_offset` parameter. 
+
+After running a timing verification task (such as, RSVPTimingVerification) with a photodiode attached to the display and connected to a device, the offset can be determined by analyzing the data. Use the `offset` module to recommend an offset correction value and display the results.
+
+To run the offset determination and print the results, use the following command:
+
+```bash
+python bcipy/helpers/offset.py -r
+```
+
+After running the above command, the recommended offset correction value will be displayed in the terminal and can be passed to determine system stability and display the results.
+
+```bash
+# Let's say the recommneded offset value is 0.1
+python bcipy/helpers/offset.py --offset "0.1" -p
+
+```
+
+Alternately, if Make is installed, you may run the follow command to run offset determination and display the results:
+
+```sh
+make offset-recommend
+```
 
 ## Testing
 ----------
@@ -215,6 +261,28 @@ Alternately, if Make is installed, you may run the follow command to run autopep
 ```sh
 make lint
 ```
+
+## Type Checking
+----------------
+
+This project enforces `mypy` type checking. The typing project configuration is found in the mypy.ini file. To run type checking, run the following command:
+
+```sh
+mypy bcipy
+```
+
+To generate a report, run the following command:
+
+```sh
+mypy --html-report bcipy
+```
+
+Alternately, if Make is installed, you may run the follow command to run mypy:
+
+```sh
+make type
+```
+
 
 ### Contributions Welcome!
 

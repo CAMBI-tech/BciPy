@@ -30,7 +30,7 @@ class ChannelWisePrincipalComponentAnalysis:
         self.logger = logging.getLogger(__name__)
         self.logger.info(f"PCA. n_components={n_components}, random_state={random_state}, num_ch={num_ch}")
 
-    def fit(self, x: np.ndarray, y: np.ndarray = None) -> None:
+    def fit(self, x: np.ndarray, y: Optional[np.ndarray] = None) -> None:
         """Fit PCA to each channel of data.
 
         Args:
@@ -42,7 +42,7 @@ class ChannelWisePrincipalComponentAnalysis:
         for i in range(self.num_ch):
             self.list_pca[i].fit(x[i, :, :], y)
 
-    def transform(self, x: np.ndarray, y: np.ndarray = None) -> np.ndarray:
+    def transform(self, x: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
         """Apply fitted PCA to each channel.
 
         Args:
@@ -57,7 +57,7 @@ class ChannelWisePrincipalComponentAnalysis:
             f_vector.append(self.list_pca[i].transform(x[i, :, :]))
         return np.concatenate(f_vector, axis=1)
 
-    def fit_transform(self, x: np.ndarray, y: np.ndarray = None) -> np.ndarray:
+    def fit_transform(self, x: np.ndarray, y: Optional[np.ndarray] = None) -> np.ndarray:
         self.fit(x)
         return self.transform(x)
 
@@ -71,7 +71,7 @@ class MockPCA:
     def fit(self, *args, **kw):
         pass
 
-    def transform(self, x: np.ndarray, y: np.ndarray = None, var_tol: Optional[float] = None) -> np.ndarray:
+    def transform(self, x: np.ndarray, y: Optional[np.ndarray] = None, var_tol: Optional[float] = None) -> np.ndarray:
         """Mock transform method for testing purposes.
 
         Args:
@@ -86,6 +86,7 @@ class MockPCA:
         x = x.reshape([x.shape[0], -1])
         return x
 
-    def fit_transform(self, x: np.ndarray, y: np.ndarray = None, var_tol: Optional[float] = None) -> np.ndarray:
+    def fit_transform(self, x: np.ndarray, y: Optional[np.ndarray]
+                      = None, var_tol: Optional[float] = None) -> np.ndarray:
         self.fit(x)
         return self.transform(x, y, var_tol)

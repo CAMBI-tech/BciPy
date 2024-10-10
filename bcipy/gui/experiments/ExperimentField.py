@@ -5,8 +5,8 @@ import sys
 
 from typing import List
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (
     QHBoxLayout,
     QPushButton,
     QScrollArea,
@@ -41,11 +41,11 @@ class ExperimentFieldCollection(QWidget):
     field_data: List[tuple] = []
     field_inputs: List[FormInput] = []
     type_inputs = {
-        'int': IntegerInput,
-        'float': FloatInput,
-        'bool': BoolInput,
-        'filepath': FileInput,
-        'directorypath': DirectoryInput
+        'int': (IntegerInput, 0),
+        'float': (FloatInput, 0.0),
+        'bool': (BoolInput, False),
+        'filepath': (FileInput, ''),
+        'directorypath': (DirectoryInput, ''),
     }
     require_mark = '*'
     alert_timeout = 10
@@ -96,13 +96,13 @@ class ExperimentFieldCollection(QWidget):
         attributes.
         """
 
-        form_input = self.type_inputs.get(field_type, TextInput)
+        form_input, init_value = self.type_inputs.get(field_type, TextInput)
 
         if required:
             field_name += self.require_mark
         return form_input(
             label=field_name,
-            value='',
+            value=init_value,
             help_tip=help_tip,
             help_size=self.help_size,
             help_color=self.help_color)
@@ -210,7 +210,7 @@ class ExperimentFieldCollection(QWidget):
         elif message_response is AlertMessageResponse.OCE:
             msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
-        return msg.exec_()
+        return msg.exec()
 
 
 class MainPanel(QWidget):
@@ -240,8 +240,8 @@ class MainPanel(QWidget):
         vbox = QVBoxLayout()
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.form_panel.setWidgetResizable(True)
         self.form_panel.setFixedWidth(self.width)
         self.form_panel.setWidget(self.form)
@@ -307,7 +307,7 @@ def start_app() -> None:
         save_path=save_path,
         file_name=file_name
     )
-    bcipy_gui.exec_()
+    bcipy_gui.exec()
 
     if validate:
         if validate_field_data_written(save_path, file_name):
