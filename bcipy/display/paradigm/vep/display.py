@@ -13,7 +13,7 @@ from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
                                               round_refresh_rate,
-                                              ssvep_to_code)
+                                              create_vep_codes)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
@@ -116,10 +116,7 @@ class VEPDisplay(Display):
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
-        codes = [
-            ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
-            for hz in flicker_rates
-        ]
+        codes = create_vep_codes(length=63, count=len(flicker_rates))
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,

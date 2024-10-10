@@ -9,7 +9,7 @@ from bcipy.helpers.exceptions import BciPyCoreException
 log = logging.getLogger(__name__)
 
 # These rates work for a 60hz display
-DEFAULT_FLICKER_RATES = [4, 5, 6, 10, 12, 15]
+DEFAULT_FLICKER_RATES = [4, 5, 6, 8, 10, 12, 15, 20]
 
 
 def mseq(seed, taps):
@@ -38,7 +38,7 @@ def mseq(seed, taps):
     return sequence
 
 
-def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4]) -> List[List[int]]:
+def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4], shift_by: int = 4) -> List[List[int]]:
     """Create a list of VEP codes using m-sequence (LFSR sequence).
 
     length - how many bits in each code. This should be greater than or equal to the refresh rate
@@ -48,12 +48,17 @@ def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4]) -
     seed - Initial state of the LFSR.
     taps - Tap positions in the LFSR to generate feedback.
     """
+    #generates the original
+    original_mseq = mseq(seed, taps)
+
     codes = []
-    for _ in range(count):
-        code = mseq(seed, taps)
-        #padding in case sequence is longer than length
-        codes.append(code[:length])
-    #contains unique mseq, each at the specific length needed
+    
+    #create unique codes by applying cyclical shifts
+    for i in range(count):
+        shift = (i * shift_by) % len(original_mseq)  #determine the shift based on index
+        shifted_sequence = original_mseq[shift:] + original_mseq[:shift]  #apply the cyclical shift
+        codes.append(shifted_sequence[:length])  #truncate to the required length if necessary
+    
     return codes
 
 
