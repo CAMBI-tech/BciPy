@@ -4,13 +4,15 @@ import logging
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
 
+import matplotlib
+matplotlib.use('QtAgg')
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from matplotlib.patches import Ellipse
 import mne
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib.figure import Figure
-from matplotlib.patches import Ellipse
 from mne import Epochs
 from mne.io import read_raw_edf
 from scipy import linalg

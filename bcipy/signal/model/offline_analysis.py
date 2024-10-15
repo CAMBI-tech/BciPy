@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+import matplotlib
+matplotlib.use('QtAgg')
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
