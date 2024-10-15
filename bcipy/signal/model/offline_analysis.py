@@ -76,7 +76,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc: bool,
                 save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
@@ -184,12 +184,15 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
+    try:
+        model.fit(data, labels)
+        model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=default_transform,
                                          evidence_type="ERP",
                                          auc=model.auc)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+        log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    except Exception as e:
+        log.error(f"Error training model: {e}")
 
     try:
         # Using an 80/20 split, report on balanced accuracy
@@ -549,6 +552,7 @@ def offline_analysis(
             figure_handles.extend(et_figure_handles)
 
     if alert_finished:
+        log.info("Alerting Offline Analysis Complete")
         results = [f"{model.name}: {model.auc}" for model in models]
         confirm(f"Offline analysis complete! \n Results={results}")
     log.info("Offline analysis complete")

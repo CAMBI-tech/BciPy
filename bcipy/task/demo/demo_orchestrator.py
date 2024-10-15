@@ -14,21 +14,24 @@ def demo_orchestrator(parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
-    fake_data = True
+    fake_data = False
     alert_finished = True
     tasks = [
         RSVPCalibrationTask,
         IntertaskAction,
-        OfflineAnalysisAction,
-        IntertaskAction,
+        # OfflineAnalysisAction,
+        # IntertaskAction,
         MatrixCalibrationTask,
         IntertaskAction,
         OfflineAnalysisAction,
-        BciPyCalibrationReportAction]
+        IntertaskAction,
+        BciPyCalibrationReportAction
+        ]
     orchestrator = SessionOrchestrator(
-        user='report_testing',
+        user='offline_testing',
         parameters_path=parameters_path,
         alert=alert_finished,
+        # visualize=True,
         fake=fake_data)
     orchestrator.add_tasks(tasks)
     orchestrator.execute()

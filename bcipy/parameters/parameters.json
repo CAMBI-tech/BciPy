@@ -641,7 +641,7 @@
     "type": "float"
   },
   "stim_number": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "name": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",

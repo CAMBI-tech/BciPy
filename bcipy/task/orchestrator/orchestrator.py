@@ -182,7 +182,9 @@ class SessionOrchestrator:
                 if self.visualize:
                     # Visualize session data and fail silently if it errors
                     try:
-                        visualize_session_data(data_save_location, self.parameters)
+                        self.logger.info(f"Visualizing session data. Saving to {data_save_location}")
+                        # TODO: set show to False to prevent segementation faults
+                        visualize_session_data(data_save_location, self.parameters, show=False)
                     except Exception as e:
                         self.logger.info(f'Error visualizing session data: {e}')
 
