@@ -440,7 +440,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = f'bcipy-train --alert --p "{self.parameter_location}" -v'
+            cmd = f'bcipy-train --alert --p "{self.parameter_location}" -v -s'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:

@@ -6,7 +6,7 @@
   },
   "BCIOne": {
     "fields": [],
-    "summary": "asdfsadf",
-    "protocol": "RSVP Calibration -> IntertaskAction -> Matrix Calibration -> IntertaskAction -> BciPy Report Action"
+    "summary": "BCIOne experiment",
+    "protocol": "RSVP Calibration -> IntertaskAction -> OfflineAnalysisAction -> IntertaskAction -> Matrix Calibration -> IntertaskAction -> OfflineAnalysisAction -> IntertaskAction -> BciPy Report Action"
   }
 }

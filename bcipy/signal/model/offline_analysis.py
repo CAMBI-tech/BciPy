@@ -214,11 +214,11 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     preferences.signal_model_directory = data_folder
 
     if save_figures or show_figures:
-        cmd = f"bcipy-erp-viz --session_path '{data_folder}' --parameters '{parameters['parameter_location']}'"
+        cmd = f'bcipy-erp-viz --session_path "{data_folder}" --parameters "{parameters["parameter_location"]}"'
         if save_figures:
-            cmd += " --save"
+            cmd += ' --save'
         if show_figures:
-            cmd += " --show"
+            cmd += ' --show'
         subprocess.run(
                 cmd,
                 shell=True

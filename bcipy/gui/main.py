@@ -1118,7 +1118,11 @@ def app(args) -> QApplication:
 
     Passes args from main and initializes the app
     """
-    return QApplication(args)
+
+    bci_app = QApplication(args).instance()
+    if not bci_app:
+        return QApplication(args)
+    return bci_app
 
 
 def start_app() -> None:
