@@ -32,7 +32,7 @@ class BCInterface(BCIGui):
     max_length = 25
     min_length = 1
     timeout = 3
-    font = 'Consolas'
+    font = 'Courier New'
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -440,7 +440,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = f'python {BCIPY_ROOT}/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
+            cmd = f'bcipy-train --alert --p "{self.parameter_location}" -v'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:

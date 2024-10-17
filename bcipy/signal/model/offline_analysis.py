@@ -1,12 +1,12 @@
 # mypy: disable-error-code="attr-defined"
 import json
 import logging
+import subprocess
 from pathlib import Path
 from typing import Tuple
 
 import numpy as np
-import matplotlib
-matplotlib.use('QtAgg')
+
 from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
@@ -212,20 +212,18 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
 
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
-    # this should have uncorrected trigger timing for display purposes
-    figure_handles = visualize_erp(
-        erp_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
-    return model, figure_handles
+
+    if save_figures or show_figures:
+        cmd = f"bcipy-erp-viz --session_path '{data_folder}' --parameters '{parameters['parameter_location']}'"
+        if save_figures:
+            cmd += " --save"
+        if show_figures:
+            cmd += " --show"
+        subprocess.run(
+                cmd,
+                shell=True
+            )
+    return model
 
 
 def analyze_gaze(
@@ -259,15 +257,13 @@ def analyze_gaze(
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
-    figures = []
-    figure_handles = visualize_gaze(
+    visualize_gaze(
         gaze_data,
         save_path=save_figures,
         img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
         show=show_figures,
         raw_plot=plot_points,
     )
-    figures.extend(figure_handles)
 
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -358,7 +354,7 @@ def analyze_gaze(
             means, covs = model.evaluate(test_re)
 
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
+            visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=save_figures,
@@ -366,7 +362,6 @@ def analyze_gaze(
                 show=show_figures,
                 raw_plot=plot_points,
             )
-            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
@@ -410,22 +405,20 @@ def analyze_gaze(
         print(f"Overall accuracy: {accuracy:.2f}")
 
         # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
-        figures.extend(figure_handles)
+        visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
 
     if model_type == "Centralized":
         cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
         cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
 
         # Visualize the results:
-        figure_handles = visualize_centralized_data(
+        visualize_centralized_data(
             cent_left, cent_right,
             save_path=save_figures,
             img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
             show=show_figures,
             raw_plot=plot_points,
         )
-        figures.extend(figure_handles)
 
         # Fit the model:
         model.fit(cent_left)
@@ -438,7 +431,7 @@ def analyze_gaze(
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
+            visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=save_figures,
@@ -446,13 +439,13 @@ def analyze_gaze(
                 show=show_figures,
                 raw_plot=plot_points,
             )
-            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
 
-    fig_handles = visualize_results_all_symbols(
+    # TODO: add visualizations to subprocess
+    visualize_results_all_symbols(
         left_eye_all, right_eye_all,
         means_all, covs_all,
         img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
@@ -460,7 +453,6 @@ def analyze_gaze(
         show=show_figures,
         raw_plot=plot_points,
     )
-    figures.extend(fig_handles)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -468,7 +460,7 @@ def analyze_gaze(
     save_model(
         model,
         Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
-    return model, figures
+    return model
 
 
 @report_execution_time
@@ -479,7 +471,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
-) -> Tuple[SignalModel, Figure]:
+) -> Tuple[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
 
@@ -510,7 +502,6 @@ def offline_analysis(
     Returns:
     --------
         model (SignalModel): trained model
-        figure_handles (Figure): handles to the ERP figures
     """
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
@@ -533,30 +524,27 @@ def offline_analysis(
     assert len(data_file_paths) > 0, "No data files found for offline analysis."
 
     models = []
-    figure_handles = []
     log.info(f"Starting offline analysis for {data_file_paths}")
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            erp_model, erp_figure_handles = analyze_erp(
+            erp_model = analyze_erp(
                 raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
             models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
 
         if device_spec.content_type == "Eyetracker":
-            et_model, et_figure_handles = analyze_gaze(
+            et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
             models.append(et_model)
-            figure_handles.extend(et_figure_handles)
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")
         results = [f"{model.name}: {model.auc}" for model in models]
         confirm(f"Offline analysis complete! \n Results={results}")
     log.info("Offline analysis complete")
-    return models, figure_handles
+    return models
 
 
 def main():

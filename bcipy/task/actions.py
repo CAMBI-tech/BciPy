@@ -96,7 +96,7 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
-            cmd = f"bcipy-train --parameters {self.parameters_path} -s"
+            cmd = f"bcipy-train --parameters {self.parameters_path} -s -v"
             if self.alert_finished:
                 cmd += " --alert"
             response = subprocess.run(
@@ -157,7 +157,7 @@ class IntertaskAction(Task):
         )
 
     def alert(self):
-        ...
+        pass
 
 
 class ExperimentFieldCollectionAction(Task):
@@ -215,7 +215,7 @@ class BciPyCalibrationReportAction(Task):
         self.protocol_path = protocol_path or ''
         self.last_task_dir = last_task_dir
         self.default_transform = None
-        self.trial_window = trial_window or (0, 1.0)
+        self.trial_window = trial_window or (0, 1.0) #TODO ask about this
         self.static_offset = self.parameters.get("static_offset", 0)
         self.report = Report(self.protocol_path)
         self.report_sections: List[ReportSection] = []

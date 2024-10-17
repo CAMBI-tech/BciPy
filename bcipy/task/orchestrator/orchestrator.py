@@ -2,6 +2,7 @@
 import errno
 import os
 import json
+import subprocess
 from datetime import datetime
 import random
 import logging
@@ -175,18 +176,21 @@ class SessionOrchestrator:
 
                 if self.user_exit:
                     break
+                
+                if initialized_task.mode != TaskMode.ACTION:    
+                    if self.alert:
+                        initialized_task.alert()
 
-                if self.alert:
-                    initialized_task.alert()
-
-                if self.visualize:
-                    # Visualize session data and fail silently if it errors
-                    try:
-                        self.logger.info(f"Visualizing session data. Saving to {data_save_location}")
-                        # TODO: set show to False to prevent segementation faults
-                        visualize_session_data(data_save_location, self.parameters, show=False)
-                    except Exception as e:
-                        self.logger.info(f'Error visualizing session data: {e}')
+                    if self.visualize:
+                        # Visualize session data and fail silently if it errors
+                        try:
+                            self.logger.info(f"Visualizing session data. Saving to {data_save_location}")
+                            subprocess.run(
+                                f'bcipy-erp-viz -s "{data_save_location}" '
+                                f'--parameters "{self.parameters_path}" --show --save',
+                                shell=True)
+                        except Exception as e:
+                            self.logger.info(f'Error visualizing session data: {e}')
 
                 initialized_task = None
 

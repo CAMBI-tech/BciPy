@@ -107,7 +107,11 @@ setup(
     )),
     entry_points={
         'console_scripts':
-        ['bcipy = bcipy.main:bcipy_main', 'bcipy-sim = bcipy.simulator', "bcipy-train = bcipy.signal.model.offline_analysis:main"],
+        [
+            'bcipy = bcipy.main:bcipy_main',
+            'bcipy-erp-viz = bcipy.helpers.visualization:erp',
+            'bcipy-sim = bcipy.simulator',
+            "bcipy-train = bcipy.signal.model.offline_analysis:main"],
     },
     install_requires=REQUIRED,
     include_package_data=True,
