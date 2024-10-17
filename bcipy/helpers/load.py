@@ -6,7 +6,7 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
@@ -213,7 +213,7 @@ def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     return filename
 
 
-def load_raw_data(filename: str) -> RawData:
+def load_raw_data(filename: Union[Path, str]) -> RawData:
     """Reads the data (.csv) file written by data acquisition.
 
     Parameters

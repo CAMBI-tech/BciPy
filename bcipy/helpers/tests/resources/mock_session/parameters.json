@@ -392,14 +392,13 @@
     "type": "float"
   },
   "font": {
-    "value": "Overpass Mono Medium",
+    "value": "Courier New",
     "section": "bci_config",
     "name": "Font",
-    "helpTip": "Specifies the font used for all text stimuli. Default: Consolas",
+    "helpTip": "Specifies the font used for all text stimuli. Default: Courier New",
     "recommended": [
       "Courier New",
-      "Lucida Sans",
-      "Consolas"
+      "Lucida Sans"
     ],
     "editable": true,
     "type": "str"

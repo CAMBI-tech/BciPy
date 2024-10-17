@@ -1,3 +1,4 @@
+# mypy: disable-error-code="union-attr"
 """Simulates the Copy Phrase task"""
 from typing import Dict, List, Optional, Tuple
 import logging

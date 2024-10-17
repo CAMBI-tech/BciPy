@@ -329,10 +329,10 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.2",
     "section": "task_config",
     "name": "Stimulus Presentation Duration",
-    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry. Default: 0.2",
     "recommended": "",
     "editable": false,
     "type": "float"
@@ -568,13 +568,13 @@
     "type": "str"
   },
   "copy_phrases_location": {
-    "value": "",
+    "value": "bcipy/parameters/experiment/phrases.json",
     "section": "online_config",
     "name": "Copy Phrases Location",
     "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
     "recommended": "",
     "editable": true,
-    "type": "str"
+    "type": "filepath"
   },
   "rsvp_task_height": {
     "value": "0.1",
@@ -641,7 +641,7 @@
     "type": "float"
   },
   "stim_number": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "name": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",

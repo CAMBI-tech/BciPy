@@ -180,8 +180,8 @@ class InquirySampler(Sampler):
         inquiry_n = random.choice(source_inquiries[data_source])
 
         # select all trials for the data_source and inquiry
-        inquiry_df = self.data.loc[(self.data['source'] == data_source)
-                                   & (self.data['inquiry_n'] == inquiry_n)]
+        inquiry_df = self.data.loc[(self.data['source'] == data_source) &
+                                   (self.data['inquiry_n'] == inquiry_n)]
         assert len(inquiry_df) == len(
             inquiry_letter_subset), f"Invalid data source {data_source}"
 

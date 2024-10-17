@@ -15,6 +15,7 @@ from bcipy.helpers.stimuli import InquiryReshaper
 
 class RdaKdeModel(SignalModel):
     reshaper = InquiryReshaper()
+    name = "rda_kde"
 
     def __init__(self, k_folds: int, prior_type: str = "uniform"):
         self.k_folds = k_folds

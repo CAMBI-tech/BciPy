@@ -3,5 +3,10 @@
     "fields": [],
     "summary": "Default experiment to test various BciPy features without registering a full experiment.",
     "protocol": "RSVP Calibration -> Matrix Calibration"
+  },
+  "BCIOne": {
+    "fields": [],
+    "summary": "BCIOne experiment",
+    "protocol": "RSVP Calibration -> IntertaskAction -> OfflineAnalysisAction -> IntertaskAction -> Matrix Calibration -> IntertaskAction -> OfflineAnalysisAction -> IntertaskAction -> BciPy Report Action"
   }
 }
