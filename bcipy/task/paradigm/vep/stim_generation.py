@@ -61,25 +61,59 @@ def generate_vep_calibration_inquiries(alp: List[str],
 
 
 def generate_vep_inquiries(symbols: List[str],
-                           num_boxes: int = 6,
-                           inquiry_count: int = 20,
+                           num_boxes: int = 8,
+                           inquiry_count: int = 100,
                            is_txt: bool = True) -> List[List[Any]]:
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
-    target_indices = random_target_positions(inquiry_count,
-                                             stim_per_inquiry=num_boxes,
-                                             percentage_without_target=0)
+    target_usage_count = {symbol: 0 for symbol in symbols}
+    max_target_uses = 12
+
+    #counter for each box to ensure <= 12 target placements per box
+    box_target_usage_count = {box: 0 for box in range(num_boxes)}
+    max_box_target_uses = 12
+    max_inquiries_per_box = num_boxes * max_box_target_uses
 
     # repeat the symbols as necessary to ensure an adequate size for sampling
     # without replacement.
     population = symbols * math.ceil(inquiry_count / len(symbols))
     targets = random.sample(population, inquiry_count)
 
-    return [[target, fixation] + generate_vep_inquiry(alphabet=symbols,
-                                                      num_boxes=num_boxes,
-                                                      target=target,
-                                                      target_pos=target_pos)
-            for target, target_pos in zip(targets, target_indices)]
+    inquiries = []
+
+    for target in targets:
+        #stop if every box has already been used 12 times
+        if sum(box_target_usage_count.values()) >= max_inquiries_per_box:
+            break
+        #check if the target can still be placed in the inquiry
+        if target_usage_count[target] < max_target_uses:
+            #find valid boxes where the target has been used less than 12 times
+            valid_boxes_for_target = [
+                idx for idx in range(num_boxes) if box_target_usage_count[idx] < max_box_target_uses
+            ]
+
+            #if no valid boxes left then stop
+            if not valid_boxes_for_target:
+                raise ValueError("No more valid boxes available to place the target.")
+
+            target_pos = random.choice(valid_boxes_for_target)
+
+            inquiry = [target, fixation] + generate_vep_inquiry(
+                alphabet=symbols,
+                num_boxes=num_boxes,
+                target=target,
+                target_pos=target_pos
+            )
+            inquiries.append(inquiry)
+
+            #update counter for the target and the box used
+            target_usage_count[target] += 1
+            box_target_usage_count[target_pos] += 1 
+
+    random.shuffle(inquiries)
+    
+    return inquiries
+
 
 
 def stim_per_box(num_symbols: int,
