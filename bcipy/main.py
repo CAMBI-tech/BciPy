@@ -9,10 +9,11 @@ from bcipy.acquisition import ClientManager, LslDataServer
 from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH,
                           STATIC_AUDIO_PATH)
 from bcipy.display import init_display_window
-from bcipy.helpers.acquisition import init_eeg_acquisition
+from bcipy.helpers.acquisition import (active_content_types,
+                                       init_eeg_acquisition)
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import (load_experiments, load_json_parameters,
-                                load_signal_models)
+from bcipy.helpers.load import (choose_signal_models, load_experiments,
+                                load_json_parameters)
 from bcipy.helpers.save import init_save_data_structure
 from bcipy.helpers.session import collect_experiment_field_data
 from bcipy.helpers.stimuli import play_sound
@@ -140,9 +141,9 @@ def execute_task(
         # Try loading in our signal_model and starting a langmodel(if enabled)
         if not fake:
             try:
-                model_dir = parameters['signal_model_path']
-                signal_models = load_signal_models(directory=model_dir)
-                assert signal_models, f"No signal models found in {model_dir}"
+                signal_models = choose_signal_models(
+                    active_content_types(parameters['acq_mode']))
+                assert signal_models, "No signal models selected"
             except Exception as error:
                 log.exception(f'Cannot load signal model. Exiting. {error}')
                 raise error
