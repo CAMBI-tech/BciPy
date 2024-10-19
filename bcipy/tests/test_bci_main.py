@@ -20,6 +20,7 @@ class TestBciMain(unittest.TestCase):
     data_save_location = '/'
     save_location = '/'
     parameters = {
+        'acq_mode': 'EEG',
         'data_save_loc': data_save_location,
         'log_name': 'test_log',
         'fake_data': False,
@@ -304,6 +305,7 @@ class TestExecuteTask(unittest.TestCase):
 
     def setUp(self) -> None:
         self.parameters = {
+            'acq_mode': 'EEG',
             'k_folds': 10,
             'is_txt_stim': True,
             'signal_model_path': '',
@@ -421,7 +423,7 @@ class TestExecuteTask(unittest.TestCase):
             server=self.fake).thenReturn(eeg_response)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_models(directory=model_path).thenReturn(load_model_response)
+        when(main).choose_signal_models(['EEG']).thenReturn(load_model_response)
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).start_task(
             self.display_mock,
@@ -453,7 +455,7 @@ class TestExecuteTask(unittest.TestCase):
             signal_models=[signal_model],
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_models(directory=model_path)
+        verify(main, times=1).choose_signal_models(['EEG'])
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 
     def test_execute_language_model_enabled(self) -> None:
@@ -475,7 +477,7 @@ class TestExecuteTask(unittest.TestCase):
         when(main).init_language_model(self.parameters).thenReturn(language_model)
         when(main).init_display_window(self.parameters).thenReturn(self.display_mock)
         when(main).print_message(self.display_mock, any())
-        when(main).load_signal_models(directory='').thenReturn(load_model_response)
+        when(main).choose_signal_models(['EEG']).thenReturn(load_model_response)
         when(main).start_task(
             self.display_mock,
             self.daq,
@@ -506,7 +508,7 @@ class TestExecuteTask(unittest.TestCase):
             signal_models=[signal_model],
             fake=self.fake,
         )
-        verify(main, times=1).load_signal_models(directory='')
+        verify(main, times=1).choose_signal_models(['EEG'])
         verify(main, times=1).init_language_model(self.parameters)
         verify(main, times=1)._clean_up_session(self.display_mock, self.daq, self.server)
 

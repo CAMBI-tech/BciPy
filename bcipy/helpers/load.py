@@ -188,6 +188,54 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     return models
 
 
+def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
+    """Prompt the user to load a signal model for each provided device.
+
+    Parameters
+    ----------
+        device_types - list of device content types (ex. 'EEG')
+    """
+    return [
+        model for model in map(choose_signal_model, set(device_types)) if model
+    ]
+
+
+def load_signal_model(file_path: str) -> SignalModel:
+    """Load signal model from persisted file.
+
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
+    directories."""
+
+    with open(file_path, "rb") as signal_file:
+        model = pickle.load(signal_file)
+        log.info(f"Loading model {model}")
+        return model
+
+
+def choose_signal_model(device_type: str) -> Optional[SignalModel]:
+    """Present a file dialog prompting the user to select a signal model for
+    the given device.
+
+    Parameters
+    ----------
+        device_type - ex. 'EEG' or 'Eyetracker'; this should correspond with
+            the content_type of the DeviceSpec of the model.
+    """
+
+    file_path = ask_filename(file_types=f"*{SIGNAL_MODEL_FILE_SUFFIX}",
+                             directory=preferences.signal_model_directory,
+                             prompt=f"Select the {device_type} signal model")
+
+    if file_path:
+        # update preferences
+        path = Path(file_path)
+        preferences.signal_model_directory = str(path)
+        return load_signal_model(str(path))
+    return None
+
+
 def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     """GUI prompt to select a csv file from the file system.
 
