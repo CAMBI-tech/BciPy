@@ -43,7 +43,7 @@ class TestActions(unittest.TestCase):
         verify(subprocess, times=1).run(code_hook, shell=True)
 
     def test_offline_analysis_action(self) -> None:
-        cmd_expected = f'bcipy-train --parameters {self.parameters_path} -v'
+        cmd_expected = f'bcipy-train --parameters {self.parameters_path}'
 
         when(subprocess).run(cmd_expected, shell=True, check=True).thenReturn(None)
         action = OfflineAnalysisAction(
@@ -52,7 +52,7 @@ class TestActions(unittest.TestCase):
             parameters_path=self.parameters_path,
         )
         response = action.execute()
-        cmd_expected = f'bcipy-train --parameters {self.parameters_path} -v'
+        cmd_expected = f"bcipy-train --parameters '{self.parameters_path}'"
         self.assertIsInstance(response, TaskData)
         verify(subprocess, times=1).run(cmd_expected, shell=True, check=True)
 

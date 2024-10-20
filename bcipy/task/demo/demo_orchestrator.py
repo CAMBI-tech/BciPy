@@ -14,7 +14,7 @@ def demo_orchestrator(parameters_path: str) -> None:
 
     The action in this case is an OfflineAnalysisAction, which will analyze the data in a given directory.
     """
-    fake_data = False
+    fake_data = True
     alert_finished = True
     tasks = [
         RSVPCalibrationTask,
@@ -31,7 +31,7 @@ def demo_orchestrator(parameters_path: str) -> None:
         user='offline_testing',
         parameters_path=parameters_path,
         alert=alert_finished,
-        # visualize=True,
+        visualize=True,
         fake=fake_data)
     orchestrator.add_tasks(tasks)
     orchestrator.execute()

@@ -51,7 +51,11 @@ class TestOfflineAnalysisEEG(unittest.TestCase):
         params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETER_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         models = offline_analysis(
-            str(cls.tmp_dir), cls.parameters, save_figures=True, show_figures=False, alert_finished=False)
+            str(cls.tmp_dir),
+            cls.parameters,
+            save_figures=False,
+            show_figures=False,
+            alert_finished=False)
         # only one model is generated using the default parameters
         cls.model = models[0]
 

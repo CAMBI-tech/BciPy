@@ -96,7 +96,7 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
-            cmd = f"bcipy-train --parameters {self.parameters_path}"
+            cmd = f"bcipy-train --parameters '{self.parameters_path}'"
             if self.alert_finished:
                 cmd += " --alert"
             response = subprocess.run(
