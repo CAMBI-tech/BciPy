@@ -12,6 +12,7 @@ from typing import Optional
 
 class GazeModelIndividual(SignalModel):
     reshaper = GazeReshaper()
+    name = "gaze_model_individual"
 
     def __init__(self, num_components=2):
         self.num_components = num_components   # number of gaussians to fit
@@ -79,6 +80,7 @@ class GazeModelIndividual(SignalModel):
 class GazeModelCombined(SignalModel):
     '''Gaze model that uses all symbols to fit a single Gaussian '''
     reshaper = GazeReshaper()
+    name = "gaze_model_combined"
 
     def __init__(self, num_components=1):
         self.num_components = num_components   # number of gaussians to fit

@@ -16,9 +16,13 @@ class SignalModelMetadata(NamedTuple):
     device_spec: DeviceSpec  # device used to train the model
     transform: Composition  # data preprocessing steps
     evidence_type: str = None  # optional; type of evidence produced
+    auc: float = None  # optional; area under the curve
+    balanced_accuracy: float = None  # optional; balanced accuracy
 
 
 class SignalModel(ABC):
+
+    name = "undefined"
 
     @property
     def metadata(self) -> SignalModelMetadata:

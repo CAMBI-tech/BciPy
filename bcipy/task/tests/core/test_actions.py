@@ -1,7 +1,7 @@
 import unittest
 import subprocess
 
-from mockito import mock, when, verify, unstub, any
+from mockito import mock, when, verify, unstub
 from bcipy.task import actions, TaskData
 from bcipy.task.actions import CodeHookAction, OfflineAnalysisAction, ExperimentFieldCollectionAction
 
@@ -43,15 +43,18 @@ class TestActions(unittest.TestCase):
         verify(subprocess, times=1).run(code_hook, shell=True)
 
     def test_offline_analysis_action(self) -> None:
-        when(actions).offline_analysis(self.data_directory, self.parameters, alert_finished=any()).thenReturn(None)
+        cmd_expected = f"bcipy-train --parameters '{self.parameters_path}'"
+
+        when(subprocess).run(cmd_expected, shell=True, check=True).thenReturn(None)
         action = OfflineAnalysisAction(
             parameters=self.parameters,
             data_directory=self.data_directory,
-            parameters_path=self.parameters_path
+            parameters_path=self.parameters_path,
         )
         response = action.execute()
+        cmd_expected = f"bcipy-train --parameters '{self.parameters_path}'"
         self.assertIsInstance(response, TaskData)
-        verify(actions, times=1).offline_analysis(self.data_directory, self.parameters, alert_finished=any())
+        verify(subprocess, times=1).run(cmd_expected, shell=True, check=True)
 
     def test_experiment_field_collection_action(self) -> None:
         experiment_id = 'experiment_id'

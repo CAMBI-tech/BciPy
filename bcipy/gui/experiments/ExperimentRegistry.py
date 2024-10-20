@@ -1,4 +1,4 @@
-from typing import List, Optional, Type
+from typing import List, Optional
 from PyQt6.QtWidgets import (
     QComboBox,
     QVBoxLayout,
@@ -7,9 +7,8 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QPushButton,
     QScrollArea,
-    QApplication,
 )
-from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton
+from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton, run_bciui
 from bcipy.helpers.load import load_fields, load_experiments
 from bcipy.helpers.save import save_experiment_data
 from bcipy.config import (
@@ -33,9 +32,14 @@ class ExperimentRegistry(BCIUI):
     def __init__(self):
         super().__init__("Experiment Registry", 600, 700)
         self.task_registry = TaskRegistry()
+        self.setProperty("class", "experiment-registry")
 
     def format_experiment_combobox(
-        self, label_text: str, combobox: QComboBox, buttons: Optional[List[QPushButton]]
+        self,
+        label_text: str,
+        combobox: QComboBox,
+        buttons: Optional[List[QPushButton]],
+        class_name: str = 'default',
     ) -> QVBoxLayout:
         """
         Create a formatted widget for a the experiment comboboxes with optional buttons.
@@ -51,11 +55,11 @@ class ExperimentRegistry(BCIUI):
             A QVBoxLayout with the label, combobox, and buttons.
         """
         label = QLabel(label_text)
-        label.setStyleSheet("font-size: 18px")
         area = QVBoxLayout()
         input_area = QHBoxLayout()
         input_area.setContentsMargins(15, 0, 0, 15)
         area.addWidget(label)
+        combobox.setProperty("class", class_name)
         input_area.addWidget(combobox, 1)
         if buttons:
             for button in buttons:
@@ -77,7 +81,7 @@ class ExperimentRegistry(BCIUI):
         """
         layout = QHBoxLayout()
         label = QLabel(name)
-        label.setStyleSheet("color: black;")
+        label.setProperty("class", "task-label")
         layout.addWidget(label)
         widget = DynamicItem()
 
@@ -102,7 +106,7 @@ class ExperimentRegistry(BCIUI):
         layout.addWidget(move_down_button)
 
         remove_button = SmallButton("Remove")
-        remove_button.setStyleSheet("background-color: red;")
+        remove_button.setProperty("class", "remove-button")
         remove_button.clicked.connect(
             lambda: layout.deleteLater()
         )  # This may not be needed
@@ -127,7 +131,7 @@ class ExperimentRegistry(BCIUI):
         """
         layout = QHBoxLayout()
         label = QLabel(name)
-        label.setStyleSheet("color: black;")
+        label.setProperty("class", "task-label")
         layout.addWidget(label)
         widget = DynamicItem()
 
@@ -277,7 +281,10 @@ class ExperimentRegistry(BCIUI):
         add_task_button = QPushButton("Add")
         add_task_button.clicked.connect(add_task)
         experiment_protocol_box = self.format_experiment_combobox(
-            "Protocol", self.experiment_protocol_input, [add_task_button]
+            "Protocol",
+            self.experiment_protocol_input,
+            [add_task_button],
+            "protocol",
         )
         form_area.addLayout(experiment_protocol_box)
 
@@ -288,7 +295,10 @@ class ExperimentRegistry(BCIUI):
         new_field_button.clicked.connect(self.create_experiment_field)
         form_area.addLayout(
             self.format_experiment_combobox(
-                "Fields", self.field_input, [add_field_button, new_field_button]
+                "Fields",
+                self.field_input,
+                [add_field_button, new_field_button],
+                "fields",
             )
         )
 
@@ -315,13 +325,6 @@ class ExperimentRegistry(BCIUI):
         create_experiment_button = QPushButton("Create experiment")
         create_experiment_button.clicked.connect(self.create_experiment)
         self.contents.addWidget(create_experiment_button)
-
-
-def run_bciui(ui: Type[BCIUI], *args, **kwargs):
-    app = QApplication([])
-    ui_instance = ui(*args, **kwargs)
-    ui_instance.display()
-    app.exec()
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ expected_output_folder = pwd / "integration_test_expected_output"  # global for 
 
 
 @pytest.mark.slow
-class TestOfflineAnalysis(unittest.TestCase):
+class TestOfflineAnalysisEEG(unittest.TestCase):
     """Integration test of offline_analysis.py (slow)
 
     This test is slow because it runs the full offline analysis pipeline and compares its' output
@@ -50,12 +50,14 @@ class TestOfflineAnalysis(unittest.TestCase):
 
         params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETER_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
-        models, fig_handles = offline_analysis(
-            str(cls.tmp_dir), cls.parameters, save_figures=True, show_figures=False, alert_finished=False)
+        models = offline_analysis(
+            str(cls.tmp_dir),
+            cls.parameters,
+            save_figures=False,
+            show_figures=False,
+            alert_finished=False)
+        # only one model is generated using the default parameters
         cls.model = models[0]
-        cls.mean_erp_fig_handle = fig_handles[0]
-        cls.mean_nontarget_topomap_handle = fig_handles[1]
-        cls.mean_target_topomap_handle = fig_handles[2]
 
     @classmethod
     def tearDownClass(cls):
@@ -72,20 +74,6 @@ class TestOfflineAnalysis(unittest.TestCase):
         expected_auc = self.get_auc(list(expected_output_folder.glob("model_*.pkl"))[0].name)
         found_auc = self.get_auc(list(self.tmp_dir.glob("model_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
-
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder, filename="test_mean_erp.png", remove_text=True)
-    def test_mean_erp(self):
-        return self.mean_erp_fig_handle
-
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder,
-                                   filename="test_target_topomap.png", remove_text=False)
-    def test_target_topomap(self):
-        return self.mean_target_topomap_handle
-
-    @pytest.mark.mpl_image_compare(baseline_dir=expected_output_folder,
-                                   filename="test_nontarget_topomap.png", remove_text=False)
-    def test_nontarget_topomap(self):
-        return self.mean_nontarget_topomap_handle
 
 
 if __name__ == "__main__":

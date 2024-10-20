@@ -1,7 +1,10 @@
+# mypy: disable-error-code="arg-type, assignment"
 import errno
 import os
 import json
+import subprocess
 from datetime import datetime
+import random
 import logging
 from logging import Logger
 from typing import List, Type, Optional
@@ -16,10 +19,9 @@ from bcipy.config import (
     MULTIPHRASE_FILENAME,
     PROTOCOL_FILENAME,
     PROTOCOL_LOG_FILENAME,
-    SESSION_LOG_FILENAME
+    SESSION_LOG_FILENAME,
 )
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.visualization import visualize_session_data
 
 
 class SessionOrchestrator:
@@ -74,10 +76,12 @@ class SessionOrchestrator:
         self.logger = self._init_orchestrator_logger(self.save_folder)
 
         self.alert = alert
+        self.logger.info("Alerts are on") if self.alert else self.logger.info("Alerts are off")
         self.visualize = visualize
         self.progress = 0
 
         self.ready_to_execute = False
+        self.user_exit = False
         self.logger.info("Session Orchestrator initialized successfully")
 
     def add_task(self, task: Type[Task]) -> None:
@@ -124,6 +128,8 @@ class SessionOrchestrator:
             with open(self.parameters['copy_phrases_location'], 'r') as f:
                 copy_phrases = json.load(f)
             self.copyphrases = copy_phrases['Phrases']
+            # randomize the order of the phrases
+            random.shuffle(self.copyphrases)
         else:
             self.copyphrases = None
             self.next_phrase = self.parameters['task_text']
@@ -153,25 +159,39 @@ class SessionOrchestrator:
                     self.parameters,
                     data_save_location,
                     fake=self.fake,
+                    alert_finished=self.alert,
                     experiment_id=self.experiment_id,
                     parameters_path=self.parameters_path,
-                    last_task_dir=self.last_task_dir)
+                    protocol_path=self.save_folder,
+                    last_task_dir=self.last_task_dir,
+                    progress=self.progress,
+                    tasks=self.tasks,
+                    exit_callback=self.close_experiment_callback)
                 task_data = initialized_task.execute()
                 self.session_data.append(task_data)
                 self.logger.info(f"Task {task.name} completed successfully")
                 # some tasks may need access to the previous task's data
                 self.last_task_dir = data_save_location
 
-                if self.alert:
-                    initialized_task.alert()
+                if self.user_exit:
+                    break
 
-                if self.visualize:
-                    # Visualize session data and fail silently if it errors
-                    try:
-                        visualize_session_data(data_save_location, self.parameters)
-                        pass
-                    except Exception as e:
-                        self.logger.info(f'Error visualizing session data: {e}')
+                if initialized_task.mode != TaskMode.ACTION:
+                    if self.alert:
+                        initialized_task.alert()
+
+                    if self.visualize:
+                        # Visualize session data and fail silently if it errors
+                        try:
+                            self.logger.info(f"Visualizing session data. Saving to {data_save_location}")
+                            subprocess.run(
+                                f'bcipy-erp-viz -s "{data_save_location}" '
+                                f'--parameters "{self.parameters_path}" --show --save',
+                                shell=True)
+                        except Exception as e:
+                            self.logger.info(f'Error visualizing session data: {e}')
+
+                initialized_task = None
 
             except Exception as e:
                 self.logger.error(f"Task {task.name} failed to execute")
@@ -210,7 +230,19 @@ class SessionOrchestrator:
             # make a directory to save task data to
             os.makedirs(save_directory)
             os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
-            # save parameters to save directory
+            # save parameters to save directory with task name
+            self.parameters.add_entry(
+                "task",
+                {
+                    "value": task.name,
+                    "section": "task_congig",
+                    "name": "BciPy Task",
+                    "helpTip": "A string representing the task that was executed",
+                    "recommended": "",
+                    "editable": "false",
+                    "type": "str",
+                }
+            )
             self.parameters.save(save_directory)
 
         except OSError as error:
@@ -252,3 +284,8 @@ class SessionOrchestrator:
 
     def get_system_info(self) -> dict:
         return get_system_info()
+
+    def close_experiment_callback(self):
+        """Callback to close the experiment."""
+        self.logger.info("User has exited the experiment.")
+        self.user_exit = True

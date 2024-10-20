@@ -1,4 +1,4 @@
-from typing import Callable
+from typing import Callable, Type
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (
     QWidget,
@@ -9,9 +9,11 @@ from PyQt6.QtWidgets import (
     QLayout,
     QSizePolicy,
     QMessageBox,
+    QApplication,
 )
 from typing import Optional, List
 from bcipy.config import BCIPY_ROOT
+import sys
 
 
 class BCIUI(QWidget):
@@ -68,7 +70,6 @@ class BCIUI(QWidget):
 
     @staticmethod
     def make_list_scroll_area(widget: QWidget) -> QScrollArea:
-        widget.setStyleSheet("background-color: transparent;")
         scroll_area = QScrollArea()
         scroll_area.setWidget(widget)
         scroll_area.setWidgetResizable(True)
@@ -106,6 +107,10 @@ class BCIUI(QWidget):
 
         on_button.clicked.connect(toggle_off)
         off_button.clicked.connect(toggle_on)
+
+    def hide(self) -> None:
+        """Close the UI window"""
+        self.hide()
 
 
 class SmallButton(QPushButton):
@@ -221,3 +226,13 @@ class DynamicList(QWidget):
             A list of values for the given property.
         """
         return [widget.data[prop] for widget in self.widgets]
+
+
+def run_bciui(ui: Type[BCIUI], *args, **kwargs):
+    # add app to kwargs
+    app = QApplication(sys.argv).instance()
+    if not app:
+        app = QApplication(sys.argv)
+    ui_instance = ui(*args, **kwargs)
+    ui_instance.display()
+    return app.exec()

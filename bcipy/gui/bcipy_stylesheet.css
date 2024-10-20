@@ -1,44 +1,87 @@
 /* This stylesheet uses the QSS syntax, but is named as a CSS file to take advantage of IDE CSS tooling */
-* {
-    background-color: white;
-}
-QWidget {
+
+QWidget[class="experiment-registry"] {
     background-color: black;
-    color: white;
-    font-size: 14px;
 }
 
-QWidget > * {
-    background-color: none;
+QWidget[class="inter-task"] {
+    background-color: black;
+}
+
+QLabel {
+    background-color: black;
+    color: white;
+}
+
+QLabel[class="task-label"] {
+    background-color: transparent;
+    color: black;
 }
 
 QPushButton {
-    background-color: green;
+    background-color: rgb(16, 173, 39);
+    color: white;
     padding: 10px;
     border-radius: 10px;
 }
 
+QPushButton[class="remove-button"] {
+    background-color:  rgb(243, 58, 58);
+}
+
+QPushButton[class="remove-button"]:hover {
+    background-color: rgb(255, 0, 0);
+}
 
 QPushButton[class="small-button"] {
+    background-color: darkslategray;
+    color: white;
     padding: 5px;
     border-radius: 5px;
 }
 
-QPushButton:hover {
+QPushButton[class="small-button"]:hover {
     background-color: darkgreen;
 }
+
 
 QPushButton:pressed {
     background-color: darkslategrey;
 }
 
-QComboBox, QLineEdit {
+QComboBox {
+    background-color: white;
+    color: black;
+    padding: 4px;
+    border-radius: 1px;
+}
+
+QComboBox:hover {
+    background-color: #e6f5ea;
+    color: black;
+}
+
+QComboBox:on {
+    background-color: #e6f5ea;
+    color: black;
+}
+
+QListView {
+    background-color: white;
+    color: black;
+    padding: 5px;
+}
+
+QLineEdit {
     background-color: white;
     color: black;
     padding: 5px;
     border: none;
+    border-radius: 1px;
 }
 
 QScrollArea {
     background-color: white;
+    color: black;
+    border-radius: 1px;
 }

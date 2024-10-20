@@ -1,36 +1,47 @@
-from typing import List
-from bcipy.gui.bciui import BCIUI, run_bciui
-from bcipy.task import Task
+from typing import Callable, List
+
 from PyQt6.QtWidgets import (
-    QApplication,
     QLabel,
     QHBoxLayout,
     QPushButton,
     QProgressBar,
+    QApplication
 )
+from bcipy.gui.bciui import BCIUI, run_bciui
+from bcipy.config import SESSION_LOG_FILENAME
+import logging
 
-from bcipy.task.main import TaskData
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class IntertaskGUI(BCIUI):
 
+    action_name = "IntertaskAction"
+
     def __init__(
-        self, next_task_name: str, current_task_index: int, total_tasks: int
+        self,
+        next_task_index: int,
+        tasks: List[str],
+        exit_callback: Callable,
     ):
-        self.total_tasks = total_tasks
-        self.current_task_index = current_task_index
-        self.next_task_name = next_task_name
-        super().__init__("Progress", 400, 100)
+        self.tasks = tasks
+        self.current_task_index = next_task_index
+        self.next_task_name = tasks[self.current_task_index]
+        self.total_tasks = len(tasks)
+        self.task_progress = next_task_index
+        self.callback = exit_callback
+        super().__init__("Progress", 800, 150)
+        self.setProperty("class", "inter-task")
 
     def app(self):
         self.contents.addLayout(BCIUI.centered(QLabel("Experiment Progress")))
 
         progress_container = QHBoxLayout()
         progress_container.addWidget(
-            QLabel(f"({self.current_task_index}/{self.total_tasks})")
+            QLabel(f"({self.task_progress}/{self.total_tasks})")
         )
         self.progress = QProgressBar()
-        self.progress.setValue(int(self.current_task_index / self.total_tasks * 100))
+        self.progress.setValue(int(self.task_progress / self.total_tasks * 100))
         self.progress.setTextVisible(False)
         progress_container.addWidget(self.progress)
         self.contents.addLayout(progress_container)
@@ -51,22 +62,25 @@ class IntertaskGUI(BCIUI):
         buttons_layout.addWidget(self.next_button)
         self.contents.addLayout(buttons_layout)
 
-        self.next_button.clicked.connect(self.close)
-        # This should be replaced with a method that stops orchestrator execution
-        self.stop_button.clicked.connect(QApplication.instance().quit)
+        self.next_button.clicked.connect(self.next)
+        self.stop_button.clicked.connect(self.stop_tasks)
 
+    def stop_tasks(self):
+        # This should exit Task executions
+        logger.info(f"Stopping Tasks... user requested. Using callback: {self.callback}")
+        self.callback()
+        self.quit()
+        logger.info("Tasks Stopped")
 
-class IntertaskAction(Task):
-    name = "Intertask Action"
-    protocol: List[Task]
-    current_task_index: int
+    def next(self):
+        logger.info(f"Next Task=[{self.next_task_name}] requested")
+        self.quit()
 
-    def execute(self) -> TaskData:
-        task = self.protocol[self.current_task_index]
-        run_bciui(IntertaskGUI, task.name, self.current_task_index, len(self.protocol))
-        return TaskData()
+    def quit(self):
+        QApplication.instance().quit()
 
 
 if __name__ == "__main__":
-    # test values
-    run_bciui(IntertaskGUI, "Placeholder Task Name", 1, 3)
+    tasks = ["RSVP Calibration", "IntertaskAction", "Matrix Calibration", "IntertaskAction"]
+
+    run_bciui(IntertaskGUI, tasks=tasks, next_task_index=1, exit_callback=lambda: print("Stopping orchestrator"))

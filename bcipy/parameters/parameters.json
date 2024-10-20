@@ -329,10 +329,10 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.25",
+    "value": "0.2",
     "section": "task_config",
     "name": "Stimulus Presentation Duration",
-    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry. Default: 0.2",
     "recommended": "",
     "editable": false,
     "type": "float"
@@ -376,7 +376,7 @@
   "rsvp_stim_pos_x": {
     "value": "0",
     "section": "rsvp_task_config",
-    "name": "Stimulus Position Horizontal",
+    "name": "RSVP Stimulus Position Horizontal",
     "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
     "editable": false,
@@ -385,7 +385,7 @@
   "rsvp_stim_pos_y": {
     "value": "0",
     "section": "rsvp_task_config",
-    "name": "Stimulus Position Vertical",
+    "name": "RSVP Stimulus Position Vertical",
     "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0",
     "recommended": "",
     "editable": false,
@@ -394,7 +394,7 @@
   "matrix_stim_pos_x": {
     "value": "-0.6",
     "section": "matrix_task_config",
-    "name": "Stimulus Starting Position Horizontal",
+    "name": "Matrix Stimulus Starting Position Horizontal",
     "helpTip": "Specifies the center point of the stimulus position along the X axis. Possible values range from -1 to 1, with 0 representing the center. Default: -0.6",
     "recommended": "",
     "editable": false,
@@ -403,7 +403,7 @@
   "matrix_stim_pos_y": {
     "value": "0.4",
     "section": "matrix_task_config",
-    "name": "Stimulus Starting Position Vertical",
+    "name": "Matrix Stimulus Starting Position Vertical",
     "helpTip": "Specifies the center point of the stimulus position along the Y axis. Possible values range from -1 to 1, with 0 representing the center. Default: 0.4",
     "recommended": "",
     "editable": false,
@@ -435,7 +435,7 @@
   "vep_stim_height": {
     "value": "0.1",
     "section": "vep_task_config",
-    "name": "vep Stimulus Size",
+    "name": "VEP Stimulus Size",
     "helpTip": "Specifies the height of text stimuli. See https://www.psychopy.org/general/units.html. Default: 0.1",
     "recommended": "",
     "editable": false,
@@ -453,7 +453,7 @@
   "matrix_keyboard_layout": {
     "value": "ALP",
     "section": "matrix_task_config",
-    "name": "Keyboard Layout",
+    "name": "Matrix Keyboard Layout",
     "helpTip": "Specifies the keyboard layout to use for the Matrix task. Default: ALP (Alphabetical)",
     "recommended": [
       "ALP",
@@ -568,13 +568,13 @@
     "type": "str"
   },
   "copy_phrases_location": {
-    "value": "",
+    "value": "bcipy/parameters/experiment/phrases.json",
     "section": "online_config",
     "name": "Copy Phrases Location",
     "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
     "recommended": "",
     "editable": true,
-    "type": "str"
+    "type": "filepath"
   },
   "rsvp_task_height": {
     "value": "0.1",
@@ -621,7 +621,7 @@
   "rsvp_task_padding": {
     "value": "0.05",
     "section": "bci_config",
-    "name": "Task Bar Padding",
+    "name": "RSVP Task Bar Padding",
     "helpTip": "Specifies the padding around the task bar text for RSVP tasks. Default: 0.05",
     "recommended": [
       "0.05"
@@ -632,7 +632,7 @@
   "matrix_task_padding": {
     "value": "0.05",
     "section": "bci_config",
-    "name": "Task Bar Padding",
+    "name": "Matrix Task Bar Padding",
     "helpTip": "Specifies the padding around the task bar text for Matrix Tasks. Default: 0.05",
     "recommended": [
       "0.05"
@@ -641,7 +641,7 @@
     "type": "float"
   },
   "stim_number": {
-    "value": "100",
+    "value": "5",
     "section": "bci_config",
     "name": "Number of Calibration inquiries",
     "helpTip": "Specifies the number of inquiries to present in a calibration session. Default: 100",
