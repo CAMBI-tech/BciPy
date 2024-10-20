@@ -187,9 +187,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     try:
         model.fit(data, labels)
         model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform,
-                                         evidence_type="ERP",
-                                         auc=model.auc)
+                                             transform=default_transform,
+                                             evidence_type="ERP",
+                                             auc=model.auc)
         log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
     except Exception as e:
         log.error(f"Error training model: {e}")

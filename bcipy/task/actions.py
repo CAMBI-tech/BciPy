@@ -215,8 +215,8 @@ class BciPyCalibrationReportAction(Task):
         self.protocol_path = protocol_path or ''
         self.last_task_dir = last_task_dir
         self.default_transform = None
-        self.trial_window = trial_window or (0, 1.0) #TODO ask about this
-        self.static_offset = self.parameters.get("static_offset", 0)
+        self.trial_window = (-0.2, 1.0)
+        self.static_offset = self.parameters.get("static_offset")
         self.report = Report(self.protocol_path)
         self.report_sections: List[ReportSection] = []
         self.all_raw_data: List[RawData] = []
@@ -236,7 +236,8 @@ class BciPyCalibrationReportAction(Task):
             if self.protocol_path:
                 # Use glob to find all directories with Calibration in the name
                 calibration_directories = glob.glob(
-                    f"{self.protocol_path}/**/*Calibration*", recursive=True)
+                    f"{self.protocol_path}/**/*Calibration*",
+                    recursive=True)
                 for data_dir in calibration_directories:
                     path_data_dir = Path(data_dir)
                     # pull out the last directory name
@@ -343,7 +344,11 @@ class BciPyCalibrationReportAction(Task):
         trigger_type, trigger_timing, trigger_label = trigger_decoder(
             offset=self.static_offset,
             trigger_path=f"{session}/{TRIGGER_FILENAME}",
-            exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+            exclusion=[
+                TriggerType.PREVIEW,
+                TriggerType.EVENT,
+                TriggerType.FIXATION],
+            device_type='EEG'
         )
         return trigger_type, trigger_timing, trigger_label
 
@@ -373,6 +378,3 @@ class BciPyCalibrationReportAction(Task):
         artifact_detector.detect_artifacts()
         return artifact_detector
 
-
-if __name__ == '__main__':
-    pass
