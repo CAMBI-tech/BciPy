@@ -20,6 +20,7 @@ from bcipy.display import (
     StimuliProperties,
 )
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.acquisition import init_acquisition, LslDataServer
@@ -470,14 +471,8 @@ class RSVPCopyPhraseTask(Task):
             ),
         )
 
-        if self.parameters["show_preview_inquiry"]:
-            stim_times, proceed = self.rsvp.preview_inquiry()
-            if proceed:
-                stim_times.extend(self.rsvp.do_inquiry())
-        else:
-            stim_times = self.rsvp.do_inquiry()
-            proceed = True
-
+        stim_times = self.rsvp.do_inquiry()
+        proceed = not self.rsvp.preview_enabled or self.rsvp.preview_accepted
         return stim_times, proceed
 
     def show_feedback(self, selection: str, correct: bool = True) -> None:
@@ -1078,7 +1073,6 @@ def _init_copy_phrase_display(
         task_bar,
         info,
         starting_spelled_text,
-        trigger_type=parameters["trigger_type"],
-        space_char=parameters["stim_space_char"],
-        preview_inquiry=preview_inquiry,
-    )
+        trigger_type=parameters['trigger_type'],
+        space_char=parameters['stim_space_char'],
+        preview_config=parameters.instantiate(PreviewParams))

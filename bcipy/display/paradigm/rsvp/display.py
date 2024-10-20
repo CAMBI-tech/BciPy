@@ -2,16 +2,16 @@ import logging
 import os.path as path
 from typing import List, Optional, Tuple
 
-from psychopy import core, event, visual
+from psychopy import core, visual
 
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
-                           PreviewInquiryProperties, StimuliProperties)
+                           StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.helpers.system_utils import get_screen_info
-from bcipy.helpers.task import get_key_press
 from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
 
 
@@ -29,7 +29,7 @@ class RSVPDisplay(Display):
             stimuli: StimuliProperties,
             task_bar: TaskBar,
             info: InformationProperties,
-            preview_inquiry: Optional[PreviewInquiryProperties] = None,
+            preview_config: Optional[PreviewParams] = None,
             trigger_type: str = 'image',
             space_char: str = SPACE_CHAR,
             full_screen: bool = False):
@@ -52,8 +52,8 @@ class RSVPDisplay(Display):
         info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
 
         # Preview Inquiry
-        preview_inquiry(PreviewInquiryProperties) Optional: attributes to display a preview of upcoming stimuli defined
-            via self.stimuli(StimuliProperties).
+        preview_config(PreviewParams) Optional: parameters used to specify the behavior for displaying a preview
+            of upcoming stimuli defined via self.stimuli(StimuliProperties). If None a preview is not displayed.
 
         trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
             task. This will be used to reconcile timing differences between acquisition and the display.
@@ -79,9 +79,11 @@ class RSVPDisplay(Display):
         self.stim_length = stimuli.stim_length
 
         self.full_screen = full_screen
-        self._preview_inquiry = preview_inquiry
-        if self._preview_inquiry:
-            self.preview_calibration = self._preview_inquiry.preview_on
+
+        self.preview_params = preview_config
+        self.preview_button_handler = init_preview_button_handler(
+            preview_config, experiment_clock) if self.preview_enabled else None
+        self.preview_accepted = True
 
         self.staticPeriod = static_clock
 
@@ -106,6 +108,11 @@ class RSVPDisplay(Display):
         # Create initial stimuli object for updating
         self.sti = stimuli.build_init_stimuli(window)
 
+    @property
+    def preview_enabled(self) -> bool:
+        """Should the inquiry preview be enabled."""
+        return self.preview_params and self.preview_params.show_preview_inquiry
+
     def draw_static(self):
         """Draw static elements in a stimulus."""
         if self.task_bar:
@@ -128,6 +135,15 @@ class RSVPDisplay(Display):
         self.stimuli_timing = timing or []
         self.stimuli_colors = colors or []
 
+    @property
+    def preview_index(self) -> int:
+        """Index within an inquiry at which the inquiry preview should be displayed.
+
+        For calibration, we should display it after the target prompt (index = 1).
+        For copy phrase there is no target prompt so it should display before the
+        rest of the inquiry."""
+        return 1
+
     def do_inquiry(self) -> List[Tuple[str, float]]:
         """Do inquiry.
 
@@ -140,7 +156,8 @@ class RSVPDisplay(Display):
         """
 
         # init an array for timing information
-        timing = []
+        timing: List[Tuple[str, float]] = []
+        self.preview_accepted = True
 
         if self.first_run:
             self._trigger_pulse()
@@ -149,28 +166,29 @@ class RSVPDisplay(Display):
         inquiry = self._generate_inquiry()
 
         # do the inquiry
-        for idx in range(len(inquiry)):
+        for idx, stim_props in enumerate(inquiry):
 
             # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
             if idx == 0 and callable(self.first_stim_callback):
-                self.first_stim_callback(inquiry[idx]['sti'])
+                self.first_stim_callback(stim_props['sti'])
 
-            # If previewing the inquiry, do so after the first stimulus
-            if self.preview_calibration and idx == 1:
-                time, _ = self.preview_inquiry()
-                timing.extend(time)
+            # If previewing the inquiry during calibration, do so after the first stimulus
+            if self.preview_enabled and idx == self.preview_index:
+                self.preview_accepted = self.preview_inquiry(timing)
+            if not self.preview_accepted:
+                break
 
             # Reset the timing clock to start presenting
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
-                inquiry[idx]['sti_label'])
+                stim_props['sti_label'])
 
             # Draw stimulus for n frames
-            inquiry[idx]['sti'].draw()
+            stim_props['sti'].draw()
             self.draw_static()
             self.window.flip()
-            core.wait(inquiry[idx]['time_to_present'])
+            core.wait(stim_props['time_to_present'])
 
             # append timing information
             timing.append(self.trigger_callback.timing)
@@ -202,74 +220,47 @@ class RSVPDisplay(Display):
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
 
-    def preview_inquiry(self) -> Tuple[List[float], bool]:
+    def preview_inquiry(self, timing: List[Tuple[str, float]]) -> bool:
         """Preview Inquiry.
 
         Given an inquiry defined to be presented via do_inquiry(), present the full inquiry
             to the user and allow input on whether the intended letter is present or not before
             going through the rapid serial visual presention.
 
+        Parameters:
+            timing - list to which all timing information should be appended.
         Returns:
-            - A tuple containing the timing information and a boolean describing whether to present
-                the inquiry (True) or generate another (False).
+            - A boolean describing whether to present the inquiry (True) or
+                generate another (False).
         """
-        # self._preview_inquiry defaults to None on __init__, assert it is defined correctly
-        assert isinstance(self._preview_inquiry, PreviewInquiryProperties), (
-            'PreviewInquiryProperties are not set on this RSVPDisplay. '
-            'Add them as a preview_inquiry kwarg to use preview_inquiry().')
-        # construct the timing to return and generate the content for preview
-        timing = []
-        if self.first_run:
-            self._trigger_pulse()
+        assert self.preview_enabled, "Preview feature not enabled."
+        assert self.preview_button_handler, "Button handler must be initialized"
 
-        content = self._generate_inquiry_preview()
-
-        # define the trigger callbacks. Here we use the trigger_callback to return immediately
+        handler = self.preview_button_handler
         self.window.callOnFlip(
             self.trigger_callback.callback,
             self.experiment_clock,
             'inquiry_preview')
+        self.draw_preview()
 
-        # Draw and flip the screen.
+        handler.await_response()
+        timing.append(self.trigger_callback.timing)
+        if handler.has_response():
+            timing.append((handler.response_label, handler.response_timestamp))
+
+        self.trigger_callback.reset()
+        self.draw_static()
+        self.window.flip()
+        core.wait(self.preview_params.preview_inquiry_isi)
+
+        return handler.accept_result()
+
+    def draw_preview(self):
+        """Generate and draw the inquiry preview"""
+        content = self._generate_inquiry_preview()
         content.draw()
         self.draw_static()
         self.window.flip()
-        timing.append(self.trigger_callback.timing)
-
-        timer = core.CountdownTimer(self._preview_inquiry.preview_inquiry_length)
-        response = False
-
-        event.clearEvents(eventType='keyboard')
-        while timer.getTime() > 0:
-            # wait for a key press event
-            response = get_key_press(
-                key_list=[self._preview_inquiry.preview_inquiry_key_input],
-                clock=self.experiment_clock,
-            )
-
-            # break if a response given unless this is preview only and wait the timer
-            if response and not self._preview_inquiry.preview_only:
-                break
-
-        self.draw_static()
-        self.window.flip()
-        self.trigger_callback.reset()
-        core.wait(self._preview_inquiry.preview_inquiry_isi)
-
-        if self._preview_inquiry.preview_only:
-            return timing, True
-
-        # depending on whether or not press to accept, define what to return to the task
-        if response and self._preview_inquiry.press_to_accept:
-            timing.append(response)
-            return timing, True
-        elif response and not self._preview_inquiry.press_to_accept:
-            timing.append(response)
-            return timing, False
-        elif not response and self._preview_inquiry.press_to_accept:
-            return timing, False
-        else:
-            return timing, True
 
     def _generate_inquiry_preview(self) -> visual.TextBox2:
         """Generate Inquiry Preview.
@@ -294,7 +285,7 @@ class RSVPDisplay(Display):
         Generate stimuli for next RSVP inquiry. [A + A, C, Q, D]
         """
         stim_info = []
-        for idx in range(len(self.stimuli_inquiry)):
+        for idx, stim in enumerate(self.stimuli_inquiry):
             current_stim = {}
 
             current_stim['time_to_present'] = self.stimuli_timing[idx]
@@ -306,20 +297,20 @@ class RSVPDisplay(Display):
                 this_stimuli_size = self.stimuli_height
 
             # Set the Stimuli attrs
-            if self.stimuli_inquiry[idx].endswith('.png'):
+            if stim.endswith('.png'):
                 current_stim['sti'] = self._create_stimulus(
                     mode='image',
                     height=this_stimuli_size,
-                    stimulus=self.stimuli_inquiry[idx]
+                    stimulus=stim
                 )
                 current_stim['sti'].size = resize_image(
                     current_stim['sti'].image, current_stim['sti'].win.size, this_stimuli_size)
                 current_stim['sti_label'] = path.splitext(
-                    path.basename(self.stimuli_inquiry[idx]))[0]
+                    path.basename(stim))[0]
             else:
                 # text stimulus
                 current_stim['sti'] = self._create_stimulus(mode='text', height=this_stimuli_size)
-                txt = self.stimuli_inquiry[idx]
+                txt = stim
                 # customize presentation of space char.
                 current_stim['sti'].text = txt if txt != SPACE_CHAR else self.space_char
                 current_stim['sti'].color = self.stimuli_colors[idx]

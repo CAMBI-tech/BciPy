@@ -260,7 +260,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Assertions
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
-        verify(self.display, times=0).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         self.assertEqual(self.temp_dir, result.save_path)
 
@@ -463,7 +462,6 @@ class TestCopyPhrase(unittest.TestCase):
 
         # Assertions
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
-        verify(self.display, times=1).preview_inquiry()
         verify(self.display, times=1).do_inquiry()
         verify(self.copy_phrase_wrapper, times=1).add_evidence(EvidenceType.BTN, ...)
         self.assertEqual(self.temp_dir, result.save_path)

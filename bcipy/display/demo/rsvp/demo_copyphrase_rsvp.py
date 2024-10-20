@@ -4,24 +4,23 @@
 
 from psychopy import core
 
-from bcipy.display import (
-    init_display_window,
-    InformationProperties,
-    PreviewInquiryProperties,
-    StimuliProperties)
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
 from bcipy.helpers.clock import Clock
 
 # Initialize Stimulus
 is_txt_stim = True
-show_preview_inquiry = True
+
 
 # Inquiry preview
-preview_inquiry_length = 5
-preview_inquiry_key_input = 'space'
-preview_inquiry_progress_method = 1  # press to accept ==1 wait to accept ==2
-preview_inquiry_isi = 3
+preview_config = PreviewParams(show_preview_inquiry=True,
+                               preview_inquiry_length=5,
+                               preview_inquiry_key_input='space',
+                               preview_inquiry_progress_method=1,
+                               preview_inquiry_isi=3)
 
 info = InformationProperties(
     info_color=['White'],
@@ -50,7 +49,7 @@ window_parameters = {
     'full_screen': False,
     'window_height': 500,
     'window_width': 500,
-    'stim_screen': 1,
+    'stim_screen': 0,
     'background_color': 'black'
 }
 
@@ -86,13 +85,7 @@ print(frameRate)
 clock = core.StaticPeriod(screenHz=frameRate)
 experiment_clock = Clock()
 task_bar = CopyPhraseTaskBar(win, task_text='COPY_PHRASE', font='Menlo')
-preview_inquiry = PreviewInquiryProperties(
-    preview_on=show_preview_inquiry,
-    preview_only=True,
-    preview_inquiry_length=preview_inquiry_length,
-    preview_inquiry_key_input=preview_inquiry_key_input,
-    preview_inquiry_progress_method=preview_inquiry_progress_method,
-    preview_inquiry_isi=preview_inquiry_isi)
+
 rsvp = CopyPhraseDisplay(
     win,
     clock,
@@ -100,11 +93,11 @@ rsvp = CopyPhraseDisplay(
     stimuli,
     task_bar,
     info,
-    preview_inquiry=preview_inquiry)
+    preview_config=preview_config)
 
 counter = 0
 
-for idx_o in range(len(spelled_text)):
+for idx_o, _symbol in enumerate(spelled_text):
 
     rsvp.update_task_bar(text=spelled_text[idx_o])
     rsvp.draw_static()
@@ -120,16 +113,8 @@ for idx_o in range(len(spelled_text)):
 
         core.wait(inter_stim_buffer)
 
-        if show_preview_inquiry:
-            inquiry_timing, proceed = rsvp.preview_inquiry()
-            print(inquiry_timing)
-            if proceed:
-                inquiry_timing.extend(rsvp.do_inquiry())
-            else:
-                print('Rejected inquiry! Handle here')
-                inquiry_timing = rsvp.do_inquiry()
-        else:
-            inquiry_timing = rsvp.do_inquiry()
+        inquiry_timing = rsvp.do_inquiry()
+        print(inquiry_timing)
 
         core.wait(inter_stim_buffer)
         counter += 1

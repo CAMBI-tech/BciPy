@@ -1,8 +1,8 @@
 from psychopy import core, visual
 
-from bcipy.display import (Display, InformationProperties,
-                           PreviewInquiryProperties, StimuliProperties)
+from bcipy.display import Display, InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
@@ -79,22 +79,13 @@ def init_calibration_display_task(
                                   height=parameters['rsvp_task_height'],
                                   padding=parameters['rsvp_task_padding'])
 
-    preview_inquiry = PreviewInquiryProperties(
-        preview_on=parameters['show_preview_inquiry'],
-        preview_only=True,
-        preview_inquiry_length=parameters['preview_inquiry_length'],
-        preview_inquiry_progress_method=parameters[
-            'preview_inquiry_progress_method'],
-        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
-        preview_inquiry_isi=parameters['preview_inquiry_isi'])
-
     return CalibrationDisplay(window,
                               static_clock,
                               experiment_clock,
                               stimuli,
                               task_bar,
                               info,
-                              preview_inquiry=preview_inquiry,
+                              preview_config=parameters.instantiate(PreviewParams),
                               trigger_type=parameters['trigger_type'],
                               space_char=parameters['stim_space_char'],
                               full_screen=parameters['full_screen'])

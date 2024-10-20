@@ -2,6 +2,7 @@
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
@@ -139,4 +140,5 @@ def init_display(
         width_pct=parameters['matrix_width'],
         height_pct=1 - (2 * task_bar.height_pct),
         trigger_type=parameters['trigger_type'],
-        should_prompt_target=False)
+        should_prompt_target=False,
+        preview_config=parameters.instantiate(PreviewParams))
