@@ -235,4 +235,4 @@ def run_bciui(ui: Type[BCIUI], *args, **kwargs):
         app = QApplication(sys.argv)
     ui_instance = ui(*args, **kwargs)
     ui_instance.display()
-    app.exec()
+    return app.exec()

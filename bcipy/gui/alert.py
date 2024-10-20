@@ -23,5 +23,5 @@ def confirm(message: str) -> bool:
                            message_response=AlertMessageResponse.OCE)
     button = dialog.exec()
     result = bool(button == AlertResponse.OK.value)
-    QApplication.instance().quit()
+    app.quit()
     return result
