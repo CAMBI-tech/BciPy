@@ -26,7 +26,7 @@ def demo_orchestrator(parameters_path: str) -> None:
         OfflineAnalysisAction,
         IntertaskAction,
         BciPyCalibrationReportAction
-        ]
+    ]
     orchestrator = SessionOrchestrator(
         user='offline_testing',
         parameters_path=parameters_path,

@@ -1,4 +1,4 @@
-# mypy: disable-error-code="arg-type"
+# mypy: disable-error-code="arg-type, assignment"
 import errno
 import os
 import json
@@ -22,7 +22,6 @@ from bcipy.config import (
     SESSION_LOG_FILENAME,
 )
 from bcipy.helpers.load import load_json_parameters
-from bcipy.helpers.visualization import visualize_session_data
 
 
 class SessionOrchestrator:
@@ -176,8 +175,8 @@ class SessionOrchestrator:
 
                 if self.user_exit:
                     break
-                
-                if initialized_task.mode != TaskMode.ACTION:    
+
+                if initialized_task.mode != TaskMode.ACTION:
                     if self.alert:
                         initialized_task.alert()
 

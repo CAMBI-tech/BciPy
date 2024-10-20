@@ -75,5 +75,6 @@ class TestOfflineAnalysisEEG(unittest.TestCase):
         found_auc = self.get_auc(list(self.tmp_dir.glob("model_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
+
 if __name__ == "__main__":
     unittest.main()

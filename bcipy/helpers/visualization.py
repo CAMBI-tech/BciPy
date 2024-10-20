@@ -760,6 +760,7 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
 
     return fig
 
+
 def erp():
     import argparse
 

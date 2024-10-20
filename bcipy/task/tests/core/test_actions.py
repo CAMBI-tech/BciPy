@@ -43,7 +43,7 @@ class TestActions(unittest.TestCase):
         verify(subprocess, times=1).run(code_hook, shell=True)
 
     def test_offline_analysis_action(self) -> None:
-        cmd_expected = f'bcipy-train --parameters {self.parameters_path}'
+        cmd_expected = f"bcipy-train --parameters '{self.parameters_path}'"
 
         when(subprocess).run(cmd_expected, shell=True, check=True).thenReturn(None)
         action = OfflineAnalysisAction(

@@ -377,4 +377,3 @@ class BciPyCalibrationReportAction(Task):
             session_triggers=triggers)
         artifact_detector.detect_artifacts()
         return artifact_detector
-

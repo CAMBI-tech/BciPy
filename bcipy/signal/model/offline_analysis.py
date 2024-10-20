@@ -7,7 +7,6 @@ from typing import List
 
 import numpy as np
 
-from matplotlib.figure import Figure
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -26,7 +25,7 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_centralized_data,
-                                         visualize_erp, visualize_gaze,
+                                         visualize_gaze,
                                          visualize_gaze_accuracies,
                                          visualize_gaze_inquiries,
                                          visualize_results_all_symbols)
@@ -220,9 +219,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         if show_figures:
             cmd += ' --show'
         subprocess.run(
-                cmd,
-                shell=True
-            )
+            cmd,
+            shell=True
+        )
     return model
 
 

@@ -29,8 +29,6 @@ class IntertaskGUI(BCIUI):
         self.next_task_name = tasks[self.current_task_index]
         self.total_tasks = len(tasks)
         self.task_progress = next_task_index
-        logger.info(f"Total Tasks: {self.total_tasks}, Tasks: {self.tasks}, Next Task: {self.next_task_name}, Task Progress: {self.task_progress}")
-
         self.callback = exit_callback
         super().__init__("Progress", 800, 150)
         self.setProperty("class", "inter-task")
