@@ -27,15 +27,13 @@ class IntertaskGUI(BCIUI):
         self.tasks = tasks
         self.current_task_index = next_task_index
         self.next_task_name = tasks[self.current_task_index]
-        tasks = [task for task in tasks if task != self.action_name]
         self.total_tasks = len(tasks)
-        self.task_progress = next_task_index - 1
-        if self.task_progress > self.total_tasks:
-            self.task_progress = self.total_tasks
+        self.task_progress = next_task_index
         logger.info(f"Total Tasks: {self.total_tasks}, Tasks: {self.tasks}, Next Task: {self.next_task_name}, Task Progress: {self.task_progress}")
 
         self.callback = exit_callback
         super().__init__("Progress", 800, 150)
+        self.setProperty("class", "inter-task")
 
     def app(self):
         self.contents.addLayout(BCIUI.centered(QLabel("Experiment Progress")))

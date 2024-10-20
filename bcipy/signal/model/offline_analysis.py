@@ -3,7 +3,7 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Tuple
+from typing import List
 
 import numpy as np
 
@@ -471,7 +471,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
-) -> Tuple[SignalModel]:
+) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
 

@@ -4,6 +4,10 @@ QWidget[class="experiment-registry"] {
     background-color: black;
 }
 
+QWidget[class="inter-task"] {
+    background-color: black;
+}
+
 QLabel {
     background-color: black;
     color: white;
