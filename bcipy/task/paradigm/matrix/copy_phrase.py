@@ -1,4 +1,5 @@
 """Defines the Copy Phrase Task which uses a Matrix display"""
+from psychopy import visual
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
@@ -6,6 +7,8 @@ from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
+from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.clock import Clock
 
 
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
@@ -102,7 +105,10 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
 
 
 def init_display(
-        parameters, win, experiment_clock, starting_spelled_text) -> MatrixDisplay:
+        parameters: Parameters,
+        win: visual.Window,
+        experiment_clock: Clock,
+        starting_spelled_text: str) -> MatrixDisplay:
     """Constructs a new Matrix display"""
 
     info = InformationProperties(

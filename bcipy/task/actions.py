@@ -165,7 +165,7 @@ class ExperimentFieldCollectionAction(Task):
     Action for collecting experiment field data.
     """
 
-    name = "Experiment Field Collection Action"
+    name = "ExperimentFieldCollectionAction"
     mode = TaskMode.ACTION
 
     def __init__(
@@ -197,7 +197,7 @@ class BciPyCalibrationReportAction(Task):
     Action for generating a report after calibration Tasks.
     """
 
-    name = "BciPy Report Action"
+    name = "BciPyReportAction"
     mode = TaskMode.ACTION
 
     def __init__(

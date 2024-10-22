@@ -45,7 +45,7 @@ class TestMatrixDisplay(unittest.TestCase):
                                    spec=psychopy.visual.TextStim)
         when(self.text_stim_mock).setOpacity(...).thenReturn()
         when(self.text_stim_mock).setColor(...).thenReturn()
-        when(self.text_stim_mock).draw(...).thenReturn()
+        when(self.text_stim_mock).draw().thenReturn()
 
         # grid item
         when(psychopy.visual).TextStim(

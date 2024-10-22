@@ -16,7 +16,6 @@ from bcipy.config import (
 )
 from bcipy.display import (
     InformationProperties,
-    PreviewInquiryProperties,
     StimuliProperties,
 )
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
@@ -1030,14 +1029,6 @@ def _init_copy_phrase_display(
     experiment_clock: Clock,
     starting_spelled_text,
 ) -> CopyPhraseDisplay:
-    preview_inquiry = PreviewInquiryProperties(
-        preview_on=parameters['show_preview_inquiry'],
-        preview_only=parameters['preview_only'],
-        preview_inquiry_length=parameters['preview_inquiry_length'],
-        preview_inquiry_key_input=parameters['preview_inquiry_key_input'],
-        preview_inquiry_progress_method=parameters[
-            'preview_inquiry_progress_method'],
-        preview_inquiry_isi=parameters['preview_inquiry_isi'])
     info = InformationProperties(
         info_color=[parameters["info_color"]],
         info_pos=[(parameters["info_pos_x"], parameters["info_pos_y"])],

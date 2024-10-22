@@ -6,6 +6,7 @@ import subprocess
 from datetime import datetime
 import random
 import logging
+import time
 from logging import Logger
 from typing import List, Type, Optional
 
@@ -201,6 +202,9 @@ class SessionOrchestrator:
                 except BaseException:
                     pass
 
+            # give the orchestrator time to save data before exiting
+            time.sleep(1)
+
         # Save the protocol data and reset the orchestrator
         self._save_data()
         self.ready_to_execute = False
@@ -225,7 +229,7 @@ class SessionOrchestrator:
 
     def _init_task_save_folder(self, task: Type[Task]) -> str:
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        save_directory = self.save_folder + f'{task.name}_{timestamp}/'
+        save_directory = self.save_folder + f'{task.name.replace(" ", "_")}_{timestamp}/'
         try:
             # make a directory to save task data to
             os.makedirs(save_directory)

@@ -44,15 +44,13 @@ class MatrixDisplay(Display):
                  stimuli: StimuliProperties,
                  task_bar: TaskBar,
                  info: InformationProperties,
-                 symbol_set: List[str] = alphabet(),
                  rows: int = 5,
                  columns: int = 6,
                  width_pct: float = 0.75,
                  height_pct: float = 0.8,
                  trigger_type: str = 'text',
-                 symbol_set: Optional[List[str]] = None,
+                 symbol_set: Optional[List[str]] = alphabet(),
                  should_prompt_target: bool = True,
-                 sort_order: Optional[Callable] = None,
                  preview_config: Optional[PreviewParams] = None):
         """Initialize Matrix display parameters and objects.
 
@@ -124,7 +122,7 @@ class MatrixDisplay(Display):
             preview_config, experiment_clock) if self.preview_enabled else None
         self.preview_accepted = True
 
-        self.logger.info(
+        logger.info(
             f"Symbol positions ({display_container.units} units):\n{self.stim_positions}"
         )
         logger.info(f"Matrix center position: {display_container.center}")

@@ -1,7 +1,6 @@
 # mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from enum import Enum
-from logging import Logger
 from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
