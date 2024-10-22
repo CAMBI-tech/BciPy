@@ -21,7 +21,7 @@ from bcipy.helpers.load import load_raw_data
 from bcipy.helpers.raw_data import RawData
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report, ReportSection
-from bcipy.config import DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
+from bcipy.config import DEFAULT_PARAMETER_FILENAME, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.evaluate.artifact import ArtifactDetection
 
@@ -70,7 +70,7 @@ class OfflineAnalysisAction(Task):
             self,
             parameters: Parameters,
             data_directory: str,
-            parameters_path: str = f'{DEFAULT_PARAMETERS_PATH}',
+            parameters_path: str,
             last_task_dir: Optional[str] = None,
             alert_finished: bool = False,
             **kwargs: Any) -> None:
@@ -96,7 +96,7 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
-            cmd = f"bcipy-train --parameters '{self.parameters_path}'"
+            cmd = f'bcipy-train -p "{self.parameters_path}"'
             if self.alert_finished:
                 cmd += " --alert"
             response = subprocess.run(
@@ -216,7 +216,7 @@ class BciPyCalibrationReportAction(Task):
         self.last_task_dir = last_task_dir
         self.default_transform = None
         self.trial_window = (-0.2, 1.0)
-        self.static_offset = self.parameters.get("static_offset")
+        self.static_offset = None
         self.report = Report(self.protocol_path)
         self.report_sections: List[ReportSection] = []
         self.all_raw_data: List[RawData] = []
@@ -272,6 +272,7 @@ class BciPyCalibrationReportAction(Task):
         channels = raw_data.channels
         sample_rate = raw_data.sample_rate
         device_spec = devices.preconfigured_device(raw_data.daq_type)
+        self.static_offset = device_spec.static_offset
         channel_map = analysis_channels(channels, device_spec)
         self.all_raw_data.append(raw_data)
 
