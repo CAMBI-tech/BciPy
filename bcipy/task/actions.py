@@ -21,7 +21,7 @@ from bcipy.helpers.load import load_raw_data
 from bcipy.helpers.raw_data import RawData
 from bcipy.signal.process import get_default_transform
 from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report, ReportSection
-from bcipy.config import DEFAULT_PARAMETER_FILENAME, SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
+from bcipy.config import SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.evaluate.artifact import ArtifactDetection
 
