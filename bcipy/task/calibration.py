@@ -1,14 +1,16 @@
 """Base calibration task."""
-
+from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
-from psychopy import core, visual
+from psychopy import core
+from psychopy.visual import Window
 
 import bcipy.task.data as session_data
 from bcipy.acquisition import ClientManager
 from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
-                          WAIT_SCREEN_MESSAGE)
-from bcipy.display import Display
+                          WAIT_SCREEN_MESSAGE, SESSION_LOG_FILENAME)
+from bcipy.helpers.acquisition import init_acquisition, LslDataServer
+from bcipy.display import init_display_window, Display
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
@@ -21,7 +23,10 @@ from bcipy.helpers.task import (get_user_input, pause_calibration,
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
-from bcipy.task import Task
+from bcipy.task import Task, TaskData, TaskMode
+
+import logging
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class Inquiry(NamedTuple):
@@ -50,10 +55,9 @@ class BaseCalibrationTask(Task):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display)
-    daq (Data Acquisition Client)
     parameters (dict)
     file_save (str)
+    fake (bool)
 
     Subclasses should override the provided MODE and can specialize behavior by overriding
     the following methods:
@@ -62,19 +66,33 @@ class BaseCalibrationTask(Task):
         - trigger_type ; used for assigning trigger types to the timing data
         - session_task_data ; provide task-specific session data
         - session_inquiry_data ; provide task-specific inquiry data to the session
-        - cleanup ; perform any necessary cleanup (closing connections, etc.)
+        - cleanup ; perform any necessary cleanup (closing connections, etc.).
+
+    Returns:
+    -------
+    TaskData
     """
 
-    MODE = 'Undefined'
+    mode = TaskMode.CALIBRATION
+    paradigm = 'Undefined'
+    initalized = False
 
-    def __init__(self, win: visual.Window, daq: ClientManager,
-                 parameters: Parameters, file_save: str) -> None:
+    def __init__(self,
+                 parameters: Parameters,
+                 file_save: str,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
         super().__init__()
+
+        self.fake = fake
+        self.validate()
+        daq, servers, win = self.setup(parameters, file_save, fake)
         self.window = win
 
         self.frame_rate = self.window.getActualFrameRate()
         self.parameters = parameters
         self.daq = daq
+        self.servers = servers
         self.static_clock = core.StaticPeriod(screenHz=self.frame_rate)
         self.experiment_clock = Clock()
         self.start_time = self.experiment_clock.getTime()
@@ -103,11 +121,47 @@ class BaseCalibrationTask(Task):
         """Symbols used in the calibration"""
         return self._symbol_set
 
-    def name(self) -> str:
-        """Task name"""
-        if self.MODE == 'Undefined':
-            raise NotImplementedError
-        return f"{self.MODE} Calibration Task"
+    def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+        # Initialize Acquisition
+        daq, servers = init_acquisition(
+            parameters, data_save_location, server=fake)
+
+        # Initialize Display
+        display = init_display_window(parameters)
+        self.initalized = True
+
+        return daq, servers, display
+
+    def validate(self) -> None:
+        """Validate the task."""
+        assert self.paradigm != 'Undefined', 'Paradigm must be defined in subclass.'
+
+    def cleanup(self) -> None:
+        """Any cleanup code to run after the last inquiry is complete."""
+        logger.info('Cleaning up task acquisition and display.')
+        self.exit_display()
+        self.write_offset_trigger()
+        self.wait()
+        if self.initalized:
+            try:
+                # Stop Acquisition
+                self.daq.stop_acquisition()
+                self.daq.cleanup()
+
+                # Stop Servers
+                if self.servers:
+                    for server in self.servers:
+                        server.stop()
+
+                # Close the display window
+                # NOTE: There is currently a bug in psychopy when attempting to shutdown
+                # windows when using a USB-C monitor. Putting the display close last in
+                # the inquiry allows acquisition to properly shutdown.
+                self.window.close()
+                self.initalized = False
+
+            except Exception as e:
+                logger.exception(str(e))
 
     def wait(self, seconds: Optional[float] = None) -> None:
         """Pause for a time.
@@ -120,9 +174,10 @@ class BaseCalibrationTask(Task):
         seconds = seconds or self.parameters['task_buffer_length']
         core.wait(seconds)
 
+    @abstractmethod
     def init_display(self) -> Display:
         """Initialize the display"""
-        raise NotImplementedError
+        ...
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
@@ -148,8 +203,8 @@ class BaseCalibrationTask(Task):
     def init_session(self) -> session_data.Session:
         """Initialize the session data."""
         return session_data.Session(save_location=self.file_save,
-                                    task='Calibration',
-                                    mode=self.MODE,
+                                    task=self.name,
+                                    mode=str(self.mode),
                                     symbol_set=self.symbol_set,
                                     task_data=self.session_task_data())
 
@@ -212,12 +267,12 @@ class BaseCalibrationTask(Task):
                                          self.wait_screen_message_color,
                                          first_run=first_inquiry)
         if not should_continue:
-            self.logger.info('User wants to exit.')
+            logger.info('User wants to exit.')
         return should_continue
 
-    def execute(self) -> str:
+    def execute(self) -> TaskData:
         """Task run loop."""
-        self.logger.info(f'Starting {self.name()}!')
+        logger.info(f'Starting {self.name}!')
         self.wait()
 
         inq_index = 0
@@ -241,11 +296,9 @@ class BaseCalibrationTask(Task):
             self.wait()
             inq_index += 1
 
-        self.exit_display()
-        self.write_offset_trigger()
         self.cleanup()
 
-        return self.file_save
+        return TaskData(save_path=self.file_save, task_dict=self.session.as_dict())
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""
@@ -257,9 +310,6 @@ class BaseCalibrationTask(Task):
 
         # Allow for some additional data to be collected for later processing
         self.wait()
-
-    def cleanup(self) -> None:
-        """Any cleanup code to run after the last inquiry is complete."""
 
     def write_trigger_data(self, timing: List[Tuple[str, float]],
                            first_run) -> None:
@@ -331,4 +381,4 @@ class BaseCalibrationTask(Task):
 
     def session_inquiry_data(self, inquiry: Inquiry) -> Optional[Dict[str, Any]]:
         """Defines task-specific session data for each inquiry."""
-        return None
+        ...

@@ -1,14 +1,12 @@
 # mypy: disable-error-code="assignment"
 from itertools import cycle, islice, repeat
-from typing import Iterator, List
+from typing import Any, Iterator, List
 
-from psychopy import visual
-
-from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
                                    jittered_timing)
-from bcipy.task.base_calibration import Inquiry
+from bcipy.task.calibration import Inquiry
+from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
 
@@ -20,22 +18,25 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Window)
-        daq (ClientManager)
         parameters (Parameters)
         file_save (str)
+        fake (bool)
 
     Output:
-        file_save (str)
+        TaskData
     """
-    TASK_NAME = 'RSVP Timing Verification Task'
+    name = 'RSVP Timing Verification'
+    mode = TaskMode.TIMING_VERIFICATION
 
-    def __init__(self, win: visual.Window, daq: ClientManager,
-                 parameters: Parameters, file_save: str) -> None:
-        parameters['stim_height'] = 0.8
-        parameters['stim_pos_y'] = 0.0
+    def __init__(self,
+                 parameters: Parameters,
+                 file_save: str,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
+        parameters['rsvp_stim_height'] = 0.8
+        parameters['rsvp_stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
-              self).__init__(win, daq, parameters, file_save)
+              self).__init__(parameters, file_save, fake=fake)
 
     @property
     def symbol_set(self) -> List[str]:
@@ -63,10 +64,3 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
 
         return repeat(Inquiry(stimuli, durations, colors),
                       params['stim_number'])
-
-    @classmethod
-    def label(cls) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME
-
-    def name(self) -> str:
-        return RSVPTimingVerificationCalibration.TASK_NAME

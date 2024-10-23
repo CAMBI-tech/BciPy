@@ -9,6 +9,7 @@ import mne
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from mne import Epochs
@@ -18,10 +19,11 @@ from scipy import linalg
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_GAZE_IMAGE_PATH, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
+                          DEFAULT_PARAMETERS_PATH)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.convert import convert_to_mne
-from bcipy.helpers.load import choose_csv_file, load_raw_data
+from bcipy.helpers.load import choose_csv_file, load_raw_data, load_json_parameters
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.stimuli import mne_epochs
@@ -29,7 +31,7 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def clip_to_display(data, screen_limits):
@@ -597,7 +599,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    log.info('Press Ctrl + C to exit!')
+    logger.info('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()
@@ -666,7 +668,11 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
+def visualize_session_data(
+        session_path: str,
+        parameters: Union[dict, Parameters],
+        show=True,
+        save=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -683,6 +689,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     Output:
         Figure of Session Data
     """
+    logger.info(f"Visualizing session data at {session_path}")
     # extract all relevant parameters
     trial_window = parameters.get("trial_window")
 
@@ -728,7 +735,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=session_path,
+        save_path=session_path if save else None,
         show=show,
     )
 
@@ -752,3 +759,34 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
     ax.set_title('Overall Accuracy: ' + str(round(accuracy, 2)))
 
     return fig
+
+
+def erp():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Visualize ERP data')
+
+    parser.add_argument(
+        '-s', '--session_path',
+        type=str,
+        help='Path to the session directory',
+        required=True)
+    parser.add_argument(
+        '-p', '--parameters',
+        type=str,
+        help='Path to the parameters file',
+        default=DEFAULT_PARAMETERS_PATH)
+    parser.add_argument(
+        '--show',
+        action='store_true',
+        help='Whether to show the figure',
+        default=False)
+    parser.add_argument(
+        '--save',
+        action='store_true',
+        help='Whether to save the figure', default=True)
+
+    args = parser.parse_args()
+
+    parameters = load_json_parameters(args.parameters, value_cast=True)
+    visualize_session_data(args.session_path, parameters, args.show, args.save)

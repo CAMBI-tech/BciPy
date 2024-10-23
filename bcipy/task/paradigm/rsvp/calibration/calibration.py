@@ -7,7 +7,7 @@ from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.triggers import TriggerType
-from bcipy.task.base_calibration import BaseCalibrationTask
+from bcipy.task.calibration import BaseCalibrationTask
 
 
 class RSVPCalibrationTask(BaseCalibrationTask):
@@ -25,12 +25,12 @@ class RSVPCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display)
-    daq (Data Acquisition Client)
     parameters (dict)
     file_save (str)
+    fake (bool)
     """
-    MODE = 'RSVP'
+    name = 'RSVP Calibration'
+    paradigm = 'RSVP'
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:
@@ -64,8 +64,8 @@ def init_calibration_display_task(
     )
     stimuli = StimuliProperties(
         stim_font=parameters['font'],
-        stim_pos=(parameters['stim_pos_x'], parameters['stim_pos_y']),
-        stim_height=parameters['stim_height'],
+        stim_pos=(parameters['rsvp_stim_pos_x'], parameters['rsvp_stim_pos_y']),
+        stim_height=parameters['rsvp_stim_height'],
         stim_inquiry=[''] * parameters['stim_length'],
         stim_colors=[parameters['stim_color']] * parameters['stim_length'],
         stim_timing=[10] * parameters['stim_length'],
@@ -76,8 +76,8 @@ def init_calibration_display_task(
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'],
-                                  padding=parameters['task_padding'])
+                                  height=parameters['rsvp_task_height'],
+                                  padding=parameters['rsvp_task_padding'])
 
     return CalibrationDisplay(window,
                               static_clock,

@@ -1,13 +1,10 @@
 """Functions for generating mock data to be used for testing/development."""
 
-import logging
 from typing import Optional, Generator, Callable
 from past.builtins import range
 
 from bcipy.config import DEFAULT_ENCODING
 from bcipy.signal.generator.generator import gen_random_data
-
-log = logging.getLogger(__name__)
 
 
 def advance_to_row(filehandle, rownum):

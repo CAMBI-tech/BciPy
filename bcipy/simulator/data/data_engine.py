@@ -7,7 +7,7 @@ from typing import Any, List, NamedTuple, Union
 import numpy as np
 import pandas as pd
 
-from bcipy.helpers.exceptions import TaskConfigurationException
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.parameters import Parameters
 from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,

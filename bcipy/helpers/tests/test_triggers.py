@@ -5,7 +5,7 @@ from unittest.mock import mock_open, patch
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, _calibration_trigger,
                                     apply_offsets, exclude_types,

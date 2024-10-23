@@ -26,7 +26,8 @@ inter_stim_buffer = .5
 stim_properties = StimuliProperties(stim_font=font,
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.17,
-                                    is_txt_stim=True)
+                                    is_txt_stim=True,
+                                    layout='ALP')
 
 # Initialize Stimulus
 window_parameters = {
