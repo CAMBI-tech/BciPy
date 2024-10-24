@@ -4,15 +4,18 @@ from functools import partial
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
-import matplotlib.ticker as ticker
-import numpy as np
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-from matplotlib.figure import Figure
-from PyQt5.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
-# pylint: disable=no-name-in-module
-from PyQt5.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
+from PyQt6.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
+
+import matplotlib
+import matplotlib.ticker as ticker
+import numpy as np
+matplotlib.use('Qt5Agg')
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableProcess
@@ -138,7 +141,7 @@ class FixedScaleInput(QWidget):
 
         lbl = QLabel(label)
         lbl.setStyleSheet(stylesheet)
-        lbl.setAlignment(Qt.AlignRight)
+        lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
         lbl.setContentsMargins(0, 2, 0, 0)
         layout.addWidget(lbl)
 
@@ -146,9 +149,9 @@ class FixedScaleInput(QWidget):
         self.fixed_scale_input.setMaximum(max_value)
         self.fixed_scale_input.setValue(initial_value)
         self.fixed_scale_input.setStyleSheet(stylesheet)
-        self.fixed_scale_input.setAlignment(Qt.AlignLeft)
+        self.fixed_scale_input.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.fixed_scale_input.valueChanged.connect(on_change_fn)
-        self.fixed_scale_input.setFocusPolicy(Qt.ClickFocus)
+        self.fixed_scale_input.setFocusPolicy(Qt.FocusPolicy.ClickFocus)
 
         layout.addWidget(self.fixed_scale_input)
         self.setLayout(layout)
@@ -236,7 +239,7 @@ class EEGPanel(QWidget):
 
         self.axes = self.init_axes()
         self.axes_bounds = self.init_axes_bounds()
-        self.canvas = FigureCanvasQTAgg(self.figure)
+        self.canvas = FigureCanvas(self.figure)
 
     # pylint: disable=invalid-name,attribute-defined-outside-init
     def initUI(self):
@@ -686,7 +689,7 @@ def main(data_file: str,
 
     panel.start()
 
-    app_exit = app.exec_()
+    app_exit = app.exec()
     if proc:
         proc.stop()
     sys.exit(app_exit)

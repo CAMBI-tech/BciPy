@@ -1,6 +1,6 @@
 from collections import Counter
 import torch
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import itertools
 import heapq
@@ -8,7 +8,7 @@ import heapq
 from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
 
 from scipy.special import logsumexp
 from scipy.special import softmax
@@ -22,8 +22,8 @@ class CausalLanguageModel(LanguageModel):
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
-                 lang_model_name: str = None,
-                 lm_path: str = None,
+                 lang_model_name: Optional[str] = None,
+                 lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
                  ):

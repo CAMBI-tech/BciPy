@@ -4,7 +4,7 @@ import pytest
 import unittest
 from operator import itemgetter
 
-from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
+from bcipy.exceptions import UnsupportedResponseType, InvalidLanguageModelException
 from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.main import ResponseType

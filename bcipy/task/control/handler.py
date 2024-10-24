@@ -4,12 +4,14 @@ from typing import Dict, List, Tuple, Optional
 
 import numpy as np
 
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.stimuli import InquirySchedule, inq_generator, StimuliOrder
 from bcipy.helpers.symbols import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.task.control.query import RandomStimuliAgent, StimuliAgent
 from bcipy.task.control.criteria import CriteriaEvaluator
+from bcipy.task.data import EvidenceType
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class EvidenceFusion():
@@ -64,7 +66,7 @@ class EvidenceFusion():
         return
 
     @property
-    def latest_evidence(self) -> Dict[str, List[float]]:
+    def latest_evidence(self) -> Dict[EvidenceType, List[float]]:
         """Latest evidence of each type in the evidence history.
 
         Returns
@@ -255,7 +257,7 @@ class DecisionMaker:
 
         Return
         ------
-        stimuli(tuple[list[char],list[float],list[str]]): tuple of
+        stimuli(tuple[list[str],list[float],list[str]]): tuple of
         stimuli information. [0]: letter, [1]: timing, [2]: color
         """
 

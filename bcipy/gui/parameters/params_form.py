@@ -5,24 +5,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, Tuple
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
-from bcipy.config import BCIPY_ROOT
-from bcipy.helpers.parameters import Parameters, changes_from_default
 
-from bcipy.gui.main import (
-    BoolInput,
-    DirectoryInput,
-    FileInput,
-    FloatInput,
-    FormInput,
-    IntegerInput,
-    SearchInput,
-    SelectionInput,
-    static_text_control,
-    TextInput,
-)
+from bcipy.config import BCIPY_ROOT
+from bcipy.gui.main import (BoolInput, DirectoryInput, FileInput, FloatInput,
+                            FormInput, IntegerInput, RangeInput, SearchInput,
+                            SelectionInput, TextInput, static_text_control)
+from bcipy.helpers.parameters import Parameters, changes_from_default
 
 
 class ParamsForm(QWidget):
@@ -86,15 +77,17 @@ class ParamsForm(QWidget):
             'float': FloatInput,
             'bool': BoolInput,
             'filepath': FileInput,
-            'directorypath': DirectoryInput
+            'directorypath': DirectoryInput,
+            'range': RangeInput
         }
-        has_options = isinstance(param['recommended_values'], list)
+        has_options = isinstance(param['recommended'], list)
         form_input = type_inputs.get(
             param['type'], SelectionInput if has_options else TextInput)
-        return form_input(label=param['readableName'],
+        return form_input(label=param['name'],
                           value=param['value'],
                           help_tip=param['helpTip'],
-                          options=param['recommended_values'],
+                          options=param['recommended'],
+                          editable=bool(param['editable']),
                           help_size=self.help_size,
                           help_color=self.help_color,
                           should_display=bool(param['section']))
@@ -137,8 +130,12 @@ class ParamsForm(QWidget):
         for param_name, form_input in self.controls.items():
             param = self.params[param_name]
             value = form_input.value()
+            editable = form_input.editable
             if value != param['value']:
                 self.params[param_name]['value'] = value
+            if editable != param['editable']:
+                editable = True if editable == "true" or editable is True else False
+                self.params[param_name]['editable'] = editable
 
 
 def clear_layout(layout):
@@ -200,7 +197,7 @@ class ChangeItems(QWidget):
 
             lbl = static_text_control(
                 None,
-                label=f"* {param['readableName']}: {param['value']}",
+                label=f"* {param['name']}: {param['value']}",
                 size=13,
                 color="darkgreen")
 
@@ -252,8 +249,8 @@ class ParamsChanges(QWidget):
         self.layout = QVBoxLayout()
 
         self.changes_area = QScrollArea()
-        self.changes_area.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.changes_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.changes_area.setWidgetResizable(True)
         self.changes_area.setWidget(self.change_items)
         self.changes_area.setVisible(not self.collapsed)
@@ -336,8 +333,8 @@ class MainPanel(QWidget):
         vbox.addLayout(self.changes_panel)
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.form_panel.setWidgetResizable(True)
         self.form_panel.setFixedWidth(self.size[0])
         self.form_panel.setWidget(self.form)
@@ -405,8 +402,7 @@ class MainPanel(QWidget):
 
     def on_save_as(self):
         """Event handler for saving form data to another parameters file."""
-        options = QFileDialog.Options()
-        options |= QFileDialog.DontUseNativeDialog
+        options = QFileDialog.Option.DontUseNativeDialog
 
         filename, _ = QFileDialog.getSaveFileName(
             self,
@@ -427,16 +423,20 @@ class MainPanel(QWidget):
                 self.repaint()
 
 
-def main(json_file, title='BCI Parameters', size=(450, 550)):
+def main(json_file, title='BCI Parameters', size=(750, 800)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)
-    _panel = MainPanel(json_file, title, size)
-    sys.exit(app.exec_())
+    panel = MainPanel(json_file, title, size)
+    app.exec()
+    json_file = panel.json_file
+    app.quit()
+    return json_file
 
 
 if __name__ == '__main__':
 
     import argparse
+
     from bcipy.config import DEFAULT_PARAMETERS_PATH
 
     parser = argparse.ArgumentParser()
@@ -447,4 +447,6 @@ if __name__ == '__main__':
                         default=DEFAULT_PARAMETERS_PATH,
                         help='Path to parameters.json configuration file.')
     args = parser.parse_args()
-    main(args.parameters)
+    # Note that this write to stdout is important for the interaction with
+    # the BCInterface main GUI.
+    print(main(args.parameters), file=sys.stdout)

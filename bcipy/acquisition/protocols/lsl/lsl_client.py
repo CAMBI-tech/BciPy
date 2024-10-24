@@ -1,19 +1,45 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
-from typing import List
+from multiprocessing import Queue
+from typing import Dict, List, Optional
 
-from pylsl import StreamInfo, StreamInlet, local_clock, resolve_stream, resolve_byprop
+import pandas as pd
+from pylsl import StreamInlet, local_clock, resolve_byprop
 
-from bcipy.acquisition.devices import DEFAULT_DEVICE_TYPE, DeviceSpec, IRREGULAR_RATE
+from bcipy.acquisition.devices import IRREGULAR_RATE, DeviceSpec
 from bcipy.acquisition.exceptions import InvalidClockError
-from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
-                                                           check_device)
+from bcipy.acquisition.protocols.lsl.connect import (device_from_metadata,
+                                                     resolve_device_stream)
+from bcipy.acquisition.protocols.lsl.lsl_connector import check_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecordingThread
 from bcipy.acquisition.record import Record
-from bcipy.helpers.clock import Clock
+from bcipy.config import MAX_PAUSE_SECONDS, SESSION_LOG_FILENAME
 from bcipy.gui.viewer.ring_buffer import RingBuffer
+from bcipy.helpers.clock import Clock
 
-log = logging.getLogger(__name__)
+LSL_TIMEOUT = 5.0  # seconds
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
+
+
+def time_range(stamps: List[float],
+               precision: int = 3,
+               sep: str = " to ") -> str:
+    """Utility for printing a range of timestamps"""
+    if stamps:
+        return "".join([
+            str(round(stamps[0], precision)), sep,
+            str(round(stamps[-1], precision))
+        ])
+    return ""
+
+
+def request_desc(start: Optional[float], end: Optional[float],
+                 limit: Optional[int]):
+    """Returns a description of the request which can be logged."""
+    start_str = round(start, 3) if start else "None"
+    end_str = round(end, 3) if end else "None"
+    return f"Requesting data from: {start_str} to: {end_str} limit: {limit}"
 
 
 class LslAcquisitionClient:
@@ -35,25 +61,41 @@ class LslAcquisitionClient:
         raw_data_file_name: if present, uses this name for the data file.
     """
 
+    inlet: StreamInlet = None
+    recorder: LslRecordingThread = None
+    buffer: RingBuffer = None
+    _first_sample_time: float = None
+    experiment_clock: Clock = None
+
     def __init__(self,
                  max_buffer_len: float = 1,
-                 device_spec: DeviceSpec = None,
-                 save_directory: str = None,
-                 raw_data_file_name: str = None):
+                 device_spec: Optional[DeviceSpec] = None,
+                 save_directory: Optional[str] = None,
+                 raw_data_file_name: Optional[str] = None):
         super().__init__()
+
         self.device_spec = device_spec
         self.max_buffer_len = max_buffer_len
-
-        self.experiment_clock = None
-
-        self.inlet = None
-        self._first_sample_time = None
-
         self.save_directory = save_directory
         self.raw_data_file_name = raw_data_file_name
+        self._max_samples = None
 
-        self.recorder = None
-        self.buffer = None
+    @property
+    def first_sample_time(self) -> float:
+        """Timestamp returned by the first sample. If the data is being
+        recorded this value reflects the timestamp of the first recorded sample"""
+        return self._first_sample_time
+
+    @property
+    def max_samples(self) -> int:
+        """Maximum number of samples available at any given time."""
+        if self._max_samples is None:
+            if self.device_spec.sample_rate == IRREGULAR_RATE:
+                self._max_samples = int(self.max_buffer_len)
+            else:
+                self._max_samples = int(self.max_buffer_len *
+                                        self.device_spec.sample_rate)
+        return self._max_samples
 
     def start_acquisition(self) -> bool:
         """Connect to the datasource and start acquiring data.
@@ -65,14 +107,13 @@ class LslAcquisitionClient:
         if self.inlet:
             return False
 
-        content_type = self.device_spec.content_type if self.device_spec else DEFAULT_DEVICE_TYPE
-        streams = resolve_stream('type', content_type)
-        if not streams:
-            raise Exception(
-                f'LSL Stream not found for content type {content_type}')
-        stream_info = streams[0]
-
-        self.inlet = StreamInlet(stream_info, max_buflen=self.max_buffer_len)
+        stream_info = resolve_device_stream(self.device_spec)
+        self.inlet = StreamInlet(
+            stream_info,
+            max_buflen=MAX_PAUSE_SECONDS,
+            max_chunklen=1)
+        logger.info("Acquiring data from data stream:")
+        logger.info(self.inlet.info().as_xml())
 
         if self.device_spec:
             check_device(self.device_spec, self.inlet.info())
@@ -80,34 +121,37 @@ class LslAcquisitionClient:
             self.device_spec = device_from_metadata(self.inlet.info())
 
         if self.save_directory:
-            self.recorder = LslRecordingThread(stream_info,
-                                               self.save_directory,
-                                               self.raw_data_file_name,
-                                               self.device_spec)
+            msg_queue = Queue()
+            self.recorder = LslRecordingThread(
+                directory=self.save_directory,
+                filename=self.raw_data_file_name,
+                device_spec=self.device_spec,
+                queue=msg_queue)
             self.recorder.start()
+            logger.info("Waiting for first sample from lsl_recorder")
+            self._first_sample_time = msg_queue.get(block=True,
+                                                    timeout=LSL_TIMEOUT)
+            logger.info(f"First sample time: {self.first_sample_time}")
 
+        self.inlet.open_stream(timeout=LSL_TIMEOUT)
         if self.max_buffer_len and self.max_buffer_len > 0:
             self.buffer = RingBuffer(size_max=self.max_samples)
-        _, self._first_sample_time = self.inlet.pull_sample()
+        if not self._first_sample_time:
+            _, self._first_sample_time = self.inlet.pull_sample()
         return True
-
-    @property
-    def first_sample_time(self) -> float:
-        """Timestamp returned by the first sample. If the data is being
-        recorded this value reflects the timestamp of the first recorded sample"""
-        if self.recorder:
-            return self.recorder.first_sample_time
-        return self._first_sample_time
 
     def stop_acquisition(self) -> None:
         """Disconnect from the data source."""
-        log.debug("Stopping Acquisition...")
-        if self.inlet:
-            self.inlet.close_stream()
-            self.inlet = None
+        logger.info(f"Stopping Acquisition from {self.device_spec.name} ...")
         if self.recorder:
+            logger.info(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
+        if self.inlet:
+            logger.info("Closing LSL connection")
+            self.inlet.close_stream()
+            self.inlet = None
+            logger.info("Inlet closed")
 
         self.buffer = None
 
@@ -120,11 +164,33 @@ class LslAcquisitionClient:
         """Context manager exit method to clean up resources."""
         self.stop_acquisition()
 
+    def _data_stats(self, data: List[Record]) -> Dict[str, float]:
+        """Summarize a list of records for logging and inspection."""
+        if data:
+            diffs = pd.DataFrame(data)['timestamp'].diff()
+            data_start = data[0].timestamp
+            data_end = data[-1].timestamp
+            precision = 3
+            return {
+                'count': len(data),
+                'seconds': round(data_end - data_start, precision),
+                'from': round(data_start, precision),
+                'to': round(data_end, precision),
+                'expected_diff': round(1 / self.device_spec.sample_rate,
+                                       precision),
+                'mean_diff': round(diffs.mean(), precision),
+                'max_diff': round(diffs.max(), precision)
+            }
+        return {}
+
     def get_data(self,
-                 start: float = None,
-                 end: float = None,
-                 limit: int = None) -> List[Record]:
+                 start: Optional[float] = None,
+                 end: Optional[float] = None,
+                 limit: Optional[int] = None) -> List[Record]:
         """Get data in time range.
+
+        Only data in the current buffer is available to query;
+        requests for data outside of this will fail.
 
         Parameters
         ----------
@@ -136,38 +202,31 @@ class LslAcquisitionClient:
         -------
             List of Records
         """
-        log.debug(f"Getting data from: {start} to: {end} limit: {limit}")
+        logger.info(request_desc(start, end, limit))
 
-        # Only data in the current buffer is available to query;
-        # requests for data outside of this will fail. Buffer size is
-        # set using the max_buffer_len parameter.
         data = self.get_latest_data()
-
         if not data:
-            log.debug('No records available')
+            logger.info('No records available')
             return []
 
-        log.debug((f'{len(data)} records available '
-                   f'(From: {data[0].timestamp} To: {data[-1].timestamp})'))
-        start = start or data[0].timestamp
-        end = end or data[-1].timestamp
-        limit = limit or -1
-        assert start >= data[0].timestamp, (
-            f'Start time of {start} is out of range: '
-            f'({data[0].timestamp} to {data[-1].timestamp}).')
+        data_start = data[0].timestamp
+        data_end = data[-1].timestamp
+        logger.info(f'Available data: {self._data_stats(data)}')
+
+        if start is None:
+            start = data_start
+        if end is None:
+            end = data_end
+
+        assert start >= data_start, 'Start time out of range'
+        assert end <= data_end, 'End time out of range'
 
         data_slice = [
             record for record in data if start <= record.timestamp <= end
         ][0:limit]
-        log.debug(f'{len(data_slice)} records returned')
-        return data_slice
+        logger.info(f"Filtered records: {self._data_stats(data_slice)}")
 
-    @property
-    def max_samples(self) -> int:
-        """Maximum number of samples available at any given time."""
-        if self.device_spec.sample_rate == IRREGULAR_RATE:
-            return int(self.max_buffer_len)
-        return int(self.max_buffer_len * self.device_spec.sample_rate)
+        return data_slice
 
     def get_latest_data(self) -> List[Record]:
         """Add all available samples in the inlet to the buffer.
@@ -176,14 +235,27 @@ class LslAcquisitionClient:
         max_buffer_len and the amount of data available in the inlet."""
         if not self.buffer:
             return []
-        samples, timestamps = self.inlet.pull_chunk(
-            max_samples=self.max_samples)
 
-        for i, sample in enumerate(samples):
-            self.buffer.append(
-                Record(data=sample, timestamp=timestamps[i], rownum=None))
+        count = self._pull_chunk()
+        # Pull all the data from LSL and append it to the local buffer.
+        while count == self.max_samples:
+            count = self._pull_chunk()
 
         return self.buffer.get()
+
+    def _pull_chunk(self) -> int:
+        """Pull a chunk of samples from LSL and record in the buffer.
+        Returns the count of samples pulled.
+        """
+        logger.debug(f"\tPulling chunk (max_samples: {self.max_samples})")
+        # A timeout of 0.0 gets currently available samples without blocking.
+        samples, timestamps = self.inlet.pull_chunk(
+            timeout=0.0, max_samples=self.max_samples)
+        count = len(samples)
+        logger.debug(f"\t-> received {count} samples: {time_range(timestamps)}")
+        for sample, stamp in zip(samples, timestamps):
+            self.buffer.append(Record(sample, stamp))
+        return count
 
     def convert_time(self, experiment_clock: Clock, timestamp: float) -> float:
         """
@@ -231,7 +303,7 @@ class LslAcquisitionClient:
         if True, uses a 0 offset; if False forces the calculation.
         """
 
-    def clock_offset(self, experiment_clock: Clock = None) -> float:
+    def clock_offset(self, experiment_clock: Optional[Clock] = None) -> float:
         """
         Offset in seconds from the experiment clock to the acquisition local clock.
 
@@ -289,7 +361,7 @@ class LslAcquisitionClient:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
         offset_from_stim = first_stim_time - self.first_sample_time
-        log.debug(f"Acquisition offset: {offset_from_stim}")
+        logger.info(f"Acquisition offset: {offset_from_stim}")
         return offset_from_stim
 
     def cleanup(self):
@@ -299,8 +371,8 @@ class LslAcquisitionClient:
 def discover_device_spec(content_type: str) -> DeviceSpec:
     """Finds the first LSL stream with the given content type and creates a
     device spec from the stream's metadata."""
-    log.info(f"Waiting for {content_type} data to be streamed over LSL.")
-    streams = resolve_byprop('type', content_type, timeout=5.0)
+    logger.info(f"Waiting for {content_type} data to be streamed over LSL.")
+    streams = resolve_byprop('type', content_type, timeout=LSL_TIMEOUT)
     if not streams:
         raise Exception(
             f'LSL Stream not found for content type {content_type}')
@@ -309,11 +381,3 @@ def discover_device_spec(content_type: str) -> DeviceSpec:
     spec = device_from_metadata(inlet.info())
     inlet.close_stream()
     return spec
-
-
-def device_from_metadata(metadata: StreamInfo) -> DeviceSpec:
-    """Create a device_spec from the data stream metadata."""
-    return DeviceSpec(name=metadata.name(),
-                      channels=channel_names(metadata),
-                      sample_rate=metadata.nominal_srate(),
-                      content_type=metadata.type())

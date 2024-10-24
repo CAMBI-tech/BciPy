@@ -1,8 +1,13 @@
 import unittest
 
-from mockito import any, mock, when, unstub
 import psychopy
+from mockito import any, mock, unstub, when
+
 from bcipy.display import init_display_window
+from bcipy.display.components.button_press_handler import (
+    AcceptButtonPressHandler, PreviewOnlyButtonPressHandler,
+    RejectButtonPressHandler)
+from bcipy.display.main import ButtonPressMode, get_button_handler_class
 
 
 class TestInitializeDisplayWindow(unittest.TestCase):
@@ -42,6 +47,19 @@ class TestInitializeDisplayWindow(unittest.TestCase):
         """Test display window is created."""
         self.assertIsInstance(self.display_window, type(self.window))
         self.assertEqual(self.display_window, self.window)
+
+
+class TestButtonPressFunctions(unittest.TestCase):
+    """Test the module functions"""
+
+    def test_get_handler_class(self):
+        """Test get handler class"""
+        self.assertEqual(PreviewOnlyButtonPressHandler,
+                         get_button_handler_class(ButtonPressMode.NOTHING))
+        self.assertEqual(AcceptButtonPressHandler,
+                         get_button_handler_class(ButtonPressMode.ACCEPT))
+        self.assertEqual(RejectButtonPressHandler,
+                         get_button_handler_class(ButtonPressMode.REJECT))
 
 
 if __name__ == '__main__':

@@ -1,0 +1,13 @@
+{
+    "Phrases" : [
+        ["HELLO_WORLD", 0],
+        ["GOOD_MORNING", 1],
+        ["GOOD_AFTERNOON", 5],
+        ["GOOD_EVENING", 0],
+        ["GOOD_NIGHT", 5],
+        ["HOW_ARE_YOU", 4],
+        ["I_AM_FINE", 5],
+        ["THANK_YOU", 6],
+        ["WELCOME_HOME", 8]
+    ]
+}

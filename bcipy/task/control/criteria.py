@@ -3,7 +3,8 @@ import logging
 from typing import Dict, List
 from copy import copy
 
-log = logging.getLogger(__name__)
+from bcipy.config import SESSION_LOG_FILENAME
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class DecisionCriteria:
@@ -50,7 +51,7 @@ class MinIterationsCriteria(DecisionCriteria):
         # than this, since the language model distribution is added before
         # the first inquiry is displayed.
         current_inq = len(series['list_sti'])
-        log.debug(
+        log.info(
             f"Checking min iterations; current iteration is {current_inq}")
         return current_inq < self.min_num_inq
 
@@ -82,7 +83,7 @@ class MaxIterationsCriteria(DecisionCriteria):
         # see MinIterationsCriteria comment
         current_inq = len(series['list_sti'])
         if current_inq >= self.max_num_inq:
-            log.debug(
+            log.info(
                 "Committing to decision: max iterations have been reached.")
             return True
         return False
@@ -103,7 +104,7 @@ class ProbThresholdCriteria(DecisionCriteria):
     def decide(self, series: Dict):
         current_distribution = series['list_distribution'][-1]
         if np.max(current_distribution) > self.tau:
-            log.debug("Committing to decision: posterior exceeded threshold.")
+            log.info("Committing to decision: posterior exceeded threshold.")
             return True
         return False
 
@@ -132,7 +133,7 @@ class MarginCriteria(DecisionCriteria):
         stopping_rule = np.abs(candidates[0] - candidates[1])
         d = stopping_rule > self.margin
         if d:
-            log.debug("Committing to decision: margin is high enough.")
+            log.info("Committing to decision: margin is high enough.")
 
         return d
 

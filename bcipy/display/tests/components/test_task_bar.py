@@ -13,13 +13,13 @@ class TestTaskBar(unittest.TestCase):
         border_mock = Mock()
 
         visual_mock.TextStim.return_value = text_stim_mock
-        visual_mock.line.Line.return_value = border_mock
+        visual_mock.Line.return_value = border_mock
 
         win = Mock(size=(500, 500), units="norm")
         task_bar = TaskBar(win, text='Testing')
         self.assertEqual(len(task_bar.stim.items()), 2)
         visual_mock.TextStim.assert_called_once()
-        visual_mock.line.Line.assert_called_once()
+        visual_mock.Line.assert_called_once()
 
         phrase = 'Hello, world'
         task_bar.update(phrase)
@@ -36,7 +36,7 @@ class TestTaskBar(unittest.TestCase):
         border_mock = Mock()
 
         visual_mock.TextStim.return_value = text_stim_mock
-        visual_mock.line.Line.return_value = border_mock
+        visual_mock.Line.return_value = border_mock
 
         win = Mock(size=(500, 500), units="norm")
         task_bar = CalibrationTaskBar(win,
@@ -54,7 +54,7 @@ class TestTaskBar(unittest.TestCase):
             text=' 1/100',
             units='norm',
             win=win)
-        visual_mock.line.Line.assert_called_once()
+        visual_mock.Line.assert_called_once()
         self.assertEqual(len(task_bar.stim.items()), 2)
         self.assertEqual(task_bar.stim['task_text'], text_stim_mock)
 
@@ -72,7 +72,7 @@ class TestTaskBar(unittest.TestCase):
         text_stim_mock = Mock()
         spelled_stim_mock = Mock()
         visual_mock.TextStim.side_effect = [text_stim_mock, spelled_stim_mock]
-        visual_mock.line.Line.return_value = Mock()
+        visual_mock.Line.return_value = Mock()
 
         win = Mock(size=(500, 500), units="norm")
         task_bar = CopyPhraseTaskBar(win,
@@ -80,7 +80,7 @@ class TestTaskBar(unittest.TestCase):
                                      spelled_text='HELLO_')
 
         self.assertEqual(2, visual_mock.TextStim.call_count)
-        visual_mock.line.Line.assert_called_once()
+        visual_mock.Line.assert_called_once()
         self.assertEqual(len(task_bar.stim.items()), 3)
 
         self.assertEqual(task_bar.displayed_text(), 'HELLO_     ')

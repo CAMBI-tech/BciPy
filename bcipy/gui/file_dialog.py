@@ -1,7 +1,10 @@
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
 from pathlib import Path
-from PyQt5.QtWidgets import QApplication, QWidget, QFileDialog, QDesktopWidget
+
+from PyQt6 import QtGui
+from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
+
 from bcipy.preferences import preferences
 
 DEFAULT_FILE_TYPES = "All Files (*)"
@@ -12,31 +15,33 @@ class FileDialog(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.title = 'PyQt5 file dialogs - pythonspot.com'
+        self.title = 'PyQt6 file dialogs - pythonspot.com'
         self.width = 640
         self.height = 480
 
         # Center on screen
         self.resize(self.width, self.height)
         frame_geom = self.frameGeometry()
-        frame_geom.moveCenter(QDesktopWidget().availableGeometry().center())
+        frame_geom.moveCenter(QtGui.QGuiApplication.primaryScreen().availableGeometry().center())
         self.move(frame_geom.topLeft())
 
         # The native dialog may prevent the selection from closing after a
         # directory is selected.
-        self.options = QFileDialog.Options()
-        self.options |= QFileDialog.DontUseNativeDialog
+        self.options = QFileDialog.Option.DontUseNativeDialog
 
-    def ask_file(self, file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
+    def ask_file(self,
+                 file_types: str = DEFAULT_FILE_TYPES,
+                 directory: str = "",
+                 prompt: str = "Select File") -> str:
         """Opens a file dialog window.
         Returns
         -------
         path or None
         """
         filename, _ = QFileDialog.getOpenFileName(self,
-                                                  "Select File",
-                                                  directory,
-                                                  file_types,
+                                                  caption=prompt,
+                                                  directory=directory,
+                                                  filter=file_types,
                                                   options=self.options)
         return filename
 
@@ -53,7 +58,7 @@ class FileDialog(QWidget):
                                                 options=self.options)
 
 
-def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> str:
+def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "", prompt="Select File") -> str:
     """Prompt for a file.
 
     Parameters
@@ -69,7 +74,7 @@ def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "") -> s
     app = QApplication(sys.argv)
     dialog = FileDialog()
     directory = directory or preferences.last_directory
-    filename = dialog.ask_file(file_types, directory)
+    filename = dialog.ask_file(file_types, directory, prompt=prompt)
 
     # update last directory preference
     path = Path(filename)

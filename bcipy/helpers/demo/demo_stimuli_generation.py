@@ -1,4 +1,4 @@
-from bcipy.helpers.stimuli import StimuliOrder, calibration_inquiry_generator, best_case_rsvp_inq_gen
+from bcipy.helpers.stimuli import StimuliOrder, generate_calibration_inquiries, best_case_rsvp_inq_gen
 import numpy as np
 
 
@@ -13,10 +13,10 @@ def _demo_random_rsvp_inquiry_generator():
                                                                len_samples))
 
     print('Alphabet:{}'.format(alp))
-    schedule = calibration_inquiry_generator(alp=alp,
-                                             stim_number=num_samples,
-                                             stim_length=len_samples,
-                                             stim_order=StimuliOrder.RANDOM)
+    schedule = generate_calibration_inquiries(alp=alp,
+                                              inquiry_count=num_samples,
+                                              stim_per_inquiry=len_samples,
+                                              stim_order=StimuliOrder.RANDOM)
     inquiries = schedule[0]
     timing = schedule[1]
     color = schedule[2]
@@ -40,10 +40,10 @@ def _demo_alphabetical_rsvp_inquiry_generator():
                                                                len_samples))
 
     print('Alphabet:{}'.format(alp))
-    schedule = calibration_inquiry_generator(alp=alp,
-                                             stim_number=num_samples,
-                                             stim_length=len_samples,
-                                             stim_order=StimuliOrder.ALPHABETICAL)
+    schedule = generate_calibration_inquiries(alp=alp,
+                                              inquiry_count=num_samples,
+                                              stim_per_inquiry=len_samples,
+                                              stim_order=StimuliOrder.ALPHABETICAL)
     inquiries = schedule[0]
     timing = schedule[1]
     color = schedule[2]

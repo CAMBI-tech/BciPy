@@ -8,7 +8,7 @@ from mne.time_frequency import psd_array_multitaper
 
 from typing import Tuple
 
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 
 
 class PSD_TYPE(Enum):

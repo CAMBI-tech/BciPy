@@ -1,9 +1,10 @@
 """Task bar component"""
 
-from typing import Dict, List
+from typing import Dict, List, Optional
+
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim
-from psychopy.visual.line import Line
+
 import bcipy.display.components.layout as layout
 
 
@@ -18,26 +19,40 @@ class TaskBar:
         font - Font to apply to all task stimuli
         height - Height of all task text stimuli
         text - Task text to apply to stimuli
+        padding - used in conjunction with the text height to compute the
+            overall height of the task bar.
     """
 
     def __init__(self,
                  win: visual.Window,
-                 colors: List[str] = None,
+                 colors: Optional[List[str]] = None,
                  font: str = 'Courier New',
                  height: float = 0.1,
-                 text: str = ''):
+                 text: str = '',
+                 padding: Optional[float] = None):
+        self.win = win
         self.colors = colors or ['white']
         self.font = font
         self.height = height
+        self.padding = (height / 2) if padding is None else padding
         self.text = text
-        self.layout = layout.at_top(layout.WindowContainer(win),
-                                    self.compute_height())
+        self.layout = layout.at_top(win, self.compute_height())
         self.stim = self.init_stim()
+
+    @property
+    def height_pct(self) -> float:
+        """Percentage of the total window that the task bar occupies.
+
+        Returns
+        -------
+            percentage ; value will be between 0 and 1.
+        """
+        win_layout = layout.Layout(self.win)
+        return self.compute_height() / win_layout.height
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        padding = 0.05  # determined by trial and error
-        return self.height + padding
+        return self.height + self.padding
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
@@ -53,13 +68,15 @@ class TaskBar:
         """Update the task bar to display the given text."""
         self.stim['task_text'].text = text
 
-    def border_stim(self) -> Line:
+    def border_stim(self) -> visual.Line:
         """Create the task bar outline"""
-        return visual.line.Line(win=self.layout.win,
-                                units=self.layout.units,
-                                start=(self.layout.left, self.layout.bottom),
-                                end=(self.layout.right, self.layout.bottom),
-                                lineColor=self.colors[0])
+        # pylint: disable=not-callable
+        return visual.Line(
+            win=self.win,
+            units=self.layout.units,
+            start=(self.layout.left, self.layout.bottom),
+            end=(self.layout.right, self.layout.bottom),
+            lineColor=self.colors[0])
 
     def text_stim(self, **kwargs) -> visual.TextStim:
         """Constructs a TextStim. Uses the config to set default properties
@@ -72,7 +89,7 @@ class TaskBar:
     def default_text_props(self) -> dict:
         """Default properties for constructing a TextStim."""
         return {
-            'win': self.layout.win,
+            'win': self.win,
             'text': self.text,
             'pos': self.layout.center,
             'units': self.layout.units,
@@ -144,10 +161,9 @@ class CopyPhraseTaskBar(TaskBar):
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        padding = 0.05  # determined by trial and error
         # height is doubled to account for task_text and spelled_text being on
         # separate lines.
-        return (self.height * 2) + padding
+        return (self.height * 2) + self.padding
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""

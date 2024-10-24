@@ -1,33 +1,23 @@
-import unittest
-import os
-from unittest.mock import patch, mock_open
-
-from collections import abc
-import tempfile
-import shutil
 import json
+import os
+import shutil
+import tempfile
+import unittest
+from collections import abc
+from unittest.mock import Mock, mock_open, patch
 
 from mockito import any, expect, unstub, when
 
-from bcipy.config import (
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_FIELD_PATH,
-    FIELD_FILENAME,
-    EXPERIMENT_FILENAME
-)
-from bcipy.helpers.load import (
-    extract_mode,
-    load_json_parameters,
-    load_experiments,
-    load_experiment_fields,
-    load_fields,
-    load_users,
-    copy_parameters)
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
+                          DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME)
+from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.helpers.load import (choose_signal_model, choose_signal_models,
+                                copy_parameters, extract_mode,
+                                load_experiment_fields, load_experiments,
+                                load_fields, load_json_parameters,
+                                load_signal_model, load_users)
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.exceptions import BciPyCoreException, InvalidExperimentException
-
 
 MOCK_EXPERIMENT = {
     "test": {
@@ -164,6 +154,12 @@ class TestUserLoad(unittest.TestCase):
         self.directory_name = 'test_data_load_user'
         self.data_save_loc = f'{self.directory_name}/'
 
+    def tearDown(self):
+        try:
+            shutil.rmtree(self.data_save_loc)
+        except FileNotFoundError:
+            pass
+
     def test_user_load_with_no_directory_written(self):
         """Use defined data save location without writing anything"""
         response = load_users(self.data_save_loc)
@@ -172,7 +168,7 @@ class TestUserLoad(unittest.TestCase):
 
     def test_user_load_with_valid_directory(self):
         user = 'user_001'
-        file_path = f'{self.directory_name}/experiment/{user}'
+        file_path = f'{self.directory_name}/{user}/experiment'
         os.makedirs(file_path)
 
         response = load_users(self.data_save_loc)
@@ -183,38 +179,115 @@ class TestUserLoad(unittest.TestCase):
 
         # assert user returned is user defined above
         self.assertEqual(response[0], user)
-        shutil.rmtree(self.data_save_loc)
 
     def test_user_load_with_invalid_directory(self):
         # create an invalid save structure and assert expected behavior.
-        user = 'user_001'
-        file_path = f'{self.directory_name}/experiment{user}'
+        file_path = f'{self.directory_name}/'
         os.makedirs(file_path)
 
         response = load_users(self.data_save_loc)
         length_of_users = len(response)
         self.assertTrue(length_of_users == 0)
-        shutil.rmtree(self.data_save_loc)
 
 
 class TestExtractMode(unittest.TestCase):
 
     def test_extract_mode_calibration(self):
-        data_save_path = 'data/default/user/user_RSVP_Calibration_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        data_save_path = 'data/user/default/user_RSVP_Calibration_Mon_01_Mar_2021_11hr19min49sec_-0800'
         expected_mode = 'calibration'
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 
     def test_extract_mode_copy_phrase(self):
-        data_save_path = 'data/default/user/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
+        data_save_path = 'data/user/default/user_RSVP_Copy_Phrase_Mon_01_Mar_2021_11hr19min49sec_-0800'
         expected_mode = 'copy_phrase'
         response = extract_mode(data_save_path)
         self.assertEqual(expected_mode, response)
 
     def test_extract_mode_without_mode_defined(self):
-        invalid_data_save_dir = 'data/default/user/user_bad_dir'
+        invalid_data_save_dir = 'data/user/default/user_bad_dir'
         with self.assertRaises(BciPyCoreException):
             extract_mode(invalid_data_save_dir)
+
+
+class TestModelLoad(unittest.TestCase):
+    """Test loading one or more signal models"""
+
+    @patch("bcipy.helpers.load.pickle.load")
+    @patch("bcipy.helpers.load.open")
+    def test_load_model(self, open_mock, pickle_mock):
+        """Test loading a signal model"""
+
+        load_signal_model("test-directory")
+        open_mock.assert_called_with("test-directory", 'rb')
+        pickle_mock.assert_called_once()
+
+    @patch("bcipy.helpers.load.load_signal_model")
+    @patch("bcipy.helpers.load.ask_filename")
+    @patch("bcipy.helpers.load.preferences")
+    def test_choose_model(self, preferences_mock, ask_file_mock,
+                          load_signal_model_mock):
+        """Test choosing a model"""
+
+        preferences_mock.signal_model_directory = "."
+        ask_file_mock.return_value = "model-path"
+        model_mock = Mock()
+        load_signal_model_mock.return_value = model_mock
+
+        model = choose_signal_model('EEG')
+
+        load_signal_model_mock.assert_called_with("model-path")
+        ask_file_mock.assert_called_with(file_types="*.pkl",
+                                         directory=".",
+                                         prompt="Select the EEG signal model")
+        self.assertEqual(model, model_mock)
+        self.assertEqual("model-path",
+                         preferences_mock.signal_model_directory,
+                         msg="Should have updated the preferences")
+
+    @patch("bcipy.helpers.load.load_signal_model")
+    @patch("bcipy.helpers.load.ask_filename")
+    @patch("bcipy.helpers.load.preferences")
+    def test_choose_model_with_cancel(self, preferences_mock, ask_file_mock,
+                                      load_signal_model_mock):
+        """Test choosing a model"""
+
+        preferences_mock.signal_model_directory = "."
+        ask_file_mock.return_value = None
+        model_mock = Mock()
+        load_signal_model_mock.return_value = model_mock
+
+        model = choose_signal_model('EEG')
+
+        load_signal_model_mock.assert_not_called()
+        ask_file_mock.assert_called_with(file_types="*.pkl",
+                                         directory=".",
+                                         prompt="Select the EEG signal model")
+        self.assertEqual(None, model)
+        self.assertEqual(".",
+                         preferences_mock.signal_model_directory,
+                         msg="Should not have updated the preferences")
+
+    @patch("bcipy.helpers.load.choose_signal_model")
+    def test_choose_signal_models(self, choose_signal_model_mock):
+        """Test choosing signal models"""
+        eeg_mock = Mock()
+        eyetracker_mock = Mock()
+        choose_signal_model_mock.side_effect = [eeg_mock, eyetracker_mock]
+
+        models = choose_signal_models(['EEG', 'Eyetracker'])
+        self.assertListEqual([eeg_mock, eyetracker_mock], models)
+
+    @patch("bcipy.helpers.load.choose_signal_model")
+    def test_choose_signal_models_missing_model(self,
+                                                choose_signal_model_mock):
+        """Test choosing signal models"""
+
+        eyetracker_mock = Mock()
+        choose_signal_model_mock.side_effect = [None, eyetracker_mock]
+
+        models = choose_signal_models(['EEG', 'Eyetracker'])
+        self.assertListEqual([eyetracker_mock], models)
 
 
 if __name__ == '__main__':

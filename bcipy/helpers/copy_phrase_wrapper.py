@@ -1,31 +1,25 @@
+# mypy: disable-error-code="arg-type, assignment"
 """Defines the CopyPhraseWrapper."""
+import logging
 from typing import List, Tuple
 
-import logging
 import numpy as np
-from bcipy.helpers.acquisition import analysis_channels, DeviceSpec
-from bcipy.helpers.exceptions import BciPyCoreException
-from bcipy.helpers.language_model import (
-    histogram,
-    with_min_prob,
-)
-from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder, TrialReshaper
+
+from bcipy.config import SESSION_LOG_FILENAME
+from bcipy.exceptions import BciPyCoreException
+from bcipy.helpers.language_model import histogram, with_min_prob
+from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
 from bcipy.helpers.symbols import BACKSPACE_CHAR
-from bcipy.signal.model import SignalModel
-from bcipy.signal.process import get_default_transform
+from bcipy.language.main import LanguageModel
+from bcipy.task.control.criteria import (CriteriaEvaluator,
+                                         MaxIterationsCriteria,
+                                         MinIterationsCriteria,
+                                         ProbThresholdCriteria)
 from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
 from bcipy.task.control.query import NBestStimuliAgent
-from bcipy.task.control.criteria import (
-    CriteriaEvaluator,
-    MaxIterationsCriteria,
-    MinIterationsCriteria,
-    ProbThresholdCriteria,
-)
 from bcipy.task.data import EvidenceType
-from bcipy.language.main import LanguageModel
 
-
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class CopyPhraseWrapper:
@@ -39,14 +33,11 @@ class CopyPhraseWrapper:
     - Determining when to stop an inquiry and make a decision (StoppageCriteria).
     - Generation of inquiries.
     - Coordination with the Language Model.
-    - Preparing EEG data for the SignalModel for classification.
 
     Parameters
     ----------
     - min_num_inq: The minimum number of inquiries to be displayed
     - max_num_inq: The maximum number of inquiries to be displayed
-    - device_spec: Specification for the EEG device used for data collection.
-    - signal_model: model trained using a calibration session of the same user.
     - k: down sampling rate
     - alp: symbol set of the task
     - evidence_names: list of evidence types used for decision-making
@@ -58,10 +49,6 @@ class CopyPhraseWrapper:
     backspace character.
     - backspace_always_shown: whether or not the backspace should
     always be presented.
-    - filter_high: filter setting used when evaluating EEG data
-    - filter_low: filter setting used when evaluating EEG data
-    - filter_order: filter setting used when evaluating EEG data
-    - notch_filter_frequency: filter setting used when evaluating EEG data
     - stim_length(int): the number of stimuli to present in each inquiry
     - stim_timing: seconds each stimuli is displayed; used for inquiry
     generation
@@ -72,23 +59,16 @@ class CopyPhraseWrapper:
                  min_num_inq: int,
                  max_num_inq: int,
                  lmodel: LanguageModel,
-                 device_spec: DeviceSpec,
-                 signal_model: SignalModel = None,
-                 k: int = 2,
-                 alp: List[str] = None,
+                 alp: List[str],
                  evidence_names: List[EvidenceType] = [
                      EvidenceType.LM, EvidenceType.ERP
                  ],
-                 task_list: List[Tuple[str, str]] = [('I_LOVE_COOKIES',
-                                                      'I_LOVE_')],
+                 task_list: List[Tuple[str,
+                                       str]] = [('I_LOVE_COOKIES', 'I_LOVE_')],
                  is_txt_stim: bool = True,
                  decision_threshold: float = 0.8,
                  backspace_prob: float = 0.05,
                  backspace_always_shown: bool = False,
-                 filter_high: int = 45,
-                 filter_low: int = 2,
-                 filter_order: int = 2,
-                 notch_filter_frequency: int = 60,
                  stim_timing: List[float] = [1, .2],
                  stim_length: int = 10,
                  stim_jitter: float = 0,
@@ -127,92 +107,11 @@ class CopyPhraseWrapper:
         # non-letter target labels include the fixation cross and calibration.
         self.nonletters = ['+', 'PLUS', 'calibration_trigger']
         self.valid_targets = set(self.alp)
-
-        self.signal_model = signal_model
-        self.sampling_rate = device_spec.sample_rate
-        self.downsample_rate = k
-        self.filter_high = filter_high
-        self.filter_low = filter_low
-        self.filter_order = filter_order
-        self.notch_filter_frequency = notch_filter_frequency
-
-        self.mode = 'copy_phrase'
         self.task_list = task_list
-        self.channel_map = analysis_channels(device_spec.channels, device_spec)
         self.backspace_prob = backspace_prob
 
-    def evaluate_inquiry(
-            self, raw_data: np.array, triggers: List[Tuple[str, float]],
-            target_info: List[str], window_length: float
-    ) -> Tuple[bool, Tuple[List[str], List[float], List[str]]]:
-        """Once data is collected, infers meaning from the data and attempt to
-        make a decision.
-
-        Parameters
-        ----------
-        - raw_data: C x L eeg data where C is number of channels and L is the
-        signal length
-        - triggers: triggers e.g. `('A', 1)` as letter and flash time for the
-        letter
-        - target_info: target information about the stimuli
-        - window_length: The length of the time between stimuli presentation
-
-        Returns
-        -------
-        - (True, None) when commitment is made.
-        - (False, next set of stimuli) when not enough evidence has
-        been provided and stoppage criteria is not yet met.
-        """
-        lik_r = self.evaluate_eeg_evidence(raw_data, triggers, target_info,
-                                           window_length)
-        self.add_evidence(EvidenceType.ERP, lik_r)
-        return self.decide()
-
-    def evaluate_eeg_evidence(self, raw_data: np.array,
-                              triggers: List[Tuple[str, float]],
-                              target_info: List[str],
-                              window_length: float) -> np.array:
-        """Once data is collected, infers meaning from the data and return the results.
-
-        Parameters
-        ----------
-        - raw_data: C x L eeg data where C is number of channels and L is the
-        signal length
-        - triggers: triggers e.g. `('A', 1)` as letter and flash time for the
-        letter
-        - target_info: target information about the stimuli
-        - window_length: The length of the time between stimuli presentation
-
-        Returns
-        -------
-        np.array of likelihood evidence
-        """
-        letters, times, target_info = self.letter_info(triggers, target_info)
-
-        default_transform = get_default_transform(
-            sample_rate_hz=self.sampling_rate,
-            notch_freq_hz=self.notch_filter_frequency,
-            bandpass_low=self.filter_low,
-            bandpass_high=self.filter_high,
-            bandpass_order=self.filter_order,
-            downsample_factor=self.downsample_rate,
-        )
-
-        data, transformed_sample_rate = default_transform(raw_data, self.sampling_rate)
-
-        # The data from DAQ is assumed to have offsets applied
-        data, _ = TrialReshaper()(
-            trial_targetness_label=target_info,
-            timing_info=times,
-            eeg_data=data,
-            sample_rate=transformed_sample_rate,
-            channel_map=self.channel_map,
-            poststimulus_length=window_length)
-
-        return self.signal_model.predict(data, letters, self.alp)
-
     def add_evidence(self, evidence_type: EvidenceType,
-                     evidence: List[float]) -> np.array:
+                     evidence: List[float]) -> np.ndarray:
         """Add evidence to the conjugator.
 
         Parameters
@@ -307,7 +206,7 @@ class CopyPhraseWrapper:
             ]
 
             # display histogram of LM probabilities
-            log.debug(histogram(lm_letter_prior))
+            log.info(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:

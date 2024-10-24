@@ -1,10 +1,10 @@
 from collections import Counter
-from typing import Dict, List, Tuple
+from typing import Optional, Dict, List, Tuple
 from math import isclose
 
 from bcipy.language.main import LanguageModel, ResponseType
 
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
 
 # pylint: disable=unused-import
 # flake8: noqa
@@ -49,9 +49,9 @@ class MixtureLanguageModel(LanguageModel):
     def __init__(self,
                  response_type: ResponseType,
                  symbol_set: List[str],
-                 lm_types: List[str] = None,
-                 lm_weights: List[float] = None,
-                 lm_params: List[Dict[str, str]] = None):
+                 lm_types: Optional[List[str]] = None,
+                 lm_weights: Optional[List[float]] = None,
+                 lm_params: Optional[List[Dict[str, str]]] = None):
         """
         Initialize instance variables and load the language model with given path
         Args:

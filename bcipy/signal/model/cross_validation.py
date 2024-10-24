@@ -2,10 +2,11 @@ import numpy as np
 
 import scipy.optimize
 from sklearn import metrics
+from bcipy.config import SESSION_LOG_FILENAME
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
@@ -14,7 +15,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
         Cost function: given a particular architecture (model). Fits the
         parameters to the folds with leave one fold out procedure. Calculates
         scores for the validation fold. Concatenates all calculated scores
-        together and returns a -AUC vale.
+        together and returns a -AUC value.
         Args:
             model(pipeline): model to be iterated on
             opt_el(int): number of the element in pipeline to be optimized
@@ -142,7 +143,7 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
                 gamma and AUC values for each fold respectively.
             """
 
-    log.debug('Starting Cross Validation !')
+    log.info('Starting Cross Validation !')
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split])
     return arg_opt

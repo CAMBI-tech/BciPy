@@ -1,9 +1,11 @@
 from psychopy import core
 
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
+from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.display import InformationProperties, StimuliProperties, init_display_window
-from bcipy.display.components.task_bar import CalibrationTaskBar
 
 info = InformationProperties(
     info_color=['White'],
@@ -44,7 +46,7 @@ window_parameters = {
     'full_screen': False,
     'window_height': 500,
     'window_width': 500,
-    'stim_screen': 1,
+    'stim_screen': 0,
     'background_color': 'black'
 }
 win = init_display_window(window_parameters)
@@ -70,13 +72,20 @@ task_bar = CalibrationTaskBar(win,
                               inquiry_count=100,
                               current_index=0,
                               font='Arial')
+
+preview_config = PreviewParams(show_preview_inquiry=True,
+                               preview_inquiry_length=2,
+                               preview_inquiry_key_input='return',
+                               preview_inquiry_progress_method=0,
+                               preview_inquiry_isi=1)
 rsvp = CalibrationDisplay(
     win,
     clock,
     experiment_clock,
     stimuli,
     task_bar,
-    info)
+    info,
+    preview_config=preview_config)
 
 
 for idx_o in range(len(task_text)):

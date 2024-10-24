@@ -1,360 +1,446 @@
 import logging
-from typing import List, Tuple, Optional
-from bcipy.display import (
-    BCIPY_LOGO_PATH,
-    Display,
-    InformationProperties,
-    VEPStimuliProperties,
-    TaskDisplayProperties,
-)
-import numpy as np
-from psychopy import visual, core
+from itertools import cycle
+from typing import (Any, Dict, Iterable, List, NamedTuple, Optional, Tuple,
+                    Union)
+
+from psychopy import core, visual  # type: ignore
+
+import bcipy.display.components.layout as layout
+from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
+                           VEPStimuliProperties)
+from bcipy.display.components.layout import scaled_size
+from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.paradigm.matrix.layout import symbol_positions
+from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
+                                              round_refresh_rate,
+                                              ssvep_to_code)
+from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
+from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.symbols import SPACE_CHAR
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
-from bcipy.helpers.stimuli import resize_image, get_fixation
+from bcipy.helpers.list import expanded
+from bcipy.helpers.stimuli import resize_image
+from bcipy.helpers.symbols import alphabet
+from bcipy.helpers.triggers import _calibration_trigger
 
 
-def create_vep_codes(length=32, count=4) -> List[List[int]]:
-    """Create a list of random VEP codes.
-
-    length - how many bits in each code. This should be greater than or equal to the refresh rate
-        if using these to flicker. For example, if the refresh rate is 60Hz, then the length should
-        be at least 60.
-    count - how many codes to generate, each will be unique.
-    """
-    np.random.seed(1)
-    return [np.random.randint(2, size=length) for _ in range(count)]
+class StimTime(NamedTuple):
+    """Represents the time that the given symbol was displayed"""
+    symbol: str
+    time: float
 
 
-class VEPBox:
-    """A class to represent a VEP box.
-
-    Attributes:
-        flicker: A list of two visual.GratingStim objects, one for on and one for off.
-        code: A list of integers representing the VEP code for this box.
-    """
-
-    def __init__(self, flicker: List[Tuple[visual.GratingStim, visual.GratingStim]], code: List[int]) -> None:
-        self.flicker = flicker
-        self.code = code
-
-    def frame_on(self) -> None:
-        """Frame On. Draw the frame for the first grating stim on the screen."""
-        self.flicker[0].draw()
-
-    def frame_off(self) -> None:
-        """Frame Off. Draw the frame for the second grating stim on the screen."""
-        self.flicker[1].draw()
+class StimProps(NamedTuple):
+    """Represents properties of a single symbol (or stim box)"""
+    symbol: Union[str, List[str]]
+    duration: float
+    color: str
 
 
 class VEPDisplay(Display):
+    """Display for VEP paradigm"""
 
-    def __init__(
-            self,
-            window: visual.Window,
-            experiment_clock: Clock,
-            stimuli: VEPStimuliProperties,
-            task_display: TaskDisplayProperties,
-            info: InformationProperties,
-            trigger_type: str = 'text',
-            space_char: str = SPACE_CHAR,
-            full_screen: bool = False,
-            codes: List[int] = None):
+    def __init__(self,
+                 window: visual.Window,
+                 experiment_clock: Clock,
+                 stimuli: VEPStimuliProperties,
+                 task_bar: TaskBar,
+                 info: InformationProperties,
+                 box_config: BoxConfiguration,
+                 trigger_type: str = 'text',
+                 symbol_set: Optional[List[str]] = None,
+                 flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
+                 should_prompt_target: bool = True,
+                 frame_rate: Optional[float] = None):
+        assert len(
+            flicker_rates
+        ) >= box_config.num_boxes, 'Not enough flicker rates provided'
         self.window = window
-        self.window_size = self.window.size  # [w, h]
-        self.refresh_rate = round(window.getActualFrameRate())
+        if not frame_rate:
+            frame_rate = self.window.getActualFrameRate()
+            assert frame_rate, 'An accurate window frame rate could not be established'
 
+        self.window_size = self.window.size  # [w, h]
+        self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)
 
+        # number of VEP text areas
+        self.vep_type: int = box_config.num_boxes
+
         # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after defintion
+        # easy updating after definition
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
+        self.timing_prompt, self.timing_fixation, self.timing_stimuli = stimuli.stim_timing
+        self.timing_animation = stimuli.animation_seconds
         self.stimuli_font = stimuli.stim_font
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
         self.logger.info(self.stimuli_pos)
-        self.is_txt_stim = stimuli.is_txt_stim
-        self.stim_length = stimuli.stim_length
-        self.sti = []
-        self.fixation = visual.TextStim(
-            self.window,
-            text=get_fixation(True),
-            color='red',
-            height=self.stimuli_height,
-            units='height',
-            pos=[0, 0])
 
-        self.full_screen = full_screen
+        self.stim_length = stimuli.stim_length
+        self.should_prompt_target = should_prompt_target
+
+        self.symbol_set = symbol_set or alphabet()
+        self.sort_order = self.symbol_set.index
+        self.check_configuration()
+
+        # Build starting list of symbols
+        display_container = layout.centered(parent=self.window, width_pct=0.7)
+        self.starting_positions = symbol_positions(display_container,
+                                                   rows=3,
+                                                   columns=10,
+                                                   symbol_set=self.symbol_set)
+        self.logger.info(
+            f"Symbol starting positions ({str(display_container.units)} units): {self.starting_positions}"
+        )
+
+        self.starting_color = 'white'
+        self.sti = self._build_inquiry_stimuli()
 
         self.static_clock = core.Clock()
 
         # Trigger handling
-        self.first_stim_time = None
+        self.first_stim_time: Optional[float] = None
         self.trigger_type = trigger_type
-        self.trigger_callback = TriggerCallback()
         self.experiment_clock = experiment_clock
+        self._timing: List[StimTime] = []
 
         # Callback used on presentation of first stimulus.
         self.first_run = True
         self.first_stim_callback = lambda _sti: None
-        self.size_list_sti = []
 
-        # Task parameters
-        self.space_char = space_char
-        self.task_display = task_display
-        self.task = task_display.build_task(self.window)
-
-        # Information parameters
-        self.info = info
+        self.task_bar = task_bar
         self.info_text = info.build_info_text(window)
 
-        self.colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'), ('orange', 'green')]
-        if not codes:
-            self.codes = create_vep_codes(length=self.refresh_rate, count=4)
-        else:
-            self.codes = codes
+        self.box_stim_height = 0.24
 
         # build the VEP stimuli
-        self.vep = []
-        self.text_boxes = []
-        self.vep_type = 4
-        assert self.vep_type == 4, 'Only 4 stimuli are supported in VEP display at this time!'
-        self.vep_box_size = .1
+        self.flicker_rates = flicker_rates
+        self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
+        rate = round_refresh_rate(frame_rate)
+        codes = [
+            ssvep_to_code(refresh_rate=rate, flicker_rate=int(hz))
+            for hz in flicker_rates
+        ]
+        vep_colors = [('white', 'black'), ('red', 'green'), ('blue', 'yellow'),
+                      ('orange', 'green')]
+        vep_stim_size = scaled_size(self.box_stim_height, self.window_size)
+        self.vep = self.build_vep_stimuli(positions=box_config.positions,
+                                          codes=codes,
+                                          colors=cycle(vep_colors),
+                                          stim_size=vep_stim_size,
+                                          num_squares=25)
+        self.box_border_width = 4
+        self.text_boxes = self._build_text_boxes(box_config)
 
-        self.animation_duration = 2
+    @property
+    def box_colors(self) -> List[str]:
+        """Get the colors used for boxes"""
+        if self.should_prompt_target:
+            [_target_color, _fixation_color, *colors] = self.stimuli_colors
+        else:
+            [_fixation_color, *colors] = self.stimuli_colors
+        return colors
 
-    def do_fixation(self) -> None:
-        # draw fixation cross
-        self.fixation.draw()
-        self.draw_static()
-        self.window.flip()
-        core.wait(self.stimuli_timing[1])
+    def check_configuration(self):
+        """Check that configured properties are consistent"""
+        assert len(self.stimuli_pos) == self.vep_type, (
+            f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}"
+        )
 
-    def do_inquiry(self) -> List[float]:
+    def stim_properties(self) -> List[StimProps]:
+        """Returns a tuple of (symbol, duration, and color) for each stimuli,
+        including the target and fixation stim. Stimuli that represent VEP
+        boxes will have a list of symbols."""
+        stim_num = len(self.stimuli_inquiry)
+        assert len(self.stimuli_colors
+                   ) == stim_num, "Each box should have its own color"
+
+        return [
+            StimProps(*props) for props in zip(
+                self.stimuli_inquiry,
+                expanded(list(self.stimuli_timing), length=stim_num),
+                self.stimuli_colors)
+        ]
+
+    def box_index(self, stim_groups: List[StimProps], sym: str) -> int:
+        """Box index for the given symbol"""
+        for i, group in enumerate(stim_groups):
+            if sym in group.symbol:
+                return i
+        raise Exception(f"Symbol not found: {sym}")
+
+    def do_inquiry(self) -> List[StimTime]:  # type: ignore
         """Do the inquiry."""
+        self.reset_timing()
 
-        timing = []
-
-        # if this is the first run, calibrate using the trigger pulse and setup the VEP and text boxes
+        # if this is the first run, calibrate using the trigger pulse
         if self.first_run:
             self._trigger_pulse()
-            self._build_vep_corner_stimuli(self.stimuli_pos, self.codes, self.colors, self.vep_box_size)
-            self._build_text_boxes()
 
-        # fixation --> animation / prompting --> VEP stimulate
-        self.do_fixation()
-        timing += self.animate_inquiry()
-        timing += self.stimulate()
+        self._reset_text_boxes()
+        self.reset_symbol_positions()
 
-        # clear everyting expect static stimuli
+        if self.should_prompt_target:
+            [target, _fixation, *stim] = self.stim_properties()
+            if isinstance(target.symbol, str):
+                self.set_stimuli_colors(stim)
+                self.prompt_target(target,
+                                   target_box_index=self.box_index(
+                                       stim, target.symbol))
+        else:
+            [_fixation, *stim] = self.stim_properties()
+            self.set_stimuli_colors(stim)
+
+        self.log_inquiry(stim)
+        self.animate_inquiry(stim)
+        core.wait(self.timing_fixation)
+        self._reset_text_boxes()
+        self.stimulate()
+
+        # clear everything expect static stimuli
         self.draw_static()
         self.window.flip()
 
-        return timing
+        return self._timing
 
-    def animate_inquiry(self) -> List[float]:
+    def starting_position(self, sym: str) -> Tuple[float, float]:
+        """Get the starting position for the given symbol"""
+        pos_index = self.sort_order(sym)
+        return self.starting_positions[pos_index]
+
+    def prompt_target(self,
+                      target: StimProps,
+                      target_box_index: Optional[int] = None) -> None:
+        """Present the target for the configured length of time. Records the
+        stimuli timing information.
+
+        Parameters
+        ----------
+            target - (symbol, duration, color) tuple
+        """
+        assert isinstance(target.symbol, str), "Target must be a str"
+        self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
+
+        # Show all symbols in the matrix at reduced opacity
+        for sym in self.symbol_set:
+            pos_index = self.sort_order(sym)
+            sti = self.sti[sym]
+            sti.pos = self.starting_positions[pos_index]
+            sti.setOpacity(0.5)
+            sti.draw()
+        self.draw_static()
+        self.draw_boxes()
+
+        # pause for a time
+        self.window.flip()
+        core.wait(target.duration / 2)
+
+        # highlight target
+        self.window.callOnFlip(self.add_timing, target.symbol)
+        target_stim = self.sti[target.symbol]
+        target_stim.setOpacity(1)
+
+        for sti in self.sti.values():
+            sti.draw()
+
+        if target_box_index is not None:
+            self.highlight_target_box(target_box_index)
+
+        self.draw_static()
+        self.draw_boxes()
+
+        self.window.flip()
+        core.wait(target.duration / 2)
+
+    def log_inquiry(self, stimuli: List[StimProps]) -> None:
+        """Log the inquiry"""
+        self.logger.info(f"Inquiry: {[stim.symbol for stim in stimuli]}")
+
+    def highlight_target_box(self, target_box_index: int) -> None:
+        """Emphasize the box at the given index"""
+        for i, box in enumerate(self.text_boxes):
+            if i == target_box_index:
+                box.borderWidth = self.box_border_width + 4
+                box.setOpacity(1.0)
+            else:
+                box.borderWidth = self.box_border_width - 2
+                box.setOpacity(0.8)
+
+    def do_fixation(self, fixation: StimProps) -> None:
+        """Show all symbols before animating."""
+        duration = fixation.duration or self.timing_fixation
+
+        starting_opacity = {}
+        for sym in self.symbol_set:
+            sti = self.sti[sym]
+            starting_opacity[sym] = sti.opacity
+            sti.setOpacity(1.0)
+            sti.draw()
+        self.draw_static()
+        self.draw_boxes()
+        self.window.flip()
+        core.wait(duration / 2)
+
+        # reset to starting opacity
+        for sym in self.symbol_set:
+            sti = self.sti[sym]
+            sti.setOpacity(starting_opacity[sym])
+            sti.draw()
+        self.draw_static()
+        self.draw_boxes()
+        self.window.flip()
+        core.wait(duration / 2)
+
+    def animate_inquiry(self, stimuli: List[StimProps]) -> None:
         """Display the inquiry.
 
         Inquiry is a list of lists of strings.
         Each list contains what stimuli to display for each box defined in self.vep.
         """
-        timing = []
-        self.trigger_callback.reset()
-        self.window.callOnFlip(
-            self.trigger_callback.callback,
-            self.experiment_clock,
-            'VEP_INQ_ANIMATION')
+        self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
-        self._reset_text_boxes()
-        self._build_inquiry_stimuli()
+        self.set_stimuli_colors(stimuli)
+        self.draw_animation(stimuli)
+        self._set_inquiry(stimuli)
 
-        self.static_clock.reset()
-        while self.static_clock.getTime() < self.animation_duration:
-            self.draw_boxes()
-            self.draw_animation()
-            self.draw_static()
-            self.window.flip()
-        timing += self.trigger_callback.timing
-
-        self._set_inquiry()
-        self.trigger_callback.reset()
-        self.window.callOnFlip(
-            self.trigger_callback.callback,
-            self.experiment_clock,
-            'VEP_INQUIRY')
+        self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
         # display the inquiry
+        self.draw_boxes()
+        self.draw_static()
+        self.window.flip()
+
+    def set_stimuli_colors(self, stim_groups: List[StimProps]) -> None:
+        """Update the colors of the stimuli associated with each symbol to
+        reflect which box it will be placed in."""
+        for group in stim_groups:
+            for sym in group.symbol:
+                self.sti[sym].color = group.color
+
+    def draw_animation(self, stimuli: List[StimProps]) -> None:
+        """Draw the stimuli animation.
+
+        Parameters
+        ----------
+            stimuli - information about each symbol's destination.
+        """
+        frames = int(self.refresh_rate * self.timing_animation)
+        # Compute intermediate positions
+        animation_paths = {}
+        for i, stim_props in enumerate(stimuli):
+            end_pos = self.text_boxes[i].pos
+            for sym in stim_props.symbol:
+                start_pos = self.starting_position(sym)
+                animation_paths[sym] = animation_path(start_pos, end_pos,
+                                                      frames)
+        counter = 0
         self.static_clock.reset()
-        while self.static_clock.getTime() < self.stimuli_timing[0]:
-            self.draw_boxes()
-            self.draw_static()
-            self.window.flip()
-
-        timing += self.trigger_callback.timing
-
-        return timing
-
-    def draw_animation(self) -> None:
-        """Draw the stimuli animation."""
-        for sti in self.sti:
-            sti.draw()
+        while self.static_clock.getTime() < self.timing_animation:
+            for frame in range(frames):
+                self.draw_boxes()
+                for sym, sti in self.sti.items():
+                    sti.pos = animation_paths[sym][frame]
+                    sti.draw()
+                self.draw_static()
+                self.window.flip()
+                counter += 1
+        self.logger.debug(
+            f"{counter} animation frames rendered in {self.timing_animation} seconds"
+        )
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
         for box in self.text_boxes:
             box.draw()
 
-    def stimulate(self) -> List[float]:
-        """Stimulate.
+    def stimulate(self) -> None:
+        """
+        This is the main display function of the VEP paradigm. It is
+        responsible for drawing the flickering stimuli.
 
-        This is the main display function of the VEP paradigm. It is responsible for drawing the flickering stimuli.
-
-        It assumes that the VEP stimuli are already constructed using the _build_vep_corner_stimuli function.
-        These boxes are drawn in the order they are in the list as defined in self.vep."""
-        self.trigger_callback.reset()
-        self.window.callOnFlip(
-            self.trigger_callback.callback,
-            self.experiment_clock,
-            'VEP_STIMULATE')
+        It assumes that the VEP stimuli are already constructed. These boxes
+        are drawn in the order they are in the list as defined in self.vep.
+        """
+        self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
         self.static_clock.reset()
-        while self.static_clock.getTime() < self.stimuli_timing[-1]:
+        while self.static_clock.getTime() < self.timing_stimuli:
             for frame in range(self.refresh_rate):
-                for box in self.vep:
-                    if box.code[frame] == 1:
-                        box.frame_on()
-                    else:
-                        box.frame_off()
+                self.draw_boxes()
+                for stim in self.vep:
+                    stim.render_frame(frame)
 
-                # flicker!
-                self.draw_static()
+                # self.draw_static()
                 self.window.flip()
-
-        return self.trigger_callback.timing
+        ended_at = self.static_clock.getTime()
+        self.logger.debug(
+            f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
+        )
+        self.logger.debug(
+            f"Average frame duration: {ended_at/self.timing_stimuli}")
 
     def draw_static(self) -> None:
-        """Draw static elements for the display."""
-        self.task.draw()
-        for info in self.info_text:
-            info.draw()
+        """Draw static elements in a stimulus."""
+        if self.task_bar:
+            self.task_bar.draw()
 
-    def update_task(self, text: str, color: str, pos: Optional[Tuple] = None) -> None:
-        """Update the task display which is displayed using the draw_static function."""
-        self.task.text = text
-        self.task.color = color
-        if pos:
-            self.task.pos = pos
+    def update_task_bar(self, text: str = ''):
+        """Update any task related display items not related to the inquiry.
+        Ex. stimuli count 1/200.
 
-    def _build_inquiry_stimuli(self) -> None:
+        Parameters
+        ----------
+            text - text for task
+        """
+        if self.task_bar:
+            self.task_bar.update(text)
+
+    def add_timing(self, stimuli: str):
+        """Add a new timing entry using the stimuli as a label.
+
+        Useful as a callback function to register a marker at the time it is
+        first displayed."""
+        self._timing.append(StimTime(stimuli, self.experiment_clock.getTime()))
+
+    def reset_timing(self):
+        """Reset the trigger timing."""
+        self._timing = []
+
+    def _build_inquiry_stimuli(self) -> Dict[str, visual.TextStim]:
         """Build the inquiry stimuli."""
-        all_letters = []
-        all_colors = []
-        self.sti = []
-        for letters, colors in zip(self.stimuli_inquiry, self.stimuli_colors):
-            for letter in letters:
-                all_letters.append(letter)
-                all_colors.append(colors[0])
-        pos = (0, 0)
-        for letter, color in zip(all_letters, all_colors):
-            pos = (pos[0] + self.stimuli_height, pos[1])
-            self.sti.append(
-                visual.TextStim(self.window, text=letter, color=color, pos=pos, height=self.stimuli_height))
+        grid = {}
+        for sym in self.symbol_set:
+            pos_index = self.sort_order(sym)
+            grid[sym] = visual.TextStim(win=self.window,
+                                        font=self.stimuli_font,
+                                        text=sym,
+                                        color=self.starting_color,
+                                        pos=self.starting_positions[pos_index],
+                                        height=self.stimuli_height)
+        return grid
 
-        return self.sti
+    def reset_symbol_positions(self) -> None:
+        """Reset the position of each symbol to its starting position"""
+        for sym in self.symbol_set:
+            pos_index = self.sort_order(sym)
+            self.sti[sym].pos = self.starting_positions[pos_index]
 
-    def _build_vep_corner_stimuli(
-            self,
-            pos: Tuple[float, float],
-            codes: List[int],
-            colors: List[Tuple[str]],
-            box_size: float) -> List[visual.GratingStim]:
-        """Build the corner stimuli for the VEP.
-
-        Args:
-            window: psychopy window object
-        """
-        corner_stim = []
-        for pos, code, color in zip(pos, codes, colors):
-            corner_stim += self._build_2x2_vep_grid(pos, box_size, color, code)
-
-        return corner_stim
-
-    def _build_1x1_vep_grid(
-            self,
-            position: Tuple[float],
-            size: float,
-            color: str,
-            code: List[int]) -> List[visual.GratingStim]:
-        """Build a 1x1 VEP grid.
-
-        Args:
-            position: position of the flicking box
-            size: size of the flicking box
-            color: color of the flicking box
-            code: code to be used with the flicking box
-
-        Returns:
-            list of visual.GratingStim objects
-
-        """
-        assert len(code) >= self.refresh_rate, 'Code must be longer than refresh rate'
-        pattern1 = visual.GratingStim(win=self.window, name=f'1x1-1-{position}', units='height',
-                                      tex=None, mask=None,
-                                      ori=0, pos=position, size=size, sf=1, phase=0.0,
-                                      color=color[0], colorSpace='rgb', opacity=1,
-                                      texRes=256, interpolate=True, depth=-1.0)
-        pattern2 = visual.GratingStim(win=self.window, name=f'1x1-2-{position}', units='height',
-                                      tex=None, mask=None,
-                                      ori=0, pos=position, size=size, sf=1, phase=0,
-                                      color=color[1], colorSpace='rgb', opacity=1,
-                                      texRes=256, interpolate=True, depth=-2.0)
-        box = [VEPBox(flicker=[pattern1, pattern2], code=code)]
-        self.vep += box
-        return box
-
-    def _build_2x2_vep_grid(self,
-                            position: Tuple[float],
-                            size: float,
-                            color: str,
-                            code: List[int]) -> List[visual.GratingStim]:
-        """Build a 2x2 VEP grid.
-
-        Args:
-            position: position of the flicking box
-            size: size of the flicking box
-            color: color of the flicking box
-            code: code to be used with the flicking box
-
-        Returns:
-            list of visual.GratingStim objects
-        """
-
-        assert len(code) >= self.refresh_rate, 'Code must be longer than refresh rate'
-        starting_position = position
-        positions = [
-            starting_position,  # bottom left
-            [starting_position[0] + size, starting_position[1]],  # bottom right
-            [starting_position[0] + size, starting_position[1] + size],  # top right
-            [starting_position[0], starting_position[1] + size],  # top left
-        ]
-        box = []
-        for pos in positions:
-            pattern1 = visual.GratingStim(win=self.window, name=f'2x2-1-{pos}', units='height',
-                                          tex=None, mask=None,
-                                          ori=0, pos=pos, size=size, sf=1, phase=0.0,
-                                          color=color[0], colorSpace='rgb', opacity=1,
-                                          texRes=256, interpolate=True, depth=-1.0)
-            pattern2 = visual.GratingStim(win=self.window, name=f'2x2-2-{pos}', units='height',
-                                          tex=None, mask=None,
-                                          ori=0, pos=pos, size=size, sf=1, phase=0,
-                                          color=color[1], colorSpace='rgb', opacity=1,
-                                          texRes=256, interpolate=True, depth=-2.0)
-            color = (color[1], color[0])
-            box += [VEPBox(flicker=[pattern1, pattern2], code=code)]
-
-        self.vep += box
-        return box
+    def build_vep_stimuli(self, positions: List[Tuple[float, float]],
+                          codes: List[List[int]], colors: Iterable[Tuple[str,
+                                                                         str]],
+                          stim_size: Tuple[float, float],
+                          num_squares: int) -> List[VEPStim]:
+        """Build the VEP flashing checkerboards"""
+        stim = []
+        for pos, code, color in zip(positions, codes, colors):
+            stim.append(
+                VEPStim(self.window,
+                        code,
+                        color,
+                        center=pos,
+                        size=stim_size,
+                        num_squares=num_squares))
+        return stim
 
     def _trigger_pulse(self) -> None:
         """Trigger Pulse.
@@ -365,64 +451,46 @@ class VEPDisplay(Display):
             beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
             correction may be required.
         """
-        calibration_time = _calibration_trigger(
-            self.experiment_clock,
-            trigger_type=self.trigger_type,
-            display=self.window)
-
-        # set the first stim time if not present and first_run to False
+        trg = _calibration_trigger(self.experiment_clock,
+                                   trigger_type=self.trigger_type,
+                                   display=self.window)
+        calibration_time = StimTime(*trg)
         if not self.first_stim_time:
-            self.first_stim_time = calibration_time[-1]
+            self.first_stim_time = calibration_time.time
             self.first_run = False
 
-    def schedule_to(self, stimuli: List[List[str]], timing: List[List[float]], colors: List[List[str]]) -> None:
+    def schedule_to(self, stimuli: List[List[Any]], timing: Optional[List[List[float]]]
+                    = None, colors: Optional[List[List[str]]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
         """
-        self.stimuli_inquiry = stimuli
-        self.stimuli_timing = timing
-        self.stimuli_colors = colors
+        self.stimuli_inquiry = stimuli  # type: ignore
+        assert timing is None or timing == self.stimuli_timing, "Timing values must match pre-configured values"
+        assert colors is None or colors == self.stimuli_colors, "Colors must match the pre-configured values"
 
-    def _build_text_boxes(self) -> List[visual.TextBox2]:
-        """Build the text boxes for the experiment.
-
-        This assumes that vep_type is 4 using a 2x2 grid. Additional configurations can be added in the future.
+    def _build_text_boxes(
+            self, box_config: BoxConfiguration) -> List[visual.TextBox2]:
+        """Build the text boxes for the experiment. These are the areas into
+        which the symbols are partitioned. Each text_box will have an
+        associated VEP Box.
         """
-        # generate the inquiry stimuli
-        assert len(
-            self.stimuli_colors) == self.vep_type, (
-                f"stmuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
-        assert len(
-            self.stimuli_pos) == self.vep_type, (
-                f"stmuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}")
-
-        self.text_boxes = []
-        inc_q = int(self.vep_type / 2)
-        size = self.vep_box_size * inc_q
-        inc = 0  # get the last box in the grating stim per vep
-        for color in self.stimuli_colors:
-            text = ' '
-            first = self.vep[inc].flicker[0].pos
-            best_neighbor = self.vep[inc + inc_q].flicker[0].pos
-
-            # the textbox requires the pos to be centered on the middle of the box, so
-            # we need to calculate the center of the vep stimulus boxes
-            pos = (first[0] + best_neighbor[0]) / 2, (first[1] + best_neighbor[1]) / 2
-            self.text_boxes += [visual.TextBox2(
-                win=self.window,
-                text=text,
-                font=self.stimuli_font,
-                units='height',
-                pos=pos,
-                color=color[0],
-                colorSpace='rgb',
-                size=[size, size],
-                alignment='center',
-                anchor='center',
-                borderWidth=2,
-                borderColor='white',
-                letterHeight=self.stimuli_height / 2)]
-            inc += self.vep_type
-        return self.text_boxes
+        positions = box_config.positions
+        size = box_config.box_size
+        return [
+            visual.TextBox2(win=self.window,
+                            text=" ",
+                            font=self.stimuli_font,
+                            pos=pos,
+                            units=box_config.units,
+                            color=color,
+                            colorSpace='rgb',
+                            size=size,
+                            alignment='center',
+                            anchor='center',
+                            borderWidth=self.box_border_width,
+                            borderColor=color,
+                            letterHeight=self.stimuli_height)
+            for pos, color in zip(positions, cycle(self.box_colors))
+        ]
 
     def _reset_text_boxes(self) -> None:
         """Reset text boxes.
@@ -431,23 +499,17 @@ class VEPDisplay(Display):
         """
         for text_box in self.text_boxes:
             text_box.setText(' ')
+            text_box.setOpacity(1.0)
+            text_box.borderWidth = self.box_border_width
 
-    def _set_inquiry(self) -> List[visual.TextBox2]:
-        """Generate Inquiry.
-
-        This method sets the correct inquiry text for each text boxes.
+    def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
+        """Set the correct inquiry text for each text boxes.
         """
-        # generate the inquiry stimuli
-        assert len(
-            self.stimuli_inquiry) == self.vep_type, (
-                f"stmuli inquiry {len(self.stimuli_inquiry)} must be the same length as vep type {self.vep_type}")
-        assert len(
-            self.stimuli_colors) == self.vep_type, (
-                f"stmuli colors {len(self.stimuli_colors)} must be the same length as vep type {self.vep_type}")
-        for box_content, color, box in zip(self.stimuli_inquiry, self.stimuli_colors, self.text_boxes):
-            text = ' '.join(box_content)
+        for i, sti in enumerate(stimuli):
+            box = self.text_boxes[i]
+            text = ' '.join(sti.symbol)
             box.text = text
-            box.color = color[0]
+            box.color = sti.color
         return self.text_boxes
 
     def wait_screen(self, message: str, color: str) -> None:
@@ -472,20 +534,17 @@ class VEPDisplay(Display):
 
         # try adding the BciPy logo to the wait screen
         try:
-            wait_logo = visual.ImageStim(
-                self.window,
-                image=BCIPY_LOGO_PATH,
-                pos=(0, .25),
-                mask=None,
-                ori=0.0)
-            wait_logo.size = resize_image(
-                BCIPY_LOGO_PATH,
-                self.window.size,
-                1)
+            wait_logo = visual.ImageStim(self.window,
+                                         image=BCIPY_LOGO_PATH,
+                                         pos=(0, .25),
+                                         mask=None,
+                                         ori=0.0)
+            wait_logo.size = resize_image(BCIPY_LOGO_PATH, self.window.size, 1)
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            self.logger.exception(
+                f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
         # Draw and flip the screen.

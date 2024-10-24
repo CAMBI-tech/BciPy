@@ -1,6 +1,7 @@
 """Demo for the task bar component"""
 import time
 from typing import Callable
+
 from psychopy import visual
 
 from bcipy.display.components.task_bar import (CalibrationTaskBar,
@@ -40,7 +41,9 @@ def demo_copy_phrase(win: visual.Window):
     task_bar = CopyPhraseTaskBar(win,
                                  task_text='HELLO_WORLD',
                                  spelled_text='HELLO',
-                                 colors=['white', 'green'])
+                                 font='Overpass Mono Medium',
+                                 colors=['white', 'green'],
+                                 padding=0.05)
 
     task_bar.draw()
     win.flip()
@@ -80,5 +83,5 @@ def run(demo: Callable[[visual.Window], None], seconds=30):
 
 if __name__ == '__main__':
     # run(demo_calibration)
-    # run(demo_copy_phrase)
-    run(demo_task_bar)
+    run(demo_copy_phrase)
+    # run(demo_task_bar)

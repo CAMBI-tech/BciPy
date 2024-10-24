@@ -1,73 +1,66 @@
-from itertools import cycle
-from bcipy.task import Task
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
-from bcipy.helpers.stimuli import PhotoDiodeStimuli, get_fixation, jittered_timing
+# mypy: disable-error-code="assignment"
+from itertools import cycle, islice, repeat
+from typing import Any, Iterator, List
+
+from bcipy.helpers.parameters import Parameters
+from bcipy.helpers.stimuli import (PhotoDiodeStimuli, get_fixation,
+                                   jittered_timing)
+from bcipy.task.calibration import Inquiry
+from bcipy.task import TaskMode
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
 
 
-class RSVPTimingVerificationCalibration(Task):
+class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
     """RSVP Calibration Task.
 
     This task is used for verifying display timing by alternating solid and empty boxes. These
         stimuli can be used with a photodiode to ensure accurate presentations.
 
     Input:
-        win (PsychoPy Display Object)
-        daq (Data Acquisition Object)
-        parameters (Dictionary)
-        file_save (String)
+        parameters (Parameters)
+        file_save (str)
+        fake (bool)
 
     Output:
-        file_save (String)
+        TaskData
     """
-    TASK_NAME = 'RSVP Timing Verification Task'
+    name = 'RSVP Timing Verification'
+    mode = TaskMode.TIMING_VERIFICATION
 
-    def __init__(self, win, daq, parameters, file_save):
-        super(RSVPTimingVerificationCalibration, self).__init__()
-        parameters['stim_height'] = 0.8
-        parameters['stim_pos_y'] = 0.0
-        self.stimuli = PhotoDiodeStimuli.list()
-        self._task = RSVPCalibrationTask(win, daq, parameters, file_save)
-        self._task.generate_stimuli = self.generate_stimuli
+    def __init__(self,
+                 parameters: Parameters,
+                 file_save: str,
+                 fake: bool = False,
+                 **kwargs: Any) -> None:
+        parameters['rsvp_stim_height'] = 0.8
+        parameters['rsvp_stim_pos_y'] = 0.0
+        super(RSVPTimingVerificationCalibration,
+              self).__init__(parameters, file_save, fake=fake)
 
-    def generate_stimuli(self):
-        """Generates the inquiries to be presented.
-        Returns:
-        --------
-            tuple(
-                samples[list[list[str]]]: list of inquiries
-                timing(list[list[float]]): list of timings
-                color(list(list[str])): list of colors)
-        """
-        samples, times, colors = [], [], []
+    @property
+    def symbol_set(self) -> List[str]:
+        """Symbols used in the calibration"""
+        return PhotoDiodeStimuli.list()
+
+    def init_inquiry_generator(self) -> Iterator[Inquiry]:
+        params = self.parameters
 
         # alternate between solid and empty boxes
-        letters = cycle(self.stimuli)
-        time_prompt, time_fixation, time_stim = self._task.timing
-        color_target, color_fixation, color_stim = self._task.color
-        inq_len = self._task.stim_length
-
-        stim_timing = jittered_timing(time_stim, self._task.jitter, inq_len)
+        letters = cycle(self.symbol_set)
         target = next(letters)
         fixation = get_fixation(is_txt=True)
 
-        inq_stim = [target, fixation, *[next(letters) for _ in range(inq_len)]]
-        inq_times = [time_prompt, time_fixation] + stim_timing
-        inq_colors = [color_target, color_fixation, *[color_stim for _ in range(inq_len)]]
+        inq_len = params['stim_length']
+        stimuli = [target, fixation, *islice(letters, inq_len)]
+        durations = [
+            params['time_prompt'], params['time_fixation'], *jittered_timing(
+                params['time_flash'], params['stim_jitter'], inq_len)
+        ]
+        colors = [
+            params['target_color'], params['fixation_color'],
+            *repeat(params['stim_color'], inq_len)
+        ]
 
-        for _ in range(self._task.stim_number):
-            samples.append(inq_stim)
-            times.append(inq_times)
-            colors.append(inq_colors)
-
-        return (samples, times, colors)
-
-    def execute(self):
-        self.logger.debug(f'Starting {self.name()}!')
-        self._task.execute()
-
-    @classmethod
-    def label(cls):
-        return RSVPTimingVerificationCalibration.TASK_NAME
-
-    def name(self):
-        return RSVPTimingVerificationCalibration.TASK_NAME
+        return repeat(Inquiry(stimuli, durations, colors),
+                      params['stim_number'])

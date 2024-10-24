@@ -1,6 +1,8 @@
+# mypy: disable-error-code="return-value"
 from enum import Enum
 
 from psychopy import core, visual
+from typing import Tuple, List, Union
 
 from bcipy.feedback.feedback import Feedback
 from bcipy.helpers.clock import Clock
@@ -15,7 +17,7 @@ class FeedbackType(Enum):
 class VisualFeedback(Feedback):
     """Visual Feedback."""
 
-    def __init__(self, display, parameters: dict, clock: Clock):
+    def __init__(self, display: visual.Window, parameters: dict, clock: Clock) -> None:
 
         # Register Feedback Type
         self.feedback_type = 'Visual Feedback'
@@ -27,8 +29,8 @@ class VisualFeedback(Feedback):
 
         # Parameters
         self.parameters = parameters
-        self.font_stim = self.parameters['feedback_font']
-        self.height_stim = self.parameters['feedback_stim_height']
+        self.font_stim: str = self.parameters['feedback_font']
+        self.height_stim: int = self.parameters['feedback_stim_height']
 
         pos_x = self.parameters['feedback_pos_x']
         pos_y = self.parameters['feedback_pos_y']
@@ -38,15 +40,14 @@ class VisualFeedback(Feedback):
         self.feedback_length = self.parameters['feedback_duration']
         self.color = self.parameters['feedback_color']
 
-        # Clock
         self.clock = clock
 
         self.feedback_timestamp_label = 'visual_feedback'
 
     def administer(
             self,
-            stimulus,
-            stimuli_type=FeedbackType.TEXT):
+            stimulus: str,
+            stimuli_type=FeedbackType.TEXT) -> List[Tuple[str, float]]:
         """Administer.
 
         Administer visual feedback. Timing information from parameters,
@@ -65,17 +66,26 @@ class VisualFeedback(Feedback):
 
         return [time]
 
-    def _show_stimuli(self, stimulus) -> None:
+    def _show_stimuli(self, stimulus: Union[visual.TargetStim, visual.ImageStim]) -> Tuple[str, float]:
         stimulus.draw()
         time = [self.feedback_timestamp_label, self.clock.getTime()]  # TODO: use callback for better precision
         self.display.flip()
         return time
 
-    def _resize_image(self, stimulus, display_size, stimuli_height):
+    def _resize_image(
+            self,
+            stimulus: str,
+            display_size: Tuple[float, float],
+            stimuli_height: int) -> Tuple[float, float]:
         return resize_image(
             stimulus, display_size, stimuli_height)
 
-    def _construct_stimulus(self, stimulus, pos, fill_color, stimuli_type):
+    def _construct_stimulus(
+            self,
+            stimulus: str,
+            pos: Tuple[float, float],
+            fill_color: str,
+            stimuli_type: FeedbackType) -> Union[visual.TargetStim, visual.ImageStim]:
         if stimuli_type == FeedbackType.IMAGE:
             image_stim = visual.ImageStim(
                 win=self.display,

@@ -10,7 +10,7 @@ import pandas as pd
 
 from mockito import any, mock, when, verify, unstub
 
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.raw_data import (RawData, RawDataReader, RawDataWriter,
                                     load, sample_data, settings, write)
 
@@ -24,7 +24,7 @@ class TestRawData(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
         self.path = Path(self.temp_dir, 'test_raw_data.csv')
         self.daq_type = 'Test-Device'
-        self.sample_rate = 300.0
+        self.sample_rate = 300
         self.columns = ['timestamp', 'ch1', 'ch2', 'ch3']
         self.row1 = [1, 1.0, 2.0, 3.0]
         self.row2 = [2, 4.0, 5.0, 6.0]

@@ -4,7 +4,7 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.helpers.symbols import alphabet
 from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
-from bcipy.helpers.exceptions import KenLMInstallationException
+from bcipy.exceptions import KenLMInstallationException
 
 try:
     import kenlm
