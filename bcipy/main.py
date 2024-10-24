@@ -1,13 +1,13 @@
 import argparse
 import logging
 import multiprocessing
-from typing import Type, Optional
+from typing import Optional, Type
 
-from bcipy.config import (DEFAULT_PARAMETERS_PATH, CUSTOM_TASK_EXPERIMENT_ID)
+from bcipy.config import CUSTOM_TASK_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.load import (load_experiments, load_json_parameters)
+from bcipy.helpers.load import load_experiments, load_json_parameters
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
-from bcipy.task import TaskRegistry, Task
+from bcipy.task import Task, TaskRegistry
 from bcipy.task.orchestrator import SessionOrchestrator
 from bcipy.task.orchestrator.protocol import parse_protocol
 

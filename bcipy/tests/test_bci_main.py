@@ -1,11 +1,13 @@
 import unittest
 
-from mockito import when, mock, verify, unstub, any
-from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.exceptions import BciPyCoreException, UnregisteredExperimentException
-from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.main import bci_main
+from mockito import any, mock, unstub, verify, when
+
 from bcipy import main
+from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.exceptions import (BciPyCoreException,
+                              UnregisteredExperimentException)
+from bcipy.main import bci_main
+from bcipy.task.orchestrator import SessionOrchestrator
 
 
 class TestBCIMain(unittest.TestCase):

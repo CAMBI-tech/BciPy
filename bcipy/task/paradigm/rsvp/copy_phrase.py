@@ -6,30 +6,23 @@ from psychopy import core, visual
 from psychopy.visual import Window
 
 from bcipy.acquisition import ClientManager
-from bcipy.config import (
-    DEFAULT_EVIDENCE_PRECISION,
-    SESSION_DATA_FILENAME,
-    SESSION_SUMMARY_FILENAME,
-    TRIGGER_FILENAME,
-    WAIT_SCREEN_MESSAGE,
-    SESSION_LOG_FILENAME
-)
-from bcipy.display import (
-    InformationProperties,
-    StimuliProperties,
-)
+from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
+                          SESSION_LOG_FILENAME, SESSION_SUMMARY_FILENAME,
+                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.copy_phrase import CopyPhraseDisplay
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.acquisition import init_acquisition, LslDataServer
+from bcipy.helpers.acquisition import (LslDataServer, active_content_types,
+                                       init_acquisition)
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.display import init_display_window
-from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_signal_models
 from bcipy.helpers.list import destutter
+from bcipy.helpers.load import choose_signal_models
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.session import session_excel
@@ -47,7 +40,8 @@ from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task, TaskData, TaskMode
-from bcipy.task.control.evidence import EvidenceEvaluator, init_evidence_evaluator
+from bcipy.task.control.evidence import (EvidenceEvaluator,
+                                         init_evidence_evaluator)
 from bcipy.task.data import EvidenceType, Inquiry, Session
 from bcipy.task.exceptions import DuplicateModelEvidence
 
@@ -197,9 +191,9 @@ class RSVPCopyPhraseTask(Task):
     def get_signal_models(self) -> Optional[List[SignalModel]]:
         if not self.fake:
             try:
-                model_dir = self.parameters.get('signal_model_path', None)
-                signal_models = load_signal_models(directory=model_dir)
-                assert signal_models, f"No signal models found in {model_dir}"
+                signal_models = choose_signal_models(
+                    active_content_types(self.parameters['acq_mode']))
+                assert signal_models, "No signal models selected"
             except Exception as error:
                 logger.exception(f'Cannot load signal model. Exiting. {error}')
                 raise error
@@ -982,6 +976,7 @@ class TaskSummary:
             return 0
 
         inquiries = self.session.all_inquiries
+        activations = []
         if self.preview_mode == 1:
             # press to confirm
             activations = [inq for inq in inquiries if inq.eeg_evidence]

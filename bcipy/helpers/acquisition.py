@@ -306,3 +306,36 @@ def stream_types(acq_mode: str, delimiter: str = "+") -> List[str]:
     """
     return list(
         dict.fromkeys([mode.strip() for mode in acq_mode.split(delimiter)]))
+
+
+def active_content_types(acq_mode: str) -> List[str]:
+    """Given the configured acquisition mode, determine which content types are
+    currently active and should be used in decision-making.
+
+    Parameters
+    ----------
+        acq_mode - delimited list of stream types (ex. 'EEG+Eyetracker')
+    """
+    return [
+        stream_type.content_type
+        for stream_type in map(parse_stream_type, stream_types(acq_mode))
+        if is_stream_type_active(stream_type)
+    ]
+
+
+def is_stream_type_active(stream_type: StreamType) -> bool:
+    """Check if the provided stream type is active.
+
+    A stream type's status, if provided, will be used to make the determinition.
+    If missing, the status of a matching pre-configured device will be used."""
+    content_type, device_name, status = stream_type
+    if status:
+        return status == DeviceStatus.ACTIVE
+
+    if device_name:
+        device = preconfigured_device(device_name, strict=False)
+        if device:
+            return device.is_active
+
+    specs_with_type = with_content_type(content_type)
+    return any(spec.is_active for spec in specs_with_type)

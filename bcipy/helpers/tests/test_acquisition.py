@@ -1,14 +1,15 @@
 """Tests for acquisition helper."""
+import logging
 import shutil
 import unittest
 from pathlib import Path
-import logging
 from unittest.mock import Mock, patch
 
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, init_device,
-                                       init_acquisition,
+from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, StreamType,
+                                       active_content_types, init_acquisition,
+                                       init_device, is_stream_type_active,
                                        max_inquiry_duration, parse_stream_type,
                                        raw_data_filename, server_spec,
                                        stream_types)
@@ -151,7 +152,8 @@ class TestAcquisition(unittest.TestCase):
     def test_parse_stream_type(self):
         """Test function to split the stream type into content_type, name,
         and status"""
-        self.assertEqual(('EEG', 'DSI-24', None), parse_stream_type('EEG/DSI-24'))
+        self.assertEqual(('EEG', 'DSI-24', None),
+                         parse_stream_type('EEG/DSI-24'))
         self.assertEqual(('Gaze', None, None), parse_stream_type('Gaze'))
         self.assertEqual(('Gaze', None, DeviceStatus.PASSIVE),
                          parse_stream_type('Gaze:passive'))
@@ -195,6 +197,142 @@ class TestAcquisition(unittest.TestCase):
                             content_type='EYETRACKER')
         self.assertEqual(raw_data_filename(device),
                          'eyetracker_data_tobii-p0.csv')
+
+
+class TestAcquisitionHelpers(unittest.TestCase):
+    """Unit tests for acquisition helper functions"""
+
+    def test_stream_type_active_given_status(self):
+        """Test function to test if a StreamType is active given the provided
+        status."""
+
+        self.assertTrue(
+            is_stream_type_active(
+                StreamType(content_type='EEG', status=DeviceStatus.ACTIVE)))
+
+        self.assertFalse(
+            is_stream_type_active(
+                StreamType(content_type='EEG', status=DeviceStatus.PASSIVE)))
+
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_stream_type_active_using_preconfigured(self,
+                                                    preconfigured_device_mock):
+        """Test function to test if a StreamType is active using a
+        preconfigured device."""
+
+        stream_type = StreamType(content_type='EEG', device_name='MyDevice')
+        device1 = Mock()
+        device1.is_active = True
+        preconfigured_device_mock.return_value = device1
+
+        self.assertTrue(is_stream_type_active(stream_type))
+        preconfigured_device_mock.assert_called_with('MyDevice', strict=False)
+
+        device1.is_active = False
+        self.assertFalse(is_stream_type_active(stream_type))
+
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    @patch('bcipy.helpers.acquisition.with_content_type')
+    def test_stream_type_active_using_content_type(self,
+                                                   with_content_type_mock,
+                                                   preconfigured_device_mock):
+        """Test function to test if a StreamType is active using a
+        preconfigured device with type."""
+
+        stream_type = StreamType(content_type='EEG', device_name='MyDevice')
+
+        preconfigured_device_mock.return_value = None
+        device1 = Mock()
+        device1.is_active = False
+        device2 = Mock()
+        device2.is_active = False
+        with_content_type_mock.return_value = [device1, device2]
+
+        self.assertFalse(is_stream_type_active(stream_type))
+        with_content_type_mock.assert_called_with('EEG')
+
+        device1.is_active = True
+        self.assertTrue(is_stream_type_active(stream_type))
+
+    def test_active_content_types_with_declared_spec(self):
+        """Test active content types when the spec declares the status."""
+        self.assertListEqual([], active_content_types('EEG:passive'))
+        self.assertListEqual(
+            [], active_content_types('EEG:passive+Eyetracker:passive'))
+        self.assertListEqual(
+            ['EEG'], active_content_types('EEG:active+Eyetracker:passive'))
+        self.assertListEqual(
+            ['EEG', 'Eyetracker'],
+            active_content_types('EEG:active+Eyetracker:active'))
+        self.assertListEqual(
+            ['Eyetracker'],
+            active_content_types('EEG:passive+Eyetracker:active'))
+
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_active_content_types_using_preconfigured(
+            self, preconfigured_device_mock):
+        """Test active content types using a preconfigured device."""
+
+        device1 = Mock()
+        device1.is_active = True
+        preconfigured_device_mock.return_value = device1
+
+        self.assertListEqual(['EEG'], active_content_types('EEG/MyDevice'))
+        preconfigured_device_mock.assert_called_with('MyDevice', strict=False)
+
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_active_content_types_using_preconfigured_false(
+            self, preconfigured_device_mock):
+        """Test active content types using a preconfigured device."""
+
+        device1 = Mock()
+        device1.is_active = False
+        preconfigured_device_mock.return_value = device1
+
+        self.assertListEqual([], active_content_types('EEG/MyDevice'))
+        preconfigured_device_mock.assert_called_with('MyDevice', strict=False)
+
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_active_content_types_using_preconfigured_multiple_devices(
+            self, preconfigured_device_mock):
+        """Test active content types using a preconfigured device."""
+
+        device1 = Mock()
+        device1.is_active = False
+        device2 = Mock()
+        device2.is_active = True
+        preconfigured_device_mock.side_effect = [device1, device2]
+
+        self.assertListEqual(
+            ['Eyetracker'],
+            active_content_types('EEG/MyDevice+Eyetracker/MyEyeDevice'))
+
+    @patch('bcipy.helpers.acquisition.with_content_type')
+    def test_active_content_types_using_content_type_false(
+            self, with_content_type_mock):
+        """Test active content types using content type."""
+
+        device1 = Mock()
+        device1.is_active = False
+        device2 = Mock()
+        device2.is_active = False
+        with_content_type_mock.return_value = [device1, device2]
+
+        self.assertListEqual([], active_content_types('EEG'))
+        with_content_type_mock.assert_called_with('EEG')
+
+    @patch('bcipy.helpers.acquisition.with_content_type')
+    def test_active_content_types_using_content_type(self,
+                                                     with_content_type_mock):
+        """Test active content types using content type."""
+        device1 = Mock()
+        device1.is_active = False
+        device2 = Mock()
+        device2.is_active = True
+        with_content_type_mock.return_value = [device1, device2]
+
+        self.assertListEqual(['EEG'], active_content_types('EEG'))
+        with_content_type_mock.assert_called_with('EEG')
 
 
 if __name__ == '__main__':

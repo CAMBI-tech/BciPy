@@ -1,33 +1,23 @@
-import unittest
-import os
-from unittest.mock import patch, mock_open
-
-from collections import abc
-import tempfile
-import shutil
 import json
+import os
+import shutil
+import tempfile
+import unittest
+from collections import abc
+from unittest.mock import Mock, mock_open, patch
 
 from mockito import any, expect, unstub, when
 
-from bcipy.config import (
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_FIELD_PATH,
-    FIELD_FILENAME,
-    EXPERIMENT_FILENAME
-)
-from bcipy.helpers.load import (
-    extract_mode,
-    load_json_parameters,
-    load_experiments,
-    load_experiment_fields,
-    load_fields,
-    load_users,
-    copy_parameters)
-from bcipy.helpers.parameters import Parameters
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
+                          DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME)
 from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
-
+from bcipy.helpers.load import (choose_signal_model, choose_signal_models,
+                                copy_parameters, extract_mode,
+                                load_experiment_fields, load_experiments,
+                                load_fields, load_json_parameters,
+                                load_signal_model, load_users)
+from bcipy.helpers.parameters import Parameters
 
 MOCK_EXPERIMENT = {
     "test": {
@@ -218,6 +208,86 @@ class TestExtractMode(unittest.TestCase):
         invalid_data_save_dir = 'data/user/default/user_bad_dir'
         with self.assertRaises(BciPyCoreException):
             extract_mode(invalid_data_save_dir)
+
+
+class TestModelLoad(unittest.TestCase):
+    """Test loading one or more signal models"""
+
+    @patch("bcipy.helpers.load.pickle.load")
+    @patch("bcipy.helpers.load.open")
+    def test_load_model(self, open_mock, pickle_mock):
+        """Test loading a signal model"""
+
+        load_signal_model("test-directory")
+        open_mock.assert_called_with("test-directory", 'rb')
+        pickle_mock.assert_called_once()
+
+    @patch("bcipy.helpers.load.load_signal_model")
+    @patch("bcipy.helpers.load.ask_filename")
+    @patch("bcipy.helpers.load.preferences")
+    def test_choose_model(self, preferences_mock, ask_file_mock,
+                          load_signal_model_mock):
+        """Test choosing a model"""
+
+        preferences_mock.signal_model_directory = "."
+        ask_file_mock.return_value = "model-path"
+        model_mock = Mock()
+        load_signal_model_mock.return_value = model_mock
+
+        model = choose_signal_model('EEG')
+
+        load_signal_model_mock.assert_called_with("model-path")
+        ask_file_mock.assert_called_with(file_types="*.pkl",
+                                         directory=".",
+                                         prompt="Select the EEG signal model")
+        self.assertEqual(model, model_mock)
+        self.assertEqual("model-path",
+                         preferences_mock.signal_model_directory,
+                         msg="Should have updated the preferences")
+
+    @patch("bcipy.helpers.load.load_signal_model")
+    @patch("bcipy.helpers.load.ask_filename")
+    @patch("bcipy.helpers.load.preferences")
+    def test_choose_model_with_cancel(self, preferences_mock, ask_file_mock,
+                                      load_signal_model_mock):
+        """Test choosing a model"""
+
+        preferences_mock.signal_model_directory = "."
+        ask_file_mock.return_value = None
+        model_mock = Mock()
+        load_signal_model_mock.return_value = model_mock
+
+        model = choose_signal_model('EEG')
+
+        load_signal_model_mock.assert_not_called()
+        ask_file_mock.assert_called_with(file_types="*.pkl",
+                                         directory=".",
+                                         prompt="Select the EEG signal model")
+        self.assertEqual(None, model)
+        self.assertEqual(".",
+                         preferences_mock.signal_model_directory,
+                         msg="Should not have updated the preferences")
+
+    @patch("bcipy.helpers.load.choose_signal_model")
+    def test_choose_signal_models(self, choose_signal_model_mock):
+        """Test choosing signal models"""
+        eeg_mock = Mock()
+        eyetracker_mock = Mock()
+        choose_signal_model_mock.side_effect = [eeg_mock, eyetracker_mock]
+
+        models = choose_signal_models(['EEG', 'Eyetracker'])
+        self.assertListEqual([eeg_mock, eyetracker_mock], models)
+
+    @patch("bcipy.helpers.load.choose_signal_model")
+    def test_choose_signal_models_missing_model(self,
+                                                choose_signal_model_mock):
+        """Test choosing signal models"""
+
+        eyetracker_mock = Mock()
+        choose_signal_model_mock.side_effect = [None, eyetracker_mock]
+
+        models = choose_signal_models(['EEG', 'Eyetracker'])
+        self.assertListEqual([eyetracker_mock], models)
 
 
 if __name__ == '__main__':
