@@ -4,6 +4,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Union, List, Tuple, Optional
 from logging import getLogger
+import logging
 
 from bcipy.config import (
     DEFAULT_PARAMETER_FILENAME,
@@ -28,10 +29,18 @@ import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 
 import mne
-log = getLogger(SESSION_LOG_FILENAME)
 mne.set_log_level('WARNING')
+log = getLogger(SESSION_LOG_FILENAME)
+
 from mne import Annotations
 
+# ARTIFACT DETECTION
+# ------------------
+# Allow setting of thresholds for voltage and EOG artifacts from the clients
+# We should be using frequency based labelling for EOG and voltage artifacts
+# No overlapping labels, if there is a voltage and an EOG (prefer the EOG label)
+# If we are given colabels, determine or return overlapping events only
+# Merge overlapping labels (keep the length, but merge them)
 
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
@@ -40,16 +49,18 @@ class DefaultArtifactParameters(Enum):
     """
 
     # Voltage
-    PEAK_THRESHOLD = 75e-7
-    PEAK_MIN_DURATION = 0.005
+    PEAK_THRESHOLD = 15e-6
+    PEAK_MIN_DURATION = 0.001
     FLAT_THRESHOLD = 0.5e-6
     FLAT_MIN_DURATION = 0.1
+
     VOlTAGE_LABEL_DURATION = 0.25
 
     # Eye
-    EOG_LABEL_DURATION = 0.2
-    EOG_THRESHOLD = 75e-6
+    EOG_THRESHOLD = 55e-6
     EOG_MIN_DURATION = 0.5
+
+    EOG_LABEL_DURATION = 0.25
 
     # I/O
     ARTIFACT_LABELLED_FILENAME = 'artifacts.fif'
@@ -185,6 +196,7 @@ class ArtifactDetection:
 
         assert len(device_spec.channel_specs) > 0, 'DeviceSpec used must have channels. None found.'
         self.units = device_spec.channel_specs[0].units
+        log.info(f'Artifact detection using {self.units} units.')
         assert self.units in self.supported_units, \
             f'Data loaded in units that cannot be processed. Support units={self.supported_units}'
         # MNE assumes that data is recorded in Volts. However, many devices use microvolts.
@@ -194,6 +206,8 @@ class ArtifactDetection:
         self.detect_voltage = detect_voltage
         self.detect_eog = detect_eog
         self.semi_automatic = semi_automatic
+
+        log.info(f'Artifact detection with {self.detect_voltage=}, {self.detect_eog=}, {self.semi_automatic=}')
 
         self.save_path = save_path
 
@@ -220,6 +234,7 @@ class ArtifactDetection:
             self.dropped = (
                 f'{kept_epochs}/{total_epochs} retained. {percent_dropped}% epochs dropped due to artifacts.'
             )
+            log.info(f'{self.dropped=}')
 
         self.analysis_done = True
         if self.save_path:
@@ -413,6 +428,7 @@ class ArtifactDetection:
             bad_percent=self.percent_bad,
             peak=peak[0])
         if len(peak_voltage_annotations) > 0:
+            log.info(f'Peak voltage events found: {len(peak_voltage_annotations)}')
             onsets, durations, descriptions = self.concat_annotations(
                 peak_voltage_annotations,
                 pre_event,
@@ -426,6 +442,7 @@ class ArtifactDetection:
         flat_voltage_annotations, bad_channels2 = mne.preprocessing.annotate_amplitude(
             self.mne_data, min_duration=flat[1], bad_percent=self.percent_bad, flat=flat[0])
         if len(flat_voltage_annotations) > 0:
+            log.info(f'Flat voltage events found: {len(flat_voltage_annotations)}')
             onsets, durations, descriptions = self.concat_annotations(
                 flat_voltage_annotations,
                 pre_event,
@@ -438,12 +455,14 @@ class ArtifactDetection:
         # combine the bad channels
         bad_channels = bad_channels1 + bad_channels2
 
-        if len(onsets) > 0 and len(bad_channels) > 0:
-            return mne.Annotations(onsets, durations, descriptions), bad_channels
-        elif len(bad_channels) > 0:
-            return None, bad_channels
+        if len(bad_channels) == 0:
+            bad_channels = None
 
-        return None
+        if len(onsets) > 0:
+            return mne.Annotations(onsets, durations, descriptions), bad_channels
+        else:
+            log.info('No voltage events found.')
+            return None, bad_channels
 
     def concat_annotations(
             self,
@@ -524,6 +543,8 @@ def write_mne_annotations(
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -554,7 +575,7 @@ if __name__ == "__main__":
     for session in Path(path).iterdir():
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
-            log.info(f'Processing {session}')
+            print(f'Processing {session}')
             prompt = input('Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
@@ -568,7 +589,7 @@ if __name__ == "__main__":
                 # load the triggers
                 if args.colabel:
                     trigger_type, trigger_timing, trigger_label = trigger_decoder(
-                        offset=parameters.get('static_trigger_offset'),
+                        offset=0.1,
                         trigger_path=f"{session}/{TRIGGER_FILENAME}",
                         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
                     )
