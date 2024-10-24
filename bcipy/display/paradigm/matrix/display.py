@@ -12,7 +12,7 @@ from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.symbols import alphabet, qwerty_order, frequency_order
+from bcipy.helpers.symbols import alphabet, frequency_order, qwerty_order
 from bcipy.helpers.triggers import _calibration_trigger
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -378,6 +378,7 @@ class MatrixDisplay(Display):
 
         Define what happens on the screen when a user pauses a session.
         """
+        self.draw_components()
 
         # Construct the wait message
         wait_message = visual.TextStim(win=self.window,
@@ -399,7 +400,7 @@ class MatrixDisplay(Display):
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(
+            logger.exception(
                 f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
