@@ -1,42 +1,43 @@
 # mypy: disable-error-code="attr-defined"
-# needed for the ERPTransformParams
 import json
 import logging
+import subprocess
 from pathlib import Path
-from typing import Tuple
+from typing import List
 
 import numpy as np
-from matplotlib.figure import Figure
+
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME,
-                          STATIC_AUDIO_PATH, TRIGGER_FILENAME)
+                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME, DEFAULT_DEVICES_PATH,
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
+from bcipy.gui.alert import confirm
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
-from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
+from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_centralized_data,
-                                         visualize_erp, visualize_gaze,
+                                         visualize_gaze,
                                          visualize_gaze_accuracies,
                                          visualize_gaze_inquiries,
                                          visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GazeModelCombined,
-                                                 GazeModelIndividual)
+from bcipy.signal.model.gaussian_mixture.gaussian_mixture import (GazeModelCombined,
+                                                                  GazeModelIndividual)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
@@ -74,7 +75,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc: bool,
                 save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
@@ -182,39 +183,46 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    try:
+        model.fit(data, labels)
+        model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                             transform=default_transform,
+                                             evidence_type="ERP",
+                                             auc=model.auc)
+        log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    except Exception as e:
+        log.error(f"Error training model: {e}")
+
+    try:
+        # Using an 80/20 split, report on balanced accuracy
+        if estimate_balanced_acc:
+            train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+            dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            dummy_model.fit(train_data, train_labels)
+            probs = dummy_model.predict_proba(test_data)
+            preds = probs.argmax(-1)
+            score = balanced_accuracy_score(test_labels, preds)
+            log.info(f"Balanced acc with 80/20 split: {score}")
+            model.metadata.balanced_accuracy = score
+            del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+
+    except Exception as e:
+        log.error(f"Error calculating balanced accuracy: {e}")
 
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
 
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-
-    # this should have uncorrected trigger timing for display purposes
-    figure_handles = visualize_erp(
-        erp_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
-    return model, figure_handles
+    if save_figures or show_figures:
+        cmd = f'bcipy-erp-viz --session_path "{data_folder}" --parameters "{parameters["parameter_location"]}"'
+        if save_figures:
+            cmd += ' --save'
+        if show_figures:
+            cmd += ' --show'
+        subprocess.run(
+            cmd,
+            shell=True
+        )
+    return model
 
 
 def analyze_gaze(
@@ -248,15 +256,13 @@ def analyze_gaze(
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
-    figures = []
-    figure_handles = visualize_gaze(
+    visualize_gaze(
         gaze_data,
         save_path=save_figures,
         img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
         show=show_figures,
         raw_plot=plot_points,
     )
-    figures.extend(figure_handles)
 
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -347,7 +353,7 @@ def analyze_gaze(
             means, covs = model.evaluate(test_re)
 
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
+            visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=save_figures,
@@ -355,7 +361,6 @@ def analyze_gaze(
                 show=show_figures,
                 raw_plot=plot_points,
             )
-            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
@@ -399,22 +404,20 @@ def analyze_gaze(
         print(f"Overall accuracy: {accuracy:.2f}")
 
         # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
-        figures.extend(figure_handles)
+        visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
 
     if model_type == "Centralized":
         cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
         cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
 
         # Visualize the results:
-        figure_handles = visualize_centralized_data(
+        visualize_centralized_data(
             cent_left, cent_right,
             save_path=save_figures,
             img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
             show=show_figures,
             raw_plot=plot_points,
         )
-        figures.extend(figure_handles)
 
         # Fit the model:
         model.fit(cent_left)
@@ -427,7 +430,7 @@ def analyze_gaze(
             le = preprocessed_data[sym][0]
             re = preprocessed_data[sym][1]
             # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
+            visualize_gaze_inquiries(
                 le, re,
                 means, covs,
                 save_path=save_figures,
@@ -435,13 +438,13 @@ def analyze_gaze(
                 show=show_figures,
                 raw_plot=plot_points,
             )
-            figures.extend(figure_handles)
             left_eye_all.append(le)
             right_eye_all.append(re)
             means_all.append(means)
             covs_all.append(covs)
 
-    fig_handles = visualize_results_all_symbols(
+    # TODO: add visualizations to subprocess
+    visualize_results_all_symbols(
         left_eye_all, right_eye_all,
         means_all, covs_all,
         img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
@@ -449,7 +452,6 @@ def analyze_gaze(
         show=show_figures,
         raw_plot=plot_points,
     )
-    figures.extend(fig_handles)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -457,7 +459,7 @@ def analyze_gaze(
     save_model(
         model,
         Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
-    return model, figures
+    return model
 
 
 @report_execution_time
@@ -468,7 +470,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
-) -> Tuple[SignalModel, Figure]:
+) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
 
@@ -499,45 +501,52 @@ def offline_analysis(
     Returns:
     --------
         model (SignalModel): trained model
-        figure_handles (Figure): handles to the ERP figures
     """
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
 
+    # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
-        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+        Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-    active_devices = (spec for spec in devices_by_name.values()
+    # Load the active devices used during a session; this will be used to exclude inactive devices
+    active_devices_by_name = devices.load(
+        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+    active_devices = (spec for spec in active_devices_by_name.values()
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
+    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
+    assert len(data_file_paths) > 0, "No data files found for offline analysis."
+
     models = []
-    figure_handles = []
+    log.info(f"Starting offline analysis for {data_file_paths}")
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            erp_model, erp_figure_handles = analyze_erp(
+            erp_model = analyze_erp(
                 raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
             models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
 
         if device_spec.content_type == "Eyetracker":
-            et_model, et_figure_handles = analyze_gaze(
+            et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
             models.append(et_model)
-            figure_handles.extend(et_figure_handles)
 
     if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    return models, figure_handles
+        log.info("Alerting Offline Analysis Complete")
+        results = [f"{model.name}: {model.auc}" for model in models]
+        confirm(f"Offline analysis complete! \n Results={results}")
+    log.info("Offline analysis complete")
+    return models
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -548,13 +557,17 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=True)
+    parser.set_defaults(balanced=False)
     parser.set_defaults(save_figures=False)
-    parser.set_defaults(show_figures=True)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
+    log.info(
+        f"Starting offline analysis client with the following: Data={args.data_folder} || "
+        f"Save Figures={args.save_figures} || Show Figures={args.show_figures} || "
+        f"Alert={args.alert} || Calculate Balanced Accuracy={args.balanced}")
 
     offline_analysis(
         args.data_folder,
@@ -563,4 +576,7 @@ if __name__ == "__main__":
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-    log.info("Offline Analysis complete.")
+
+
+if __name__ == "__main__":
+    main()

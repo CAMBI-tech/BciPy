@@ -12,13 +12,15 @@ from bcipy.display.paradigm.matrix.display import MatrixDisplay, SymbolDuration
 
 # Define some reusable elements to test Matrix Display with
 LEN_STIM = 10
-TEST_STIM = StimuliProperties(stim_font='Arial',
-                              stim_pos=(-0.6, 0.4),
-                              stim_height=0.1,
-                              stim_inquiry=['A'],
-                              stim_colors=[],
-                              stim_timing=[0.1],
-                              is_txt_stim=True)
+TEST_STIM = StimuliProperties(
+    stim_font='Arial',
+    stim_pos=(-0.6, 0.4),
+    stim_height=0.1,
+    stim_inquiry=['A'],
+    stim_colors=[],
+    stim_timing=[0.1],
+    is_txt_stim=True,
+    layout='QWERTY')
 
 TEST_INFO = InformationProperties(
     info_color=['White'],
@@ -43,7 +45,7 @@ class TestMatrixDisplay(unittest.TestCase):
                                    spec=psychopy.visual.TextStim)
         when(self.text_stim_mock).setOpacity(...).thenReturn()
         when(self.text_stim_mock).setColor(...).thenReturn()
-        when(self.text_stim_mock).draw(...).thenReturn()
+        when(self.text_stim_mock).draw().thenReturn()
 
         # grid item
         when(psychopy.visual).TextStim(

@@ -1,6 +1,6 @@
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
-from psychopy import core, visual
+from psychopy import visual
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -10,7 +10,7 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_stimuli_position_info
 from bcipy.helpers.system_utils import get_screen_info
-from bcipy.task.base_calibration import BaseCalibrationTask
+from bcipy.task.calibration import BaseCalibrationTask
 
 
 class MatrixCalibrationTask(BaseCalibrationTask):
@@ -28,12 +28,13 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     PARAMETERS:
     ----------
-    win (PsychoPy Display Object)
-    daq (Data Acquisition Object [ClientManager]])
-    parameters (Parameters Object)
-    file_save (String)
+    parameters (dict)
+    file_save (str)
+    fake (bool)
+
     """
-    MODE = 'Matrix'
+    name = 'Matrix Calibration'
+    paradigm = 'Matrix'
 
     @property
     def screen_info(self) -> Dict[str, Any]:
@@ -56,7 +57,6 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
     def cleanup(self) -> None:
         assert isinstance(self.display, MatrixDisplay)
-        # TODO: refactor offline_analysis to use session data and and remove this.
         save_stimuli_position_info(self.display.stim_positions, self.file_save,
                                    self.screen_info)
         return super().cleanup()
@@ -68,7 +68,7 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 
 def init_matrix_display(parameters: Parameters, window: visual.Window,
                         experiment_clock: Clock,
-                        symbol_set: core.StaticPeriod) -> MatrixDisplay:
+                        symbol_set: List[str]) -> MatrixDisplay:
     """Initialize the matrix display"""
     info = InformationProperties(
         info_color=[parameters['info_color']],
@@ -78,22 +78,23 @@ def init_matrix_display(parameters: Parameters, window: visual.Window,
         info_text=[parameters['info_text']],
     )
     stimuli = StimuliProperties(stim_font=parameters['font'],
-                                stim_pos=(-0.6, 0.4),
-                                stim_height=0.1,
+                                stim_pos=(parameters['matrix_stim_pos_x'], parameters['matrix_stim_pos_y']),
+                                stim_height=parameters['matrix_stim_height'],
                                 stim_inquiry=[''] * parameters['stim_length'],
                                 stim_colors=[parameters['stim_color']] *
                                 parameters['stim_length'],
                                 stim_timing=[10] * parameters['stim_length'],
                                 is_txt_stim=parameters['is_txt_stim'],
-                                prompt_time=parameters["time_prompt"])
+                                prompt_time=parameters['time_prompt'],
+                                layout=parameters['matrix_keyboard_layout'])
 
     task_bar = CalibrationTaskBar(window,
                                   inquiry_count=parameters['stim_number'],
                                   current_index=0,
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'],
-                                  padding=parameters['task_padding'])
+                                  height=parameters['matrix_task_height'],
+                                  padding=parameters['matrix_task_padding'])
 
     return MatrixDisplay(window,
                          experiment_clock,

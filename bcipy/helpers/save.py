@@ -16,7 +16,6 @@ from bcipy.config import (DEFAULT_ENCODING,
                           DEFAULT_PARAMETER_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX,
                           STIMULI_POSITIONS_FILENAME)
-from bcipy.helpers.validate import validate_experiments
 from bcipy.signal.model.base_model import SignalModel
 
 
@@ -41,7 +40,6 @@ def save_experiment_data(
         fields: dict,
         location: str,
         name: str) -> str:
-    validate_experiments(experiments, fields)
     return save_json_data(experiments, location, name)
 
 

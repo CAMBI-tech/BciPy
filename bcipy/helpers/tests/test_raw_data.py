@@ -10,7 +10,7 @@ import pandas as pd
 
 from mockito import any, mock, when, verify, unstub
 
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.raw_data import (RawData, RawDataReader, RawDataWriter,
                                     load, sample_data, settings, write)
 

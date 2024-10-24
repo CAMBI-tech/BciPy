@@ -4,7 +4,7 @@ import pytest
 import unittest
 import os
 
-from bcipy.helpers.exceptions import UnsupportedResponseType, InvalidLanguageModelException
+from bcipy.exceptions import UnsupportedResponseType, InvalidLanguageModelException
 from bcipy.helpers.symbols import alphabet, BACKSPACE_CHAR
 from bcipy.language.model.unigram import UnigramLanguageModel
 from bcipy.language.main import ResponseType

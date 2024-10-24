@@ -14,13 +14,13 @@ from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 from bcipy.signal.process import Composition, get_default_transform
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 FILE_LENGTH_LIMIT = 150
 

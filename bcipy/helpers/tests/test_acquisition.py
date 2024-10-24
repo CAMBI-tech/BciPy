@@ -1,4 +1,5 @@
 """Tests for acquisition helper."""
+import logging
 import shutil
 import unittest
 from pathlib import Path
@@ -7,9 +8,8 @@ from unittest.mock import Mock, patch
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, StreamType,
-                                       active_content_types, init_device,
-                                       init_eeg_acquisition,
-                                       is_stream_type_active,
+                                       active_content_types, init_acquisition,
+                                       init_device, is_stream_type_active,
                                        max_inquiry_duration, parse_stream_type,
                                        raw_data_filename, server_spec,
                                        stream_types)
@@ -38,12 +38,14 @@ class TestAcquisition(unittest.TestCase):
         shutil.rmtree(self.save)
 
     def test_init_acquisition(self):
-        """Test init_eeg_acquisition with LSL client."""
+        """Test init_acquisition with LSL client."""
 
         params = self.parameters
+        logger = Mock(spec=logging.Logger)
+        logger.info = lambda x: x
         params['acq_mode'] = 'EEG:passive/DSI-24'
 
-        client, servers = init_eeg_acquisition(params, self.save, server=True)
+        client, servers = init_acquisition(params, self.save, server=True)
 
         client.stop_acquisition()
         client.cleanup()

@@ -8,7 +8,7 @@ import heapq
 from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
 
 from scipy.special import logsumexp
 from scipy.special import softmax

@@ -30,7 +30,8 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.name, Report.DEFAULT_NAME)
 
     def test_init_sections(self):
-        report_section = SessionReportSection()
+        summary = {}
+        report_section = SessionReportSection(summary)
         section = [report_section]
         report = Report(self.temp_dir, sections=section)
         self.assertEqual(report.sections, section)
@@ -64,7 +65,8 @@ class TestReport(unittest.TestCase):
 
     def test_save(self):
         report = Report(self.temp_dir)
-        report_section = SessionReportSection()
+        summary = {}
+        report_section = SessionReportSection(summary)
         report.add(report_section)
         report.save()
         self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
@@ -113,7 +115,8 @@ class TestSessionReportSection(unittest.TestCase):
         }
 
     def test_init(self):
-        report_section = SessionReportSection()
+        summary = {}
+        report_section = SessionReportSection(summary)
         self.assertIsInstance(report_section, ReportSection)
         self.assertIsNotNone(report_section.style)
 
@@ -124,7 +127,8 @@ class TestSessionReportSection(unittest.TestCase):
         self.assertIsInstance(table, Flowable)
 
     def test_create_header(self):
-        report_section = SessionReportSection()
+        summary = {}
+        report_section = SessionReportSection(summary)
         header = report_section._create_header()
         self.assertIsInstance(header, Paragraph)
 
