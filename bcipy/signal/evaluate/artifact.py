@@ -34,14 +34,6 @@ log = getLogger(SESSION_LOG_FILENAME)
 
 from mne import Annotations
 
-# ARTIFACT DETECTION
-# ------------------
-# Allow setting of thresholds for voltage and EOG artifacts from the clients
-# We should be using frequency based labelling for EOG and voltage artifacts
-# No overlapping labels, if there is a voltage and an EOG (prefer the EOG label)
-# If we are given colabels, determine or return overlapping events only
-# Merge overlapping labels (keep the length, but merge them)
-
 
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
