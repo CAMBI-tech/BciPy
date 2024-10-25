@@ -1,5 +1,6 @@
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
+from typing import Optional
 from pathlib import Path
 
 from PyQt6 import QtGui
@@ -15,7 +16,7 @@ class FileDialog(QWidget):
 
     def __init__(self):
         super().__init__()
-        self.title = 'PyQt6 file dialogs - pythonspot.com'
+        self.title = 'File Dialog'
         self.width = 640
         self.height = 480
 
@@ -45,7 +46,7 @@ class FileDialog(QWidget):
                                                   options=self.options)
         return filename
 
-    def ask_directory(self, directory: str = "") -> str:
+    def ask_directory(self, directory: str = "", prompt: str = "Select Directory") -> str:
         """Opens a dialog window to select a directory.
 
         Returns
@@ -53,12 +54,15 @@ class FileDialog(QWidget):
         path or None
         """
         return QFileDialog.getExistingDirectory(self,
-                                                "Select Directory",
+                                                prompt,
                                                 directory=directory,
                                                 options=self.options)
 
 
-def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "", prompt="Select File") -> str:
+def ask_filename(
+        file_types: str = DEFAULT_FILE_TYPES,
+        directory: str = "",
+        prompt: str="Select File") -> str:
     """Prompt for a file.
 
     Parameters
@@ -87,7 +91,7 @@ def ask_filename(file_types: str = DEFAULT_FILE_TYPES, directory: str = "", prom
     return filename
 
 
-def ask_directory() -> str:
+def ask_directory(prompt: str = "Select Directory") -> str:
     """Prompt for a directory.
 
     Returns
@@ -100,9 +104,10 @@ def ask_directory() -> str:
     directory = ''
     if preferences.last_directory:
         directory = str(Path(preferences.last_directory).parent)
-    name = dialog.ask_directory(directory)
+    name = dialog.ask_directory(directory, prompt=prompt)
     if name and Path(name).is_dir():
         preferences.last_directory = name
+
     # Alternatively, we could use `app.closeAllWindows()`
     app.quit()
 
