@@ -7,7 +7,6 @@ omit =
         *test*
         *demo*
         *exceptions.py
-        */gui/*
 
 [report]
 exclude_lines =

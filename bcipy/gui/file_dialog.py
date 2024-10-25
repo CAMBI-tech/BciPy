@@ -1,6 +1,5 @@
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
-from typing import Optional
 from pathlib import Path
 
 from PyQt6 import QtGui
@@ -62,7 +61,7 @@ class FileDialog(QWidget):
 def ask_filename(
         file_types: str = DEFAULT_FILE_TYPES,
         directory: str = "",
-        prompt: str="Select File") -> str:
+        prompt: str = "Select File") -> str:
     """Prompt for a file.
 
     Parameters

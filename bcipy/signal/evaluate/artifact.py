@@ -42,6 +42,7 @@ from mne import Annotations
 # If we are given colabels, determine or return overlapping events only
 # Merge overlapping labels (keep the length, but merge them)
 
+
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
 
@@ -543,7 +544,9 @@ def write_mne_annotations(
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
     import argparse
 
