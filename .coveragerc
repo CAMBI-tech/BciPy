@@ -2,11 +2,15 @@
 [run]
 omit =
         *__init__*
+        *__main__*
         */usr/local/lib*
         *tests*
         *test*
         *demo*
         *exceptions.py
+        */gui/experiments/*
+        */gui/viewer/*
+        */gui/BCInterface.py
 
 [report]
 exclude_lines =
