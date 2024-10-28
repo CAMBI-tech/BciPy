@@ -38,7 +38,9 @@ from mne import Annotations
 class DefaultArtifactParameters(Enum):
     """Default Artifact Parameters.
 
-    These values are used as defaults for artifact analysis purposes.
+    These values are used as defaults for artifact analysis purposes. These values were determined through
+    experimentation and are used as a starting point for artifact detection. These values should be adjusted
+    based on the data being analyzed.
     """
 
     # Voltage
