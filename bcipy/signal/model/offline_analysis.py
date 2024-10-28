@@ -1,64 +1,47 @@
 # mypy: disable-error-code="attr-defined"
-# needed for the ERPTransformParams
 import json
 import logging
+import subprocess
 from pathlib import Path
-from typing import Tuple
+from typing import List
 
 import numpy as np
-import pandas as pd
-from matplotlib.figure import Figure
+
+import matplotlib.pyplot as plt
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold, KFold
-from sklearn.utils import resample
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME,
-                          STATIC_AUDIO_PATH, TRIGGER_FILENAME)
+                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME, DEFAULT_DEVICES_PATH,
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
+from bcipy.gui.alert import confirm
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
-from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
+from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
-from bcipy.helpers.task import relative_triggers
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import (visualize_centralized_data,
-                                         visualize_erp, visualize_gaze,
+                                         visualize_gaze,
                                          visualize_gaze_accuracies,
                                          visualize_gaze_inquiries,
                                          visualize_results_all_symbols)
+from bcipy.signal.model.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,
-                                                    KernelGP, KernelGPSampleAverage)
+                                                 KernelGP, KernelGPSampleAverage)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
-from matplotlib import pyplot as plt
-from scipy import stats
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
-def calculate_stats(train_data: np.ndarray):
-    '''
-    Calculate the mean and covariance of the training data
-    '''
-    mu = np.mean(train_data, axis=0)
-    sigma = np.cov(train_data.T)
-    
-    return mu, sigma
-
-def calculate_loglikelihoods(data, mu, sigma) -> np.ndarray:
-    # Find the likelihoods by insterting the test data into the pdf of each component
-    log_likelihoods = stats.multivariate_normal.logpdf(data, mu, sigma, allow_singular=True)
-
-    return log_likelihoods
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
     """Performs a train/test split on the provided data and labels, accounting for
@@ -94,41 +77,20 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def calculate_acc(predictions: int, counter: int):
-    '''
-    Compute performance characteristics on the provided test data and labels.
-
-    predictions: predicted labels for each test point per symbol
-    counter: true labels for each test point per symbol
-    '''
-    accuracy_per_symbol = np.sum(predictions == counter) / len(predictions) * 100
-
-    return accuracy_per_symbol
-
-
-def analyze_multimodal(eeg_data, 
-                       gaze_data, 
-                       parameters, 
-                       device_spec_eeg, 
-                       device_spec_gaze, 
-                       data_folder, 
-                       estimate_balanced_acc,
-                       save_figures=False, 
-                       show_figures=False):
+def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc: bool,
+                save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
     Extract timing information from trigger file.
     Apply filtering and preprocessing on the raw data.
     Reshape and label the data for the training procedure.
-    Fit the model to the training data. Use cross validation to select parameters.
-    Return performance measures on a separate test set.
+    Fit the model to the data. Use cross validation to select parameters.
     Pickle dump model into .pkl file
     Generate and [optional] save/show ERP figures.
 
     Parameters:
     -----------
-        eeg_data (RawData): RawData object containing the data to be analyzed.
-        gaze_data (RawData): RawData object containing the data to be analyzed.
+        erp_data (RawData): RawData object containing the data to be analyzed.
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
@@ -137,12 +99,11 @@ def analyze_multimodal(eeg_data,
         save_figures (bool): If true, saves ERP figures after training to the data folder.
         show_figures (bool): If true, shows ERP figures after training.
     """
-
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window")
     if trial_window is None:
         trial_window = (0.0, 0.5)
-    window_length = trial_window[1] - trial_window[0]  # eeg window length, in seconds
+    window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
@@ -153,28 +114,22 @@ def analyze_multimodal(eeg_data,
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
-    static_offset = parameters.get("static_trigger_offset")
-    # Get the flash time (for gaze analysis)
-    flash_time = parameters.get("time_flash")
+    static_offset = device_spec.static_offset
 
     log.info(
-        f"\nEEG Data processing settings: \n"
+        f"\nData processing settings: \n"
         f"{str(transform_params)} \n"
         f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
         f"Prestimulus Buffer: {prestim_length}s, Poststimulus Buffer: {buffer}s \n"
         f"Static offset: {static_offset}"
     )
-    eeg_channels = eeg_data.channels
-    eeg_type_amp = eeg_data.daq_type
-    eeg_sample_rate = eeg_data.sample_rate
-
-    gaze_channels = gaze_data.channels
-    gaze_type_amp = gaze_data.daq_type
-    gaze_sample_rate = gaze_data.sample_rate
+    channels = erp_data.channels
+    type_amp = erp_data.daq_type
+    sample_rate = erp_data.sample_rate
 
     # setup filtering
     default_transform = get_default_transform(
-        sample_rate_hz=eeg_sample_rate,
+        sample_rate_hz=sample_rate,
         notch_freq_hz=transform_params.notch_filter_frequency,
         bandpass_low=transform_params.filter_low,
         bandpass_high=transform_params.filter_high,
@@ -182,419 +137,94 @@ def analyze_multimodal(eeg_data,
         downsample_factor=transform_params.down_sampling_rate,
     )
 
-    log.info(f"Channels read from csv: {eeg_channels}")
-    log.info(f"Device type: {eeg_type_amp}, fs={eeg_sample_rate}")
-    log.info(f"Channels read from csv: {gaze_channels}")
-    log.info(f"Device type: {gaze_type_amp}, fs={gaze_sample_rate}")
-    eeg_channel_map = analysis_channels(eeg_channels, device_spec_eeg)
-    gaze_channel_map = analysis_channels(gaze_channels, device_spec_gaze)
+    log.info(f"Channels read from csv: {channels}")
+    log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
-    # The timestamp column [0] is already excluded.
-    eeg_channels_used = [eeg_channels[i] for i, keep in enumerate(eeg_channel_map) if keep == 1]
-    log.info(f'Channels used in eeg analysis: {eeg_channels_used}')
-
-    gaze_channels_used = [gaze_channels[i] for i, keep in enumerate(gaze_channel_map) if keep == 1]
-    log.info(f'Channels used in gaze analysis: {gaze_channels_used}')
-
-    # Define the model object before reshaping the data
     k_folds = parameters.get("k_folds")
-    eeg_model = PcaRdaKdeModel(k_folds=k_folds)
-    # Select between the two (or three) gaze models to test:
-    gaze_model = KernelGPSampleAverage() # change the name to gaussian process model
+    model = PcaRdaKdeModel(k_folds=k_folds)
 
-    # Process triggers.txt files for eeg data:
-    trigger_targetness, trigger_timing, inquiry_symbols = trigger_decoder(
+    # Process triggers.txt files
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         offset=static_offset,
         device_type='EEG'
     )
 
-    # Same as above, but with the 'prompt' triggers added for gaze analysis:
-    trigger_targetness_gaze, trigger_timing_gaze, trigger_symbols = trigger_decoder(
-        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        remove_pre_fixation=False,
-        exclusion=[
-            TriggerType.PREVIEW,
-            TriggerType.EVENT,
-            TriggerType.FIXATION,
-            TriggerType.SYSTEM,
-            TriggerType.OFFSET],
-        device_type='EYETRACKER',
-        apply_starting_offset=False
-    )
-    ''' Trigger_timing includes PROMPT and excludes FIXATION '''
-    
-    target_symbols = [trigger_symbols[idx] for idx, targetness in enumerate(trigger_targetness_gaze) if targetness == 'prompt']
-    inq_start = trigger_timing_gaze[1::11] # inquiry start times, exluding prompt and fixation
-
-    symbol_set = alphabet()
-
     # update the trigger timing list to account for the initial trial window
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    erp_data, fs_eeg = eeg_data.by_channel()
-    trajectory_data, fs_eye = gaze_data.by_channel() 
+    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
+    # The timestamp column [0] is already excluded.
+    channel_map = analysis_channels(channels, device_spec)
+    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    log.info(f'Channels used in analysis: {channels_used}')
 
-    # Reshaping EEG data:
-    eeg_inquiries, eeg_inquiry_labels, eeg_inquiry_timing = eeg_model.reshaper(
+    data, fs = erp_data.by_channel()
+
+    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
         trial_targetness_label=trigger_targetness,
         timing_info=corrected_trigger_timing,
-        eeg_data=erp_data,
-        sample_rate=eeg_sample_rate,
+        eeg_data=data,
+        sample_rate=sample_rate,
         trials_per_inquiry=trials_per_inquiry,
-        channel_map=eeg_channel_map,
+        channel_map=channel_map,
         poststimulus_length=window_length,
         prestimulus_length=prestim_length,
         transformation_buffer=buffer,
     )
-    # Size = Inquiries x Channels x Samples
 
-    # Reshaping gaze data:
-    gaze_inquiries_dict, gaze_inquiries_list, _ = gaze_model.reshaper(
-        inq_start_times=inq_start,
-        target_symbols=target_symbols,
-        gaze_data=trajectory_data,
-        sample_rate=gaze_sample_rate,
-        stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=10,
-        symbol_set=symbol_set
-    )
-    
-    # Visualize the raw gaze data:
-    figures = []
-    figure_handles = visualize_gaze(
-        gaze_data,
-        save_path=data_folder if save_figures else None,
-        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-        show=show_figures,
-        raw_plot=True,
-    )
-    figures.append(figure_handles)
-
-    ## More EEG preprocessing:
-    eeg_inquiries, fs = filter_inquiries(eeg_inquiries, default_transform, eeg_sample_rate)
-    eeg_inquiry_timing = update_inquiry_timing(eeg_inquiry_timing, downsample_rate)
+    inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
+    inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
-    # preprocessed_eeg_data = eeg_model.reshaper.extract_trials(eeg_inquiries, trial_duration_samples, eeg_inquiry_timing)
-    # we will extract the trials from the inquiries later
+    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
-    erp_labels = eeg_inquiry_labels.flatten().tolist()
+    labels = inquiry_labels.flatten().tolist()
 
-    
-    ## More gaze preprocessing:
-    preprocessed_gaze_data = np.zeros((len(gaze_inquiries_list), 4, 180))
-    # Extract left_x, left_y, right_x, right_y for each inquiry
-    for j in range(len(gaze_inquiries_list)):
-        left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_list[j])
-        preprocessed_gaze_data[j] = np.concatenate((left_eye.T, right_eye.T,), axis=0)
+    # train and save the model as a pkl file
+    log.info("Training model. This will take some time...")
+    model = PcaRdaKdeModel(k_folds=k_folds)
+    try:
+        model.fit(data, labels)
+        model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                             transform=default_transform,
+                                             evidence_type="ERP",
+                                             auc=model.auc)
+        log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    except Exception as e:
+        log.error(f"Error training model: {e}")
 
-    preprocessed_gaze_dict = {i: [] for i in symbol_set}
-    for i in symbol_set:
-        # Skip if there's no evidence for this symbol:
-        if len(gaze_inquiries_dict[i]) == 0:
-            continue
-        for j in range(len(gaze_inquiries_dict[i])):
-            left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_dict[i][j])
-            preprocessed_gaze_dict[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
-        preprocessed_gaze_dict[i] = np.array(preprocessed_gaze_dict[i])
-    
-    # Find the time averages for each symbol:
-    centralized_data_dict = {i: [] for i in symbol_set}
-    time_average_per_symbol = {i: [] for i in symbol_set}
-    for sym in symbol_set:
-    # Skip if there's no evidence for this symbol:
-        try: 
-            if len(gaze_inquiries_dict[sym]) == 0:
-                continue
-        except:
-            log.info(f"Error in symbol {sym}")
-            continue
-        
-        # with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
-        #         symbol_positions = json.load(params_file)
-
-        for j in range(len(preprocessed_gaze_dict[sym])):
-            temp = np.mean(preprocessed_gaze_dict[sym][j], axis=1)
-            time_average_per_symbol[sym].append(temp)
-            centralized_data_dict[sym].append(gaze_model.substract_mean(preprocessed_gaze_dict[sym][j], temp))  # Delta_t = X_t - mu
-        centralized_data_dict[sym] = np.array(centralized_data_dict[sym])
-        time_average_per_symbol[sym] = np.mean(np.array(time_average_per_symbol[sym]), axis=0)
-    # print(f"time_average for symbol {sym}: ", time_average[sym])
-
-    # Take the time average of the gaze data:
-    centralized_gaze_data = np.zeros_like(preprocessed_gaze_data)
-    for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
-        centralized_gaze_data[i] = gaze_model.substract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
-
-    '''Use bootstrap resampling for both EEG and Gaze data'''
-    log.info("Bootstrap sampling for EEG and Gaze data...")
-    n_iterations=10
-    eeg_acc = []
-    gaze_acc = []
-    fusion_acc = []
-    # selection length is the length of eeg or gaze data, whichever is smaller:
-    selection_length = min(len(eeg_inquiries[1]), len(preprocessed_gaze_data))
-    for iter in range(n_iterations):
-        # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
-        train_indices = resample(list(range(selection_length)), replace=True, n_samples=100)
-        test_indices = np.array([x for x in list(range(selection_length)) if x not in train_indices])
-        if len(test_indices) == 0:
-            break
-
-        train_data_eeg = eeg_inquiries[:, train_indices, :]
-        test_data_eeg = eeg_inquiries[:, test_indices, :]
-        eeg_inquiry_timing = np.array(eeg_inquiry_timing)
-        train_eeg_inquiry_timing = eeg_inquiry_timing[train_indices]
-        test_eeg_inquiry_timing = eeg_inquiry_timing[test_indices]
-        inquiry_symbols_test = np.array([])
-        for t_i in test_indices:
-            inquiry_symbols_test = np.append(inquiry_symbols_test, inquiry_symbols[t_i*10:(t_i+1)*10])
-        inquiry_symbols_test = inquiry_symbols_test.tolist()
-
-        # Now extract the inquiries from trials for eeg model fitting:
-        preprocessed_train_eeg = eeg_model.reshaper.extract_trials(train_data_eeg, trial_duration_samples, train_eeg_inquiry_timing)
-        preprocessed_test_eeg = eeg_model.reshaper.extract_trials(test_data_eeg, trial_duration_samples, test_eeg_inquiry_timing)
-
-        # train and save the eeg model a pkl file
-        log.info("Training model. This will take some time...")
-        # Flatten the labels (0=nontarget/1=target) prior to model fitting
-        erp_train_labels = eeg_inquiry_labels[train_indices].flatten().tolist()
-        # erp_test_labels = eeg_inquiry_labels[test_indices].flatten().tolist()
-        eeg_model.fit(preprocessed_train_eeg, erp_train_labels)
-        eeg_model.metadata = SignalModelMetadata(device_spec=device_spec_eeg,
-                                            transform=default_transform)
-        log.info(f"Training complete [AUC={eeg_model.auc:0.4f}]. Saving data...")
-        # save_model(eeg_model, Path(data_folder, f"model_{eeg_model.auc:0.4f}.pkl"))
-        preferences.signal_model_directory = data_folder
-
-        # extract train and test indices for gaze data:
-        centralized_gaze_data_train = centralized_gaze_data[train_indices]
-        gaze_train_labels = np.array([target_symbols[i] for i in train_indices])
-        gaze_data_test = preprocessed_gaze_data[test_indices]         # test set is NOT centralized
-        gaze_test_labels = np.array([target_symbols[i] for i in test_indices])
-        # generate a tuple that matches the index of the symbol with the symbol itself:
-        symbol_to_index = {symbol: i for i, symbol in enumerate(symbol_set)}
-        
-        # train and save the gaze model as a pkl file:
-        reshaped_data = centralized_gaze_data_train.reshape((len(centralized_gaze_data_train),720))
-        units = 1e4
-        reshaped_data *= units
-        cov_matrix = np.cov(reshaped_data, rowvar=False)
-        time_horizon = 9
-
-        # plt.imshow(cov_matrix)
-        # plt.colorbar()
-        # plt.show()
-        
-        for eye_coord_0 in range(4):
-            for eye_coord_1 in range(4):
-                for time_0 in range(180):
-                    for time_1 in range(180):
-                        l_ind = eye_coord_0 * 180 + time_0
-                        m_ind = eye_coord_1 * 180 + time_1
-                        if np.abs(time_1 - time_0) > time_horizon:
-                            cov_matrix[l_ind, m_ind] = 0
-        
-        # plt.imshow(cov_matrix)
-        # plt.colorbar()
-        # plt.show()
-        reshaped_mean = np.mean(reshaped_data, axis=0)
-
-        # eps = 5e+3
-        eps = 0
-        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix))*eps
-        try:
-            inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
-        except:
-            print("Singular matrix, using pseudo-inverse instead")
-            eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
-            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
-            # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
-        denominator_gaze = 0
-
-        # plt.subplot(1, 2, 1)
-        # plt.imshow(cov_matrix)
-        # plt.colorbar()
-        # plt.subplot(1, 2, 2)
-        # plt.imshow(regularized_cov_matrix)
-        # plt.colorbar()
-        plt.imshow(inv_cov_matrix)
-        plt.colorbar()
-        plt.show()
-
-        # Given the test data, compute the log likelihood ratios for each symbol,
-        # from eeg and gaze models:
-        eeg_log_likelihoods = np.zeros((len(gaze_data_test),(len(symbol_set))))
-        gaze_log_likelihoods = np.zeros((len(gaze_data_test),(len(symbol_set))))
-
-        # Save the max posterior and the second max posterior for each test point:
-        target_posteriors_gaze = np.zeros((len(gaze_data_test), 2))
-        target_posteriors_eeg = np.zeros((len(gaze_data_test), 2))
-        target_posteriors_fusion = np.zeros((len(gaze_data_test), 2))
-
-        # 1. Find cases where the gaze posterior
-        
-        counter_gaze = 0
-        counter_eeg = 0
-        counter_fusion = 0
-        for test_idx, test_data in enumerate(gaze_data_test):
-            numerator_gaze_list = []
-            diff_list = []
-            for idx, sym in enumerate(symbol_set):
-                # skip if there is no training example from the symbol
-                if time_average_per_symbol[sym] == []:
-                    gaze_log_likelihoods[test_idx, idx] = -100000 # set a very small value
-                else:
-                    central_data = gaze_model.substract_mean(test_data, time_average_per_symbol[sym])
-                    flattened_data = central_data.reshape((720,))
-                    flattened_data *= units
-                    diff = flattened_data - reshaped_mean
-                    diff_list.append(diff)
-                    numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2 # !!!!!!
-                    numerator_gaze_list.append(numerator)
-                    unnormalized_log_likelihood_gaze = numerator - denominator_gaze
-                    gaze_log_likelihoods[test_idx, idx] = unnormalized_log_likelihood_gaze
-            normalized_posterior_gaze_only = np.exp(gaze_log_likelihoods[test_idx, :])/np.sum(np.exp(gaze_log_likelihoods[test_idx, :]))   
-            # Find the max likelihood:
-            max_like_gaze = np.argmax(normalized_posterior_gaze_only)
-            
-            posterior_of_true_label_gaze = normalized_posterior_gaze_only[symbol_to_index[gaze_test_labels[test_idx]]]
-            top_competitor_gaze = np.sort(normalized_posterior_gaze_only)[-2]
-            target_posteriors_gaze[test_idx, 0] = posterior_of_true_label_gaze
-            target_posteriors_gaze[test_idx, 1] = top_competitor_gaze
-            # Check if it's the same as the target
-            if symbol_set[max_like_gaze] == gaze_test_labels[test_idx]:
-                counter_gaze += 1
-                
-            # to compute eeg likelihoods, take the next 10 indices of the eeg test data every time in this loop:
-            start = test_idx*10
-            end = (test_idx+1)*10
-            eeg_tst_data = preprocessed_test_eeg[:, start:end, :]
-            inq_sym = inquiry_symbols_test[start: end]
-            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(eeg_tst_data, inq_sym, alphabet())
-            unnormalized_log_likelihood_eeg = np.log(eeg_likelihood_ratios)
-            eeg_log_likelihoods[test_idx, :] = unnormalized_log_likelihood_eeg  
-            normalized_posterior_eeg_only = np.exp(eeg_log_likelihoods[test_idx, :])/np.sum(np.exp(eeg_log_likelihoods[test_idx, :]))
-            
-            max_like_eeg = np.argmax(normalized_posterior_eeg_only) 
-            top_competitor_eeg = np.sort(normalized_posterior_eeg_only)[-2]
-            posterior_of_true_label_eeg = normalized_posterior_eeg_only[symbol_to_index[gaze_test_labels[test_idx]]]
-            
-            target_posteriors_eeg[test_idx, 0] = posterior_of_true_label_eeg
-            target_posteriors_eeg[test_idx, 1] = top_competitor_eeg
-            if symbol_set[max_like_eeg] == gaze_test_labels[test_idx]:
-                counter_eeg += 1
-        
-            # Bayesian fusion update and decision making:
-            log_unnormalized_posterior = np.log(eeg_likelihood_ratios) + gaze_log_likelihoods[test_idx, :]
-            unnormalized_posterior = np.exp(log_unnormalized_posterior)
-            denominator = np.sum(unnormalized_posterior)
-            posterior = unnormalized_posterior/denominator  # normalized posterior
-            log_posterior = np.log(posterior)
-            max_posterior = np.argmax(log_posterior)
-            top_competitor_fusion = np.sort(log_posterior)[-2]
-            posterior_of_true_label_fusion = posterior[symbol_to_index[gaze_test_labels[test_idx]]]
-
-            target_posteriors_fusion[test_idx, 0] = posterior_of_true_label_fusion
-            target_posteriors_fusion[test_idx, 1] = top_competitor_fusion
-            if symbol_set[max_posterior] == gaze_test_labels[test_idx]:
-                counter_fusion += 1
-
-            # stop if posterior has nan values:
-            if posterior.any() == np.nan:
-                breakpoint()
-        
-        # print accuracy with only 3 decimals:
-        eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg/len(test_indices)))
-        gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze/len(test_indices)))
-        fusion_acc_in_iteration = float("{:.3f}".format(counter_fusion/len(test_indices)))
-        eeg_acc.append(eeg_acc_in_iteration)
-        gaze_acc.append(gaze_acc_in_iteration)
-        fusion_acc.append(fusion_acc_in_iteration)
-        print(f"Iteration: {iter}")
-        print(f"# Train samples: {len(train_indices)}")
-        print(f"# Test samples: {len(test_indices)}")
-        print(f"Gaze accuracy: {gaze_acc_in_iteration}, \nEeg acc: {eeg_acc_in_iteration}")
-        print(f"Fusion acc: {fusion_acc_in_iteration}")
-
-        # for all data points in the test set, plot the max posteriors vs second candidates for gaze, eeg and fusion:
-        plt.figure()
-        plt.scatter(target_posteriors_gaze[:, 1], target_posteriors_gaze[:, 0], label='Gaze')
-        plt.scatter(target_posteriors_eeg[:, 1], target_posteriors_eeg[:, 0], label='EEG')
-        plt.scatter(target_posteriors_fusion[:, 1], target_posteriors_fusion[:, 0], label='Fusion')
-        plt.legend()
-        plt.xlim(0, 1)
-        plt.ylim(0, 1)
-        plt.xlabel("Posterior of the top candidate")
-        plt.ylabel("Posterior of the target")
-        plt.title(f"Normalized posteriors for the true target vs top candidate across modalities")
-        plt.savefig(f"{data_folder}/posteriors_iteration_{iter}.png")
-
-        breakpoint()
-
-    # Save it to a csv file:
-    results = pd.DataFrame({'EEG': eeg_acc, 'Gaze': gaze_acc, 'Fusion': fusion_acc})
-    results.to_csv(f"{data_folder}/results.csv")
-    # breakpoint()
-    # Visualize the results
-    plt.bar(['EEG', 'Gaze', 'Fusion'], [np.mean(eeg_acc), np.mean(gaze_acc), np.mean(fusion_acc)])
-    plt.title(f"Average accuracy over N={n_iterations} iterations")
-    plt.ylabel("Test Accuracy (%)")
-    plt.ylim(0, 1)
-    # plt.show()
-    plt.savefig(f"{data_folder}/fusion_results.png")
-
-    print(f"Average EEG accuracy: {np.mean(eeg_acc)}")
-    print(f"Average Gaze accuracy: {np.mean(gaze_acc)}")
-    print(f"Average Fusion accuracy: {np.mean(fusion_acc)}")
-
-    breakpoint()
-    '''
-    # Using an 80/20 split, report on balanced accuracy
-    
-    if estimate_balanced_acc:
-        # Implement cross-validation for balanced accuracy
-        scores = []
-
-        skf = KFold(n_splits=5, shuffle=True, random_state=0)
-        data = data.swapaxes(0, 1)
-        for train_index, test_index in skf.split(data, labels):
-            train_data, test_data = data[train_index], data[test_index]
-            train_labels, test_labels = np.array(labels)[train_index], np.array(labels)[test_index]
+    try:
+        # Using an 80/20 split, report on balanced accuracy
+        if estimate_balanced_acc:
+            train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
             dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-            breakpoint()
-            # Swap axes back to original shape:
-            train_data = train_data.swapaxes(0, 1)
-            test_data = test_data.swapaxes(0, 1)
             dummy_model.fit(train_data, train_labels)
             probs = dummy_model.predict_proba(test_data)
             preds = probs.argmax(-1)
-            breakpoint()
             score = balanced_accuracy_score(test_labels, preds)
-            scores.append(score)
+            log.info(f"Balanced acc with 80/20 split: {score}")
+            model.metadata.balanced_accuracy = score
+            del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
 
-        average_score = np.mean(scores)
-        log.info(f"Cross-validated balanced accuracy: {average_score}")
+    except Exception as e:
+        log.error(f"Error calculating balanced accuracy: {e}")
 
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-        '''
+    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
+    preferences.signal_model_directory = data_folder
 
-    figure_handles = visualize_erp(
-        eeg_data,
-        eeg_channel_map,
-        trigger_timing,
-        erp_labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
-    return eeg_model, figure_handles
+    if save_figures or show_figures:
+        cmd = f'bcipy-erp-viz --session_path "{data_folder}" --parameters "{parameters["parameter_location"]}"'
+        if save_figures:
+            cmd += ' --save'
+        if show_figures:
+            cmd += ' --show'
+        subprocess.run(
+            cmd,
+            shell=True
+        )
+    return model
 
 
 def analyze_gaze(
@@ -1068,15 +698,16 @@ def analyze_gaze(
     return model, figures
 
 
+
 @report_execution_time
 def offline_analysis(
     data_folder: str = None,
     parameters: Parameters = None,
     alert_finished: bool = True,
-    estimate_balanced_acc: bool = True,
+    estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
-) -> Tuple[SignalModel, Figure]:
+) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
 
@@ -1093,12 +724,6 @@ def offline_analysis(
     - generates and [optional] saves/shows the ERP figure
     - [optional] alert the user finished processing
 
-    For gaze modeling, user can set one of the following 4 models with corresponding keywords:
-    Individual: Gaze model that fits different Gaussians/Gaussian Mixtures for each symbol.
-    Centralized: Gaze model that uses all symbols to fit a single Gaussian, by centralizing the input
-    GP: Multi-Output Gaussian Process 
-    GP_SampleAverage: Multi-Output Gaussian Process with centralized input.
-
     Parameters:
     ----------
         data_folder(str): folder of the data
@@ -1113,48 +738,65 @@ def offline_analysis(
     Returns:
     --------
         model (SignalModel): trained model
-        figure_handles (Figure): handles to the ERP figures
     """
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
 
+    # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
-        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+        Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-    active_devices = (spec for spec in devices_by_name.values()
+    # Load the active devices used during a session; this will be used to exclude inactive devices
+    active_devices_by_name = devices.load(
+        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+    active_devices = (spec for spec in active_devices_by_name.values()
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
-    eeg_data = load_raw_data(data_file_paths[0])
-    device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
-    gaze_data = load_raw_data(data_file_paths[1])
-    device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
+    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
+    assert len(data_file_paths) > 0, "No data files found for offline analysis."
 
-    # Check if device status is active before running multimodal
+    models = []
+    log.info(f"Starting offline analysis for {data_file_paths}")
+    for raw_data_path in data_file_paths:
+        raw_data = load_raw_data(raw_data_path)
+        device_spec = devices_by_name.get(raw_data.daq_type)
+            # extract relevant information from raw data object eeg
+        if device_spec.content_type == "EEG" and device_spec.status == "active":
+            eeg_data = raw_data
+            erp_model = analyze_erp(
+                raw_data,
+                parameters,
+                device_spec,
+                data_folder,
+                estimate_balanced_acc,
+                save_figures,
+                show_figures)
+            models.append(erp_model)
 
-      
-    # Analyze both EEG and Eyetracker data here
-    multi_model, multi_figure_handles = analyze_multimodal(
-                eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, 
-                  estimate_balanced_acc, save_figures, show_figures)
-            # models.append(erp_model)
-            # figure_handles.append(erp_figure_handles)
+        if device_spec.content_type == "Eyetracker" and device_spec.status == "active":
+            et_data = raw_data
+            et_model = analyze_gaze(
+                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
+            models.append(et_model)
 
-    # et_model, et_figure_handles = analyze_eeg(
-    #             gaze_data, parameters, device_spec_gaze, data_folder, save_figures, 
-    #             show_figures, model_type="GP_SampleAverage")
-    #         # models.append(et_model)
-    #         # figure_handles.append(et_figure_handles)
+    if len(models) > 1:
+        log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")
+        calculate_eeg_gaze_fusion_acc(
+            erp_model, et_model, eeg_data, et_data, alphabet(), parameters, data_folder)
 
     if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    # return multi_model, multi_figure_handles
+        log.info("Alerting Offline Analysis Complete")
+        results = [f"{model.name}: {model.auc}" for model in models]
+        confirm(f"Offline analysis complete! \n Results={results}")
+    log.info("Offline analysis complete")
+    return models
 
 
-if __name__ == "__main__":
+def main():
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -1165,13 +807,17 @@ if __name__ == "__main__":
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
-    parser.set_defaults(balanced=True)
-    parser.set_defaults(save_figures=True)
-    parser.set_defaults(show_figures=True)
+    parser.set_defaults(balanced=False)
+    parser.set_defaults(save_figures=False)
+    parser.set_defaults(show_figures=False)
     args = parser.parse_args()
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
+    log.info(
+        f"Starting offline analysis client with the following: Data={args.data_folder} || "
+        f"Save Figures={args.save_figures} || Show Figures={args.show_figures} || "
+        f"Alert={args.alert} || Calculate Balanced Accuracy={args.balanced}")
 
     offline_analysis(
         args.data_folder,
@@ -1180,4 +826,7 @@ if __name__ == "__main__":
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-    log.info("Offline Analysis complete.")
+
+
+if __name__ == "__main__":
+    main()

@@ -8,8 +8,9 @@ import threading
 import time
 
 from bcipy.acquisition.datastream.generator import random_data_generator
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class Producer(threading.Thread):

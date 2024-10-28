@@ -5,13 +5,13 @@ from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import resize_image
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 NONE_VALUES = ['0', '0.0']
 
@@ -161,6 +161,7 @@ class TriggerType(Enum):
     OFFSET = "offset"
     EVENT = "event"
     PREVIEW = "preview"
+    ARTIFACT = "artifact"
 
     @classmethod
     def list(cls) -> List[str]:

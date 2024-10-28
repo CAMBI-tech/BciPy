@@ -1,12 +1,14 @@
 # 2.0.0-rc.4
 
-Our last release candidate before the official 2.0 release!
+Our final release candidate before the official 2.0 release!
 
 ## Contributions
 
 - Multimodal Acquisition and Querying
     - Support for multiple devices in online querying #286
     - Support for trigger handling relative to a given device #293
+- Session Orchestrator
+    - New task protocol for orchestrating tasks in a session. This refactors several Task and Cli functionality #339
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
     - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
@@ -14,13 +16,30 @@ Our last release candidate before the official 2.0 release!
     - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
+- Report
+  - Functionality to generate a report in the form of a PDF #325
+- Offset Support
+  - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
 - Parameters
-    - Add a Range type parameter #285
+    - Add a Range type parameter #285 Add editable fields #340 Update parameters.json to seperate relevant parameters by task
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
-
+    - Fix GitHub actions build issues with macOS
+    - Fix occasionally failing test in `test_stimuli` #326
+- GUI Refactor
+  - Create new `BCIUI` class for simpler more straightforward UI creation.
+  - Create dedicated external stylesheet for global styling
+  - Rewrite Experiment Registry to use new GUI code
+  - Create intertask action UI
+- Task Return Object
+  - Create `TaskData` dataclass to be returned from tasks
+  - updates task `execute` methods to return an instance of `TaskData`
+  - Allows for optional storage of a save path and task dictionary in `TaskData`
+-Experiment Refactor
+  - Refactors the Experiment Field Collection GUI to be an action
+  - Allows task protocol to be defined in the orchestrator
 
 # 2.0.0-rc.3
 

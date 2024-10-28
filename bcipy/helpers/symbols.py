@@ -7,7 +7,7 @@ SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
 
 
-def alphabet(parameters=None, include_path=True):
+def alphabet(parameters=None, include_path=True, backspace=BACKSPACE_CHAR, space=SPACE_CHAR):
     """Alphabet.
 
     Function used to standardize the symbols we use as alphabet.
@@ -31,7 +31,7 @@ def alphabet(parameters=None, include_path=True):
                 stimulus_array.append(img)
         return stimulus_array
 
-    return list(ascii_uppercase) + [BACKSPACE_CHAR, SPACE_CHAR]
+    return list(ascii_uppercase) + [backspace, space]
 
 
 def qwerty_order(is_txt_stim: bool = True,
@@ -49,14 +49,17 @@ def qwerty_order(is_txt_stim: bool = True,
     return f"{row1}{row2}{row3}".index
 
 
-def frequency_order(is_txt_stim: bool = True) -> Callable:
+def frequency_order(
+        is_txt_stim: bool = True,
+        space: str = SPACE_CHAR,
+        backspace: str = BACKSPACE_CHAR) -> Callable:
     """Returns a function that can be used to sort the alphabet symbols
     in most frequently used order in the English language.
     """
     if not is_txt_stim:
         raise NotImplementedError(
             'Frequency ordering not implemented for images')
-    return f"ETAOINSHRDLCUMWFGYPBVKJXQZ{BACKSPACE_CHAR}{SPACE_CHAR}".index
+    return f"ETAOINSHRDLCUMWFGYPBVKJXQZ{backspace}{space}".index
 
 
 DEFAULT_SYMBOL_SET = alphabet()

@@ -44,10 +44,11 @@ if __name__ == '__main__':
     if not path:
         path = load_experimental_data()
 
-    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
+    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}',
+                                      value_cast=True)
 
     # extract all relevant parameters
-    trial_window = parameters.get("trial_window")
+    trial_window = parameters.get("trial_window", (0, 0.5))
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # The task buffer length defines the min time between two inquiries
@@ -59,11 +60,15 @@ if __name__ == '__main__':
     filter_high = parameters.get("filter_high")
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
-    static_offset = parameters.get("static_trigger_offset")
+
     raw_data = load_raw_data(Path(path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
+
+    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    static_offset = device_spec.static_offset
 
     # setup filtering
     default_transform = get_default_transform(
@@ -82,8 +87,6 @@ if __name__ == '__main__':
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
-    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
     channel_map = analysis_channels(channels, device_spec)
 
     save_path = None if not args.save else path

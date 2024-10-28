@@ -9,7 +9,7 @@ import soundfile as sf
 from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                    StimuliOrder, TargetPositions,
                                    TrialReshaper, alphabetize,
@@ -730,7 +730,6 @@ class TestStimuliGeneration(unittest.TestCase):
 
     def test_best_case_inquiry_gen_with_inq_constants(self):
         """Test best_case_rsvp_inq_gen with inquiry constants"""
-
         alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g']
         n = 5
 
@@ -761,9 +760,24 @@ class TestStimuliGeneration(unittest.TestCase):
         for letter in expected:
             self.assertTrue(letter in first_inq)
 
-        self.assertNotEqual(expected, first_inq, 'Should be in random order.')
         self.assertEqual([1] + ([0.2] * n), times[0])
         self.assertEqual(['red'] + (['white'] * n), colors[0])
+
+    def test_best_case_inq_gen_is_random(self):
+        """Test that best_case_inq_gen produces random results. While this test can technically fail,
+        the odds are incredibly low, around 1 in 1 million"""
+        samps = set()
+        for i in range(25):
+            alp = ['a', 'b', 'c', 'd', 'e', 'f', 'g', '<']
+            samples, _, _ = best_case_rsvp_inq_gen(
+                alp=alp,
+                session_stimuli=[0.1, 0.1, 0.1, 0.2, 0.2, 0.1, 0.2, 0.0],
+                stim_number=1,
+                stim_length=8,
+                is_txt=True,
+                inq_constants=['<'])
+            samps.add(tuple(samples[0]))
+        self.assertTrue(len(samps) > 1, '`best_case_rsvp_inq_gen` Should produce random results')
 
 
 class TestJitteredTiming(unittest.TestCase):

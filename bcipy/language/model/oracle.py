@@ -4,11 +4,12 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.symbols import BACKSPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.language.model.uniform import equally_probable
 
-logger = logging.getLogger()
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 TARGET_BUMP_MIN = 0.0
 TARGET_BUMP_MAX = 0.95

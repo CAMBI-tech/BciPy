@@ -15,7 +15,7 @@ from bcipy.signal.model.cross_validation import cross_validation
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 
 expected_output_folder = Path(__file__).absolute().parent.parent / "unit_test_expected_output"
 

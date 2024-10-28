@@ -1,10 +1,13 @@
 # mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
-from logging import Logger
-from typing import Any, List, Optional, Tuple, Union
+from enum import Enum
+from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
 
+from bcipy.display.components.button_press_handler import (
+    AcceptButtonPressHandler, ButtonPressHandler,
+    PreviewOnlyButtonPressHandler, RejectButtonPressHandler)
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.system_utils import get_screen_info
 
@@ -18,14 +21,15 @@ class Display(ABC):
     window: visual.Window = None
     timing_clock: Clock = None
     experiment_clock: Clock = None
-    logger: Logger = None
     stimuli_inquiry: List[str] = None
     stimuli_colors: List[str] = None
     stimuli_timing: List[float] = None
     task = None
+    info_text: List[Any] = None
+    first_stim_time: float = None
 
     @abstractmethod
-    def do_inquiry(self) -> List[float]:
+    def do_inquiry(self) -> List[Tuple[str, float]]:
         """Do inquiry.
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
@@ -62,7 +66,7 @@ class Display(ABC):
         """
         ...
 
-    def preview_inquiry(self) -> List[float]:
+    def preview_inquiry(self, *args, **kwargs) -> List[float]:
         """Preview Inquiry.
 
         Display an inquiry or instruction beforehand to the user. This should be called before do_inquiry.
@@ -126,7 +130,7 @@ def init_display_window(parameters):
 class StimuliProperties:
     """"Stimuli Properties.
 
-    An encapsulation of properties relevant to core stimuli presentation in an RSVP or Matrix paradigm.
+    An encapsulation of properties relevant to core stimuli presentation in a paradigm.
     """
 
     def __init__(
@@ -138,7 +142,8 @@ class StimuliProperties:
             stim_colors: Optional[List[str]] = None,
             stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
-            prompt_time: Optional[float] = None):
+            prompt_time: Optional[float] = None,
+            layout: Optional[str] = None):
         """Initialize Stimuli Parameters.
 
         stim_font(List[str]): Ordered list of colors to apply to information stimuli
@@ -150,6 +155,8 @@ class StimuliProperties:
         stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
         is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
         prompt_time(float): Time to display target prompt for at the beginning of inquiry
+        layout(str): Layout of stimuli on the screen (ex. 'ALPHABET' or 'QWERTY').
+            This is only used for matrix displays.
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
@@ -161,6 +168,7 @@ class StimuliProperties:
         self.stim_length = len(self.stim_inquiry)
         self.sti = None
         self.prompt_time = prompt_time
+        self.layout = layout
 
     def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
         """"Build Initial Stimuli.
@@ -236,6 +244,13 @@ class InformationProperties:
         return self.text_stim
 
 
+class ButtonPressMode(Enum):
+    """Represents the possible meanings for a button press (when using an Inquiry Preview.)"""
+    NOTHING = 0
+    ACCEPT = 1
+    REJECT = 2
+
+
 class PreviewInquiryProperties:
     """"Preview Inquiry Properties.
     An encapsulation of properties relevant to preview_inquiry() operation.
@@ -243,12 +258,15 @@ class PreviewInquiryProperties:
 
     def __init__(
             self,
+            preview_on: bool,
             preview_only: bool,
             preview_inquiry_length: float,
             preview_inquiry_progress_method: int,
             preview_inquiry_key_input: str,
             preview_inquiry_isi: float):
         """Initialize Inquiry Preview Parameters.
+
+        preview_on(bool): If True, display an inquiry preview before the main inquiry.
         preview_only(bool): If True, only preview the inquiry and do not probe for response
         preview_inquiry_length(float): Length of time in seconds to present the inquiry preview
         preview_inquiry_progress_method(int): Method of progression for inquiry preview.
@@ -256,11 +274,50 @@ class PreviewInquiryProperties:
         preview_inquiry_key_input(str): Defines which key should be listened to for progressing
         preview_inquiry_isi(float): Length of time after displaying the inquiry preview to display a blank screen
         """
+        self.preview_on = preview_on
         self.preview_inquiry_length = preview_inquiry_length
         self.preview_inquiry_key_input = preview_inquiry_key_input
         self.press_to_accept = True if preview_inquiry_progress_method == 1 else False
         self.preview_only = preview_only
         self.preview_inquiry_isi = preview_inquiry_isi
+
+
+class PreviewParams(NamedTuple):
+    """Parameters relevant for the Inquiry Preview functionality.
+
+    Create from an existing Parameters instance using:
+    >>> parameters.instantiate(PreviewParams)
+    """
+    show_preview_inquiry: bool
+    preview_inquiry_length: float
+    preview_inquiry_key_input: str
+    preview_inquiry_progress_method: int
+    preview_inquiry_isi: float
+
+    @property
+    def button_press_mode(self):
+        """Mode indicated by the inquiry progress method."""
+        return ButtonPressMode(self.preview_inquiry_progress_method)
+
+
+def get_button_handler_class(
+        mode: ButtonPressMode) -> Type[ButtonPressHandler]:
+    """Get the appropriate handler constructor for the given button press mode."""
+    mapping = {
+        ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
+        ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
+        ButtonPressMode.REJECT: RejectButtonPressHandler
+    }
+    return mapping[mode]
+
+
+def init_preview_button_handler(params: PreviewParams,
+                                experiment_clock: Clock) -> ButtonPressHandler:
+    """"Returns a button press handler for inquiry preview."""
+    make_handler = get_button_handler_class(params.button_press_mode)
+    return make_handler(max_wait=params.preview_inquiry_length,
+                        key_input=params.preview_inquiry_key_input,
+                        clock=experiment_clock)
 
 
 class VEPStimuliProperties(StimuliProperties):

@@ -1,21 +1,19 @@
 import subprocess
 import sys
-
+import logging
 from typing import List
 
-from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_IMAGES_PATH
-from bcipy.gui.main import (
-    AlertMessageResponse,
-    AlertMessageType,
-    AlertResponse,
-    app,
-    BCIGui,
-    contains_special_characters,
-    contains_whitespaces,
-    invalid_length,
-)
-from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
-from bcipy.task import TaskType
+from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
+                          STATIC_IMAGES_PATH, PROTOCOL_LOG_FILENAME)
+from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
+                            AlertResponse, BCIGui, app,
+                            contains_special_characters, contains_whitespaces,
+                            invalid_length)
+from bcipy.helpers.load import (copy_parameters, load_experiments,
+                                load_json_parameters, load_users)
+from bcipy.task import TaskRegistry
+
+logger = logging.getLogger(PROTOCOL_LOG_FILENAME)
 
 
 class BCInterface(BCIGui):
@@ -25,7 +23,7 @@ class BCInterface(BCIGui):
         editing and loading, and offline analysis execution.
     """
 
-    tasks = TaskType.list()
+    tasks = TaskRegistry().list()
 
     default_text = '...'
     padding = 20
@@ -34,7 +32,7 @@ class BCInterface(BCIGui):
     max_length = 25
     min_length = 1
     timeout = 3
-    font = 'Consolas'
+    font = 'Courier New'
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -317,9 +315,11 @@ class BCInterface(BCIGui):
                 else:
                     return None
 
-            subprocess.call(
+            output = subprocess.check_output(
                 f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
                 shell=True)
+            if output:
+                self.parameter_location = output.decode().strip()
 
     def check_input(self) -> bool:
         """Check Input.
@@ -336,17 +336,18 @@ class BCInterface(BCIGui):
         try:
             if not self.check_user_id():
                 return False
-            if self.experiment == BCInterface.default_text:
+
+            if self.experiment == BCInterface.default_text and self.task == BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select or create an Experiment',
+                    message='Please select an Experiment or Task for execution',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
-            if self.task == BCInterface.default_text:
+            if self.experiment != BCInterface.default_text and self.task != BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select a Task',
+                    message='Please select only an Experiment or Task',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
@@ -410,13 +411,25 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.INFO,
                 message_response=AlertMessageResponse.OTE,
                 message_timeout=self.task_start_timeout)
-            cmd = (
-                f'bcipy -e "{self.experiment}" '
-                f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
-            )
+            if self.task != BCInterface.default_text:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
+                )
+            else:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -e "{self.experiment}" -p "{self.parameter_location}"'
+                )
             if self.alert:
                 cmd += ' -a'
-            subprocess.Popen(cmd, shell=True)
+            output = subprocess.run(cmd, shell=True)
+            if output.returncode != 0:
+                self.throw_alert_message(
+                    title='BciPy Alert',
+                    message=f'Error: {output.stderr.decode()}',
+                    message_type=AlertMessageType.CRIT,
+                    message_response=AlertMessageResponse.OTE)
 
             if self.autoclose:
                 self.close()
@@ -427,7 +440,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = f'python {BCIPY_ROOT}/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
+            cmd = f'bcipy-train --alert --p "{self.parameter_location}" -v -s'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:

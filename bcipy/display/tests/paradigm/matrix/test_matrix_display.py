@@ -7,6 +7,7 @@ from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
 
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import TaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay, SymbolDuration
 
 # Define some reusable elements to test Matrix Display with
@@ -18,7 +19,8 @@ TEST_STIM = StimuliProperties(
     stim_inquiry=['A'],
     stim_colors=[],
     stim_timing=[0.1],
-    is_txt_stim=True)
+    is_txt_stim=True,
+    layout='QWERTY')
 
 TEST_INFO = InformationProperties(
     info_color=['White'],
@@ -39,10 +41,11 @@ class TestMatrixDisplay(unittest.TestCase):
         self.window = mock({"units": "norm", "size": (2.0, 2.0)})
         self.experiment_clock = mock()
         self.static_clock = mock()
-        self.text_stim_mock = mock({'pos': (0, 0)}, spec=psychopy.visual.TextStim)
+        self.text_stim_mock = mock({'pos': (0, 0)},
+                                   spec=psychopy.visual.TextStim)
         when(self.text_stim_mock).setOpacity(...).thenReturn()
         when(self.text_stim_mock).setColor(...).thenReturn()
-        when(self.text_stim_mock).draw(...).thenReturn()
+        when(self.text_stim_mock).draw().thenReturn()
 
         # grid item
         when(psychopy.visual).TextStim(
@@ -99,13 +102,17 @@ class TestMatrixDisplay(unittest.TestCase):
         unstub()
 
     def test_information_properties_set_correctly(self):
-        self.assertEqual(self.matrix.info_text, self.info.build_info_text(self.window))
+        self.assertEqual(self.matrix.info_text,
+                         self.info.build_info_text(self.window))
 
     def test_schedule_to(self):
         # Test schedule_to method correctly sets stim inquiry, timing, and colors to given parameters.
-        self.matrix.schedule_to(self.stimuli.stim_inquiry, self.stimuli.stim_timing, self.stimuli.stim_colors)
+        self.matrix.schedule_to(self.stimuli.stim_inquiry,
+                                self.stimuli.stim_timing,
+                                self.stimuli.stim_colors)
 
-        self.assertEqual(self.matrix.stimuli_inquiry, self.stimuli.stim_inquiry)
+        self.assertEqual(self.matrix.stimuli_inquiry,
+                         self.stimuli.stim_inquiry)
         self.assertEqual(self.matrix.stimuli_timing, self.stimuli.stim_timing)
 
     def test_do_inquiry(self):
@@ -129,16 +136,91 @@ class TestMatrixDisplay(unittest.TestCase):
         verify(self.matrix, times=1).prompt_target(target)
         verify(self.matrix, times=1).animate_scp(fixation, stim_durations)
 
+    def test_do_inquiry_with_preview_accepted(self):
+        """Verify that the symbols are animated following an inquiry preview
+        in which the user accepts the input."""
+        preview_config = PreviewParams(show_preview_inquiry=True,
+                                       preview_inquiry_length=2,
+                                       preview_inquiry_key_input='return',
+                                       preview_inquiry_progress_method=2,
+                                       preview_inquiry_isi=1)
+        matrix = MatrixDisplay(window=self.window,
+                               experiment_clock=self.experiment_clock,
+                               stimuli=self.stimuli,
+                               task_bar=self.task_bar_mock,
+                               info=self.info,
+                               preview_config=preview_config)
+        when(matrix)._trigger_pulse().thenReturn()
+
+        stimuli = ['X', '+', 'A', 'B', 'C']
+        timing = [0.5, 1.0, 0.2, 0.2, 0.2]
+
+        target = SymbolDuration('X', 0.5)
+        fixation = SymbolDuration('+', 1.0)
+        stim_durations = [
+            SymbolDuration(*sti)
+            for sti in [('A', 0.2), ('B', 0.2), ('C', 0.2)]
+        ]
+
+        when(matrix).prompt_target(any()).thenReturn(0.0)
+        when(matrix).animate_scp(any(), any()).thenReturn([])
+        when(matrix).preview_inquiry(any()).thenReturn(True)
+
+        matrix.schedule_to(stimuli, timing, [])
+        matrix.do_inquiry()
+
+        verify(matrix, times=1)._trigger_pulse()
+        verify(matrix, times=1).prompt_target(target)
+        verify(matrix, times=1).preview_inquiry(stim_durations)
+        verify(matrix, times=1).animate_scp(fixation, stim_durations)
+
+    def test_do_inquiry_with_preview_rejected(self):
+        """Test that if an inquiry preview is rejected the inquiry does not
+        animate."""
+        preview_config = PreviewParams(show_preview_inquiry=True,
+                                       preview_inquiry_length=2,
+                                       preview_inquiry_key_input='return',
+                                       preview_inquiry_progress_method=2,
+                                       preview_inquiry_isi=1)
+        matrix = MatrixDisplay(window=self.window,
+                               experiment_clock=self.experiment_clock,
+                               stimuli=self.stimuli,
+                               task_bar=self.task_bar_mock,
+                               info=self.info,
+                               preview_config=preview_config)
+        when(matrix)._trigger_pulse().thenReturn()
+
+        stimuli = ['X', '+', 'A', 'B', 'C']
+        timing = [0.5, 1.0, 0.2, 0.2, 0.2]
+
+        target = SymbolDuration('X', 0.5)
+        fixation = SymbolDuration('+', 1.0)
+        stim_durations = [
+            SymbolDuration(*sti)
+            for sti in [('A', 0.2), ('B', 0.2), ('C', 0.2)]
+        ]
+
+        when(matrix).prompt_target(any()).thenReturn(0.0)
+        when(matrix).preview_inquiry(any()).thenReturn(False)
+        when(matrix).animate_scp(any(), any()).thenReturn([])
+
+        matrix.schedule_to(stimuli, timing, [])
+        matrix.do_inquiry()
+
+        verify(matrix, times=1)._trigger_pulse()
+        verify(matrix, times=1).prompt_target(target)
+        verify(matrix, times=1).preview_inquiry(stim_durations)
+        verify(matrix, times=0).animate_scp(fixation, stim_durations)
+
     def test_build_grid(self):
         # mock the text stims and increment_position
-        when(psychopy.visual).TextStim(
-            win=self.window,
-            height=any(),
-            text=any(),
-            color=any(),
-            pos=any(),
-            opacity=any()
-        ).thenReturn(self.text_stim_mock)
+        when(psychopy.visual).TextStim(win=self.window,
+                                       height=any(),
+                                       text=any(),
+                                       color=any(),
+                                       pos=any(),
+                                       opacity=any()).thenReturn(
+                                           self.text_stim_mock)
 
         sym_length = len(self.matrix.symbol_set)
         grid = self.matrix.build_grid()
@@ -152,13 +234,12 @@ class TestMatrixDisplay(unittest.TestCase):
 
     def test_animate_scp(self):
         # mock the text stims and window
-        when(psychopy.visual).TextStim(
-            win=self.window,
-            height=any(),
-            text=any(),
-            pos=any(),
-            opacity=any()
-        ).thenReturn(self.text_stim_mock)
+        when(psychopy.visual).TextStim(win=self.window,
+                                       height=any(),
+                                       text=any(),
+                                       pos=any(),
+                                       opacity=any()).thenReturn(
+                                           self.text_stim_mock)
         when(self.matrix.window).callOnFlip(any(), any(), any()).thenReturn()
         when(self.matrix.window).callOnFlip(any(), any()).thenReturn()
         # mock the drawing of text stims

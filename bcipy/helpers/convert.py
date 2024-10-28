@@ -4,7 +4,7 @@ import logging
 import os
 import tarfile
 from pathlib import Path
-from typing import Dict, List, Tuple, Optional, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import mne
 import numpy as np
@@ -12,14 +12,15 @@ from mne.io import RawArray
 from pyedflib import FILETYPE_BDFPLUS, FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
+from bcipy.acquisition.devices import preconfigured_device
 from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.triggers import trigger_decoder, trigger_durations
 from bcipy.signal.process import Composition, get_default_transform
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 FILE_LENGTH_LIMIT = 150
 
@@ -177,6 +178,7 @@ def pyedf_convert(data_dir: str,
                                   value_cast=True)
     data = load_raw_data(str(Path(data_dir, f'{RAW_DATA_FILENAME}.csv')))
     fs = data.sample_rate
+    device_spec = preconfigured_device(data.daq_type)
     if pre_filter:
         default_transform = get_default_transform(
             sample_rate_hz=data.sample_rate,
@@ -194,7 +196,7 @@ def pyedf_convert(data_dir: str,
     else:
         raw_data, _ = data.by_channel()
     durations = trigger_durations(params) if use_event_durations else {}
-    static_offset = params['static_trigger_offset']
+    static_offset = device_spec.static_offset
     logger.info(f'Static offset: {static_offset}')
 
     trigger_type, trigger_timing, trigger_label = trigger_decoder(

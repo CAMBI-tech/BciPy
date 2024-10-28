@@ -6,13 +6,14 @@ from typing import List, Optional, Type
 import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.stimuli import TrialReshaper
 from bcipy.signal.model import SignalModel
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class EvidenceEvaluator:

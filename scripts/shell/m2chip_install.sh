@@ -1,6 +1,6 @@
 """Mac M2 install script. 
 
-This script is intended to be run from the root of the BciPy repository. It may work for M1 chips, but
+This script is intended to be run from the root of the BciPy repository. It has been tested on M2 and M3 chips. It may work for M1 chips, but
 this has not been tested and may require use of Rosetta 2.
 
 This script will install the necessary dependencies for the M2 chip on a Mac. It will also install

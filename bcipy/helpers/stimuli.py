@@ -21,13 +21,13 @@ from pandas import Series
 from PIL import Image
 from psychopy import core
 
-from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 NO_TARGET_INDEX = None
 
@@ -88,6 +88,16 @@ class InquirySchedule(NamedTuple):
     stimuli: List[Any]
     durations: Union[List[List[float]], List[float]]
     colors: Union[List[List[str]], List[str]]
+
+    def inquiries(self) -> Iterator[Tuple]:
+        """Generator that iterates through each Inquiry. Yields tuples of
+        (stim, duration, color)."""
+        count = len(self.stimuli)
+        index = 0
+        while index < count:
+            yield (self.stimuli[index], self.durations[index],
+                   self.colors[index])
+            index += 1
 
 
 class Reshaper(ABC):
@@ -400,32 +410,47 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
-def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[List[float]]:
+def update_inquiry_timing(timing: List[List[int]], downsample: int) -> List[List[int]]:
     """Update inquiry timing to reflect downsampling."""
-
     for i, inquiry in enumerate(timing):
         for j, time in enumerate(inquiry):
-            timing[i][j] = time // downsample
+            timing[i][j] = int(time // downsample)
 
     return timing
 
 
 def mne_epochs(mne_data: RawArray,
-               trigger_timing: List[float],
                trial_length: float,
-               trigger_labels: List[int],
-               baseline: Optional[Tuple[Any, float]] = None) -> Epochs:
+               trigger_timing: Optional[List[float]] = None,
+               trigger_labels: Optional[List[int]] = None,
+               baseline: Optional[Tuple[Any, float]] = None,
+               reject_by_annotation: bool = False,
+               preload: bool = False) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
     each may be accessed by numbered order. Ex. first_class = epochs['1'], second_class = epochs['2']
     """
-    annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
-    mne_data.set_annotations(annotations)
-    events_from_annot, _ = mne.events_from_annotations(mne_data)
-    if not baseline:
-        baseline = (None, 0.0)
-    return Epochs(mne_data, events_from_annot, tmax=trial_length, baseline=baseline)
+    old_annotations = mne_data.annotations
+    if trigger_timing and trigger_labels:
+        new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+        all_annotations = new_annotations + old_annotations
+    else:
+        all_annotations = old_annotations
+
+    tmp_data = mne_data.copy()
+    tmp_data.set_annotations(all_annotations)
+
+    events_from_annot, _ = mne.events_from_annotations(tmp_data)
+    return Epochs(
+        mne_data,
+        events_from_annot,
+        baseline=baseline,
+        tmax=trial_length,
+        tmin=-0.05,
+        proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
+        reject_by_annotation=reject_by_annotation,
+        preload=preload)
 
 
 def alphabetize(stimuli: List[str]) -> List[str]:

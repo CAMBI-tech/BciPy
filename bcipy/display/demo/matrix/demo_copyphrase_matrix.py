@@ -8,6 +8,7 @@ from psychopy import core
 from bcipy.display import (InformationProperties, StimuliProperties,
                            init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
 font = "Overpass Mono"
@@ -25,7 +26,8 @@ inter_stim_buffer = .5
 stim_properties = StimuliProperties(stim_font=font,
                                     stim_pos=(-0.6, 0.4),
                                     stim_height=0.17,
-                                    is_txt_stim=True)
+                                    is_txt_stim=True,
+                                    layout='ALP')
 
 # Initialize Stimulus
 window_parameters = {
@@ -72,13 +74,18 @@ task_bar = CopyPhraseTaskBar(win,
                              spelled_text='COPY_PHA',
                              colors=['white', 'green'],
                              font=font)
-
+preview_config = PreviewParams(show_preview_inquiry=True,
+                               preview_inquiry_length=2,
+                               preview_inquiry_key_input='return',
+                               preview_inquiry_progress_method=0,
+                               preview_inquiry_isi=1)
 display = MatrixDisplay(win,
                         experiment_clock,
                         stim_properties,
                         task_bar,
                         info,
-                        should_prompt_target=False)
+                        should_prompt_target=False,
+                        preview_config=preview_config)
 
 counter = 0
 

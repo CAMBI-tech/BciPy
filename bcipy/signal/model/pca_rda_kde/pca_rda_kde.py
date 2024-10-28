@@ -4,7 +4,7 @@ from typing import List
 
 import numpy as np
 
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
@@ -18,6 +18,7 @@ from bcipy.signal.model.pipeline import Pipeline
 
 class PcaRdaKdeModel(SignalModel):
     reshaper: InquiryReshaper = InquiryReshaper()
+    name = "pca_rda_kde"
 
     def __init__(self, k_folds: int = 10, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
