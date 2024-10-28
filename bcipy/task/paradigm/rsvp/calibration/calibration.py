@@ -6,7 +6,6 @@ from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.triggers import TriggerType
 from bcipy.task.calibration import BaseCalibrationTask
 
 
@@ -31,18 +30,6 @@ class RSVPCalibrationTask(BaseCalibrationTask):
     """
     name = 'RSVP Calibration'
     paradigm = 'RSVP'
-
-    def trigger_type(self, symbol: str, target: str,
-                     index: int) -> TriggerType:
-        if index == 0:
-            return TriggerType.PROMPT
-        if symbol == 'inquiry_preview':
-            return TriggerType.PREVIEW
-        if symbol == '+':
-            return TriggerType.FIXATION
-        if target == symbol:
-            return TriggerType.TARGET
-        return TriggerType.NONTARGET
 
     def init_display(self) -> Display:
         return init_calibration_display_task(self.parameters, self.window,

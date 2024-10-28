@@ -895,7 +895,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if symbol == "inquiry_preview":
             return TriggerType.PREVIEW
-        if "bcipy_key_press" in symbol:
+        if "key_press" in symbol:
             return TriggerType.EVENT
         if symbol == "+":
             return TriggerType.FIXATION

@@ -73,6 +73,8 @@ class RSVPDisplay(Display):
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
         self.stimuli_font = stimuli.stim_font
+        # Note: there is a bug in TextBox2 that prevents certain custom fonts from being used. This is to avoid that.
+        self.textbox_font = 'Consolas'
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
         self.is_txt_stim = stimuli.is_txt_stim
@@ -271,13 +273,12 @@ class RSVPDisplay(Display):
         text = ' '.join(self.stimuli_inquiry).split('+ ')[1]
 
         return self._create_stimulus(
-            0.12,
+            self.preview_params.preview_box_text_size,
             stimulus=text,
             units='height',
             stimuli_position=self.stimuli_pos,
             mode='textbox',
-            align_text='left',
-            wrap_width=0.025)
+            align_text='left')
 
     def _generate_inquiry(self) -> list:
         """Generate inquiry.
@@ -439,9 +440,11 @@ class RSVPDisplay(Display):
                 borderWidth=2,
                 borderColor='white',
                 units=units,
-                font=self.stimuli_font,
+                padding=0.05,
+                font=self.textbox_font,
                 letterHeight=height,
-                size=[.5, .5],
+                size=[.55, .55],
                 pos=stimuli_position,
                 alignment=align_text,
+                editable=False,
             )
