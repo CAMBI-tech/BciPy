@@ -261,6 +261,17 @@ def analyze_multimodal(eeg_data,
         num_stimuli_per_inquiry=10,
         symbol_set=symbol_set
     )
+    
+    # Visualize the raw gaze data:
+    figures = []
+    figure_handles = visualize_gaze(
+        gaze_data,
+        save_path=data_folder if save_figures else None,
+        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
+        show=show_figures,
+        raw_plot=True,
+    )
+    figures.append(figure_handles)
 
     ## More EEG preprocessing:
     eeg_inquiries, fs = filter_inquiries(eeg_inquiries, default_transform, eeg_sample_rate)
@@ -320,11 +331,16 @@ def analyze_multimodal(eeg_data,
 
     '''Use bootstrap resampling for both EEG and Gaze data'''
     log.info("Bootstrap sampling for EEG and Gaze data...")
-    n_iterations=1
-    for i in range(n_iterations):
+    n_iterations=10
+    eeg_acc = []
+    gaze_acc = []
+    fusion_acc = []
+    # selection length is the length of eeg or gaze data, whichever is smaller:
+    selection_length = min(len(eeg_inquiries[1]), len(preprocessed_gaze_data))
+    for iter in range(n_iterations):
         # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
-        train_indices = resample(list(range(100)), replace=True, n_samples=150, random_state=0)
-        test_indices = np.array([x for x in list(range(100)) if x not in train_indices])
+        train_indices = resample(list(range(selection_length)), replace=True, n_samples=100)
+        test_indices = np.array([x for x in list(range(selection_length)) if x not in train_indices])
         if len(test_indices) == 0:
             break
 
@@ -333,7 +349,10 @@ def analyze_multimodal(eeg_data,
         eeg_inquiry_timing = np.array(eeg_inquiry_timing)
         train_eeg_inquiry_timing = eeg_inquiry_timing[train_indices]
         test_eeg_inquiry_timing = eeg_inquiry_timing[test_indices]
-
+        inquiry_symbols_test = np.array([])
+        for t_i in test_indices:
+            inquiry_symbols_test = np.append(inquiry_symbols_test, inquiry_symbols[t_i*10:(t_i+1)*10])
+        inquiry_symbols_test = inquiry_symbols_test.tolist()
 
         # Now extract the inquiries from trials for eeg model fitting:
         preprocessed_train_eeg = eeg_model.reshaper.extract_trials(train_data_eeg, trial_duration_samples, train_eeg_inquiry_timing)
@@ -343,7 +362,7 @@ def analyze_multimodal(eeg_data,
         log.info("Training model. This will take some time...")
         # Flatten the labels (0=nontarget/1=target) prior to model fitting
         erp_train_labels = eeg_inquiry_labels[train_indices].flatten().tolist()
-        erp_test_labels = eeg_inquiry_labels[test_indices].flatten().tolist()
+        # erp_test_labels = eeg_inquiry_labels[test_indices].flatten().tolist()
         eeg_model.fit(preprocessed_train_eeg, erp_train_labels)
         eeg_model.metadata = SignalModelMetadata(device_spec=device_spec_eeg,
                                             transform=default_transform)
@@ -351,19 +370,188 @@ def analyze_multimodal(eeg_data,
         # save_model(eeg_model, Path(data_folder, f"model_{eeg_model.auc:0.4f}.pkl"))
         preferences.signal_model_directory = data_folder
 
-        # Given the test data, compute the log likelihood ratios for each symbol:
-        eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(preprocessed_test_eeg, inquiry_symbols, alphabet())
-        eeg_log_likelihood_ratios = np.log(eeg_likelihood_ratios)
+        # extract train and test indices for gaze data:
+        centralized_gaze_data_train = centralized_gaze_data[train_indices]
+        gaze_train_labels = np.array([target_symbols[i] for i in train_indices])
+        gaze_data_test = preprocessed_gaze_data[test_indices]         # test set is NOT centralized
+        gaze_test_labels = np.array([target_symbols[i] for i in test_indices])
+        # generate a tuple that matches the index of the symbol with the symbol itself:
+        symbol_to_index = {symbol: i for i, symbol in enumerate(symbol_set)}
+        
+        # train and save the gaze model as a pkl file:
+        reshaped_data = centralized_gaze_data_train.reshape((len(centralized_gaze_data_train),720))
+        units = 1e4
+        reshaped_data *= units
+        cov_matrix = np.cov(reshaped_data, rowvar=False)
+        time_horizon = 9
+
+        # plt.imshow(cov_matrix)
+        # plt.colorbar()
+        # plt.show()
+        
+        for eye_coord_0 in range(4):
+            for eye_coord_1 in range(4):
+                for time_0 in range(180):
+                    for time_1 in range(180):
+                        l_ind = eye_coord_0 * 180 + time_0
+                        m_ind = eye_coord_1 * 180 + time_1
+                        if np.abs(time_1 - time_0) > time_horizon:
+                            cov_matrix[l_ind, m_ind] = 0
+        
+        # plt.imshow(cov_matrix)
+        # plt.colorbar()
+        # plt.show()
+        reshaped_mean = np.mean(reshaped_data, axis=0)
+
+        # eps = 5e+3
+        eps = 0
+        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix))*eps
+        try:
+            inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
+        except:
+            print("Singular matrix, using pseudo-inverse instead")
+            eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
+            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
+            # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
+        denominator_gaze = 0
+
+        # plt.subplot(1, 2, 1)
+        # plt.imshow(cov_matrix)
+        # plt.colorbar()
+        # plt.subplot(1, 2, 2)
+        # plt.imshow(regularized_cov_matrix)
+        # plt.colorbar()
+        plt.imshow(inv_cov_matrix)
+        plt.colorbar()
+        plt.show()
+
+        # Given the test data, compute the log likelihood ratios for each symbol,
+        # from eeg and gaze models:
+        eeg_log_likelihoods = np.zeros((len(gaze_data_test),(len(symbol_set))))
+        gaze_log_likelihoods = np.zeros((len(gaze_data_test),(len(symbol_set))))
+
+        # Save the max posterior and the second max posterior for each test point:
+        target_posteriors_gaze = np.zeros((len(gaze_data_test), 2))
+        target_posteriors_eeg = np.zeros((len(gaze_data_test), 2))
+        target_posteriors_fusion = np.zeros((len(gaze_data_test), 2))
+
+        # 1. Find cases where the gaze posterior
+        
+        counter_gaze = 0
+        counter_eeg = 0
+        counter_fusion = 0
+        for test_idx, test_data in enumerate(gaze_data_test):
+            numerator_gaze_list = []
+            diff_list = []
+            for idx, sym in enumerate(symbol_set):
+                # skip if there is no training example from the symbol
+                if time_average_per_symbol[sym] == []:
+                    gaze_log_likelihoods[test_idx, idx] = -100000 # set a very small value
+                else:
+                    central_data = gaze_model.substract_mean(test_data, time_average_per_symbol[sym])
+                    flattened_data = central_data.reshape((720,))
+                    flattened_data *= units
+                    diff = flattened_data - reshaped_mean
+                    diff_list.append(diff)
+                    numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2 # !!!!!!
+                    numerator_gaze_list.append(numerator)
+                    unnormalized_log_likelihood_gaze = numerator - denominator_gaze
+                    gaze_log_likelihoods[test_idx, idx] = unnormalized_log_likelihood_gaze
+            normalized_posterior_gaze_only = np.exp(gaze_log_likelihoods[test_idx, :])/np.sum(np.exp(gaze_log_likelihoods[test_idx, :]))   
+            # Find the max likelihood:
+            max_like_gaze = np.argmax(normalized_posterior_gaze_only)
+            
+            posterior_of_true_label_gaze = normalized_posterior_gaze_only[symbol_to_index[gaze_test_labels[test_idx]]]
+            top_competitor_gaze = np.sort(normalized_posterior_gaze_only)[-2]
+            target_posteriors_gaze[test_idx, 0] = posterior_of_true_label_gaze
+            target_posteriors_gaze[test_idx, 1] = top_competitor_gaze
+            # Check if it's the same as the target
+            if symbol_set[max_like_gaze] == gaze_test_labels[test_idx]:
+                counter_gaze += 1
+                
+            # to compute eeg likelihoods, take the next 10 indices of the eeg test data every time in this loop:
+            start = test_idx*10
+            end = (test_idx+1)*10
+            eeg_tst_data = preprocessed_test_eeg[:, start:end, :]
+            inq_sym = inquiry_symbols_test[start: end]
+            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(eeg_tst_data, inq_sym, alphabet())
+            unnormalized_log_likelihood_eeg = np.log(eeg_likelihood_ratios)
+            eeg_log_likelihoods[test_idx, :] = unnormalized_log_likelihood_eeg  
+            normalized_posterior_eeg_only = np.exp(eeg_log_likelihoods[test_idx, :])/np.sum(np.exp(eeg_log_likelihoods[test_idx, :]))
+            
+            max_like_eeg = np.argmax(normalized_posterior_eeg_only) 
+            top_competitor_eeg = np.sort(normalized_posterior_eeg_only)[-2]
+            posterior_of_true_label_eeg = normalized_posterior_eeg_only[symbol_to_index[gaze_test_labels[test_idx]]]
+            
+            target_posteriors_eeg[test_idx, 0] = posterior_of_true_label_eeg
+            target_posteriors_eeg[test_idx, 1] = top_competitor_eeg
+            if symbol_set[max_like_eeg] == gaze_test_labels[test_idx]:
+                counter_eeg += 1
+        
+            # Bayesian fusion update and decision making:
+            log_unnormalized_posterior = np.log(eeg_likelihood_ratios) + gaze_log_likelihoods[test_idx, :]
+            unnormalized_posterior = np.exp(log_unnormalized_posterior)
+            denominator = np.sum(unnormalized_posterior)
+            posterior = unnormalized_posterior/denominator  # normalized posterior
+            log_posterior = np.log(posterior)
+            max_posterior = np.argmax(log_posterior)
+            top_competitor_fusion = np.sort(log_posterior)[-2]
+            posterior_of_true_label_fusion = posterior[symbol_to_index[gaze_test_labels[test_idx]]]
+
+            target_posteriors_fusion[test_idx, 0] = posterior_of_true_label_fusion
+            target_posteriors_fusion[test_idx, 1] = top_competitor_fusion
+            if symbol_set[max_posterior] == gaze_test_labels[test_idx]:
+                counter_fusion += 1
+
+            # stop if posterior has nan values:
+            if posterior.any() == np.nan:
+                breakpoint()
+        
+        # print accuracy with only 3 decimals:
+        eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg/len(test_indices)))
+        gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze/len(test_indices)))
+        fusion_acc_in_iteration = float("{:.3f}".format(counter_fusion/len(test_indices)))
+        eeg_acc.append(eeg_acc_in_iteration)
+        gaze_acc.append(gaze_acc_in_iteration)
+        fusion_acc.append(fusion_acc_in_iteration)
+        print(f"Iteration: {iter}")
+        print(f"# Train samples: {len(train_indices)}")
+        print(f"# Test samples: {len(test_indices)}")
+        print(f"Gaze accuracy: {gaze_acc_in_iteration}, \nEeg acc: {eeg_acc_in_iteration}")
+        print(f"Fusion acc: {fusion_acc_in_iteration}")
+
+        # for all data points in the test set, plot the max posteriors vs second candidates for gaze, eeg and fusion:
+        plt.figure()
+        plt.scatter(target_posteriors_gaze[:, 1], target_posteriors_gaze[:, 0], label='Gaze')
+        plt.scatter(target_posteriors_eeg[:, 1], target_posteriors_eeg[:, 0], label='EEG')
+        plt.scatter(target_posteriors_fusion[:, 1], target_posteriors_fusion[:, 0], label='Fusion')
+        plt.legend()
+        plt.xlim(0, 1)
+        plt.ylim(0, 1)
+        plt.xlabel("Posterior of the top candidate")
+        plt.ylabel("Posterior of the target")
+        plt.title(f"Normalized posteriors for the true target vs top candidate across modalities")
+        plt.savefig(f"{data_folder}/posteriors_iteration_{iter}.png")
+
         breakpoint()
 
-        # train and save the gaze model as a pkl file
+    # Save it to a csv file:
+    results = pd.DataFrame({'EEG': eeg_acc, 'Gaze': gaze_acc, 'Fusion': fusion_acc})
+    results.to_csv(f"{data_folder}/results.csv")
+    # breakpoint()
+    # Visualize the results
+    plt.bar(['EEG', 'Gaze', 'Fusion'], [np.mean(eeg_acc), np.mean(gaze_acc), np.mean(fusion_acc)])
+    plt.title(f"Average accuracy over N={n_iterations} iterations")
+    plt.ylabel("Test Accuracy (%)")
+    plt.ylim(0, 1)
+    # plt.show()
+    plt.savefig(f"{data_folder}/fusion_results.png")
 
-        # And the log likelihood evidence from gaze model:
+    print(f"Average EEG accuracy: {np.mean(eeg_acc)}")
+    print(f"Average Gaze accuracy: {np.mean(gaze_acc)}")
+    print(f"Average Fusion accuracy: {np.mean(fusion_acc)}")
 
-
-        # Bayesian fusion update and decision making:
-
-    
+    breakpoint()
     '''
     # Using an 80/20 split, report on balanced accuracy
     
@@ -394,7 +582,6 @@ def analyze_multimodal(eeg_data,
         del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
         '''
 
-    # this should have uncorrected trigger timing for display purposes
     figure_handles = visualize_erp(
         eeg_data,
         eeg_channel_map,
@@ -672,7 +859,6 @@ def analyze_gaze(
 
         centralized_data_training_set = np.array(centralized_data_training_set)
 
-        # Take the sample average of the centralized data: time_average
         # centralized_data_training_set.shape = (72,4,180)
 
         # flatten the covariance to (72, 720)
@@ -947,19 +1133,21 @@ def offline_analysis(
     gaze_data = load_raw_data(data_file_paths[1])
     device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
 
+    # Check if device status is active before running multimodal
+
       
     # Analyze both EEG and Eyetracker data here
-    # multi_model, multi_figure_handles = analyze_multimodal(
-    #             eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, 
-    #               estimate_balanced_acc, save_figures, show_figures)
+    multi_model, multi_figure_handles = analyze_multimodal(
+                eeg_data, gaze_data, parameters, device_spec_eeg, device_spec_gaze, data_folder, 
+                  estimate_balanced_acc, save_figures, show_figures)
             # models.append(erp_model)
             # figure_handles.append(erp_figure_handles)
 
-    et_model, et_figure_handles = analyze_gaze(
-                gaze_data, parameters, device_spec_gaze, data_folder, save_figures, 
-                show_figures, model_type="GP_SampleAverage")
-            # models.append(et_model)
-            # figure_handles.append(et_figure_handles)
+    # et_model, et_figure_handles = analyze_eeg(
+    #             gaze_data, parameters, device_spec_gaze, data_folder, save_figures, 
+    #             show_figures, model_type="GP_SampleAverage")
+    #         # models.append(et_model)
+    #         # figure_handles.append(et_figure_handles)
 
     if alert_finished:
         play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
