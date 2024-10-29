@@ -15,6 +15,7 @@ from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
+    DEFAULT_PARAMETER_FILENAME,
     DEFAULT_PARAMETERS_PATH,
     DEFAULT_USER_ID,
     MULTIPHRASE_FILENAME,
@@ -249,7 +250,7 @@ class SessionOrchestrator:
                     "type": "str",
                 }
             )
-            self.parameters.save(save_directory)
+            self.parameters.save(save_directory, name=DEFAULT_PARAMETER_FILENAME)
 
         except OSError as error:
             # If the error is anything other than file existing, raise an error
