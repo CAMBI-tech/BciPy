@@ -121,7 +121,11 @@ class BaseCalibrationTask(Task):
         """Symbols used in the calibration"""
         return self._symbol_set
 
-    def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+    def setup(
+            self,
+            parameters: Parameters,
+            data_save_location: str,
+            fake: bool=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
@@ -212,7 +216,9 @@ class BaseCalibrationTask(Task):
         """"Task-specific session data"""
         return None
 
-    def trigger_type(self, symbol: str, target: str,
+    def trigger_type(self,
+                     symbol: str,
+                     target: str,
                      index: int) -> TriggerType:
         """Trigger Type.
 
@@ -232,7 +238,8 @@ class BaseCalibrationTask(Task):
             return TriggerType.EVENT
         return TriggerType.NONTARGET
 
-    def present_inquiry(self, index: int,
+    def present_inquiry(self,
+                        index: int,
                         inquiry: Inquiry) -> List[Tuple[str, float]]:
         """Present the given inquiry and return the trigger timing info.
 

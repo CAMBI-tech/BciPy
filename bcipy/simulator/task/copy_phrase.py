@@ -1,6 +1,6 @@
 # mypy: disable-error-code="union-attr"
 """Simulates the Copy Phrase task"""
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import logging
 
 from bcipy.display.main import Display
@@ -46,18 +46,24 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
                          file_save=file_save,
                          fake=False)
 
-    def setup(self, parameters, data_save_location, fake=False) -> None:
-        """Override to do nothing"""
+    def setup(
+            self,
+            parameters: Parameters,
+            data_save_location: str,
+            fake: bool = False) -> Tuple[Any, Any, Display]:
+        """Override the setup method to avoid initializing the data acquisition."""
         daq = None
         server = None
         display = self.init_display()
         self.initalized = True
         return daq, server, display
-    
+
     def get_signal_models(self):
+        """Override the get the signal models"""
         return self.args_sm
-    
+
     def get_language_model(self):
+        """Override the get the language model"""
         return self.args_lm
 
     def init_evidence_evaluators(
