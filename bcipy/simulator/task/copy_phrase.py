@@ -37,16 +37,28 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
                  signal_models: List[SignalModel],
                  language_model: LanguageModel, samplers: Dict[SignalModel,
                                                                Sampler]):
-        super().__init__(win=None,
-                         daq=None,
-                         parameters=parameters,
-                         file_save=file_save,
-                         signal_models=signal_models,
-                         language_model=language_model,
-                         fake=False)
+        self.args_sm = signal_models
+        self.args_lm = language_model
         self.save_session_every_inquiry = False
         self.samplers = samplers
         self.logger = logging.getLogger(__name__)
+        super().__init__(parameters=parameters,
+                         file_save=file_save,
+                         fake=False)
+
+    def setup(self, parameters, data_save_location, fake=False) -> None:
+        """Override to do nothing"""
+        daq = None
+        server = None
+        display = self.init_display()
+        self.initalized = True
+        return daq, server, display
+    
+    def get_signal_models(self):
+        return self.args_sm
+    
+    def get_language_model(self):
+        return self.args_lm
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
