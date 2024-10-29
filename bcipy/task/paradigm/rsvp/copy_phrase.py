@@ -200,7 +200,7 @@ class RSVPCopyPhraseTask(Task):
             self,
             parameters: Parameters,
             data_save_location: str,
-            fake: bool=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+            fake: bool = False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
