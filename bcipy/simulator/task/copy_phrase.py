@@ -18,11 +18,27 @@ from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
+SUPPORTED_EVIDENCE_TYPES = {EvidenceType.ERP.value}
 
 
 def get_evidence_type(model: SignalModel) -> EvidenceType:
-    """Get the evidence type provided by the given model"""
-    return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
+    """Get the evidence type provided by the given model and return it as an enum (EvidenceType).
+
+    If the model does not provide an evidence type, the default evidence type is returned.
+    """
+    evidence_type = model.metadata.evidence_type
+
+    # Note: once more than one evidence type is supported, this should be updated to throw an error
+    if not evidence_type:
+        return DEFAULT_EVIDENCE_TYPE
+
+    # Check if the evidence type is supported
+    if evidence_type not in SUPPORTED_EVIDENCE_TYPES:
+        raise ValueError(f"Unsupported evidence type: {evidence_type}. Supported types: {SUPPORTED_EVIDENCE_TYPES}")
+
+    # Return the evidence type as an enum
+    else:
+        return EvidenceType(evidence_type)
 
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
@@ -123,7 +139,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             sampled_data = sampler.sample_data(current_state)
             evidence = model.predict(sampled_data, self.current_symbols(),
                                      self.alp)
-            evidence_type = model.metadata.evidence_type or EvidenceType.ERP
+            evidence_type = get_evidence_type(model)
             evidences.append((evidence_type, evidence))
         return evidences
 
