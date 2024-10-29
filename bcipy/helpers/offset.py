@@ -16,7 +16,7 @@ from bcipy.config import (
     DIODE_TRIGGER,
     RAW_DATA_FILENAME,
     DEFAULT_TRIGGER_CHANNEL_NAME,
-    DEFAULT_PARAMETER_FILENAME
+    DEFAULT_PARAMETERS_FILENAME
 )
 
 
@@ -343,7 +343,7 @@ if __name__ == '__main__':
         data_path = ask_directory()
 
     # grab the stim length from the data directory parameters
-    stim_length = load_json_parameters(f'{data_path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)['stim_length']
+    stim_length = load_json_parameters(f'{data_path}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)['stim_length']
 
     raw_data, triggers, static_offset = extract_data_latency_calculation(
         data_path,

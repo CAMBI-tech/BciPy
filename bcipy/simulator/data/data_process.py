@@ -14,7 +14,7 @@ from bcipy.acquisition import devices
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETER_FILENAME, TRIGGER_FILENAME)
+                          DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
@@ -270,7 +270,7 @@ class RawDataProcessor():
         raw_data, device_spec = load_device_data(data_folder,
                                                  self.content_type.name)
         data_parameters = load_json_parameters(
-            f"{data_folder}/{DEFAULT_PARAMETER_FILENAME}", value_cast=True)
+            f"{data_folder}/{DEFAULT_PARAMETERS_FILENAME}", value_cast=True)
 
         timing_params = parameters.instantiate(TimingParams)
 

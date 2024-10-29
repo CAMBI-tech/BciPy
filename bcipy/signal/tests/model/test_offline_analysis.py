@@ -9,7 +9,7 @@ import numpy as np
 import random
 import gzip
 
-from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETER_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
+from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
 from bcipy.helpers.load import load_json_parameters
 from bcipy.signal.model.offline_analysis import offline_analysis
 
@@ -48,7 +48,7 @@ class TestOfflineAnalysisEEG(unittest.TestCase):
         shutil.copyfile(input_folder / TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
         shutil.copyfile(input_folder / DEFAULT_DEVICE_SPEC_FILENAME, cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
 
-        params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETER_FILENAME
+        params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETERS_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         models = offline_analysis(
             str(cls.tmp_dir),

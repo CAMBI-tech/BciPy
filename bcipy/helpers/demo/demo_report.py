@@ -3,7 +3,7 @@ from bcipy.helpers.load import load_json_parameters, load_raw_data, load_experim
 from bcipy.helpers.triggers import trigger_decoder, TriggerType
 from bcipy.config import (
     BCIPY_ROOT,
-    DEFAULT_PARAMETER_FILENAME,
+    DEFAULT_PARAMETERS_FILENAME,
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME)
@@ -44,7 +44,7 @@ if __name__ == "__main__":
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
-                    f'{session}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
+                    f'{session}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)
 
                 # load the raw data from the data directory
                 raw_data = load_raw_data(Path(session, f'{RAW_DATA_FILENAME}.csv'))
