@@ -97,19 +97,20 @@ The data will be saved in the following format in the specified data_save_loc (d
 <!-- The following would be a single orchestration run with two Tasks  -->
 data_save_loc/
     user_id/
-        experiment_id/
-            run_id <datetimestamp>/
-                task_id/
-                    logs/
-                        task_log_data
-                    task_data (e.g. acquisition data, parameters, visualizations)
-                task_id/
-                    logs/
-                        task_log_data
-                    task_data (e.g. acquisition data, parameters, visualizations)
-                logs/
-                    protocol_log_data
-                protocol_data (system data, protocol/tasks executed)
+        date/
+          experiment_id/
+              run_id <datetimestamp>/
+                  task_id/
+                      logs/
+                          task_log_data
+                      task_data (e.g. acquisition data, parameters, visualizations)
+                  task_id/
+                      logs/
+                          task_log_data
+                      task_data (e.g. acquisition data, parameters, visualizations)
+                  logs/
+                      protocol_log_data
+                  protocol_data (system data, protocol/tasks executed)
 ```
 
 ### Usage manually

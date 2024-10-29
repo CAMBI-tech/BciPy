@@ -7,36 +7,68 @@ Our final release candidate before the official 2.0 release!
 - Multimodal Acquisition and Querying
     - Support for multiple devices in online querying #286
     - Support for trigger handling relative to a given device #293
-- Session Orchestrator
-    - New task protocol for orchestrating tasks in a session. This refactors several Task and Cli functionality #339
+    - Support multiple device static offests #331
+    - Support for Device Status (passive or active) #310
+- Session Orchestrator #339
+    - New task protocol for orchestrating tasks in a session. This refactors several Task and Cli functionality #339, #343
+    - Parameter guardrails #340
+    - Allow multiple phrases in a single protocol to be defined in a phrase.json and randomized #352
+- BciPy Client Additions #346
+  - Other commands added for offline analysis, visualization and simulation.
+- Artifact Module #336
+- Simulator #350
+- Task
+  - Calibration Task Refactor: pulls out common elements from RSVP and Matrix calibration tasks #330
+  - Registry Refactor #332
+  - Inquiry Preview
+    - Surface button error probability #347
+    - Add to Matrix #353
+    - Bugfixes/Refactor #348
+  - Add more stoppage criteria #351 (max_incorrect)
+  - Matrix 
+    - Layout Support #349
+    - Grid always on #313
+    - Output stimuli position, screen capture and monitor information after Matrix tasks #303
+    - Row/Column spacing support #298
+  - VEP Calibration #304/#296
+    - session data to VEP calibration #322
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
+- Language Model
+  - Add Oracle model #316
+  - Random Uniform model #311
 - Stimuli
-    - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
+    - Updates to ensure stimuli are presented at the same frequency #287 
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Report
   - Functionality to generate a report in the form of a PDF #325
+  - Add a BciPy Calbiraiton Report Action #357
 - Offset Support
-  - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #TODO
+  - Add support for determining offsets between timing verification Tasks (Ex. RSVPTimingVerificationCalibration) and RawData with a photodiode trigger column. This is useful for setting up new systems and preventing errors before an experiment begins. #327
 - Parameters
     - Add a Range type parameter #285 Add editable fields #340 Update parameters.json to seperate relevant parameters by task
 - Housekeeping
     - Add mypy typing to the codebase #301
     - Change default log level to INFO to prevent too many messages in the experiment logs #288 
     - Upgrade requirements for m1/2 chips #299/#300
-    - Fix GitHub actions build issues with macOS
-    - Fix occasionally failing test in `test_stimuli` #326
-- GUI Refactor
+    - Fix GitHub actions build issues with macOS #324
+    - Tests Improvements
+      - Fix occasionally failing test in `test_stimuli` #326
+      - Reshaper tests #302
+    - Fix parameter save as #323
+    - Pause error #321
+    - Fix data buffer issue #308
+- GUI Refactor #337
   - Create new `BCIUI` class for simpler more straightforward UI creation.
   - Create dedicated external stylesheet for global styling
   - Rewrite Experiment Registry to use new GUI code
   - Create intertask action UI
-- Task Return Object
+- Task Return Object #334
   - Create `TaskData` dataclass to be returned from tasks
   - updates task `execute` methods to return an instance of `TaskData`
   - Allows for optional storage of a save path and task dictionary in `TaskData`
--Experiment Refactor
+-Experiment Refactor #333 #329
   - Refactors the Experiment Field Collection GUI to be an action
   - Allows task protocol to be defined in the orchestrator
 
@@ -77,7 +109,6 @@ Our final release candidate before the official 2.0 release!
     - added KenLM model `kenlm.py` #268
     - added mixture model `mixture.py` and script to tune weights `mixture_tuning.py` #268
     - added script to evaluate language model performance `lm_eval.py` #268
-    - added Oracle model #316
 - Signal Model
     - added `RdaKdeModel` and restructured to pull out common elements from the PcaRdaKdeModel #279
 - Bug Fixes
