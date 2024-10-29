@@ -14,6 +14,7 @@ from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.simulator.util.state import SimState
 from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
+from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
@@ -27,6 +28,10 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     """CopyPhraseTask that simulates user interactions by sampling data
     from a DataSampler."""
+
+    name = "Simulator Copy Phrase"
+    paradigm = "RSVP"
+    mode = TaskMode.COPYPHRASE
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],

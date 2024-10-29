@@ -56,6 +56,7 @@ class TestCopyPhrase(unittest.TestCase):
             'preview_inquiry_key_input': 'space',
             'preview_inquiry_length': 5.0,
             'preview_inquiry_progress_method': 1,
+            'preview_box_text_size': 0.1,
             'show_feedback': False,
             'show_preview_inquiry': False,
             'spelled_letters_count': 0,

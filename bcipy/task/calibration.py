@@ -228,6 +228,8 @@ class BaseCalibrationTask(Task):
             return TriggerType.FIXATION
         if target == symbol:
             return TriggerType.TARGET
+        if 'key_press' in symbol:
+            return TriggerType.EVENT
         return TriggerType.NONTARGET
 
     def present_inquiry(self, index: int,

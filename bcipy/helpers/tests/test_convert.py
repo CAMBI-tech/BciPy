@@ -528,7 +528,7 @@ class TestMNEConvert(unittest.TestCase):
         def transform(x, fs):
             return x * multiplier, fs
 
-        data = convert_to_mne(self.raw_data, transform=transform)
+        data = convert_to_mne(self.raw_data, transform=transform, volts=True)
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(data.ch_names, self.channels[1:])

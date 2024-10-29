@@ -293,6 +293,7 @@ class PreviewParams(NamedTuple):
     preview_inquiry_key_input: str
     preview_inquiry_progress_method: int
     preview_inquiry_isi: float
+    preview_box_text_size: float
 
     @property
     def button_press_mode(self):

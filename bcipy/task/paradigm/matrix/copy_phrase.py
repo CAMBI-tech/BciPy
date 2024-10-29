@@ -66,6 +66,7 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
         "preview_inquiry_error_prob",
         "preview_inquiry_length",
         "preview_inquiry_progress_method",
+        "preview_box_text_size",
         "spelled_letters_count",
         "stim_color",
         "matrix_stim_height",
