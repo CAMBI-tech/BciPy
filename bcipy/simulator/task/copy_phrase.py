@@ -1,6 +1,6 @@
 # mypy: disable-error-code="union-attr"
 """Simulates the Copy Phrase task"""
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 import logging
 
 from bcipy.display.main import Display
@@ -21,8 +21,20 @@ DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
 
 
 def get_evidence_type(model: SignalModel) -> EvidenceType:
-    """Get the evidence type provided by the given model"""
-    return model.metadata.evidence_type or DEFAULT_EVIDENCE_TYPE
+    """Get the evidence type provided by the given model and return it as an enum (EvidenceType).
+
+    If the model does not provide an evidence type, the default evidence type is returned (ERP).
+    """
+    evidence_type = model.metadata.evidence_type
+
+    # Note: once more than one evidence type is supported, this should be updated to throw an error
+    if not evidence_type:
+        return DEFAULT_EVIDENCE_TYPE
+
+    try:
+        return EvidenceType(evidence_type)
+    except ValueError:
+        raise ValueError(f"Unsupported evidence type: {evidence_type}. Supported types: {EvidenceType.list()}")
 
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
@@ -37,16 +49,34 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
                  signal_models: List[SignalModel],
                  language_model: LanguageModel, samplers: Dict[SignalModel,
                                                                Sampler]):
-        super().__init__(win=None,
-                         daq=None,
-                         parameters=parameters,
-                         file_save=file_save,
-                         signal_models=signal_models,
-                         language_model=language_model,
-                         fake=False)
+        self.args_sm = signal_models
+        self.args_lm = language_model
         self.save_session_every_inquiry = False
         self.samplers = samplers
         self.logger = logging.getLogger(__name__)
+        super().__init__(parameters=parameters,
+                         file_save=file_save,
+                         fake=False)
+
+    def setup(
+            self,
+            parameters: Parameters,
+            data_save_location: str,
+            fake: bool = False) -> Tuple[Any, Any, Display]:
+        """Override the setup method to avoid initializing the data acquisition."""
+        daq = None
+        server = None
+        display = self.init_display()
+        self.initalized = True
+        return daq, server, display
+
+    def get_signal_models(self):
+        """Override the get the signal models"""
+        return self.args_sm
+
+    def get_language_model(self):
+        """Override the get the language model"""
+        return self.args_lm
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
@@ -105,7 +135,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             sampled_data = sampler.sample_data(current_state)
             evidence = model.predict(sampled_data, self.current_symbols(),
                                      self.alp)
-            evidence_type = model.metadata.evidence_type or EvidenceType.ERP
+            evidence_type = get_evidence_type(model)
             evidences.append((evidence_type, evidence))
         return evidences
 

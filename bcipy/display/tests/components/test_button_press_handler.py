@@ -189,3 +189,7 @@ class TestRejectButtonPressHandler(unittest.TestCase):
         self.assertTrue(handler.has_response())
         self.assertEqual('bcipy_key_press_space', handler.response_label)
         self.assertEqual(1.5, handler.response_timestamp)
+
+
+if __name__ == '__main__':
+    unittest.main()

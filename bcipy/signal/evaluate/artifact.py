@@ -7,7 +7,7 @@ from logging import getLogger
 import logging
 
 from bcipy.config import (
-    DEFAULT_PARAMETER_FILENAME,
+    DEFAULT_PARAMETERS_FILENAME,
     RAW_DATA_FILENAME,
     TRIGGER_FILENAME,
     DEFAULT_DEVICE_SPEC_FILENAME,
@@ -577,7 +577,7 @@ if __name__ == "__main__":
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
-                    f'{session}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
+                    f'{session}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)
 
                 # load the raw data from the data directory
                 raw_data = load_raw_data(str(Path(session, f'{RAW_DATA_FILENAME}.csv')))

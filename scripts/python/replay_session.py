@@ -12,7 +12,7 @@ import seaborn as sns
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           SESSION_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.list import grouper
@@ -341,7 +341,7 @@ if __name__ == "__main__":
         if args.parameter_file is not None:
             params_file = args.parameter_file
         else:
-            params_file = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
+            params_file = Path(data_folder, DEFAULT_PARAMETERS_FILENAME)
         logger.info(f"Loading params from {params_file}")
         params = load_json_parameters(params_file, value_cast=True)
 

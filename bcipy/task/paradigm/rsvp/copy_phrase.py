@@ -94,21 +94,60 @@ class RSVPCopyPhraseTask(Task):
     initalized = False
 
     PARAMETERS_USED = [
-        'time_fixation', 'time_flash', 'time_prompt', 'trial_window',
-        'font', 'fixation_color', 'trigger_type',
-        'filter_high', 'filter_low', 'filter_order', 'notch_filter_frequency', 'down_sampling_rate', 'prestim_length',
-        'is_txt_stim', 'lm_backspace_prob', 'backspace_always_shown',
-        'decision_threshold', 'max_inq_len', 'max_inq_per_series', 'max_minutes', 'max_selections', 'max_incorrect',
+        'backspace_always_shown',
+        'decision_threshold',
+        'down_sampling_rate',
+        'feedback_duration',
+        'filter_high',
+        'filter_low',
+        'filter_order',
+        'fixation_color',
+        'font',
+        'info_color',
+        'info_color',
+        'info_height',
+        'info_height',
+        'info_pos_x', 'info_pos_y',
+        'info_text',
+        'info_text',
+        'is_txt_stim',
+        'lm_backspace_prob',
+        'max_incorrect',
+        'max_inq_len',
+        'max_inq_per_series',
+        'max_minutes',
+        'max_selections',
         'min_inq_len',
-        'show_feedback', 'feedback_duration',
-        'show_preview_inquiry', 'preview_inquiry_isi',
-        'preview_inquiry_error_prob', 'preview_inquiry_key_input', 'preview_inquiry_length',
-        'preview_inquiry_progress_method', 'preview_box_text_size',
+        'notch_filter_frequency',
+        'prestim_length',
+        'preview_box_text_size',
+        'preview_inquiry_error_prob',
+        'preview_inquiry_isi',
+        'preview_inquiry_key_input',
+        'preview_inquiry_length',
+        'preview_inquiry_progress_method',
+        'rsvp_stim_height',
+        'rsvp_stim_pos_x', 'rsvp_stim_pos_y',
+        'rsvp_task_height',
+        'rsvp_task_padding',
+        'show_feedback',
+        'show_preview_inquiry',
         'spelled_letters_count',
-        'stim_color', 'rsvp_stim_height', 'stim_jitter', 'stim_length', 'stim_number',
-        'stim_order', 'rsvp_stim_pos_x', 'rsvp_stim_pos_y', 'stim_space_char', 'target_color',
-        'task_buffer_length', 'task_color', 'rsvp_task_height', 'task_text', 'rsvp_task_padding',
-        'info_pos_x', 'info_pos_y', 'info_color', 'info_height', 'info_text', 'info_color', 'info_height', 'info_text',
+        'stim_color',
+        'stim_jitter',
+        'stim_length',
+        'stim_number',
+        'stim_order',
+        'stim_space_char',
+        'target_color',
+        'task_buffer_length',
+        'task_color',
+        'task_text',
+        'time_fixation',
+        'time_flash',
+        'time_prompt',
+        'trial_window',
+        'trigger_type',
     ]
 
     def __init__(
@@ -155,27 +194,13 @@ class RSVPCopyPhraseTask(Task):
 
         self.set()
 
-        # set a preview_only parameter
-        self.parameters.add_entry(
-            "preview_only",
-            {
-                "value": (
-                    "true"
-                    if self.parameters["preview_inquiry_progress_method"] == 0
-                    else "false"
-                ),
-                "section": "",
-                "name": "",
-                "helpTip": "",
-                "recommended": "",
-                "editable": "false",
-                "type": "bool",
-            },
-        )
-
         self.rsvp = self.init_display()
 
-    def setup(self, parameters, data_save_location, fake=False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+    def setup(
+            self,
+            parameters: Parameters,
+            data_save_location: str,
+            fake: bool = False) -> Tuple[ClientManager, List[LslDataServer], Window]:
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
@@ -662,8 +687,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if (
             not self.parameters["show_preview_inquiry"] or
-            not self.current_inquiry or
-            self.parameters["preview_only"]
+            not self.current_inquiry
         ):
             return None
         probs = compute_probs_after_preview(

@@ -12,7 +12,7 @@ from mockito import any as any_value
 from mockito import mock, unstub, verify, verifyNoMoreInteractions, when
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETER_FILENAME,
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers import convert
 from bcipy.helpers.convert import (archive_list, compress, convert_to_bdf,
@@ -64,7 +64,7 @@ def create_bcipy_session_artifacts(
                                          filter_high=filter_settings['filter_high'],
                                          filter_low=filter_settings['filter_low'],
                                          filter_order=filter_settings['filter_order'])
-    params.save(write_dir, DEFAULT_PARAMETER_FILENAME)
+    params.save(write_dir, DEFAULT_PARAMETERS_FILENAME)
     return trg_data, data, params
 
 
