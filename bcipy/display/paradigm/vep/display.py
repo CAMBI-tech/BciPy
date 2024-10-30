@@ -50,7 +50,8 @@ class VEPDisplay(Display):
                  symbol_set: Optional[List[str]] = None,
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
-                 frame_rate: Optional[float] = None):
+                 frame_rate: Optional[float] = None,
+                 mseq_length: Optional[int] = 63):
         assert len(
             flicker_rates
         ) <= box_config.num_boxes, 'Not enough flicker rates provided'
@@ -66,6 +67,8 @@ class VEPDisplay(Display):
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)
+
+        self.mseq_length = mseq_length
 
         # number of VEP text areas
         self.vep_type: int = box_config.num_boxes
@@ -120,7 +123,7 @@ class VEPDisplay(Display):
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
-        codes = create_vep_codes(length=63, count=len(flicker_rates))
+        codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
@@ -325,7 +328,7 @@ class VEPDisplay(Display):
         self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
         self.static_clock.reset()
         while self.static_clock.getTime() < self.timing_stimuli:
-            for frame in range(self.refresh_rate):
+            for frame in range(self.mseq_length):
                 self.draw_boxes()
                 for stim in self.vep:
                     stim.render_frame(frame)

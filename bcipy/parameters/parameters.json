@@ -178,7 +178,7 @@
     "type": "bool"
   },
   "parameter_location": {
-    "value": "bcipy/parameters/parameters.json",
+    "value": "C:/Users/Public/BciPy/Bcipy/bcipy/parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter File",
     "helpTip": "Specifies the file containing the current system parameters. Default: bcipy/parameters/parameters.json",
