@@ -234,10 +234,12 @@ class VEPDisplay(Display):
 
     def highlight_target_box(self, target_box_index: int) -> None:
         """Emphasize the box at the given index"""
+        self.current_highlighted_box_index = target_box_index
         for i, box in enumerate(self.text_boxes):
             if i == target_box_index:
-                box.borderWidth = self.box_border_width + 4
-                box.setOpacity(1.0)
+                box.borderColor = 'green'
+                box.borderWidth = self.box_border_width + 15
+                box.setOpacity(1)
             else:
                 box.borderWidth = self.box_border_width - 2
                 box.setOpacity(0.8)
@@ -311,7 +313,10 @@ class VEPDisplay(Display):
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
-        for box in self.text_boxes:
+        for i, box in enumerate(self.text_boxes):
+            if i == self.current_highlighted_box_index:
+                box.borderColor = 'green'
+                box.borderWidth = self.box_border_width + 10
             box.draw()
 
     def stimulate(self) -> None:
