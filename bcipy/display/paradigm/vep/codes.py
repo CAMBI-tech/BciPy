@@ -3,7 +3,7 @@ import logging
 from typing import List
 
 import numpy as np
-
+from scipy.signal import max_len_seq
 from bcipy.helpers.exceptions import BciPyCoreException
 
 log = logging.getLogger(__name__)
@@ -21,21 +21,25 @@ def mseq(seed, taps):
     :return: List representing the generated LFSR sequence.
     """
     state = seed.copy()
-    sequence = []
+    # sequence = []
 
-    for _ in range(2 ** (len(seed)) - 1):
-        # Output the first bit of the state
-        sequence.append(state[0])
+    # for _ in range(2 ** (len(seed)) - 1):
+    #     # Output the first bit of the state
+    #     sequence.append(state[0])
 
-        # Calculate the feedback bit
-        feedback = 0
-        for tap in taps:
-            feedback ^= state[tap]
+    #     # Calculate the feedback bit
+    #     feedback = 0
+    #     for tap in taps:
+    #         feedback ^= state[tap]
 
-        # Shift the register and insert the feedback bit at the end
-        state = state[1:] + [feedback]
+    #     # Shift the register and insert the feedback bit at the end
+    #     state = state[1:] + [feedback]
 
-    return sequence
+    # return sequence
+
+    sequence, _ = max_len_seq(nbits = len(state), taps = taps, state = state)
+
+    return sequence.tolist()
 
 
 def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4], shift_by: int = 4) -> List[List[int]]:
@@ -50,6 +54,8 @@ def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4], s
     """
     #generates the original
     original_mseq = mseq(seed, taps)
+    print(len(original_mseq))
+    print(original_mseq)
 
     codes = []
     
@@ -59,6 +65,7 @@ def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0], taps=[5, 4], s
         shifted_sequence = original_mseq[shift:] + original_mseq[:shift]  #apply the cyclical shift
         codes.append(shifted_sequence[:length])  #truncate to the required length if necessary
     
+    print(len(codes))
     return codes
 
 
