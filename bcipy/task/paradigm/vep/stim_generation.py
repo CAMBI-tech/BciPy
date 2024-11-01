@@ -67,11 +67,11 @@ def generate_vep_inquiries(symbols: List[str],
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
     target_usage_count = {symbol: 0 for symbol in symbols}
-    max_target_uses = 20
+    max_target_uses = 1
 
     #counter for each box to ensure <= 12 target placements per box
     box_target_usage_count = {box: 0 for box in range(num_boxes)}
-    max_box_target_uses = 20
+    max_box_target_uses = 1
     max_inquiries_per_box = num_boxes * max_box_target_uses
 
     # repeat the symbols as necessary to ensure an adequate size for sampling
