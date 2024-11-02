@@ -686,6 +686,7 @@ class RSVPCopyPhraseTask(Task):
         """
         if (not self.should_compute_button_press_evidence()):
             return None
+        assert self.current_inquiry, "Current inquiry is required"
         probs = compute_probs_after_preview(
             self.current_inquiry.stimuli[0],
             self.alp,
@@ -696,8 +697,8 @@ class RSVPCopyPhraseTask(Task):
 
     def should_compute_button_press_evidence(self) -> bool:
         """Determine if button press evidence should be computed"""
-        return self.parameters["show_preview_inquiry"] and self.parameters[
-            'preview_inquiry_progress_method'] > 0 and self.current_inquiry
+        return bool(self.parameters["show_preview_inquiry"] and self.parameters[
+            'preview_inquiry_progress_method'] > 0 and self.current_inquiry)
 
     def compute_device_evidence(
             self,
