@@ -671,8 +671,7 @@ class RSVPCopyPhraseTask(Task):
         return evidence_types
 
     def compute_button_press_evidence(
-        self, proceed: bool
-    ) -> Optional[Tuple[EvidenceType, List[float]]]:
+            self, proceed: bool) -> Optional[Tuple[EvidenceType, List[float]]]:
         """If 'show_preview_inquiry' feature is enabled, compute the button
         press evidence and add it to the copy phrase task.
 
@@ -685,11 +684,9 @@ class RSVPCopyPhraseTask(Task):
             tuple of (evidence type, evidence) or None if inquiry preview is
             not enabled.
         """
-        if (
-            not self.parameters["show_preview_inquiry"] or
-            not self.current_inquiry
-        ):
+        if (not self.should_compute_button_press_evidence()):
             return None
+        assert self.current_inquiry, "Current inquiry is required"
         probs = compute_probs_after_preview(
             self.current_inquiry.stimuli[0],
             self.alp,
@@ -698,9 +695,15 @@ class RSVPCopyPhraseTask(Task):
         )
         return (EvidenceType.BTN, probs)
 
+    def should_compute_button_press_evidence(self) -> bool:
+        """Determine if button press evidence should be computed"""
+        return bool(self.parameters["show_preview_inquiry"] and self.parameters[
+            'preview_inquiry_progress_method'] > 0 and self.current_inquiry)
+
     def compute_device_evidence(
-        self, stim_times: List[List], proceed: bool = True
-    ) -> List[Tuple[EvidenceType, List[float]]]:
+            self,
+            stim_times: List[List],
+            proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
         """Get inquiry data from all devices and evaluate the evidence, but
         don't yet attempt a decision.
 
