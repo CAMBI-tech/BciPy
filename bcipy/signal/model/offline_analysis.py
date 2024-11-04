@@ -7,7 +7,6 @@ from typing import List
 
 import numpy as np
 
-import matplotlib.pyplot as plt
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
@@ -194,7 +193,8 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
     except Exception as e:
         log.error(f"Error training model: {e}")
-
+    # TODO: This split should be the norm for model training unless otherwise specified.
+    # This will be handled in Rc patch.
     try:
         # Using an 80/20 split, report on balanced accuracy
         if estimate_balanced_acc:
@@ -258,15 +258,15 @@ def analyze_gaze(
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
-    figures = []
-    figure_handles = visualize_gaze(
-        gaze_data,
-        save_path=data_folder if save_figures else None,
-        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-        show=show_figures,
-        raw_plot=True,
-    )
-    figures.append(figure_handles)
+    # figures = []
+    # figure_handles = visualize_gaze(
+    #     gaze_data,
+    #     save_path=data_folder if save_figures else None,
+    #     img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
+    #     show=show_figures,
+    #     raw_plot=True,
+    # )
+    # figures.append(figure_handles)
 
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -284,23 +284,14 @@ def analyze_gaze(
 
     data, _fs = gaze_data.by_channel()
 
-    if model_type == "GP_SampleAverage":
+    if model_type == "Individual":
+        model = GMIndividual()
+    elif model_type == "Centralized":
+        model = GMCentralized()
+    elif model_type == "GP":
+        model = KernelGP()
+    elif model_type == "GP_SampleAverage":
         model = KernelGPSampleAverage()
-    # elif model_type == "Centralized":
-    #     model = GazeModelCombined()
-    # elif model_type == "GP":
-    #     model = GazeModelKernelGaussianProcess()
-    # elif model_type == "GP_SampleAverage":
-    #     model = GazeModelKernelGPSampleAverage()
-
-    # # Extract all Triggers info
-    # trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-    #     trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-    #     remove_pre_fixation=True,
-    #     exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-    #     device_type='EYETRACKER',
-    #     apply_starting_offset=False
-    # )
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -336,7 +327,6 @@ def analyze_gaze(
         symbol_set=symbol_set
     )
     
-
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
     preprocessed_data = {i: [] for i in symbol_set}
@@ -350,63 +340,37 @@ def analyze_gaze(
             preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
              # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
-    # ---------------------------------------------------------------------------
     
-    centralized_data_left = []
-    centralized_data_right = []
-    centralized_data_train = {i: [] for i in symbol_set}
     centralized_data = {i: [] for i in symbol_set}
     time_average = {i: [] for i in symbol_set}
-    train_dict = {}
-    test_dict = {i: [] for i in symbol_set}
-
-    left_eye_all = []
-    right_eye_all = []
 
     for sym in symbol_set:
         # Skip if there's no evidence for this symbol:
         try: 
             if len(inquiries_dict[sym]) == 0:
                 continue
-            # le = preprocessed_data[sym][0]
-            # re = preprocessed_data[sym][1]
-            # breakpoint()
-
-        #     # Train test split:
-        #     labels = np.array([sym] * len(le))  # Labels are the same for both eyes
-        #     train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
-        #     train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-        #     train_dict[sym] = np.concatenate((train_le, train_re), axis=0)  # Note that here both eyes are concatenated
-        #     test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
 
         except:
-            log.info(f"Error in symbol {sym}")
+            log.info(f"No evidence from symbol {sym}")
             continue
 
         # Fit the model based on model type.
         if model_type == "Individual":
             # Model 1: Fit Gaussian mixture on each symbol separately
-            model.fit(train_dict[sym])
+            reshaped_data = preprocessed_data[sym].reshape((preprocessed_data[sym].shape[0]*preprocessed_data[sym].shape[2], preprocessed_data[sym].shape[1]))
+            model.fit(reshaped_data)
 
-
-            left_eye_all.append(le)
-            right_eye_all.append(re)
-
-
-        # if model_type == "Centralized":
-        if model_type == "GP_SampleAverage":
-            # Centralize the data using symbol positions:
+        if model_type == "Centralized":
+            # Centralize the data using symbol positions and fit a single Gaussian.
             # Load json file.
             with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
+            
             # Subtract the symbol positions from the data:
-            # centralized_data_left.append(model.centralize(train_le, symbol_positions[sym]))
-            # centralized_data_right.append(model.centralize(train_re, symbol_positions[sym]))
-            # centralized_data_train.append(model.centralize(train_dict[sym], symbol_positions[sym]))
-
-            # for j in range(len(preprocessed_data[sym])):
-            #     centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
-
+            for j in range(len(preprocessed_data[sym])):
+                centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
+        
+        if model_type == "GP_SampleAverage":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
@@ -414,58 +378,35 @@ def analyze_gaze(
                 centralized_data[sym].append(model.substract_mean(preprocessed_data[sym][j], temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
-            # print(f"time_average for symbol {sym}: ", time_average[sym])
-
 
     if model_type == "Individual":
         accuracy = 0
         acc_all_symbols = {}
         counter = 0
-
-        for sym in symbol_set:
-            # Continue if there is no test data for this symbol:
-            if len(test_dict[sym]) == 0:
-                acc_all_symbols[sym] = 0
-                continue
-            # TODO: likelihoods should be in predict_proba !!!
-            predictions = model.predict(  # inference!
-                test_dict[sym])
-            acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
-            accuracy += acc_all_symbols[sym]
-            counter += 1
-        accuracy /= counter
-
-        # df = pd.DataFrame(acc_all_symbols, index=[0])
-        # df.to_csv('my_data.csv', index=False)
-
-        # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, 
-                                                   accuracy, 
-                                                   save_path=data_folder if save_figures else None, 
-                                                   show=show_figures)
-        figures.append(figure_handles)
+        
+        # TODO: Will be handled in fusion.py
+        # for sym in symbol_set:
+        #     # Continue if there is no evidence for this symbol:
+        #     if len(test_dict[sym]) == 0:
+        #         acc_all_symbols[sym] = 0
+        #         continue
+        #     # TODO: likelihoods should be in predict_proba
+        #     predictions = model.predict(test_dict[sym])
+        #     acc_all_symbols[sym] = model.evaluate(predictions, counter)
+        #     accuracy += acc_all_symbols[sym]
+        #     counter += 1
+        # accuracy /= counter
 
     if model_type == "GP_SampleAverage":
+        test_dict = {i: [] for i in symbol_set}
         # Visualize different inquiries from the same target letter:
         colors = ['r', 'g', 'b', 'y', 'm', 'c', 'k', 'w', 'orange', 'purple']
         for sym in symbol_set:
             if len(centralized_data[sym]) == 0:
                 continue
-            # for j in range(len(centralized_data[sym])):
-            #     plt.plot(range(len(centralized_data[sym][j][:, 0])), centralized_data[sym][j][:, 0], label=f'{sym} Inquiry {j}', c=colors[j])
-            # plt.legend()
-            # plt.show()
-            # breakpoint()
-       
-        # # Save the dictionary as a csv file:
-        # df = pd.DataFrame.from_dict(centralized_data, orient='index')
-        # df.to_csv('centralized_data.csv', header=False)
-
-        # # Also save preprocessed data:
-        # df_2 = pd.DataFrame.from_dict(preprocessed_data, orient='index')
-        # df_2.to_csv('preprocessed_data.csv', header=False)
 
         # Split the data into train and test sets & fit the model:
+        # TODO: Update this in the patch
         centralized_data_training_set = []
         for sym in symbol_set:
             if len(centralized_data[sym]) <= 1:
@@ -478,24 +419,10 @@ def analyze_gaze(
             # Add the last inquiry to the test set:
             test_dict[sym] = preprocessed_data[sym][-1]
 
-        # Save the test dict as well:
-        import pickle 
-        with open('test_dict.pkl', 'wb') as f:
-            pickle.dump(test_dict, f)
-        
-        # Save the list as well:
-        with open('centralized_data_training_set.pkl', 'wb') as f:
-            pickle.dump(centralized_data_training_set, f)
 
         centralized_data_training_set = np.array(centralized_data_training_set)
-
-        # centralized_data_training_set.shape = (72,4,180)
-
-        # flatten the covariance to (72, 720)
-        # cov_matrix = np.zeros((centralized_data_training_set.shape[0], centralized_data_training_set.shape[1]*centralized_data_training_set.shape[2]))
-        
-        # for i in range(centralized_data_training_set.shape[0]):
         reshaped_data = centralized_data_training_set.reshape((72,720))
+        
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
         # Accuracy vs time horizon
@@ -510,19 +437,19 @@ def analyze_gaze(
                             cov_matrix[l_ind, m_ind] = 0
                             # cov_matrix[m_ind, l_ind] = 0
         # cov_matrix.shape = (720,720)
-
-        plt.imshow(cov_matrix)
-        plt.colorbar()
-        plt.show()
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        breakpoint()
         eps = 0
-        inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
+        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix))*eps
+        try:
+            inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
+        except:
+            print("Singular matrix, using pseudo-inverse instead")
+            eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
+            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
+            # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
         denominator = 0
-        # denominator = np.log(np.linalg.det(cov_matrix + np.eye(len(cov_matrix))*eps))/2+np.log(2*np.pi)*len(cov_matrix)/2
-        # print(np.linalg.det(cov_matrix))
-        # print(denominator)
+
         # Find the likelihoods for the test case:
         l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
         log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
@@ -547,147 +474,55 @@ def analyze_gaze(
             if max_like == i_sym0:
                 # print("True")
                 counter += 1
-                # l_likelihoods[i_sym0, i_sym1] = calculate_loglikelihoods(flattened_data, reshaped_mean,  cov_matrix)
-        # print(central_data)
-        # print("log_likelihoods: ")
-        # print(log_likelihoods)
-        breakpoint()
-        # max_like = l_likelihoodsl_likelihoods.max(axis=0)
 
-        # Find the covariances of the centralized data:
-        cov_matrix_trial = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[0], centralized_data_training_set.shape[0]))
-        for i_coord in range(centralized_data_training_set.shape[1]):
-            cov_matrix_trial[i_coord] = np.cov(centralized_data_training_set[:, i_coord, :])
-        # cov_matrix_trial.shape = (4,72,72)
-        plt.imshow(cov_matrix_trial[0])
-        plt.show()
-        
-        cov_matrix_coord = np.zeros((centralized_data_training_set.shape[2], centralized_data_training_set.shape[1], centralized_data_training_set.shape[1]))
-        for i_time in range(centralized_data_training_set.shape[2]):
-            cov_matrix_coord[i_time] = np.cov((centralized_data_training_set[:, :, i_time]).T)
-        # cov_matrix_coord.shape = (180,4,4)
-        plt.imshow(cov_matrix_coord[0])
-        plt.show()
+        # # Find the covariances of the centralized data:
+        # cov_matrix_time = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[2], centralized_data_training_set.shape[2]))
+        # for i_coord in range(centralized_data_training_set.shape[1]):
+        #     cov_matrix_time[i_coord] = np.cov((centralized_data_training_set[:, i_coord, :]).T)
 
-        cov_matrix_time = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[2], centralized_data_training_set.shape[2]))
-        for i_coord in range(centralized_data_training_set.shape[1]):
-            cov_matrix_time[i_coord] = np.cov((centralized_data_training_set[:, i_coord, :]).T)
-        # cov_matrix_time.shape = (4,180,180)    -> Chosen Kernel
-        # Plot the correlation between the time points
-        corr = np.corrcoef(centralized_data_training_set[:, 0, :].T) # left_x over all time points
-        # plt.imshow(corr)
-        fig, ax = plt.subplots()
-        cax = ax.matshow(corr, cmap='coolwarm')
-        fig.colorbar(cax)
-        plt.show()
+        # # Find the mean of the centralized_data_training_set 
+        # mean_delta = np.mean(centralized_data_training_set, axis=0)
+        # dim_list = ['Left_x', 'Left_y', 'Right_x', 'Right_y']
+        # fig, axs = plt.subplots(4,1)
+        # for i, dim in zip(range(mean_delta.shape[0]), dim_list):    
+        #     axs[i].plot(range(len(mean_delta[i, :])), mean_delta[i, :], label=f'Mean Inquiry {dim}', c=colors[i])
+        #     std_dev = np.sqrt(np.diag(cov_matrix_time[i]))
+        #     axs[i].fill_between(range(len(mean_delta[i, :])), mean_delta[i, :]- std_dev, mean_delta[i, :]+std_dev, alpha=0.2)
+        #     axs[i].legend()
+        #     axs[i].set_ylim(-0.01, 0.01)
+        # plt.suptitle('Sample Average & Confidence Interval for Inquiries')
+        # plt.show() 
 
-        # Plot the correlation between the different dimensions, with colorbar:
-        # corr = np.corrcoef(centralized_data_training_set[0, :, :])
-
-        # Find the mean of the centralized_data_training_set 
-        mean_delta = np.mean(centralized_data_training_set, axis=0)
-        dim_list = ['Left_x', 'Left_y', 'Right_x', 'Right_y']
-        fig, axs = plt.subplots(4,1)
-        for i, dim in zip(range(mean_delta.shape[0]), dim_list):    
-            axs[i].plot(range(len(mean_delta[i, :])), mean_delta[i, :], label=f'Mean Inquiry {dim}', c=colors[i])
-            std_dev = np.sqrt(np.diag(cov_matrix_time[i]))
-            axs[i].fill_between(range(len(mean_delta[i, :])), mean_delta[i, :]- std_dev, mean_delta[i, :]+std_dev, alpha=0.2)
-            axs[i].legend()
-            axs[i].set_ylim(-0.01, 0.01)
-        plt.suptitle('Sample Average & Confidence Interval for Inquiries')
-
-        # plt.plot(range(len(mean_delta[0, :])), mean_delta[0, :], label=f'Mean Inquiry Left_x', c='r')
-        # plt.fill_between(range(len(mean_delta[0, :])), mean_delta[0, :]- std_for_left_x, mean_delta[0, :]+st_dev_for_left_x)
-        plt.show() 
-
-        # for j in range(len(centralized_data_training_set)):
-        #     cov_matrix =+ np.cov(centralized_data_training_set[j,:,:], rowvar=False)
-        # cov_matrix = cov_matrix / len(centralized_data_training_set)
-        # cov_matrix.shape = (180,180)
-
-        # for sym in symbol_set:
-        #     for j in range(len(centralized_data[sym])):
-        #         plt.plot(range(len(centralized_data[sym][j][0, :])), centralized_data[sym][j][0, :], label=f'{sym} Inquiry {j} Left_x', c=colors[j])
-        #     plt.legend()
-        #     plt.show()
-        
-        breakpoint()
-        
-        # model.fit(centralized_data_training_set)
 
     if model_type == "Centralized":
-        # Model 2: Fit Gaussian mixture on a centralized data
+        # Fit the model parameters using the centralized data:
+        # flatten the dict to a np array:
+        cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
+        # Merge the first and third dimensions:
+        cent_data = cent_data.reshape((cent_data.shape[0]*cent_data.shape[2], cent_data.shape[1]))
 
-        all_data = np.concatenate(centralized_data_train, axis=0)
-    
-        # # Visualize the results:
-        # figure_handles = visualize_centralized_data(
-        #     all_data,
-        #     save_path=data_folder if save_figures else None,
-        #     show=show_figures,
-        #     img_path=f"{data_folder}/matrix.png",
-        #     raw_plot=True,
-        # )
-        # figures.append(figure_handles)
+        # cent_data = np.concatenate(centralized_data, axis=0)
+        model.fit(cent_data)
+        # TODO: Update it in patch
+        # for sym in symbol_set:
+        #     if len(test_dict[sym]) == 0:
+        #         continue
 
-        # Calculate means, covariances for each symbol.
-        for sym in symbol_set:
-            if len(test_dict[sym]) == 0:
-                continue
-
-            # Visualize the results:
-            le = preprocessed_data[sym][0]
-            re = preprocessed_data[sym][1]
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                model.means, model.covs,
-                save_path=None,
-                show=False,
-                img_path=f"{data_folder}/matrix.png",
-                raw_plot=True,
-            )
-            figures.append(figure_handles)
-            left_eye_all.append(le)
-            right_eye_all.append(re)
-
-        # Compute scores for the test set.
-        accuracy = 0
-        acc_all_symbols = {}
-        counter = 0
-        for sym in symbol_set:
-            if len(test_dict[sym]) == 0:
-                # Continue if there is no test data for this symbol:
-                acc_all_symbols[sym] = 0
-                continue
-            predictions = model.predict(
-                test_dict[sym])
-            acc_all_symbols[sym] = calculate_acc(predictions, counter) # TODO use evaluate method
-            accuracy += acc_all_symbols[sym]
-            counter += 1
-        accuracy /= counter
-
-        # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, 
-                                                   accuracy, 
-                                                   save_path=data_folder if save_figures else None, 
-                                                   show=show_figures)
-        
-        # Save accuracies for later use as a csv file:
-        # df = pd.DataFrame(acc_all_symbols, index=[0])
-        # df.to_csv('my_data.csv', index=False)
-        # basak = pd.read_csv('my_data.csv')
-        
-        figures.append(figure_handles)
-
-    fig_handles = visualize_results_all_symbols(
-        left_eye_all, right_eye_all,
-        model.means, model.covs,
-        save_path=data_folder if save_figures else None,
-        show=show_figures,
-        img_path=f"{data_folder}/matrix.png",
-        raw_plot=True,
-    )
-    figures.append(fig_handles)
+        # # Compute scores for the test set.
+        # accuracy = 0
+        # acc_all_symbols = {}
+        # counter = 0
+        # for sym in symbol_set:
+        #     if len(test_dict[sym]) == 0:
+        #         # Continue if there is no test data for this symbol:
+        #         acc_all_symbols[sym] = 0
+        #         continue
+        #     predictions = model.predict(
+        #         test_dict[sym])
+        #     acc_all_symbols[sym] = model.evaluate(predictions, counter) # TODO use evaluate method
+        #     accuracy += acc_all_symbols[sym]
+        #     counter += 1
+        # accuracy /= counter
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -695,8 +530,7 @@ def analyze_gaze(
     save_model(
         model,
         Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
-    return model, figures
-
+    return model
 
 
 @report_execution_time
@@ -765,7 +599,8 @@ def offline_analysis(
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
             # extract relevant information from raw data object eeg
-        if device_spec.content_type == "EEG" and device_spec.status == "active":
+        # if device_spec.content_type == "EEG" and device_spec.status == "active":
+        if device_spec.content_type == "EEG":
             eeg_data = raw_data
             erp_model = analyze_erp(
                 raw_data,
@@ -777,7 +612,8 @@ def offline_analysis(
                 show_figures)
             models.append(erp_model)
 
-        if device_spec.content_type == "Eyetracker" and device_spec.status == "active":
+        # if device_spec.content_type == "Eyetracker" and device_spec.status == "active":
+        if device_spec.content_type == "Eyetracker":
             et_data = raw_data
             et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
@@ -785,8 +621,8 @@ def offline_analysis(
 
     if len(models) > 1:
         log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")
-        calculate_eeg_gaze_fusion_acc(
-            erp_model, et_model, eeg_data, et_data, alphabet(), parameters, data_folder)
+        # calculate_eeg_gaze_fusion_acc(
+        #     erp_model, et_model, eeg_data, et_data, alphabet(), parameters, data_folder)
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")
@@ -826,7 +662,11 @@ def main():
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-
+    
+    #TODO: Add a parameter for train test split. If yes, split the train data and calculate balanced accuracy.
+    # Print the results and prompt again if the user wants to train with the whole dataset.
+    # Another option: Add a threshold in the parameters file as a minimum allowable AUC to train the full model again.
+    # This will be added in the next patch.
 
 if __name__ == "__main__":
     main()

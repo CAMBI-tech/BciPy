@@ -18,45 +18,12 @@ warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 import matplotlib.pyplot as plt
 import numpy as np
 
-
-# def plot_gp(mu, cov, X, X_train=None, Y_train=None, samples=[]):
-#     X = X.ravel()
-#     mu = mu.ravel()
-#     uncertainty = 1.96 * np.sqrt(np.diag(cov))
-    
-#     plt.fill_between(X, mu + uncertainty, mu - uncertainty, alpha=0.1)
-#     plt.plot(X, mu, label='Mean')
-#     for i, sample in enumerate(samples):
-#         plt.plot(X, sample, lw=1, ls='--', label=f'Sample {i+1}')
-#     if X_train is not None:
-#         plt.plot(X_train, Y_train, 'rx')
-#     plt.legend()
-
-# def plot_model(m, X, Y, lower=-8.0, upper=8.0):
-#     pX = np.linspace(lower, upper, 100)[:, None]
-#     pY, pYv = m.predict_y(pX)
-#     if pY.ndim == 3:
-#         pY = pY[:, 0, :]
-#     plt.plot(X, Y, "x")
-#     plt.gca().set_prop_cycle(None)
-#     plt.plot(pX, pY)
-#     for i in range(pY.shape[1]):
-#         top = pY[:, i] + 2.0 * pYv[:, i] ** 0.5
-#         bot = pY[:, i] - 2.0 * pYv[:, i] ** 0.5
-#         plt.fill_between(pX[:, 0], top, bot, alpha=0.3)
-#     plt.xlabel("X")
-#     plt.ylabel("f")
-#     plt.title(f"ELBO: {m.elbo([X, Y]):.3}")
-#     plt.plot(Z, Z * 0.0, "o")
-
 class KernelGP(SignalModel):
     def __init__(self):
         reshaper = GazeReshaper()
 
     def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
         training_data = np.asarray(training_data)
-
-
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
@@ -87,8 +54,6 @@ class KernelGPSampleAverage(SignalModel):
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         # cov_matrix_shape = (features x samples) x (features x samples)
         reshaped_mean = np.mean(reshaped_data, axis=0)
-        
-        
     
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
@@ -142,7 +107,7 @@ class GMIndividual(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_individual"
 
-    def __init__(self, num_components=2, random_state=0):
+    def __init__(self, num_components=4, random_state=0):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
         self.means = None
@@ -162,10 +127,21 @@ class GMIndividual(SignalModel):
 
         return self
 
-    def evaluate(self, test_data, test_labels) -> Tuple[np.ndarray, np.ndarray]:
+    def evaluate(self, predictions, true_labels) -> np.ndarray:
         '''
-        Evaluate the accuracy of the model.
+        Compute performance characteristics on the provided test data and labels.
+        
+        Parameters:
+        -----------
+        predictions: predicted labels for each test point per symbol
+        true_labels: true labels for each test point per symbol
+        Returns:
+        --------
+        accuracy_per_symbol: accuracy per symbol
         '''
+        accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
+       
+        return accuracy_per_symbol
         ...
     
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
@@ -174,7 +150,7 @@ class GMIndividual(SignalModel):
         '''
         ...
 
-    def predict(self, test_data: np.ndarray, inquiry, symbol_set) -> np.ndarray:
+    def predict(self, test_data: np.ndarray) -> np.ndarray:
         '''
         Compute log-likelihood of each sample.
         Predict the labels for the test data.
@@ -217,7 +193,7 @@ class GMIndividual(SignalModel):
 
         return likelihoods
         # return posterior
-        # TODO: calculate posteriors for each symbol, using the prior information!!
+        # TODO: calculate posteriors for each symbol, using the prior information
 
     def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
         data_length, _ = data.shape
@@ -257,7 +233,7 @@ class GMCentralized(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_combined"
 
-    def __init__(self, num_components=1, random_state=0):
+    def __init__(self, num_components=4, random_state=0):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
         self.means = None
@@ -277,11 +253,21 @@ class GMCentralized(SignalModel):
         self.ready_to_predict = True
         return self
 
-    def evaluate(self, test_data, test_labels):
+    def evaluate(self, predictions, true_labels) -> np.ndarray:
         '''
-        Evaluate the accuracy of the model.
+        Compute performance characteristics on the provided test data and labels.
+        
+        Parameters:
+        -----------
+        predictions: predicted labels for each test point per symbol
+        true_labels: true labels for each test point per symbol
+        Returns:
+        --------
+        accuracy_per_symbol: accuracy per symbol
         '''
-
+        accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
+       
+        return accuracy_per_symbol
         ...
 
     def predict(self, test_data: np.ndarray) -> np.ndarray:
@@ -356,6 +342,8 @@ class GMCentralized(SignalModel):
         """
         new_data = np.copy(data)
         for i in range(len(data)):
-            new_data[i] = data[i] - symbol_pos
+            # new_data[i] = data[i] - symbol_pos
+            new_data[:2,i] = data[:2,i] - symbol_pos
+            new_data[2:,i] = data[2:,i] - symbol_pos
 
         return new_data
