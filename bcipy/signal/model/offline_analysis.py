@@ -193,8 +193,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
     except Exception as e:
         log.error(f"Error training model: {e}")
-    # TODO: This split should be the norm for model training unless otherwise specified.
-    # This will be handled in Rc patch.
+
     try:
         # Using an 80/20 split, report on balanced accuracy
         if estimate_balanced_acc:
@@ -258,16 +257,6 @@ def analyze_gaze(
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
-    # figures = []
-    # figure_handles = visualize_gaze(
-    #     gaze_data,
-    #     save_path=data_folder if save_figures else None,
-    #     img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-    #     show=show_figures,
-    #     raw_plot=True,
-    # )
-    # figures.append(figure_handles)
-
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate
@@ -383,19 +372,6 @@ def analyze_gaze(
         accuracy = 0
         acc_all_symbols = {}
         counter = 0
-        
-        # TODO: Will be handled in fusion.py
-        # for sym in symbol_set:
-        #     # Continue if there is no evidence for this symbol:
-        #     if len(test_dict[sym]) == 0:
-        #         acc_all_symbols[sym] = 0
-        #         continue
-        #     # TODO: likelihoods should be in predict_proba
-        #     predictions = model.predict(test_dict[sym])
-        #     acc_all_symbols[sym] = model.evaluate(predictions, counter)
-        #     accuracy += acc_all_symbols[sym]
-        #     counter += 1
-        # accuracy /= counter
 
     if model_type == "GP_SampleAverage":
         test_dict = {i: [] for i in symbol_set}
@@ -406,7 +382,6 @@ def analyze_gaze(
                 continue
 
         # Split the data into train and test sets & fit the model:
-        # TODO: Update this in the patch
         centralized_data_training_set = []
         for sym in symbol_set:
             if len(centralized_data[sym]) <= 1:
@@ -436,7 +411,6 @@ def analyze_gaze(
                         if np.abs(time_1 - time_0) > time_horizon:
                             cov_matrix[l_ind, m_ind] = 0
                             # cov_matrix[m_ind, l_ind] = 0
-        # cov_matrix.shape = (720,720)
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
         eps = 0
@@ -475,25 +449,6 @@ def analyze_gaze(
                 # print("True")
                 counter += 1
 
-        # # Find the covariances of the centralized data:
-        # cov_matrix_time = np.zeros((centralized_data_training_set.shape[1], centralized_data_training_set.shape[2], centralized_data_training_set.shape[2]))
-        # for i_coord in range(centralized_data_training_set.shape[1]):
-        #     cov_matrix_time[i_coord] = np.cov((centralized_data_training_set[:, i_coord, :]).T)
-
-        # # Find the mean of the centralized_data_training_set 
-        # mean_delta = np.mean(centralized_data_training_set, axis=0)
-        # dim_list = ['Left_x', 'Left_y', 'Right_x', 'Right_y']
-        # fig, axs = plt.subplots(4,1)
-        # for i, dim in zip(range(mean_delta.shape[0]), dim_list):    
-        #     axs[i].plot(range(len(mean_delta[i, :])), mean_delta[i, :], label=f'Mean Inquiry {dim}', c=colors[i])
-        #     std_dev = np.sqrt(np.diag(cov_matrix_time[i]))
-        #     axs[i].fill_between(range(len(mean_delta[i, :])), mean_delta[i, :]- std_dev, mean_delta[i, :]+std_dev, alpha=0.2)
-        #     axs[i].legend()
-        #     axs[i].set_ylim(-0.01, 0.01)
-        # plt.suptitle('Sample Average & Confidence Interval for Inquiries')
-        # plt.show() 
-
-
     if model_type == "Centralized":
         # Fit the model parameters using the centralized data:
         # flatten the dict to a np array:
@@ -503,26 +458,6 @@ def analyze_gaze(
 
         # cent_data = np.concatenate(centralized_data, axis=0)
         model.fit(cent_data)
-        # TODO: Update it in patch
-        # for sym in symbol_set:
-        #     if len(test_dict[sym]) == 0:
-        #         continue
-
-        # # Compute scores for the test set.
-        # accuracy = 0
-        # acc_all_symbols = {}
-        # counter = 0
-        # for sym in symbol_set:
-        #     if len(test_dict[sym]) == 0:
-        #         # Continue if there is no test data for this symbol:
-        #         acc_all_symbols[sym] = 0
-        #         continue
-        #     predictions = model.predict(
-        #         test_dict[sym])
-        #     acc_all_symbols[sym] = model.evaluate(predictions, counter) # TODO use evaluate method
-        #     accuracy += acc_all_symbols[sym]
-        #     counter += 1
-        # accuracy /= counter
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -662,11 +597,6 @@ def main():
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-    
-    #TODO: Add a parameter for train test split. If yes, split the train data and calculate balanced accuracy.
-    # Print the results and prompt again if the user wants to train with the whole dataset.
-    # Another option: Add a threshold in the parameters file as a minimum allowable AUC to train the full model again.
-    # This will be added in the next patch.
 
 if __name__ == "__main__":
     main()

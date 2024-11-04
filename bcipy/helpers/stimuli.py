@@ -325,16 +325,6 @@ class GazeReshaper:
             # Populate the dict by appending the inquiry to the corresponding key:
             data_by_targets_dict[labels[i]].append(gaze_data[:, start:stop])
     
-        # TODO: Remove if not needed
-        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
-        # for symbol in symbol_set:
-            # if len(data_by_targets[symbol]) > 0:
-                # data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
-                # data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
-
-            # Note that this is a workaround to the issue of having different number of targetness in
-            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
-            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
         return data_by_targets_dict, reshaped_data, labels
 
     def centralize_all_data(data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:

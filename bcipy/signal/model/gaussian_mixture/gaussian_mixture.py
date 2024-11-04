@@ -189,11 +189,8 @@ class GMIndividual(SignalModel):
                 sigma = self.covs[k]
 
                 likelihoods[i, k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
-        # posterior = likelihoods x prior / common denominator
 
         return likelihoods
-        # return posterior
-        # TODO: calculate posteriors for each symbol, using the prior information
 
     def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
         data_length, _ = data.shape
@@ -207,11 +204,6 @@ class GMIndividual(SignalModel):
                 sigma = self.covs[k]
 
                 likelihoods[i, k] = stats.multivariate_normal.pdf(data[i], mu, sigma)
-
-                #likelihoods[0, k] = [() , (), ... ]
-
-                # p(x_g_i | theta = A), p(x_g_i | theta = B), p(x_g_i | theta = C), ...
-        # TODO: multiply over all data[i]
         """
 
         """
@@ -276,7 +268,6 @@ class GMCentralized(SignalModel):
         Predict the labels for the test data.
         '''
         data_length, _ = test_data.shape
-        # TODO what is this data length?
         predictions = np.zeros(data_length, dtype=object)
         likelihoods = self.model.predict_proba(test_data)
 
@@ -317,7 +308,6 @@ class GMCentralized(SignalModel):
 
         predictions: predicted labels for each test point per symbol
         counter: true labels for each test point per symbol
-        TODO: This could be our evaluation function
         '''
         accuracy_per_symbol = np.sum(predictions == counter) / len(predictions) * 100
 
