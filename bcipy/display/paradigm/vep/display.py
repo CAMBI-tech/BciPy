@@ -126,9 +126,8 @@ class VEPDisplay(Display):
         rate = round_refresh_rate(frame_rate)
         # codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
         codes = ssvep_to_code(refresh_rate = self.refresh_rate, flicker_rates = self.flicker_rates)
-        print(len(codes))
-        print(len(codes[0]))
-        print(codes[0])
+        print(f"Number of codes: {len(codes)}")
+        print(f"Length of each code: {len(codes[0])}")
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
@@ -333,7 +332,7 @@ class VEPDisplay(Display):
         self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
         self.static_clock.reset()
         while self.static_clock.getTime() < self.timing_stimuli:
-            for frame in range(self.refresh_rate):
+            for frame in range(self.refresh_rate * 2):
                 self.draw_boxes()
                 for stim in self.vep:
                     stim.render_frame(frame)

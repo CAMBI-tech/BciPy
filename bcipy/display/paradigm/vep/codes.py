@@ -135,7 +135,7 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rates: List[int] = DEFAULT_FLI
         for _ in range(flicker_rate):
             code += [t] * length_flicker
             t = 1 - t
-        codes.append(code)
+        codes.append(code * 2)
 
     return codes
 
