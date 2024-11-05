@@ -564,7 +564,7 @@ def offline_analysis(
 
 def main():
     """Main function for offline analysis client.
-    
+
     Parses command line arguments and runs offline analysis.
 
     Command Line Arguments:
