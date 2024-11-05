@@ -2,21 +2,24 @@
 devices."""
 import json
 import logging
+from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Union
+from typing import Dict, List, NamedTuple, Optional, Union
 
-from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH
+from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH, SESSION_LOG_FILENAME
 
-IRREGULAR_RATE = 0.0
+
+IRREGULAR_RATE: int = 0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH
-_SUPPORTED_DEVICES = {}
+_SUPPORTED_DEVICES: Dict[str, 'DeviceSpec'] = {}
 # see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
 SUPPORTED_DATA_TYPES = [
     'float32', 'double64', 'string', 'int32', 'int16', 'int8'
 ]
 DEFAULT_DEVICE_TYPE = 'EEG'
+DEFAULT_STATIC_OFFSET = 0.1
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class ChannelSpec(NamedTuple):
@@ -50,6 +53,22 @@ def channel_spec(channel: Union[str, dict, ChannelSpec]) -> ChannelSpec:
     raise Exception("Unexpected channel type")
 
 
+class DeviceStatus(Enum):
+    """Represents the recording status of a device during acquisition."""
+    ACTIVE = auto()
+    PASSIVE = auto()
+
+    def __str__(self) -> str:
+        """String representation"""
+        return self.name.lower()
+
+    @classmethod
+    def from_str(cls, name: str) -> 'DeviceStatus':
+        """Returns the DeviceStatus associated with the given string
+        representation."""
+        return cls[name.upper()]
+
+
 class DeviceSpec:
     """Specification for a hardware device used in data acquisition.
 
@@ -67,28 +86,39 @@ class DeviceSpec:
         data_type - data format of a channel; all channels must have the same type;
             see https://labstreaminglayer.readthedocs.io/projects/liblsl/ref/enums.html
         excluded_from_analysis - list of channels (label) to exclude from analysis.
+        status - recording status
+        static_offset - Specifies the static trigger offset (in seconds) used to align
+            triggers properly with EEG data from LSL. The system includes built-in
+            offset correction, but there is still a hardware-limited offset between EEG
+            and trigger timing values for which the system does not account. The correct
+            value may be different for each computer, and must be determined on a
+            case-by-case basis. Default: 0.1",
     """
 
     def __init__(self,
                  name: str,
                  channels: Union[List[str], List[ChannelSpec], List[dict]],
-                 sample_rate: float,
+                 sample_rate: int,
                  content_type: str = DEFAULT_DEVICE_TYPE,
-                 description: str = None,
-                 excluded_from_analysis: List[str] = None,
-                 data_type='float32'):
+                 description: Optional[str] = None,
+                 excluded_from_analysis: Optional[List[str]] = None,
+                 data_type: str = 'float32',
+                 status: DeviceStatus = DeviceStatus.ACTIVE,
+                 static_offset: float = DEFAULT_STATIC_OFFSET):
 
         assert sample_rate >= 0, "Sample rate can't be negative."
         assert data_type in SUPPORTED_DATA_TYPES
 
         self.name = name
         self.channel_specs = [channel_spec(ch) for ch in channels]
-        self.sample_rate = sample_rate
+        self.sample_rate = int(sample_rate)
         self.content_type = content_type
         self.description = description or name
         self.data_type = data_type
         self.excluded_from_analysis = excluded_from_analysis or []
         self._validate_excluded_channels()
+        self.status = status
+        self.static_offset = static_offset
 
     @property
     def channel_count(self) -> int:
@@ -117,6 +147,12 @@ class DeviceSpec:
             filter(lambda channel: channel not in self.excluded_from_analysis,
                    self.channels))
 
+    @property
+    def is_active(self) -> bool:
+        """Returns a boolean indicating if the device is currently active
+        (recording status set to DeviceStatus.ACTIVE)."""
+        return self.status == DeviceStatus.ACTIVE
+
     def to_dict(self) -> dict:
         """Converts the DeviceSpec to a dict."""
         return {
@@ -125,7 +161,9 @@ class DeviceSpec:
             'channels': [ch._asdict() for ch in self.channel_specs],
             'sample_rate': self.sample_rate,
             'description': self.description,
-            'excluded_from_analysis': self.excluded_from_analysis
+            'excluded_from_analysis': self.excluded_from_analysis,
+            'status': str(self.status),
+            'static_offset': self.static_offset
         }
 
     def __str__(self):
@@ -145,7 +183,7 @@ class DeviceSpec:
         """Warn if excluded channels are not in the list of channels"""
         for channel in self.excluded_from_analysis:
             if channel not in self.channels:
-                log.warning(
+                logger.warning(
                     f"Excluded channel {channel} not found in spec for {self.name}"
                 )
 
@@ -153,13 +191,16 @@ class DeviceSpec:
 def make_device_spec(config: dict) -> DeviceSpec:
     """Constructs a DeviceSpec from a dict. Throws a KeyError if any fields
     are missing."""
+    default_status = str(DeviceStatus.ACTIVE)
     return DeviceSpec(name=config['name'],
                       content_type=config['content_type'],
                       channels=config['channels'],
                       sample_rate=config['sample_rate'],
                       description=config['description'],
                       excluded_from_analysis=config.get(
-                          'excluded_from_analysis', []))
+                          'excluded_from_analysis', []),
+                      status=DeviceStatus.from_str(config.get('status', default_status)),
+                      static_offset=config.get('static_offset', DEFAULT_STATIC_OFFSET))
 
 
 def load(config_path: Path = Path(DEFAULT_CONFIG), replace: bool = False) -> Dict[str, DeviceSpec]:
@@ -207,6 +248,7 @@ def preconfigured_device(name: str, strict: bool = True) -> DeviceSpec:
             "\n"
             "You may register new devices using the device module `register` function or in bulk"
             " using `load`.")
+        logger.error(msg)
         raise ValueError(msg)
     return device
 

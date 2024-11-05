@@ -1,7 +1,7 @@
-from typing import List, Tuple
+from typing import Optional, List, Tuple
 from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
 import json
 from bcipy.config import LM_PATH
 
@@ -9,7 +9,7 @@ from bcipy.config import LM_PATH
 class UnigramLanguageModel(LanguageModel):
     """Character language model based on trained unigram weights"""
 
-    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: str = None):
+    def __init__(self, response_type: ResponseType, symbol_set: List[str], lm_path: Optional[str] = None):
 
         super().__init__(response_type=response_type, symbol_set=symbol_set)
         self.model = None

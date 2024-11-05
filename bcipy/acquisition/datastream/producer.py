@@ -8,8 +8,9 @@ import threading
 import time
 
 from bcipy.acquisition.datastream.generator import random_data_generator
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class Producer(threading.Thread):
@@ -105,16 +106,16 @@ class _ConsumerThread(threading.Thread):
         while True:
             if not self._q.empty():
                 item = self._q.get()
-                log.debug('Getting %s: %s items in queue',
-                          str(item), str(self._q.qsize()))
+                log.info('Getting %s: %s items in queue',
+                         str(item), str(self._q.qsize()))
                 time.sleep(random.random())
 
 
 def main():
     """Main method"""
-    data_queue = Queue()
-    producer = Producer(data_queue)
-    consumer = _ConsumerThread(data_queue)
+    data_queue: Queue = Queue()
+    producer: Producer = Producer(data_queue)
+    consumer: _ConsumerThread = _ConsumerThread(data_queue)
 
     producer.start()
     consumer.start()

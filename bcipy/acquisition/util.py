@@ -21,24 +21,6 @@ def mock_data(n_records: int, n_cols: int, low: int = -1000, high: int = 1000):
     """
     return (mock_record(n_cols, low, high) for _i in range(n_records))
 
-# def mock_data_stream(n_records: int, length: int, low: int= -1000,
-#     high: int = 1000):
-#     """Generator for mock data that streams continuously.
-
-#     Parameters:
-#     -----------
-#         n_records: number of records to generate
-#         length: length of each record
-#         low: optional; min value for each item; default is -1000
-#         high: optional; max value for each item; default is 1000
-
-#     Returns:
-#     --------
-#         A generator that yields arrays of random data
-#     """
-#     while True:
-#         yield mock_record(length, low, high)
-
 
 def mock_record(n_cols: int = 25, low: int = -1000, high: int = 1000):
     """Create an list of random data.

@@ -1,7 +1,6 @@
 """Demo for the LslAcquisitionClient"""
 
 import time
-
 from bcipy.acquisition import LslAcquisitionClient
 
 

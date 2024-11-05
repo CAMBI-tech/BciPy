@@ -1,13 +1,10 @@
 """Functions for generating mock data to be used for testing/development."""
 
-import logging
-from typing import Generator, Callable
+from typing import Optional, Generator, Callable
 from past.builtins import range
 
 from bcipy.config import DEFAULT_ENCODING
 from bcipy.signal.generator.generator import gen_random_data
-
-log = logging.getLogger(__name__)
 
 
 def advance_to_row(filehandle, rownum):
@@ -63,7 +60,7 @@ def random_data_generator(encoder=_DefaultEncoder(),
         yield encoder.encode(sensor_data)
 
 
-def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), channel_count: int = None):
+def file_data_generator(filename, header_row=3, encoder=_DefaultEncoder(), channel_count: Optional[int] = None):
     """Generates data from a source file and encodes it according to the
     provided encoder.
 

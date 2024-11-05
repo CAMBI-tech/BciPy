@@ -1,10 +1,17 @@
 """Tests for session-related functionality."""
 
 import unittest
-from bcipy.task.data import Session, Inquiry, EvidenceType
+
+from bcipy.task.data import EvidenceType, Inquiry, Session
+
+SYMBOL_SET = [
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O',
+    'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', '<', '_'
+]
 
 
 def sample_stim_seq(include_evidence: bool = False):
+    """Generates a sample Inquiry."""
     stim_seq = Inquiry(
         stimuli=["+", "I", "D", "H", "G", "F", "<", "E", "B", "C", "A"],
         timing=[0.5, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.3],
@@ -62,6 +69,23 @@ def sample_stim_seq(include_evidence: bool = False):
     return stim_seq
 
 
+class TestEvidenceType(unittest.TestCase):
+    """Tests for EvidenceType enum"""
+
+    def test_str(self):
+        """Test string representation"""
+        self.assertEqual('BTN', str(EvidenceType.BTN))
+
+    def test_serialization(self):
+        """Test serialization / deserialization"""
+
+        self.assertEqual(
+            EvidenceType.ERP,
+            EvidenceType.deserialized(EvidenceType.ERP.serialized))
+        self.assertEqual(EvidenceType.LM,
+                         EvidenceType.deserialized(EvidenceType.LM.serialized))
+
+
 class TestSessionData(unittest.TestCase):
     """Tests for session data."""
 
@@ -81,7 +105,7 @@ class TestSessionData(unittest.TestCase):
 
         for key in expected_keys:
             self.assertTrue(key in serialized)
-            self.assertEqual(serialized[key], stim_seq.__getattribute__(key))
+            self.assertEqual(serialized[key], getattr(stim_seq, key))
 
         for key in ['lm_evidence', 'erp_evidence', 'likelihood']:
             self.assertFalse(key in serialized)
@@ -90,7 +114,7 @@ class TestSessionData(unittest.TestCase):
         """Test that a stim sequence can be deserialized from a dict."""
         stim_seq = sample_stim_seq(include_evidence=True)
         serialized = stim_seq.as_dict()
-        self.assertTrue('lm_evidence' in serialized.keys())
+        self.assertTrue('lm_evidence' in serialized)
         self.assertEqual(serialized['lm_evidence'],
                          stim_seq.evidences[EvidenceType.LM])
 
@@ -110,14 +134,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_stim_sequence_evidence(self):
         """Test simplified evidence view"""
-        alp = [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
-            '<', '_'
-        ]
-
         stim_seq = sample_stim_seq(include_evidence=True)
-        evidence = stim_seq.stim_evidence(alp, n_most_likely=5)
+        evidence = stim_seq.stim_evidence(SYMBOL_SET, n_most_likely=5)
         self.assertEqual(len(evidence['most_likely']), 5)
         self.assertAlmostEqual(evidence['most_likely']['<'], 0.05, places=2)
 
@@ -154,7 +172,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_empty_session(self):
         """Test initial session creation"""
-        session = Session(save_location=".")
+
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         self.assertEqual(0, session.total_number_series)
         self.assertEqual(0, session.total_inquiries)
         self.assertEqual(0, session.total_number_decisions)
@@ -169,7 +188,8 @@ class TestSessionData(unittest.TestCase):
 
     def test_session(self):
         """Test session functionality"""
-        session = Session(save_location=".")
+
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq())
 
@@ -191,8 +211,8 @@ class TestSessionData(unittest.TestCase):
         self.assertEqual(1, serialized['total_selections'])
         self.assertEqual(3, serialized['inquiries_per_selection'])
 
-        self.assertTrue('1' in serialized['series'].keys())
-        self.assertTrue('2' in serialized['series'].keys())
+        self.assertTrue('1' in serialized['series'])
+        self.assertTrue('2' in serialized['series'])
 
         self.assertEqual(2, len(serialized['series']['1'].keys()))
         self.assertEqual(1, len(serialized['series']['2'].keys()))
@@ -202,7 +222,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_session_add_series(self):
         """Test session functionality for adding a series"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
 
         session.add_series()
         self.assertEqual(0, session.total_number_series)
@@ -224,7 +244,7 @@ class TestSessionData(unittest.TestCase):
 
     def test_session_deserialization(self):
         """Test that a Session can be deserialized"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq())
 
@@ -253,20 +273,46 @@ class TestSessionData(unittest.TestCase):
 
     def test_task_summary(self):
         """Test that arbitrary data can be added."""
-        session = Session(save_location=".")
-        self.assertFalse('task_summary' in session.as_dict().keys())
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
+        self.assertFalse('task_summary' in session.as_dict())
 
         session.task_summary = {"typing_accuracy": 22}
         serialized = session.as_dict()
-        self.assertTrue('task_summary' in serialized.keys())
+        self.assertTrue('task_summary' in serialized)
         self.assertEqual(serialized['task_summary']['typing_accuracy'], 22)
 
     def test_has_evidence(self):
         """Test that a Session has evidence"""
-        session = Session(save_location=".")
+        session = Session(save_location=".", symbol_set=SYMBOL_SET)
         session.add_sequence(sample_stim_seq())
         session.add_sequence(sample_stim_seq(include_evidence=True))
         self.assertTrue(session.has_evidence())
+
+    def test_task_data(self):
+        """Test that task-specific data can be added to the session."""
+        session = Session(save_location=".",
+                          symbol_set=SYMBOL_SET,
+                          task_data={
+                              "greeting": "Hello",
+                              "count": 10
+                          })
+        serialized = session.as_dict()
+        self.assertTrue("task_data" in serialized)
+        self.assertEqual(serialized['task_data']['greeting'], "Hello")
+        self.assertEqual(serialized['task_data']['count'], 10)
+
+    def test_task_inquiry_data(self):
+        """Test that inquiries may have task-specific data."""
+        data = {"color": "blue", "flicker_rate": 10}
+        inq = Inquiry(stimuli=[],
+                      timing=[],
+                      triggers=[],
+                      target_info=[],
+                      task_data=data)
+        inq_dict = inq.as_dict()
+        self.assertTrue("task_data" in inq_dict)
+        self.assertEqual(inq_dict['task_data']['color'], 'blue')
+        self.assertEqual(inq_dict['task_data']['flicker_rate'], 10)
 
 
 if __name__ == '__main__':

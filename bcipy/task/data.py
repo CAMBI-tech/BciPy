@@ -1,7 +1,7 @@
 """Module for functionality related to session-related data."""
 from collections import Counter
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 EVIDENCE_SUFFIX = "_evidence"
 
@@ -21,6 +21,7 @@ class EvidenceType(Enum):
     LM = 'LM'  # Language Model
     ERP = 'ERP'  # Event-Related Potential using EEG signals
     BTN = 'BTN'  # Button
+    EYE = 'EYE'  # Eyetracker
 
     @classmethod
     def list(cls) -> List[str]:
@@ -65,19 +66,21 @@ class Inquiry:
         lm_evidence - language model evidence for each stimulus
         eeg_evidence - eeg evidence for each stimulus
         likelihood - combined likelihood for each stimulus
+        task_data - task-specific information about the inquiry that may be useful in training a model
     """
 
     def __init__(self,
-                 stimuli: List[str],
+                 stimuli: List[Any],
                  timing: List[float],
-                 triggers: List[List],
+                 triggers: List[Tuple[str, float]],
                  target_info: List[str],
-                 target_letter: str = None,
-                 current_text: str = None,
-                 target_text: str = None,
-                 selection: str = None,
-                 next_display_state: str = None,
-                 likelihood: List[float] = None):
+                 target_letter: Optional[str] = None,
+                 current_text: Optional[str] = None,
+                 target_text: Optional[str] = None,
+                 selection: Optional[str] = None,
+                 next_display_state: Optional[str] = None,
+                 likelihood: Optional[List[float]] = None,
+                 task_data: Optional[Dict] = None) -> None:
         super().__init__()
         self.stimuli = stimuli
         self.timing = timing
@@ -91,16 +94,17 @@ class Inquiry:
 
         self.evidences: Dict[EvidenceType, List[float]] = {}
         self.likelihood = likelihood or []
-        # Precision used for serialization of evidence values.
-        self.precision = None
+        self.task_data = task_data or {}
+        # Precision used for serialization of evidence values. By default, no precision.
+        self.precision: int = 0
 
     @property
-    def lm_evidence(self):
+    def lm_evidence(self) -> List[float]:
         """Language model evidence"""
         return self.evidences.get(EvidenceType.LM, [])
 
     @property
-    def eeg_evidence(self):
+    def eeg_evidence(self) -> List[float]:
         """EEG evidence"""
         return self.evidences.get(EvidenceType.ERP, [])
 
@@ -112,10 +116,12 @@ class Inquiry:
     @property
     def is_correct_decision(self) -> bool:
         """Indicates whether the current selection was the target"""
-        return self.selection and (self.selection == self.target_letter)
+        if self.selection and self.target_letter:
+            return self.selection == self.target_letter
+        return False
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Inquiry':
         """Deserializes from a dict
 
         Parameters:
@@ -144,7 +150,7 @@ class Inquiry:
 
     def as_dict(self) -> Dict:
         """Dict representation"""
-        data = {
+        data: Dict = {
             'stimuli': self.stimuli,
             'timing': self.timing,
             'triggers': self.triggers,
@@ -161,6 +167,8 @@ class Inquiry:
 
         if self.likelihood:
             data['likelihood'] = self.format(self.likelihood)
+        if self.task_data:
+            data['task_data'] = self.task_data
         return data
 
     def stim_evidence(self,
@@ -205,20 +213,22 @@ class Session:
 
     def __init__(self,
                  save_location: str,
+                 symbol_set: List[str],
                  task: str = 'Copy Phrase',
                  mode: str = 'RSVP',
-                 symbol_set: List[str] = None,
-                 decision_threshold: float = None):
+                 decision_threshold: Optional[float] = None,
+                 task_data: Optional[Dict[str, Any]] = None) -> None:
         super().__init__()
         self.save_location = save_location
         self.task = task
         self.mode = mode
         self.series: List[List[Inquiry]] = [[]]
-        self.total_time_spent = 0
+        self.total_time_spent: float = 0.0
         self.time_spent_precision = 2
-        self.task_summary = {}
+        self.task_summary: Dict[str, Any] = {}
         self.symbol_set = symbol_set
         self.decision_threshold = decision_threshold
+        self.task_data = task_data or {}
 
     @property
     def total_number_series(self) -> int:
@@ -254,12 +264,12 @@ class Session:
         """Tests whether any inquiries have evidence."""
         return any(inq.evidences for inq in self.all_inquiries)
 
-    def add_series(self):
+    def add_series(self) -> None:
         """Add another series unless the last one is empty"""
         if self.last_series():
             self.series.append([])
 
-    def add_sequence(self, inquiry: Inquiry, new_series: bool = False):
+    def add_sequence(self, inquiry: Inquiry, new_series: bool = False) -> None:
         """Append sequence information
 
         Parameters:
@@ -302,28 +312,34 @@ class Session:
                         stim_dict = stim.as_dict()
                     series_dict[series_counter][str(series_index)] = stim_dict
 
-        info = {
+        task_info: Dict = {
             'session': self.save_location,
             'task': self.task,
             'mode': self.mode,
             'symbol_set': self.symbol_set,
-            'decision_threshold': self.decision_threshold,
-            'series': series_dict,
-            'total_time_spent': round(self.total_time_spent,
-                                      self.time_spent_precision),
+            'decision_threshold': self.decision_threshold
+        }
+        if self.task_data:
+            task_info['task_data'] = self.task_data
+
+        series_info = {'series': series_dict}
+
+        summary_info: Dict = {
+            'total_time_spent': round(self.total_time_spent, self.time_spent_precision),
             'total_minutes': round(self.total_time_spent / 60, self.time_spent_precision),
             'total_number_series': self.total_number_series,
             'total_inquiries': self.total_inquiries,
             'total_selections': self.total_number_decisions,
             'inquiries_per_selection': self.inquiries_per_selection
         }
-
         if self.task_summary:
-            info['task_summary'] = self.task_summary
+            summary_info['task_summary'] = self.task_summary
+
+        info = {**task_info, **series_info, **summary_info}
         return info
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> 'Session':
         """Deserialize from a dict.
 
         Parameters:

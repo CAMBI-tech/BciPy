@@ -2,8 +2,10 @@
 import logging
 import time
 from bcipy.acquisition.util import StoppableThread
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.raw_data import RawDataReader
-log = logging.getLogger(__name__)
+
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class FileStreamer(StoppableThread):
@@ -24,11 +26,11 @@ class FileStreamer(StoppableThread):
         self.data_queue = data_queue
 
     def run(self):
-        log.debug("Starting raw_data file streamer")
+        log.info("Starting raw_data file streamer")
 
         with RawDataReader(self.data_file, convert_data=True) as reader:
             fs = reader.sample_rate
-            log.debug(f"Publishing data at sample rate {fs} hz")
+            log.info(f"Publishing data at sample rate {fs} hz")
 
             # publish data
             for data in reader:
@@ -36,4 +38,4 @@ class FileStreamer(StoppableThread):
                     break
                 self.data_queue.put(data)
                 time.sleep(1 / fs)
-            log.debug("Stopping raw_data file streamer")
+            log.info("Stopping raw_data file streamer")

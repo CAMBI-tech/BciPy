@@ -2,28 +2,29 @@
 import logging
 import subprocess
 import time
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
-from bcipy.acquisition.devices import (DeviceSpec, preconfigured_device,
-                                       with_content_type)
-from bcipy.acquisition import (LslAcquisitionClient, await_start,
-                               LslDataServer, discover_device_spec,
-                               ClientManager)
+from bcipy.acquisition import (ClientManager, LslAcquisitionClient,
+                               LslDataServer, await_start,
+                               discover_device_spec)
+from bcipy.acquisition.devices import (DeviceSpec, DeviceStatus,
+                                       preconfigured_device, with_content_type)
+from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, SESSION_LOG_FILENAME
+from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 from bcipy.helpers.save import save_device_specs
-from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
-def init_eeg_acquisition(
+def init_acquisition(
         parameters: dict,
         save_folder: str,
         server: bool = False) -> Tuple[ClientManager, List[LslDataServer]]:
     """Initialize EEG Acquisition.
 
-    Initializes a client that connects with the EEG data source and begins
+    Initializes a client that connects with ta data source and begins
     data collection.
 
     Parameters
@@ -50,11 +51,11 @@ def init_eeg_acquisition(
     manager = ClientManager()
 
     for stream_type in stream_types(parameters['acq_mode']):
-        content_type, device_name = parse_stream_type(stream_type)
+        content_type, device_name, status = parse_stream_type(stream_type)
 
         if server:
             server_device_spec = server_spec(content_type, device_name)
-            log.info(
+            logger.info(
                 f"Generating mock device data for {server_device_spec.name}")
             dataserver = LslDataServer(server_device_spec)
             servers.append(dataserver)
@@ -62,10 +63,11 @@ def init_eeg_acquisition(
             await_start(dataserver)
 
         device_spec = init_device(content_type, device_name)
-        raw_data_name = f'{RAW_DATA_FILENAME}.csv' if content_type == 'EEG' else None
+        if status:
+            device_spec.status = status
+        raw_data_name = raw_data_filename(device_spec)
 
-        client = init_lsl_client(parameters, device_spec, save_folder,
-                                 raw_data_name)
+        client = init_lsl_client(parameters, device_spec, save_folder, raw_data_name)
         manager.add_client(client)
 
     manager.start_acquisition()
@@ -78,6 +80,16 @@ def init_eeg_acquisition(
     save_device_specs(manager.device_specs, save_folder, spec_name)
 
     return (manager, servers)
+
+
+def raw_data_filename(device_spec: DeviceSpec) -> str:
+    """Returns the name of the raw data file for the given device."""
+    if device_spec.content_type == 'EEG':
+        return f'{RAW_DATA_FILENAME}.csv'
+
+    content_type = '_'.join(device_spec.content_type.split()).lower()
+    name = '_'.join(device_spec.name.split()).lower()
+    return f"{content_type}_data_{name}.csv"
 
 
 def init_device(content_type: str,
@@ -105,7 +117,7 @@ def init_device(content_type: str,
 
 
 def server_spec(content_type: str,
-                device_name: Optional[str] = None) -> LslDataServer:
+                device_name: Optional[str] = None) -> DeviceSpec:
     """Get the device_spec definition to use for a mock data server. If the
     device_name is provided, the matching preconfigured_device will be used.
     Otherwise, the first matching preconfigured device with the given
@@ -126,34 +138,56 @@ def server_spec(content_type: str,
     return devices[0]
 
 
+class StreamType(NamedTuple):
+    """Specifies a stream."""
+    content_type: str
+    device_name: Optional[str] = None
+    status: Optional[DeviceStatus] = None
+
+
 def parse_stream_type(stream_type: str,
-                      delimiter: str = "/") -> Tuple[str, str]:
-    """Parses the stream type into a tuple of (content_type, device_name).
+                      name_delim: str = "/",
+                      status_delim: str = ":") -> StreamType:
+    """Parses the stream type into a tuple of (content_type, device_name, status).
 
     Parameters
     ----------
         stream_type - LSL content type (EEG, Gaze, etc). If you know the name
             of the preconfigured device it can be added 'EEG/DSI-24'
-
+        name_delim - optionally used after the content_type (and status)
+            for specifying the device name.
+        status_delim - optionally used after the content_type to specify the
+            status for the device ('active' or 'passive')
     >>> parse_stream_type('EEG/DSI-24')
     ('EEG', 'DSI-24')
     >>> parse_stream_type('Gaze')
     ('Gaze', None)
+    >>> parse_stream_type('Gaze:passive')
+    ('Gaze', None, DeviceStatus.PASSIVE)
     """
-    if delimiter in stream_type:
-        content_type, device_name = stream_type.split(delimiter)[0:2]
-        return (content_type, device_name)
-    return (stream_type, None)
+    device_name = None
+    status = None
+
+    if name_delim in stream_type:
+        content_type, device_name = stream_type.split(name_delim)[0:2]
+    else:
+        content_type = stream_type
+    if status_delim in content_type:
+        content_type, status_str = content_type.split(status_delim)[0:2]
+        status = DeviceStatus.from_str(status_str)
+    return StreamType(content_type, device_name, status)
 
 
 def init_lsl_client(parameters: dict,
                     device_spec: DeviceSpec,
                     save_folder: str,
-                    raw_data_file_name: str = None):
+                    raw_data_file_name: Optional[str] = None):
     """Initialize a client that acquires data from LabStreamingLayer."""
 
     data_buffer_seconds = round(max_inquiry_duration(parameters))
-
+    logger.info(
+        f"Setting an acquisition buffer for {device_spec.name} of {data_buffer_seconds} seconds"
+    )
     return LslAcquisitionClient(max_buffer_len=data_buffer_seconds,
                                 device_spec=device_spec,
                                 save_directory=save_folder,
@@ -206,7 +240,7 @@ def analysis_channels(channels: List[str], device_spec: DeviceSpec) -> list:
     ----------
     - channels(list(str)): list of channel names from the raw_data
     (excluding the timestamp)
-    - device_spec(str): device from which the data was collected
+    - device_spec: device from which the data was collected
 
     Returns
     --------
@@ -272,3 +306,36 @@ def stream_types(acq_mode: str, delimiter: str = "+") -> List[str]:
     """
     return list(
         dict.fromkeys([mode.strip() for mode in acq_mode.split(delimiter)]))
+
+
+def active_content_types(acq_mode: str) -> List[str]:
+    """Given the configured acquisition mode, determine which content types are
+    currently active and should be used in decision-making.
+
+    Parameters
+    ----------
+        acq_mode - delimited list of stream types (ex. 'EEG+Eyetracker')
+    """
+    return [
+        stream_type.content_type
+        for stream_type in map(parse_stream_type, stream_types(acq_mode))
+        if is_stream_type_active(stream_type)
+    ]
+
+
+def is_stream_type_active(stream_type: StreamType) -> bool:
+    """Check if the provided stream type is active.
+
+    A stream type's status, if provided, will be used to make the determinition.
+    If missing, the status of a matching pre-configured device will be used."""
+    content_type, device_name, status = stream_type
+    if status:
+        return status == DeviceStatus.ACTIVE
+
+    if device_name:
+        device = preconfigured_device(device_name, strict=False)
+        if device:
+            return device.is_active
+
+    specs_with_type = with_content_type(content_type)
+    return any(spec.is_active for spec in specs_with_type)

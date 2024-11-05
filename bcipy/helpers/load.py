@@ -1,32 +1,30 @@
+# mypy: disable-error-code="arg-type, union-attr"
 import json
 import logging
 import os
+import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import Any, Dict, List, Tuple
+from typing import List, Optional, Union
 
-from bcipy.config import (
-    ROOT,
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME)
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
+                          DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
+                          SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.preferences import preferences
-from bcipy.helpers.exceptions import (BciPyCoreException,
-                                      InvalidExperimentException)
+from bcipy.exceptions import (BciPyCoreException,
+                              InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
+from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
-                    destination: str = None) -> str:
+                    destination: Optional[str] = None) -> str:
     """Creates a copy of the given configuration (parameters.json) to the
     given directory and returns the path.
 
@@ -138,9 +136,10 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     "fake_data": {
         "value": "true",
         "section": "bci_config",
-        "readableName": "Fake Data Sessions",
+        "name": "Fake Data Sessions",
         "helpTip": "If true, fake data server used",
-        "recommended_values": "",
+        "recommended": "",
+        "editable": "true",
         "type": "bool"
         }
 
@@ -158,42 +157,87 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
 
 def load_experimental_data() -> str:
     filename = ask_directory()  # show dialog box and return the path
-    log.debug("Loaded Experimental Data From: %s" % filename)
+    log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
-def load_signal_model(model_class: SignalModel,
-                      model_kwargs: Dict[str, Any], filename: str = None) -> Tuple[SignalModel, str]:
-    """Construct the specified model and load pretrained parameters.
+def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
+    """Load all signal models in a given directory.
+
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
+    directories.
 
     Args:
-        model_class (SignalModel, optional): Model class to construct.
-        model_kwargs (dict, optional): Keyword arguments for constructing model.
-        filename (str, optional): Location of pretrained model parameters.
-
-    Returns:
-        SignalModel: Model after loading pretrained parameters.
+        dirname (str, optional): Location of pretrained models. If not
+            provided the user will be prompted for a location.
     """
-    # use python's internal gui to call file explorers and get the filename
-    if not filename or Path(filename).is_dir():
-        directory = filename or preferences.signal_model_directory
-        filename = ask_filename('*.pkl', directory)
+    if not directory or Path(directory).is_file():
+        directory = ask_directory()
 
+    # update preferences
+    path = Path(directory)
+    preferences.signal_model_directory = str(path)
+
+    models = []
+    for file_path in path.glob(f"*{SIGNAL_MODEL_FILE_SUFFIX}"):
+        with open(file_path, "rb") as signal_file:
+            model = pickle.load(signal_file)
+            log.info(f"Loading model {model}")
+            models.append(model)
+    return models
+
+
+def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
+    """Prompt the user to load a signal model for each provided device.
+
+    Parameters
+    ----------
+        device_types - list of device content types (ex. 'EEG')
+    """
+    return [
+        model for model in map(choose_signal_model, set(device_types)) if model
+    ]
+
+
+def load_signal_model(file_path: str) -> SignalModel:
+    """Load signal model from persisted file.
+
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
+    directories."""
+
+    with open(file_path, "rb") as signal_file:
+        model = pickle.load(signal_file)
+        log.info(f"Loading model {model}")
+        return model
+
+
+def choose_signal_model(device_type: str) -> Optional[SignalModel]:
+    """Present a file dialog prompting the user to select a signal model for
+    the given device.
+
+    Parameters
+    ----------
+        device_type - ex. 'EEG' or 'Eyetracker'; this should correspond with
+            the content_type of the DeviceSpec of the model.
+    """
+
+    file_path = ask_filename(file_types=f"*{SIGNAL_MODEL_FILE_SUFFIX}",
+                             directory=preferences.signal_model_directory,
+                             prompt=f"Select the {device_type} signal model")
+
+    if file_path:
         # update preferences
-        path = Path(filename)
-        if path.is_file():
-            preferences.signal_model_directory = str(path.parent)
-
-    # load the signal_model with pickle
-    signal_model = model_class(**model_kwargs)
-    signal_model.load(filename)
-
-    log.info(f'Loaded signal model from {filename}')
-
-    return signal_model, filename
+        path = Path(file_path)
+        preferences.signal_model_directory = str(path)
+        return load_signal_model(str(path))
+    return None
 
 
-def choose_csv_file(filename: str = None) -> str:
+def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     """GUI prompt to select a csv file from the file system.
 
     Parameters
@@ -217,7 +261,7 @@ def choose_csv_file(filename: str = None) -> str:
     return filename
 
 
-def load_raw_data(filename: str) -> RawData:
+def load_raw_data(filename: Union[Path, str]) -> RawData:
     """Reads the data (.csv) file written by data acquisition.
 
     Parameters
@@ -242,7 +286,7 @@ def load_txt_data() -> str:
     return filename
 
 
-def load_users(data_save_loc) -> List[str]:
+def load_users(data_save_loc: str) -> List[str]:
     """Load Users.
 
     Loads user directory names below experiments from the data path defined and returns them as a list.
@@ -250,7 +294,7 @@ def load_users(data_save_loc) -> List[str]:
     have been run yet.
     """
     # build a saved users list, pull out the data save location from parameters
-    saved_users = []
+    saved_users: List[str] = []
 
     # check the directory is valid, if it is, set path as data save location
     if os.path.isdir(data_save_loc):
@@ -265,14 +309,11 @@ def load_users(data_save_loc) -> List[str]:
         return saved_users
 
     # grab all experiments in the directory and iterate over them to get the users
-    experiments = fast_scandir(path, return_path=True)
+    users = fast_scandir(path, return_path=True)
 
-    for experiment in experiments:
-        users = fast_scandir(experiment, return_path=False)
-        # If it is a new user, append it to the saved_user list
-        for user in users:
-            if user not in saved_users:
-                saved_users.append(user)
+    for user in users:
+        if user not in saved_users:
+            saved_users.append(user.split('/')[-1])
 
     return saved_users
 

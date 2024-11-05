@@ -1,21 +1,19 @@
 import subprocess
 import sys
-
+import logging
 from typing import List
 
-from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH, STATIC_IMAGES_PATH
-from bcipy.gui.main import (
-    AlertMessageResponse,
-    AlertMessageType,
-    AlertResponse,
-    app,
-    BCIGui,
-    contains_special_characters,
-    contains_whitespaces,
-    invalid_length,
-)
-from bcipy.helpers.load import load_json_parameters, load_experiments, copy_parameters, load_users
-from bcipy.task import TaskType
+from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
+                          STATIC_IMAGES_PATH, PROTOCOL_LOG_FILENAME)
+from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
+                            AlertResponse, BCIGui, app,
+                            contains_special_characters, contains_whitespaces,
+                            invalid_length)
+from bcipy.helpers.load import (copy_parameters, load_experiments,
+                                load_json_parameters, load_users)
+from bcipy.task import TaskRegistry
+
+logger = logging.getLogger(PROTOCOL_LOG_FILENAME)
 
 
 class BCInterface(BCIGui):
@@ -25,14 +23,16 @@ class BCInterface(BCIGui):
         editing and loading, and offline analysis execution.
     """
 
-    tasks = TaskType.list()
+    tasks = TaskRegistry().list()
 
     default_text = '...'
-    padding = 30
+    padding = 20
     btn_height = 40
+    btn_width = 100
     max_length = 25
     min_length = 1
     timeout = 3
+    font = 'Courier New'
 
     def __init__(self, *args, **kwargs):
         super(BCInterface, self).__init__(*args, **kwargs)
@@ -63,7 +63,7 @@ class BCInterface(BCIGui):
 
         self.autoclose = False
         self.alert = True
-        self.static_font_size = 24
+        self.static_font_size = 16
 
         self.user_id_validations = [
             (invalid_length(min=self.min_length, max=self.max_length),
@@ -77,36 +77,43 @@ class BCInterface(BCIGui):
 
         Build all buttons necessary for the UI. Define their action on click using the named argument action.
         """
+
         self.add_button(
-            message='Load Parameters', position=[self.padding, 450],
-            size=[110, self.btn_height], background_color='white',
+            message='Load', position=[self.padding, 450],
+            size=[self.btn_width, self.btn_height], background_color='Plum',
+            text_color='black',
+            font_family=self.font,
             action=self.select_parameters)
 
         self.add_button(
-            message='Edit Parameters', position=[self.padding + 115, 450],
-            size=[105, self.btn_height], background_color='white',
+            message='Edit', position=[self.padding + self.btn_width + 10, 450],
+            size=[self.btn_width, self.btn_height], background_color='LightCoral',
+            text_color='black',
+            font_family=self.font,
             action=self.edit_parameters)
 
-        btn_auc_width = 100
-        btn_auc_x = self.padding + 225
+        btn_auc_x = self.padding + (self.btn_width * 2) + 20
         self.add_button(
-            message='Calculate AUC', position=(btn_auc_x, 450),
-            size=(btn_auc_width, self.btn_height), background_color='white',
+            message='Train', position=(btn_auc_x, 450),
+            size=(self.btn_width, self.btn_height), background_color='LightSeaGreen',
+            text_color='black',
+            font_family=self.font,
             action=self.offline_analysis)
 
-        btn_start_width = 200
+        btn_start_width = self.btn_width * 2 + 10
         btn_start_x = self.width - (self.padding + btn_start_width)
         self.add_button(
-            message='Start Experiment Session', position=[btn_start_x, 450],
-            size=[btn_start_width, self.btn_height],
+            message='Start Session', position=[btn_start_x, 440],
+            size=[btn_start_width, self.btn_height + 10],
             background_color='green',
             action=self.start_experiment,
-            text_color='white')
+            text_color='white',
+            font_family=self.font)
 
         self.add_button(
             message='+',
             position=[self.width - self.padding - 200, 260],
-            size=[40, self.btn_height - 10],
+            size=[35, self.btn_height - 10],
             background_color='green',
             action=self.create_experiment,
             text_color='white'
@@ -202,10 +209,11 @@ class BCInterface(BCIGui):
         """
         self.add_static_textbox(
             text='BCInterface',
-            position=[275, 0],
-            size=[200, 50],
+            position=[210, 0],
+            size=[250, 50],
             background_color='black',
             text_color='white',
+            font_family=self.font,
             font_size=30)
 
         text_x = 145
@@ -215,12 +223,14 @@ class BCInterface(BCIGui):
             size=[200, 50],
             background_color='black',
             text_color='white',
+            font_family=self.font,
             font_size=self.static_font_size)
         self.add_static_textbox(
             text='Experiment',
             position=[text_x, 205],
             size=[300, 50],
             background_color='black',
+            font_family=self.font,
             text_color='white',
             font_size=self.static_font_size)
         self.add_static_textbox(
@@ -229,6 +239,7 @@ class BCInterface(BCIGui):
             size=[300, 50],
             background_color='black',
             text_color='white',
+            font_family=self.font,
             font_size=self.static_font_size)
 
     def build_images(self) -> None:
@@ -304,9 +315,11 @@ class BCInterface(BCIGui):
                 else:
                     return None
 
-            subprocess.call(
+            output = subprocess.check_output(
                 f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
                 shell=True)
+            if output:
+                self.parameter_location = output.decode().strip()
 
     def check_input(self) -> bool:
         """Check Input.
@@ -323,17 +336,18 @@ class BCInterface(BCIGui):
         try:
             if not self.check_user_id():
                 return False
-            if self.experiment == BCInterface.default_text:
+
+            if self.experiment == BCInterface.default_text and self.task == BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select or create an Experiment',
+                    message='Please select an Experiment or Task for execution',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
-            if self.task == BCInterface.default_text:
+            if self.experiment != BCInterface.default_text and self.task != BCInterface.default_text:
                 self.throw_alert_message(
                     title='BciPy Alert',
-                    message='Please select a Task',
+                    message='Please select only an Experiment or Task',
                     message_type=AlertMessageType.INFO,
                     message_response=AlertMessageResponse.OTE)
                 return False
@@ -397,13 +411,25 @@ class BCInterface(BCIGui):
                 message_type=AlertMessageType.INFO,
                 message_response=AlertMessageResponse.OTE,
                 message_timeout=self.task_start_timeout)
-            cmd = (
-                f'bcipy -e "{self.experiment}" '
-                f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
-            )
+            if self.task != BCInterface.default_text:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
+                )
+            else:
+                cmd = (
+                    f'bcipy '
+                    f'-u "{self.user}" -e "{self.experiment}" -p "{self.parameter_location}"'
+                )
             if self.alert:
                 cmd += ' -a'
-            subprocess.Popen(cmd, shell=True)
+            output = subprocess.run(cmd, shell=True)
+            if output.returncode != 0:
+                self.throw_alert_message(
+                    title='BciPy Alert',
+                    message=f'Error: {output.stderr.decode()}',
+                    message_type=AlertMessageType.CRIT,
+                    message_response=AlertMessageResponse.OTE)
 
             if self.autoclose:
                 self.close()
@@ -414,7 +440,7 @@ class BCInterface(BCIGui):
         Run offline analysis as a script in a new process.
         """
         if not self.action_disabled():
-            cmd = f'python {BCIPY_ROOT}/signal/model/offline_analysis.py --alert --p "{self.parameter_location}"'
+            cmd = f'bcipy-train --alert --p "{self.parameter_location}" -v -s'
             subprocess.Popen(cmd, shell=True)
 
     def action_disabled(self) -> bool:
@@ -430,8 +456,8 @@ class BCInterface(BCIGui):
             return True
         else:
             self.disable = True
-            # set the update time to every 1000ms
-            self.timer.start(1000)
+            # set the update time to every 500ms
+            self.timer.start(500)
             return False
 
     def _disable_action(self) -> bool:
@@ -456,12 +482,12 @@ def start_app() -> None:
     ex = BCInterface(
         title='Brain Computer Interface',
         height=550,
-        width=750,
+        width=700,
         background_color='black')
 
     ex.show_gui()
 
-    sys.exit(bcipy_gui.exec_())
+    sys.exit(bcipy_gui.exec())
 
 
 if __name__ == '__main__':

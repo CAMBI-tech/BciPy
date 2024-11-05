@@ -1,22 +1,25 @@
 """Helper functions for language model use."""
-import math
 import inspect
+import math
 from typing import Dict, List, Tuple
+
 import numpy as np
-from bcipy.language.main import LanguageModel, ResponseType
+
 from bcipy.helpers.symbols import alphabet
+from bcipy.language.main import LanguageModel, ResponseType
+
 # pylint: disable=unused-import
 # flake8: noqa
 
 """Only imported models will be included in language_models_by_name"""
-from bcipy.language.model.uniform import UniformLanguageModel
-from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.language.model.mixture import MixtureLanguageModel
-from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.language.model.unigram import UnigramLanguageModel
-
 # flake8: noqa
-from bcipy.helpers.exceptions import InvalidLanguageModelException
+from bcipy.exceptions import InvalidLanguageModelException
+from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.language.model.mixture import MixtureLanguageModel
+from bcipy.language.model.oracle import OracleLanguageModel
+from bcipy.language.model.uniform import UniformLanguageModel
+from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:

@@ -5,26 +5,29 @@ prior to integration.
 
 from psychopy import core
 
-from bcipy.display import (init_display_window, InformationProperties,
-                           StimuliProperties)
-from bcipy.display.paradigm.matrix.display import MatrixDisplay
+from bcipy.display import (InformationProperties, StimuliProperties,
+                           init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
+from bcipy.display.main import PreviewParams
+from bcipy.display.paradigm.matrix.display import MatrixDisplay
 
+font = "Overpass Mono"
 info = InformationProperties(
     info_color=['White'],
     info_pos=[(-.5, -.75)],
     info_height=[0.1],
-    info_font=['Arial'],
+    info_font=[font],
     info_text=['Matrix Copy Phrase Demo'],
 )
 task_height = 0.1
 
 inter_stim_buffer = .5
 
-stim_properties = StimuliProperties(stim_font='Arial',
+stim_properties = StimuliProperties(stim_font=font,
                                     stim_pos=(-0.6, 0.4),
-                                    stim_height=0.1,
-                                    is_txt_stim=True)
+                                    stim_height=0.17,
+                                    is_txt_stim=True,
+                                    layout='ALP')
 
 # Initialize Stimulus
 window_parameters = {
@@ -70,20 +73,25 @@ task_bar = CopyPhraseTaskBar(win,
                              task_text='COPY_PHRASE',
                              spelled_text='COPY_PHA',
                              colors=['white', 'green'],
-                             font='Menlo')
-
+                             font=font)
+preview_config = PreviewParams(show_preview_inquiry=True,
+                               preview_inquiry_length=2,
+                               preview_inquiry_key_input='return',
+                               preview_inquiry_progress_method=0,
+                               preview_inquiry_isi=1)
 display = MatrixDisplay(win,
                         experiment_clock,
                         stim_properties,
                         task_bar,
                         info,
-                        should_prompt_target=False)
+                        should_prompt_target=False,
+                        preview_config=preview_config)
 
 counter = 0
 
-for idx_o in range(len(spelled_text)):
+for spelled in spelled_text:
 
-    display.update_task_bar(text=spelled_text[idx_o])
+    display.update_task_bar(text=spelled)
     display.draw_static()
     win.flip()
 

@@ -3,8 +3,9 @@ import logging
 from typing import Any
 
 import pylsl
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class MarkerWriter():
@@ -50,7 +51,7 @@ class LslMarkerWriter(MarkerWriter):
         - marker : any object that can be converted to a str
         """
         stamp = pylsl.local_clock()
-        log.debug(f'Pushing marker {str(marker)} at {stamp}')
+        log.info(f'Pushing marker {str(marker)} at {stamp}')
         self.markers_outlet.push_sample([str(marker)], stamp)
         if not self.first_marker_stamp:
             self.first_marker_stamp = stamp

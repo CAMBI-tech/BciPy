@@ -150,12 +150,14 @@ class TestDataAcquisitionClient(unittest.TestCase):
         """Test that recording works."""
 
         temp_dir = tempfile.mkdtemp()
-        path = Path(temp_dir, f'eeg_data_{DEVICE_NAME.lower()}.csv')
+        filename = f'eeg_data_{DEVICE_NAME.lower()}.csv'
+        path = Path(temp_dir, filename)
 
         self.assertFalse(path.exists())
 
         client = LslAcquisitionClient(max_buffer_len=1,
-                                      save_directory=temp_dir)
+                                      save_directory=temp_dir,
+                                      raw_data_file_name=filename)
         client.start_acquisition()
         time.sleep(0.1)
         client.stop_acquisition()

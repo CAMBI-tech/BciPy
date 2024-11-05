@@ -3,20 +3,24 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
+
+from bcipy.exceptions import SignalException
+from bcipy.helpers.stimuli import InquiryReshaper
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,
+                                                 cross_validation)
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
-from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.dimensionality_reduction import \
+    ChannelWisePrincipalComponentAnalysis
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.helpers.exceptions import SignalException
-from bcipy.helpers.stimuli import InquiryReshaper
 
 
 class PcaRdaKdeModel(SignalModel):
-    reshaper = InquiryReshaper()
+    reshaper: InquiryReshaper = InquiryReshaper()
+    name = "pca_rda_kde"
 
-    def __init__(self, k_folds: int, prior_type="uniform", pca_n_components=0.9):
+    def __init__(self, k_folds: int = 10, prior_type="uniform", pca_n_components=0.9):
         self.k_folds = k_folds
         self.prior_type = prior_type
         self.pca_n_components = pca_n_components
@@ -26,7 +30,11 @@ class PcaRdaKdeModel(SignalModel):
         self.max = 1e2
         self.model = None
         self.auc = None
-        self._ready_to_predict = False
+
+    @property
+    def ready_to_predict(self) -> bool:
+        """Returns True if a model has been trained"""
+        return bool(self.model)
 
     def fit(self, train_data: np.array, train_labels: np.array) -> SignalModel:
         """
@@ -78,7 +86,6 @@ class PcaRdaKdeModel(SignalModel):
         else:
             raise ValueError("prior_type must be 'empirical' or 'uniform'")
 
-        self._ready_to_predict = True
         return self
 
     def evaluate(self, test_data: np.array, test_labels: np.array) -> ModelEvaluationReport:
@@ -94,7 +101,7 @@ class PcaRdaKdeModel(SignalModel):
         Returns:
             ModelEvaluationReport: stores AUC
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.evaluate()")
 
         tmp_model = Pipeline([self.model.pipeline[0], self.model.pipeline[1]])
@@ -107,7 +114,7 @@ class PcaRdaKdeModel(SignalModel):
         auc = -tmp
         return ModelEvaluationReport(auc)
 
-    def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
+    def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
         """
         For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
         Rather than just computing an update p(e|l=+) for the seen symbol and p(e|l=-) for all unseen symbols,
@@ -126,7 +133,7 @@ class PcaRdaKdeModel(SignalModel):
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
 
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict()")
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
@@ -139,16 +146,16 @@ class PcaRdaKdeModel(SignalModel):
         likelihood_ratios = np.ones(len(symbol_set))
         for idx in range(len(subset_likelihood_ratios)):
             likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
-        return likelihood_ratios
+        return likelihood_ratios   # used in multimodal update
 
-    def predict_proba(self, data: np.array) -> np.array:
+    def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
         """Converts log likelihoods from model into class probabilities.
 
         Returns:
             posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
                 probability for the two labels.
         """
-        if not self._ready_to_predict:
+        if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
@@ -162,16 +169,58 @@ class PcaRdaKdeModel(SignalModel):
         denom = np.logaddexp(log_post_0, log_post_1)
         log_post_0 -= denom
         log_post_1 -= denom
-        posterior = np.exp(np.stack([log_post_0, log_post_1], axis=-1))
-        return posterior
+        log_posterior = np.stack([log_post_0, log_post_1], axis=-1)
+        return log_posterior
 
-    def save(self, path: Path):
+    def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
+        """
+        Calculates log(p(e | l)) for each trial in the data.
+        p(e | l=1), p(e | l=0)
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
+
+        log_scores_class_0 = self.model.transform(data)[:, 0]
+        log_scores_class_1 = self.model.transform(data)[:, 1]
+        return np.stack([log_scores_class_0, log_scores_class_1], axis=-1)
+
+    def predict(self, data: np.ndarray) -> np.ndarray:
+        """Predict the most likely label for each trial in the data.
+
+        Returns:
+            predictions (np.ndarray): shape (num_items,) - the predicted label for each item.
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict()")
+
+        posterior = self.compute_class_probabilities(data)
+        predictions = np.argmax(posterior, axis=1)
+        return predictions
+
+    def predict_proba(self, data: np.ndarray) -> np.ndarray:
+        """Converts log likelihoods from model into class probabilities.
+
+        Returns:
+            posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
+                probability for the two labels.
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
+
+        # Model originally produces p(eeg | label). We want p(label | eeg):
+        #
+        # p(l=1 | e) = p(e | l=1) p(l=1) / p(e)
+        # log(p(l=1 | e)) = log(p(e | l=1)) + log(p(l=1)) - log(p(e))
+        return self.compute_class_probabilities(data)
+
+    def save(self, path: Path) -> None:
         """Save model weights (e.g. after training) to `path`"""
         with open(path, "wb") as f:
             pickle.dump(self.model, f)
 
-    def load(self, path: Path):
-        """Load pretrained model weights from `path`"""
+    def load(self, path: Path) -> SignalModel:
+        """Load pretrained model from `path`"""
         with open(path, "rb") as f:
-            self.model = pickle.load(f)
-        self._ready_to_predict = True
+            model = pickle.load(f)
+
+        return model

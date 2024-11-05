@@ -6,29 +6,26 @@ import os
 import sqlite3
 import subprocess
 from dataclasses import dataclass, fields
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import openpyxl
 from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
-from openpyxl.styles.colors import BLACK, WHITE, YELLOW
-
-from bcipy.config import (
-    BCIPY_ROOT,
-    DEFAULT_ENCODING,
-    DEFAULT_PARAMETER_FILENAME,
-    EXPERIMENT_DATA_FILENAME,
-    SESSION_DATA_FILENAME,
-    SESSION_SUMMARY_FILENAME,
-)
+from openpyxl.styles.colors import COLOR_INDEX
+BLACK = COLOR_INDEX[0]
+WHITE = COLOR_INDEX[1]
+YELLOW = COLOR_INDEX[5]
+from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
+                          DEFAULT_PARAMETERS_FILENAME, EXPERIMENT_DATA_FILENAME,
+                          SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
 from bcipy.helpers.load import (load_experiment_fields, load_experiments,
                                 load_json_parameters)
 from bcipy.helpers.validate import validate_field_data_written
 from bcipy.task.data import Session
 
 
-def read_session(file_name=SESSION_DATA_FILENAME) -> Session:
+def read_session(file_name: str = SESSION_DATA_FILENAME) -> Session:
     """Read the session data from the given file."""
     with open(file_name, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return Session.from_dict(json.load(json_file))
@@ -40,7 +37,7 @@ def session_data(data_dir: str) -> Dict:
     not useful for debugging."""
 
     parameters = load_json_parameters(os.path.join(data_dir,
-                                                   DEFAULT_PARAMETER_FILENAME),
+                                                   DEFAULT_PARAMETERS_FILENAME),
                                       value_cast=True)
     session = read_session(os.path.join(data_dir, SESSION_DATA_FILENAME))
     data = session.as_dict(evidence_only=True)
@@ -48,9 +45,9 @@ def session_data(data_dir: str) -> Dict:
     return data
 
 
-def collect_experiment_field_data(experiment_name,
-                                  save_path,
-                                  file_name=EXPERIMENT_DATA_FILENAME) -> None:
+def collect_experiment_field_data(experiment_name: str,
+                                  save_path: str,
+                                  file_name: str = EXPERIMENT_DATA_FILENAME) -> None:
     experiment = load_experiments()[experiment_name]
     experiment_fields = load_experiment_fields(experiment)
 
@@ -71,9 +68,10 @@ class EvidenceRecord:
     stim: str
     lm: float
     eeg: float
+    eye: float
     btn: float
     cumulative: float
-    inq_position: int
+    inq_position: Optional[int]
     is_target: int
     presented: int
     above_threshold: int
@@ -121,6 +119,7 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
                         stim=stim,
                         lm=evidence['lm_evidence'].get(stim, ''),
                         eeg=evidence['eeg_evidence'].get(stim, ''),
+                        eye=evidence.get('eye_evidence', {}).get(stim, ''),
                         btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
                         inq_position=stimuli.index(stim) if stim in stimuli else None,
@@ -150,6 +149,8 @@ def session_db(session: Session, db_file: str = 'session.db'):
         first inquiry)
     - eeg real (likelihood for the given inquiry; a value of 1.0 indicates
         that the letter was not presented)
+    - btn real (button press evidence)
+    - eye real (eyetracker evidence)
     - cumulative real (cumulative likelihood for the trial thus far)
     - inq_position integer (inquiry position; null if not presented)
     - is_target integer (boolean; true(1) if this letter is the target)
@@ -232,7 +233,7 @@ def session_excel(session: Session,
 
     # Write rows
     inq_background = next(backgrounds_iter)
-    alp_len = None
+    alp_len = len(session.symbol_set)
     for i, record in enumerate(evidence_records(session)):
         rownum = i + 2  # Excel is 1-indexed; also account for column row.
         border = default_border
@@ -245,10 +246,6 @@ def session_excel(session: Session,
 
         if record.inquiry != inquiry:
             inquiry = record.inquiry
-
-            # Set the alphabet length used for chart data ranges.
-            if not alp_len and i > 0:
-                alp_len = i
             chart_data[f"Series {series} inquiry {inquiry}"] = rownum
 
             # Toggle the background for each inquiry for easier viewing.
@@ -288,8 +285,9 @@ def session_excel(session: Session,
             chart.add_data(data, titles_from_data=False)
             chart.series[0].title = openpyxl.chart.series.SeriesLabel(v="lm")
             chart.series[1].title = openpyxl.chart.series.SeriesLabel(v="eeg")
-            chart.series[2].title = openpyxl.chart.series.SeriesLabel(v="btn")
-            chart.series[3].title = openpyxl.chart.series.SeriesLabel(
+            chart.series[2].title = openpyxl.chart.series.SeriesLabel(v="eye")
+            chart.series[3].title = openpyxl.chart.series.SeriesLabel(v="btn")
+            chart.series[4].title = openpyxl.chart.series.SeriesLabel(
                 v="combined")
 
             chart.set_categories(categories)

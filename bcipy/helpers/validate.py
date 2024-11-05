@@ -7,11 +7,12 @@ from bcipy.config import (
     FIELD_FILENAME)
 from bcipy.helpers.load import load_experiments, load_fields
 from bcipy.helpers.system_utils import is_battery_powered, is_connected, is_screen_refresh_rate_low
-from bcipy.helpers.exceptions import (InvalidFieldException,
-                                      InvalidExperimentException,
-                                      UnregisteredExperimentException,
-                                      UnregisteredFieldException)
+from bcipy.exceptions import (InvalidFieldException,
+                              InvalidExperimentException,
+                              UnregisteredExperimentException,
+                              UnregisteredFieldException)
 from bcipy.gui.alert import confirm
+from bcipy.task.orchestrator.protocol import validate_protocol_string
 
 
 def validate_bcipy_session(parameters: dict, fake_data: bool) -> bool:
@@ -46,7 +47,7 @@ def validate_experiment(
         experiment_name: str,
         experiment_path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}',
         field_path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}'
-) -> bool:
+) -> dict:
     """Validate Experiment.
 
     Validate the experiment is in the correct format and the fields are properly registered.
@@ -65,7 +66,7 @@ def validate_experiment(
     _validate_experiment_format(experiment, experiment_name)
     _validate_experiment_fields(experiment['fields'], fields)
 
-    return True
+    return experiment
 
 
 def _validate_experiment_fields(experiment_fields, fields):
@@ -118,6 +119,9 @@ def _validate_experiment_format(experiment, name):
         assert isinstance(exp_summary, str)
         experiment_fields = experiment['fields']
         assert isinstance(experiment_fields, list)
+        protocol = experiment['protocol']
+        if protocol:
+            validate_protocol_string(protocol)
     except KeyError:
         raise InvalidExperimentException(
             f'Experiment [{name}] is formatted incorrectly. It should contain the keys: summary and fields.')
