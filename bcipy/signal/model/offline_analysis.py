@@ -11,8 +11,8 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME, DEFAULT_DEVICES_PATH,
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
@@ -24,12 +24,6 @@ from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import (visualize_centralized_data,
-                                         visualize_gaze,
-                                         visualize_gaze_accuracies,
-                                         visualize_gaze_inquiries,
-                                         visualize_results_all_symbols)
-from bcipy.signal.model.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,
@@ -316,7 +310,7 @@ def analyze_gaze(
         num_stimuli_per_inquiry=10,
         symbol_set=alphabet()
     )
-    
+
     # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
     preprocessed_data = {i: [] for i in symbol_set}
@@ -327,27 +321,30 @@ def analyze_gaze(
 
         for j in range(len(inquiries_dict[i])):
             left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_dict[i][j])
-            preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))   
-             # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
+            preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))
+            # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
-    
+
     centralized_data = {i: [] for i in symbol_set}
     time_average = {i: [] for i in symbol_set}
 
     for sym in symbol_set:
         # Skip if there's no evidence for this symbol:
-        try: 
+        try:
             if len(inquiries_dict[sym]) == 0:
                 continue
 
-        except:
+        except BaseException:
             log.info(f"No evidence from symbol {sym}")
             continue
 
         # Fit the model based on model type.
         if model_type == "Individual":
             # Model 1: Fit Gaussian mixture on each symbol separately
-            reshaped_data = preprocessed_data[sym].reshape((preprocessed_data[sym].shape[0]*preprocessed_data[sym].shape[2], preprocessed_data[sym].shape[1]))
+            reshaped_data = preprocessed_data[sym].reshape(
+                (preprocessed_data[sym].shape[0] *
+                 preprocessed_data[sym].shape[2],
+                 preprocessed_data[sym].shape[1]))
             model.fit(reshaped_data)
 
         if model_type == "Centralized":
@@ -355,17 +352,20 @@ def analyze_gaze(
             # Load json file.
             with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
-            
+
             # Subtract the symbol positions from the data:
             for j in range(len(preprocessed_data[sym])):
                 centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
-        
+
         if model_type == "GP_SampleAverage":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
                 time_average[sym].append(temp)
-                centralized_data[sym].append(model.substract_mean(preprocessed_data[sym][j], temp))  # Delta_t = X_t - mu
+                centralized_data[sym].append(
+                    model.substract_mean(
+                        preprocessed_data[sym][j],
+                        temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
 
@@ -390,19 +390,18 @@ def analyze_gaze(
                     test_dict[sym] = preprocessed_data[sym][-1]
                 continue
             # Leave one out and add the rest to the training set:
-            for j in range(len(centralized_data[sym])-1):
+            for j in range(len(centralized_data[sym]) - 1):
                 centralized_data_training_set.append(centralized_data[sym][j])
             # Add the last inquiry to the test set:
             test_dict[sym] = preprocessed_data[sym][-1]
 
-
         centralized_data_training_set = np.array(centralized_data_training_set)
-        reshaped_data = centralized_data_training_set.reshape((72,720))
-        
+        reshaped_data = centralized_data_training_set.reshape((72, 720))
+
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
         # Accuracy vs time horizon
-        
+
         for eye_coord_0 in range(4):
             for eye_coord_1 in range(4):
                 for time_0 in range(180):
@@ -415,13 +414,13 @@ def analyze_gaze(
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
         eps = 0
-        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix))*eps
+        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix)) * eps
         try:
             inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
-        except:
+        except BaseException:
             print("Singular matrix, using pseudo-inverse instead")
             eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
-            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix))*eps)
+            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
             # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
         denominator = 0
 
@@ -439,7 +438,7 @@ def analyze_gaze(
                 central_data = model.substract_mean(test_dict[sym0], time_average[sym1])
                 flattened_data = central_data.reshape((720,))
                 diff = flattened_data - reshaped_mean
-                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff))/2
+                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
                 log_likelihood = numerator - denominator
                 # print(f"{log_likelihood:.3E}")
                 log_likelihoods[i_sym0, i_sym1] = log_likelihood
@@ -455,7 +454,7 @@ def analyze_gaze(
         # flatten the dict to a np array:
         cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
         # Merge the first and third dimensions:
-        cent_data = cent_data.reshape((cent_data.shape[0]*cent_data.shape[2], cent_data.shape[1]))
+        cent_data = cent_data.reshape((cent_data.shape[0] * cent_data.shape[2], cent_data.shape[1]))
 
         # cent_data = np.concatenate(centralized_data, axis=0)
         model.fit(cent_data)
@@ -534,8 +533,8 @@ def offline_analysis(
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
-            # extract relevant information from raw data object eeg
-   
+        # extract relevant information from raw data object eeg
+
         if device_spec.content_type == "EEG" and device_spec.is_active:
             erp_model = analyze_erp(
                 raw_data,
@@ -546,7 +545,7 @@ def offline_analysis(
                 save_figures,
                 show_figures)
             models.append(erp_model)
-        
+
         if device_spec.content_type == "Eyetracker" and device_spec.is_active:
             et_data = raw_data
             et_model = analyze_gaze(
@@ -594,6 +593,7 @@ def main():
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
+
 
 if __name__ == "__main__":
     main()

@@ -251,17 +251,17 @@ class GazeReshaper:
                  symbol_set: List[str] = alphabet(),
                  channel_map: Optional[List[int]] = None,
                  ) -> Tuple[dict, list, List[str]]:
-        """Extract gaze trajectory data and labels. 
-        
-        Different from the EEG, gaze inquiry windows start with the first highlighted symbol and end with the 
-        last highlighted symbol in the inquiry. Each inquiry has a length of (trial duration x num of trials) 
-        seconds. Labels are provided in 'target_symbols'. It returns a Dict, where keys are the target symbols 
-        and the values are inquiries (appended in order of appearance) where the corresponding target symbol is 
+        """Extract gaze trajectory data and labels.
+
+        Different from the EEG, gaze inquiry windows start with the first highlighted symbol and end with the
+        last highlighted symbol in the inquiry. Each inquiry has a length of (trial duration x num of trials)
+        seconds. Labels are provided in 'target_symbols'. It returns a Dict, where keys are the target symbols
+        and the values are inquiries (appended in order of appearance) where the corresponding target symbol is
         prompted.
-        
+
         Optional outputs:
-        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are 
-        appended in chronological order. 
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are
+        appended in chronological order.
         labels returns the list of target symbols in each inquiry.
 
         Parameters
@@ -278,9 +278,9 @@ class GazeReshaper:
 
         Returns
         -------
-            data_by_targets (dict): Dictionary where keys consist of the symbol set, and values 
+            data_by_targets (dict): Dictionary where keys consist of the symbol set, and values
             the appended inquiries for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
-            
+
             reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
             labels (List[str]) [optional] : Target symbol in each inquiry.
         """
@@ -325,7 +325,7 @@ class GazeReshaper:
 
             # Populate the dict by appending the inquiry to the corresponding key:
             data_by_targets_dict[labels[i]].append(gaze_data[:, start:stop])
-    
+
         return data_by_targets_dict, reshaped_data, labels
 
     def centralize_all_data(self, data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:

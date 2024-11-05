@@ -20,7 +20,7 @@ from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.signal.model import PcaRdaKdeModel
+from bcipy.signal.model import PcaRdaKdeModel, SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
 
@@ -63,7 +63,7 @@ def generate_replay_outputs(
     tuple - new_model_outputs, old_model_target_output, old_model_nontarget_output
     """
     k_folds = parameters.get("k_folds")
-    model = load_model(model_path, k_folds, model_class)
+    model: SignalModel = load_model(model_path, k_folds, model_class)
     logger.info(f"Loaded model from {model_path}")
 
     # get trial information; to make backwards compatible, we will try to get the trial length
@@ -156,7 +156,7 @@ def generate_replay_outputs(
     for i, (inquiry_trials, this_inquiry_letters, this_inquiry_labels) in enumerate(
         zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
     ):
-        response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
+        response = model.compute_likelihood_ratio(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
         if np.any(this_inquiry_labels == 1):
             index_of_target_trial = np.argwhere(this_inquiry_labels == 1)[0][0]
             target_letter = this_inquiry_letters[index_of_target_trial]

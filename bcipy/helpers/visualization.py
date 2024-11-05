@@ -348,6 +348,7 @@ def visualize_gaze_inquiries(
 
     return fig
 
+
 def visualize_pupil_size(
         means: Optional[np.ndarray] = None,
         covs: Optional[np.ndarray] = None,

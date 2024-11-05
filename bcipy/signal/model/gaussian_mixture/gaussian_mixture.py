@@ -1,22 +1,17 @@
 from pathlib import Path
+from typing import List
 
-import numpy as np
-from numpy.core.multiarray import array as array
-from bcipy.signal.model import SignalModel
-from sklearn.mixture import GaussianMixture
 from bcipy.helpers.stimuli import GazeReshaper
-from sklearn.model_selection import cross_val_score  # noqa
+from bcipy.signal.model import SignalModel
+
+from numpy.core.multiarray import array as array
+from sklearn.mixture import GaussianMixture
+import numpy as np
 import scipy.stats as stats
-from typing import List, Tuple
-from numpy.linalg import inv
-import matplotlib.pyplot as plt
 
 import warnings
-
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
-import matplotlib.pyplot as plt
-import numpy as np
 
 class KernelGP(SignalModel):
     def __init__(self):
@@ -40,9 +35,10 @@ class KernelGP(SignalModel):
     def load(self, path: Path):
         ...
 
+
 class KernelGPSampleAverage(SignalModel):
     reshaper = GazeReshaper()
-    
+
     def __init__(self):
         self.ready_to_predict = False
 
@@ -54,7 +50,7 @@ class KernelGPSampleAverage(SignalModel):
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         # cov_matrix_shape = (features x samples) x (features x samples)
         reshaped_mean = np.mean(reshaped_data, axis=0)
-    
+
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
 
@@ -81,11 +77,11 @@ class KernelGPSampleAverage(SignalModel):
         """
         new_data = np.copy(data)
         for i in range(len(data.T)):
-            new_data[0:2,i] = data[0:2,i] - symbol_pos
-            new_data[2:4,i] = data[2:4,i] - symbol_pos
+            new_data[0:2, i] = data[0:2, i] - symbol_pos
+            new_data[2:4, i] = data[2:4, i] - symbol_pos
 
         return new_data
-    
+
     def substract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
@@ -97,7 +93,7 @@ class KernelGPSampleAverage(SignalModel):
         """
         new_data = np.copy(data)
         for i in range(len(data.T)):
-            new_data[:,i] = data[:,i] - time_avg
+            new_data[:, i] = data[:, i] - time_avg
 
         return new_data
 
@@ -130,7 +126,7 @@ class GMIndividual(SignalModel):
     def evaluate(self, predictions, true_labels) -> np.ndarray:
         '''
         Compute performance characteristics on the provided test data and labels.
-        
+
         Parameters:
         -----------
         predictions: predicted labels for each test point per symbol
@@ -140,9 +136,9 @@ class GMIndividual(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-       
+
         return accuracy_per_symbol
-    
+
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
         '''
         Not implemented in this model.
@@ -162,7 +158,7 @@ class GMIndividual(SignalModel):
         predictions = np.zeros(data_length, dtype=object)
 
         likelihoods = self.model.predict_proba(test_data)
-        
+
         for i in range(data_length):
             # Find the argmax of the likelihoods to get the predictions
             predictions[i] = np.argmax(likelihoods[i])
@@ -205,8 +201,7 @@ class GMIndividual(SignalModel):
                 likelihoods[i, k] = stats.multivariate_normal.pdf(data[i], mu, sigma)
 
         return likelihoods
-        
-    
+
     def save(self, path: Path):
         """Save model state to the provided checkpoint"""
         ...
@@ -229,7 +224,6 @@ class GMCentralized(SignalModel):
 
         self.ready_to_predict = False
 
-
     def fit(self, train_data: np.ndarray):
         model = GaussianMixture(n_components=self.num_components, random_state=self.random_state, init_params='kmeans')
         model.fit(train_data)
@@ -244,7 +238,7 @@ class GMCentralized(SignalModel):
     def evaluate(self, predictions, true_labels) -> np.ndarray:
         '''
         Compute performance characteristics on the provided test data and labels.
-        
+
         Parameters:
         -----------
         predictions: predicted labels for each test point per symbol
@@ -254,7 +248,7 @@ class GMCentralized(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-       
+
         return accuracy_per_symbol
         ...
 
@@ -273,18 +267,16 @@ class GMCentralized(SignalModel):
 
         return predictions
 
-    
     def predict_proba(self, test_data: np.ndarray) -> np.ndarray:
         '''
         Compute log-likelihood of each sample.
         Predict the labels for the test data.
 
-        test_data: 
+        test_data:
         '''
         data_length, _ = test_data.shape
 
         likelihoods = np.zeros((data_length, self.num_components), dtype=object)
-
 
         # Find the likelihoods by insterting the test data into the pdf of each component
         for i in range(data_length):
@@ -293,8 +285,6 @@ class GMCentralized(SignalModel):
                 sigma = self.covs[k]
 
                 likelihoods[i, k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
-
-        
 
         return likelihoods
 
@@ -329,7 +319,7 @@ class GMCentralized(SignalModel):
         new_data = np.copy(data)
         for i in range(len(data)):
             # new_data[i] = data[i] - symbol_pos
-            new_data[:2,i] = data[:2,i] - symbol_pos
-            new_data[2:,i] = data[2:,i] - symbol_pos
+            new_data[:2, i] = data[:2, i] - symbol_pos
+            new_data[2:, i] = data[2:, i] - symbol_pos
 
         return new_data

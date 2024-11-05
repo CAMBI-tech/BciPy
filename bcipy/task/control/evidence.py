@@ -112,7 +112,8 @@ class EEGEvaluator(EvidenceEvaluator):
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
         return self.signal_model.compute_likelihood_ratio(data, symbols, self.symbol_set)
-    
+
+
 class GazeEvaluator(EvidenceEvaluator):
     """EvidenceEvaluator that extracts symbol likelihoods from raw gaze data.
 
@@ -178,6 +179,7 @@ class GazeEvaluator(EvidenceEvaluator):
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
         return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
+
 
 def get_evaluator(
         data_source: ContentType,

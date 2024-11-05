@@ -33,17 +33,17 @@ def extract_eye_info(data):
     deleted_samples = left_eye_nan_idx.sum()
     all_samples = len(left_eye)
     if deleted_samples:
-    # Apply padding instead of deleting samples:
+        # Apply padding instead of deleting samples:
         for j in range(len(left_eye)):
             if np.isnan(left_eye[j]).any():
-                left_eye[j] = left_eye[j-1]
+                left_eye[j] = left_eye[j - 1]
 
     # Same for the right eye:
     right_eye_nan_idx = np.isnan(right_eye).any(axis=1)
     if right_eye_nan_idx.sum() != 0:
         for i in range(len(right_eye)):
             if np.isnan(right_eye[i]).any():
-                right_eye[i] = right_eye[i-1]
+                right_eye[i] = right_eye[i - 1]
 
     try:
         len(left_eye) != len(right_eye)
