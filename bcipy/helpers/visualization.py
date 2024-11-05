@@ -384,9 +384,6 @@ def visualize_pupil_size(
     """
 
     title = 'Pupil Size '
-
-    if img_path is None:
-        img_path = '/Users/basak/Downloads/GB Feb 15/GB_Matrix_Calibration_Thu_15_Feb_2024_15hr24min24sec_-0800/matrix.png'
     img = plt.imread(img_path)
 
     # Define mns as a copy of means to avoid modifying the original array

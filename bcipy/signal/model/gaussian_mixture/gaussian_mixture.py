@@ -142,7 +142,6 @@ class GMIndividual(SignalModel):
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
        
         return accuracy_per_symbol
-        ...
     
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
         '''
@@ -204,10 +203,7 @@ class GMIndividual(SignalModel):
                 sigma = self.covs[k]
 
                 likelihoods[i, k] = stats.multivariate_normal.pdf(data[i], mu, sigma)
-        """
 
-        """
-        # return log_likelihoods
         return likelihoods
         
     

@@ -313,7 +313,7 @@ def analyze_gaze(
         sample_rate=sample_rate,
         stimulus_duration=flash_time,
         num_stimuli_per_inquiry=10,
-        symbol_set=symbol_set
+        symbol_set=alphabet()
     )
     
     # Extract the data for each target label and each eye separately.
@@ -352,7 +352,7 @@ def analyze_gaze(
         if model_type == "Centralized":
             # Centralize the data using symbol positions and fit a single Gaussian.
             # Load json file.
-            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
+            with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
             
             # Subtract the symbol positions from the data:
@@ -534,9 +534,8 @@ def offline_analysis(
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
             # extract relevant information from raw data object eeg
-        # if device_spec.content_type == "EEG" and device_spec.status == "active":
-        if device_spec.content_type == "EEG":
-            eeg_data = raw_data
+   
+        if device_spec.content_type == "EEG" and device_spec.is_active:
             erp_model = analyze_erp(
                 raw_data,
                 parameters,
@@ -546,9 +545,8 @@ def offline_analysis(
                 save_figures,
                 show_figures)
             models.append(erp_model)
-
-        # if device_spec.content_type == "Eyetracker" and device_spec.status == "active":
-        if device_spec.content_type == "Eyetracker":
+        
+        if device_spec.content_type == "Eyetracker" and device_spec.is_active:
             et_data = raw_data
             et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
@@ -556,8 +554,6 @@ def offline_analysis(
 
     if len(models) > 1:
         log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")
-        # calculate_eeg_gaze_fusion_acc(
-        #     erp_model, et_model, eeg_data, et_data, alphabet(), parameters, data_folder)
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")

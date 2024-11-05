@@ -29,10 +29,6 @@ def extract_eye_info(data):
     left_eye = np.vstack((np.array(lx), np.array(ly))).T
     right_eye = np.vstack((np.array(rx), np.array(ry))).T
 
-    # Remove all blinks (i.e. Nan values) regardless of which eye it occurs.
-    # if np.isnan(left_eye).any() or np.isnan(right_eye).any():
-    #     breakpoint()
-
     left_eye_nan_idx = np.isnan(left_eye).any(axis=1)
     deleted_samples = left_eye_nan_idx.sum()
     all_samples = len(left_eye)
@@ -41,11 +37,6 @@ def extract_eye_info(data):
         for j in range(len(left_eye)):
             if np.isnan(left_eye[j]).any():
                 left_eye[j] = left_eye[j-1]
-    
-    # left_eye = left_eye[~left_eye_nan_idx]
-    # right_eye = right_eye[~left_eye_nan_idx]
-    # left_pupil = left_pupil[~left_eye_nan_idx]
-    # right_pupil = right_pupil[~left_eye_nan_idx]
 
     # Same for the right eye:
     right_eye_nan_idx = np.isnan(right_eye).any(axis=1)
@@ -53,17 +44,7 @@ def extract_eye_info(data):
         for i in range(len(right_eye)):
             if np.isnan(right_eye[i]).any():
                 right_eye[i] = right_eye[i-1]
-    # left_eye = left_eye[~right_eye_nan_idx]
-    # right_eye = right_eye[~right_eye_nan_idx]
-    # left_pupil = left_pupil[~right_eye_nan_idx]
-    # right_pupil = right_pupil[~right_eye_nan_idx]
-    
-    # if np.isnan(left_eye).any() or np.isnan(right_eye).any():
-    #     breakpoint()
 
-    # Make sure that the number of samples are the same for both eyes
-    # 1. Take average of all non-nan values, replace nan with average
-    # 2. Discard the whole inquiry for both eeg and gaze
     try:
         len(left_eye) != len(right_eye)
     except AssertionError:

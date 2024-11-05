@@ -12,6 +12,7 @@ Our final release candidate before the official 2.0 release!
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
     - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
+    - Offline analysis support for EEG and (multiple) gaze models. Updates to support Eye Tracker Evidence class #360
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287 Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window

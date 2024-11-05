@@ -38,6 +38,3 @@ bcipy/language/out/
 
 bcipy/simulator/tests/resource/
 !bcipy/simulator/data
-
-
-*.csv

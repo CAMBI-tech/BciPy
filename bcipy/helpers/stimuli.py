@@ -24,6 +24,7 @@ from psychopy import core
 from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
 from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
+from bcipy.helpers.symbols import alphabet
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)
@@ -247,7 +248,7 @@ class GazeReshaper:
                  sample_rate: int,
                  stimulus_duration: float,
                  num_stimuli_per_inquiry: int,
-                 symbol_set: List[str],
+                 symbol_set: List[str] = alphabet(),
                  channel_map: Optional[List[int]] = None,
                  ) -> Tuple[dict, List[float], List[str]]:
         """Extract gaze trajectory data and labels. 

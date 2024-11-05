@@ -41,7 +41,7 @@ class EvidenceFusion():
 
         # Current rule is to multiply
         for value in dict_evidence.values():
-            self.likelihood *= value[:] # not in log form. TODO: summation in log form
+            self.likelihood *= value[:]
 
         if np.isinf(np.sum(self.likelihood)):
             tmp = np.zeros(len(self.likelihood))
