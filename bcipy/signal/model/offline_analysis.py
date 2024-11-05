@@ -547,7 +547,6 @@ def offline_analysis(
             models.append(erp_model)
 
         if device_spec.content_type == "Eyetracker" and device_spec.is_active:
-            et_data = raw_data
             et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
             models.append(et_model)
@@ -564,6 +563,19 @@ def offline_analysis(
 
 
 def main():
+    """Main function for offline analysis client.
+    
+    Parses command line arguments and runs offline analysis.
+
+    Command Line Arguments:
+
+    -d, --data_folder: Path to the folder containing the data to be analyzed.
+    -p, --parameters_file: Path to the parameters file. Default is DEFAULT_PARAMETERS_PATH.
+    -s, --save_figures: If true, saves data figures after training to the data folder.
+    -v, --show_figures: If true, shows data figures after training.
+    --alert: If true, alerts the user when offline analysis is complete.
+    --balanced-acc: If true, uses another model copy on an 80/20 split to estimate balanced accuracy.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()
