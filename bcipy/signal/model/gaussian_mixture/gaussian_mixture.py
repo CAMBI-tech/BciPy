@@ -4,7 +4,6 @@ from typing import List
 from bcipy.helpers.stimuli import GazeReshaper
 from bcipy.signal.model import SignalModel
 
-from numpy.core.multiarray import array as array
 from sklearn.mixture import GaussianMixture
 import numpy as np
 import scipy.stats as stats
