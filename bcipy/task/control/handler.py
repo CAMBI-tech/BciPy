@@ -31,8 +31,9 @@ class EvidenceFusion():
         """ Updates the probability distribution
             Args:
                 dict_evidence(dict{name: ndarray[float]}): dictionary of
-                    evidences (EEG and other likelihoods)
+                    evidences (EEG (likelihood ratios) and other likelihoods)
         """
+        # {EEG: [], GAZE: ()}
 
         for key in dict_evidence.keys():
             tmp = dict_evidence[key][:][:]
@@ -45,6 +46,7 @@ class EvidenceFusion():
         if np.isinf(np.sum(self.likelihood)):
             tmp = np.zeros(len(self.likelihood))
             tmp[np.where(self.likelihood == np.inf)[0][0]] = 1
+
             self.likelihood = tmp
 
         if not np.isnan(np.sum(self.likelihood)):

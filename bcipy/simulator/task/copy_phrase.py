@@ -133,8 +133,10 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             # This assumes that sampling is independent. Changes to the sampler API are needed if
             # we need to provide the trial context of the last sample.
             sampled_data = sampler.sample_data(current_state)
-            evidence = model.predict(sampled_data, self.current_symbols(),
-                                     self.alp)
+            evidence = model.compute_class_probabilities(
+                sampled_data,
+                self.current_symbols(),
+                self.alp)
             evidence_type = get_evidence_type(model)
             evidences.append((evidence_type, evidence))
         return evidences

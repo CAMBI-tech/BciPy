@@ -97,9 +97,6 @@ if __name__ == '__main__':
         trigger_timing,
         labels,
         trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
         save_path=save_path,
         show=args.show
     )

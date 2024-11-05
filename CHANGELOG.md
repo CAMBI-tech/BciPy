@@ -34,11 +34,14 @@ Our final release candidate before the official 2.0 release!
     - session data to VEP calibration #322
 - Model
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
+    - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
+    - Offline analysis support for EEG and (multiple) gaze models. Updates to support Eye Tracker Evidence class #360
 - Language Model
   - Add Oracle model #316
   - Random Uniform model #311
 - Stimuli
     - Updates to ensure stimuli are presented at the same frequency #287 
+    - Output stimuli position, screen capture and monitor information after Matrix tasks #303
 - Dynamic Selection Window
     - Updated trial_length to trial_window to allow for greater control of window used after stimulus presentations #291
 - Report

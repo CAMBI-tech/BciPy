@@ -228,7 +228,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         symbol_set = alphabet()
         inquiry = symbol_set[:n_trial]
         data = np.random.randn(self.num_channel, n_trial, self.dim_x)
-        output_before = self.model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
+        output_before = self.model.compute_likelihood_ratio(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         checkpoint_path = self.tmp_dir / "model.pkl"
         save_model(self.model, checkpoint_path)
@@ -237,7 +237,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         self.assertEqual(1, len(loaded_models))
         other_model = loaded_models[0]
         self.assertEqual(self.model.k_folds, other_model.k_folds)
-        output_after = other_model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
+        output_after = other_model.compute_likelihood_ratio(data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         self.assertTrue(np.allclose(output_before, output_after))
 
@@ -249,7 +249,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
     def test_predict_before_fit(self):
         model = PcaRdaKdeModel(k_folds=10)
         with self.assertRaises(SignalException):
-            model.predict(self.x, inquiry=["A"], symbol_set=alphabet())
+            model.compute_likelihood_ratio(self.x, inquiry=["A"], symbol_set=alphabet())
 
     def test_evaluate_before_fit(self):
         model = PcaRdaKdeModel(k_folds=10)
