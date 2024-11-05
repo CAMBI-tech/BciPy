@@ -345,7 +345,7 @@ class VEPDisplay(Display):
                 # self.draw_static()
                 self.window.flip()
         ended_at = self.static_clock.getTime()
-        self.logger.debug(
+        self.logger.info(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
         self.logger.debug(

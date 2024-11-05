@@ -132,10 +132,10 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rates: List[int] = DEFAULT_FLI
         # it will then toggle on (1)/ off (0) for length of flicker until all frames are filled for refresh rate.
         t = 0
         code = []
-        for _ in range(flicker_rate):
+        for _ in range(flicker_rate * 2):
             code += [t] * length_flicker
             t = 1 - t
-        codes.append(code * 2)
+        codes.append(code)
 
     return codes
 
@@ -151,3 +151,4 @@ def round_refresh_rate(rate: float) -> int:
     120
     """
     return int(round(rate, -1))
+ 
