@@ -250,7 +250,7 @@ class GazeReshaper:
                  num_stimuli_per_inquiry: int,
                  symbol_set: List[str] = alphabet(),
                  channel_map: Optional[List[int]] = None,
-                 ) -> Tuple[dict, List[float], List[str]]:
+                 ) -> Tuple[dict, list, List[str]]:
         """Extract gaze trajectory data and labels. 
         
         Different from the EEG, gaze inquiry windows start with the first highlighted symbol and end with the 
@@ -328,7 +328,7 @@ class GazeReshaper:
     
         return data_by_targets_dict, reshaped_data, labels
 
-    def centralize_all_data(data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:
+    def centralize_all_data(self, data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:

@@ -24,6 +24,7 @@ class TestEegEvaluator(unittest.TestCase):
         meta_mock.device_spec = self.device_mock
         meta_mock.transform = self.transform_mock
         self.signal_model_mock.metadata = meta_mock
+        self.signal_model_mock.compute_likelihood_ratio = Mock()
 
     @patch('bcipy.task.control.evidence.analysis_channels')
     def test_init(self, analysis_channels_mock):
@@ -77,7 +78,7 @@ class TestEegEvaluator(unittest.TestCase):
             channel_map=channel_map,
             poststimulus_length=window_length)
 
-        self.signal_model_mock.predict.assert_called_once_with(
+        self.signal_model_mock.compute_likelihood_ratio.assert_called_once_with(
             reshaped_data, symbols, self.symbol_set)
 
 

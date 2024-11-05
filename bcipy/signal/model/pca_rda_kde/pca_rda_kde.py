@@ -170,7 +170,7 @@ class PcaRdaKdeModel(SignalModel):
         log_post_0 -= denom
         log_post_1 -= denom
         log_posterior = np.stack([log_post_0, log_post_1], axis=-1)
-        return log_posterior  # TODO: This is the normalized posterior! You need to unnormalize
+        return log_posterior
     
     def evaluate_likelihood(self, data: np.ndarray) -> np.ndarray:
         """
@@ -196,6 +196,22 @@ class PcaRdaKdeModel(SignalModel):
         posterior = self.compute_class_probabilities(data)
         predictions = np.argmax(posterior, axis=1)
         return predictions
+    
+    def predict_proba(self, data: np.ndarray) -> np.ndarray:
+        """Converts log likelihoods from model into class probabilities.
+
+        Returns:
+            posterior (np.ndarray): shape (num_items, 2) - for each item, the model's predicted
+                probability for the two labels.
+        """
+        if not self.ready_to_predict:
+            raise SignalException("must use model.fit() before model.predict_proba()")
+
+        # Model originally produces p(eeg | label). We want p(label | eeg):
+        #
+        # p(l=1 | e) = p(e | l=1) p(l=1) / p(e)
+        # log(p(l=1 | e)) = log(p(e | l=1)) + log(p(l=1)) - log(p(e))
+        return self.compute_class_probabilities(data)
 
     def save(self, path: Path) -> None:
         """Save model weights (e.g. after training) to `path`"""
