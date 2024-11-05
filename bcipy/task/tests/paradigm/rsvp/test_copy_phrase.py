@@ -13,8 +13,8 @@ from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import DEFAULT_ENCODING
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.exceptions import TaskConfigurationException
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.helpers.triggers import TriggerHandler
@@ -56,6 +56,7 @@ class TestCopyPhrase(unittest.TestCase):
             'preview_inquiry_key_input': 'space',
             'preview_inquiry_length': 5.0,
             'preview_inquiry_progress_method': 1,
+            'preview_box_text_size': 0.1,
             'show_feedback': False,
             'show_preview_inquiry': False,
             'spelled_letters_count': 0,
@@ -592,6 +593,77 @@ class TestCopyPhrase(unittest.TestCase):
         with open(Path(task.session_save_location), 'r', encoding=DEFAULT_ENCODING) as json_file:
             session = Session.from_dict(json.load(json_file))
             self.assertEqual(1, session.total_number_series)
+
+    def test_btn_evidence_without_inquiry_preview_enabled(self):
+        """Test button evidence without the inquiry preview functionality"""
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        self.parameters['show_preview_inquiry'] = False
+        task = RSVPCopyPhraseTask(
+            parameters=self.parameters,
+            file_save=self.temp_dir,
+            fake=False)
+        self.assertIsNone(task.compute_button_press_evidence(True))
+        self.assertIsNone(task.compute_button_press_evidence(False))
+
+    def test_btn_evidence_without_current_inquiry(self):
+        """Test button evidence without a current inquiry"""
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        self.parameters['show_preview_inquiry'] = True
+        task = RSVPCopyPhraseTask(
+            parameters=self.parameters,
+            file_save=self.temp_dir,
+            fake=False)
+        task.current_inquiry = None
+        self.assertIsNone(task.compute_button_press_evidence(True))
+        self.assertIsNone(task.compute_button_press_evidence(False))
+
+    @patch('bcipy.task.paradigm.rsvp.copy_phrase.compute_probs_after_preview')
+    def test_btn_evidence_with_inquiry_preview_enabled(self,
+                                                       compute_probs_mock):
+        """Test button evidence with the inquiry preview functionality"""
+        probs = [
+            0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05, 0.95, 0.05
+        ]
+        compute_probs_mock.return_value = probs
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(
+            any(), any(), any()).thenReturn((self.daq, self.servers, self.win))
+        self.parameters['show_preview_inquiry'] = True
+        self.parameters['preview_inquiry_progress_method'] = 1
+        task = RSVPCopyPhraseTask(parameters=self.parameters,
+                                  file_save=self.temp_dir,
+                                  fake=False)
+
+        self.assertEqual(task.compute_button_press_evidence(True),
+                         (EvidenceType.BTN, probs))
+        compute_probs_mock.assert_called_with(task.current_inquiry.stimuli[0],
+                                              task.alp,
+                                              task.button_press_error_prob,
+                                              True)
+        self.assertEqual(task.compute_button_press_evidence(False),
+                         (EvidenceType.BTN, probs))
+        compute_probs_mock.assert_called_with(task.current_inquiry.stimuli[0],
+                                              task.alp,
+                                              task.button_press_error_prob,
+                                              False)
+
+    def test_btn_evidence_with_preview_only(self):
+        """Test button evidence with inquiry preview mode set to preview only."""
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
+            (self.daq, self.servers, self.win))
+        self.parameters['show_preview_inquiry'] = True
+        self.parameters['preview_inquiry_progress_method'] = 0  # ButtonPressMode.NOTHING.value
+
+        task = RSVPCopyPhraseTask(
+            parameters=self.parameters,
+            file_save=self.temp_dir,
+            fake=False)
+
+        self.assertIsNone(task.compute_button_press_evidence(True))
+        self.assertIsNone(task.compute_button_press_evidence(False))
 
     def test_setup(self):
         """Test setup"""

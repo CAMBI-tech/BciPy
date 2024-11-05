@@ -15,7 +15,7 @@ To use at bcipy root,
 """
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
@@ -44,7 +44,7 @@ if __name__ == '__main__':
     if not path:
         path = load_experimental_data()
 
-    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}',
+    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETERS_FILENAME}',
                                       value_cast=True)
 
     # extract all relevant parameters

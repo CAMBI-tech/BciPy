@@ -13,7 +13,7 @@ from pyedflib import FILETYPE_BDFPLUS, FILETYPE_EDFPLUS, EdfWriter
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.config import (DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+from bcipy.config import (DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.raw_data import RawData
@@ -174,7 +174,7 @@ def pyedf_convert(data_dir: str,
             otherwise a string of the filter parameters used to filter the data
     """
 
-    params = load_json_parameters(str(Path(data_dir, DEFAULT_PARAMETER_FILENAME)),
+    params = load_json_parameters(str(Path(data_dir, DEFAULT_PARAMETERS_FILENAME)),
                                   value_cast=True)
     data = load_raw_data(str(Path(data_dir, f'{RAW_DATA_FILENAME}.csv')))
     fs = data.sample_rate
@@ -498,7 +498,7 @@ def convert_to_mne(
         channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
-        volts: bool = True) -> RawArray:
+        volts: bool = False) -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names

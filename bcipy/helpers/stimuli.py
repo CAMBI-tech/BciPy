@@ -433,12 +433,19 @@ def mne_epochs(mne_data: RawArray,
     tmp_data.set_annotations(all_annotations)
 
     events_from_annot, _ = mne.events_from_annotations(tmp_data)
+
+    if baseline is None:
+        baseline = (0, 0)
+        tmin = -0.1
+    else:
+        tmin = baseline[0]
+
     return Epochs(
         mne_data,
         events_from_annot,
         baseline=baseline,
         tmax=trial_length,
-        tmin=-0.05,
+        tmin=tmin,
         proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
         reject_by_annotation=reject_by_annotation,
         preload=preload)

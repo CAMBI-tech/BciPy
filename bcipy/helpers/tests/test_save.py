@@ -6,7 +6,7 @@ import json
 
 from bcipy.config import (
     DEFAULT_PARAMETERS_PATH,
-    DEFAULT_PARAMETER_FILENAME,
+    DEFAULT_PARAMETERS_FILENAME,
     DEFAULT_EXPERIMENT_ID,
     STIMULI_POSITIONS_FILENAME)
 from bcipy.helpers import save
@@ -50,7 +50,7 @@ class TestSave(unittest.TestCase):
     def test_parameter_file_copies(self):
 
         # construct the path of the parameters
-        param_path = self.save_folder_name + f'/{DEFAULT_PARAMETER_FILENAME}'
+        param_path = self.save_folder_name + f'/{DEFAULT_PARAMETERS_FILENAME}'
 
         # assert that the params file was created in the correct location
         self.assertTrue(os.path.isfile(param_path))

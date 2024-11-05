@@ -134,7 +134,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=2,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=1,
-                                       preview_inquiry_isi=1)
+                                       preview_inquiry_isi=1,
+                                       preview_box_text_size=0.1)
         rsvp = RSVPDisplay(self.window,
                            self.static_clock,
                            self.experiment_clock,
@@ -151,7 +152,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=2,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=1,
-                                       preview_inquiry_isi=1)
+                                       preview_inquiry_isi=1,
+                                       preview_box_text_size=0.1)
         rsvp = RSVPDisplay(self.window,
                            self.static_clock,
                            self.experiment_clock,
@@ -173,7 +175,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=0.01,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=1,
-                                       preview_inquiry_isi=0.01)
+                                       preview_inquiry_isi=0.01,
+                                       preview_box_text_size=0.1)
         self.init_display(preview_config)
 
         button_press_handler_mock.has_response.return_value = True
@@ -209,7 +212,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=0.01,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=2,
-                                       preview_inquiry_isi=0.01)
+                                       preview_inquiry_isi=0.01,
+                                       preview_box_text_size=0.1)
         self.init_display(preview_config)
 
         button_press_handler_mock.has_response.return_value = True
@@ -238,7 +242,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=0.01,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=1,
-                                       preview_inquiry_isi=0.01)
+                                       preview_inquiry_isi=0.01,
+                                       preview_box_text_size=0.1)
         self.init_display(preview_config)
 
         button_press_handler_mock.has_response.return_value = False
@@ -264,7 +269,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=0.01,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=2,
-                                       preview_inquiry_isi=0.01)
+                                       preview_inquiry_isi=0.01,
+                                       preview_box_text_size=0.1)
         self.init_display(preview_config)
 
         button_press_handler_mock.has_response.return_value = False
@@ -290,7 +296,8 @@ class TestRSVPDisplayInquiryPreview(unittest.TestCase):
                                        preview_inquiry_length=0.01,
                                        preview_inquiry_key_input='space',
                                        preview_inquiry_progress_method=0,
-                                       preview_inquiry_isi=0.01)
+                                       preview_inquiry_isi=0.01,
+                                       preview_box_text_size=0.1)
         self.init_display(preview_config)
 
         button_press_handler_mock.has_response.return_value = False

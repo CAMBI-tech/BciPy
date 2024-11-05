@@ -15,6 +15,7 @@ from bcipy.helpers.system_utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
+    DEFAULT_PARAMETERS_FILENAME,
     DEFAULT_PARAMETERS_PATH,
     DEFAULT_USER_ID,
     MULTIPHRASE_FILENAME,
@@ -219,10 +220,12 @@ class SessionOrchestrator:
             logging.DEBUG)
 
     def _init_orchestrator_save_folder(self, save_path: str) -> str:
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        date_time = datetime.now()
+        date = date_time.strftime("%Y-%m-%d")
+        timestamp = date_time.strftime("%Y-%m-%d_%H-%M-%S")
         # * No '/' after `save_folder` since it is included in
         # * `data_save_location` in parameters
-        path = f'{save_path}{self.user}/{self.experiment_id}/{timestamp}/'
+        path = f'{save_path}{self.user}/{date}/{self.experiment_id}/{timestamp}/'
         os.makedirs(path)
         os.makedirs(os.path.join(path, 'logs'), exist_ok=True)
         return path
@@ -247,7 +250,7 @@ class SessionOrchestrator:
                     "type": "str",
                 }
             )
-            self.parameters.save(save_directory)
+            self.parameters.save(save_directory, name=DEFAULT_PARAMETERS_FILENAME)
 
         except OSError as error:
             # If the error is anything other than file existing, raise an error

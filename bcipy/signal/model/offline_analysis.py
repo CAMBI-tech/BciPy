@@ -145,8 +145,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # Process triggers.txt files
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
         offset=static_offset,
+        remove_pre_fixation=True,
         device_type='EEG'
     )
 

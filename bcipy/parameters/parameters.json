@@ -807,6 +807,15 @@
     "editable": false,
     "type": "bool"
   },
+  "preview_box_text_size": {
+    "value": "0.1",
+    "section": "task_config",
+    "name": "Preview Inquiry Box Text Size",
+    "helpTip": "Specifies the height of text stimuli in the preview inquiry box. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended": "",
+    "editable": false,
+    "type": "float"
+  },
   "preview_inquiry_error_prob": {
     "value": "0.05",
     "section": "bci_config",

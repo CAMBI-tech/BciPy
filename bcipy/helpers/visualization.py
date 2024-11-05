@@ -87,7 +87,7 @@ def visualize_erp(
     trial_length = trial_window[1] - 0.0
 
     # check for a baseline interval or set to None
-    if trial_window[0] < 0:
+    if trial_window[0] <= 0:
         baseline = (trial_window[0], 0.0)
     else:
         baseline = None

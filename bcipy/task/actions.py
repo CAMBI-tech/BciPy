@@ -8,6 +8,7 @@ import glob
 from bcipy.gui.bciui import run_bciui
 from matplotlib.figure import Figure
 
+from bcipy.gui.file_dialog import ask_directory
 from bcipy.gui.intertask_gui import IntertaskGUI
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task, TaskMode, TaskData
@@ -79,7 +80,6 @@ class OfflineAnalysisAction(Task):
         self.parameters_path = parameters_path
         self.alert_finished = alert_finished
 
-        # TODO: add a feature to orchestrator to permit the user to select the last task directory or have it loaded.
         if last_task_dir:
             self.data_directory = last_task_dir
         else:
@@ -96,6 +96,8 @@ class OfflineAnalysisAction(Task):
         """
         logger.info("Running offline analysis action")
         try:
+            # Note: The subprocess.run function will cause a segmentation fault if visualization and alerting are
+            # enabled. This is because the MNE library.
             cmd = f'bcipy-train -p "{self.parameters_path}"'
             if self.alert_finished:
                 cmd += " --alert"
@@ -212,15 +214,21 @@ class BciPyCalibrationReportAction(Task):
         self.save_folder = save_path
         # Currently we assume all Tasks have the same parameters, this may change in the future.
         self.parameters = parameters
-        self.protocol_path = protocol_path or ''
+
+        if not protocol_path:
+            protocol_path = ask_directory(
+                prompt="Select BciPy protocol directory with calibration data...")
+        self.protocol_path = protocol_path
         self.last_task_dir = last_task_dir
-        self.default_transform = None
         self.trial_window = (-0.2, 1.0)
-        self.static_offset = None
         self.report = Report(self.protocol_path)
         self.report_sections: List[ReportSection] = []
         self.all_raw_data: List[RawData] = []
+
+        # These are pulled off the device spec / set from parameters
+        self.default_transform = None
         self.type_amp = None
+        self.static_offset = None
 
     def execute(self) -> TaskData:
         """Excute the report generation action.
@@ -262,7 +270,9 @@ class BciPyCalibrationReportAction(Task):
         self.report.save()
         return TaskData(
             save_path=self.save_folder,
-            task_dict={},
+            task_dict={
+                'reports': len(calibration_directories),
+            },
         )
 
     def create_signal_report(self, data_dir: Path) -> SignalReportSection:
@@ -274,7 +284,11 @@ class BciPyCalibrationReportAction(Task):
         device_spec = devices.preconfigured_device(raw_data.daq_type)
         self.static_offset = device_spec.static_offset
         channel_map = analysis_channels(channels, device_spec)
-        self.all_raw_data.append(raw_data)
+
+        logger.info(
+            f"Creating signal section for {data_dir}. \n"
+            f"Channels: {channels}, Sample Rate: {sample_rate}, "
+            f"Device: {self.type_amp}, Static Offset: {self.static_offset}")
 
         # Set the default transform if not already set
         if not self.default_transform:
@@ -341,7 +355,7 @@ class BciPyCalibrationReportAction(Task):
             eye_channels = None
         return eye_channels
 
-    def get_triggers(self, session) -> tuple:
+    def get_triggers(self, session: str) -> tuple:
         trigger_type, trigger_timing, trigger_label = trigger_decoder(
             offset=self.static_offset,
             trigger_path=f"{session}/{TRIGGER_FILENAME}",
@@ -354,12 +368,12 @@ class BciPyCalibrationReportAction(Task):
         return trigger_type, trigger_timing, trigger_label
 
     def get_figure_handles(self, raw_data, channel_map, triggers) -> List[Figure]:
-        _, trigger_timing, trigger_label = triggers
+        trigger_type, trigger_timing, _ = triggers
         figure_handles = visualize_erp(
             raw_data,
             channel_map,
             trigger_timing,
-            trigger_label,
+            trigger_type,
             self.trial_window,
             transform=self.default_transform,
             plot_average=True,

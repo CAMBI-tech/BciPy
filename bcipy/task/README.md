@@ -39,6 +39,38 @@ Currently, these are the supported paradigms and modes:
 > Calibration: Used to calibrate the VEP paradigm for a user. Note this has not been extensively tested, use with caution.
 
 
+## Actions
+-----------
+
+### BciPy Calibration Report Action
+
+This action is used to generate a calibration report for a user. It will generate a report with the following information:
+
+- Session Summary
+  - Task / Paradigm (RSVP, Matrix, or VEP)
+  - AUC (if available)
+  - Amplifier
+  - Data Location
+- Signal Report
+  - Signal Artifact Report
+    - Determine the percentage of data that is artifact based on the artifact thresholds
+      - See `bcipy.signal.evaluate.artifact.py` for more information, to visualize the artifacts or to adjust the thresholds.
+  - Signal Plots (target / non-target)
+    - ERP
+    - Topographic Maps
+
+The report will be saved in the protocol directory. A demo of the action can be used offline by running the following command:
+
+```bash
+python bcipy/task/demo/demo_calibration_report.py
+```
+
+This will prompt the user to select a protocol directory to generate a calibration report for. The report will be saved in the protocol directory.
+
+### Offline Analysis Action
+
+This action is used to run an offline analysis on the data collected during a session. It will run the command line version of the BciPy client on the data collected during the session. The results will be saved in the session directory.
+
 ## Running Tasks using the SessionOrchestrator
 
 The `SessionOrchestrator` is a class that can be used to run a Protocol (sequence of Tasks/Actions). The core BciPy client and GUI use this class and resulting data strucutures. It will run the tasks in the order defined, handle the transition between tasks, and persist data. There are several optional arguments that can be provided to the orchestrator:
@@ -65,19 +97,20 @@ The data will be saved in the following format in the specified data_save_loc (d
 <!-- The following would be a single orchestration run with two Tasks  -->
 data_save_loc/
     user_id/
-        experiment_id/
-            run_id <datetimestamp>/
-                task_id/
-                    logs/
-                        task_log_data
-                    task_data (e.g. acquisition data, parameters, visualizations)
-                task_id/
-                    logs/
-                        task_log_data
-                    task_data (e.g. acquisition data, parameters, visualizations)
-                logs/
-                    protocol_log_data
-                protocol_data (system data, protocol/tasks executed)
+        date/
+          experiment_id/
+              run_id <datetimestamp>/
+                  task_id/
+                      logs/
+                          task_log_data
+                      task_data (e.g. acquisition data, parameters, visualizations)
+                  task_id/
+                      logs/
+                          task_log_data
+                      task_data (e.g. acquisition data, parameters, visualizations)
+                  logs/
+                      protocol_log_data
+                  protocol_data (system data, protocol/tasks executed)
 ```
 
 ### Usage manually

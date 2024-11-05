@@ -40,7 +40,8 @@ If using zsh, instead of bash, you may encounter a segementation fault when runn
 ## Installation
 ---------------
 
-#### BciPy Setup
+### BciPy Setup
+----------------
 
 In order to run BciPy on your computer, after following the dependencies above, you will need to install the BciPy package.
 
@@ -62,26 +63,86 @@ Alternately, if [Make](http://www.mingw.org/) is installed, you may run the foll
 make dev-install
 ```
 
-#### Client Usage
-   	Invoke an experiment protocol or task directly using command line utility `bcipy`.
-		- You can pass it attributes with flags, if desired.
-				Running with a User ID and Task: `bcipy --user "bci_user" --task "RSVP Calibration"`
-				Running with a User ID and Tasks with a registered Protocol: `bcipy --user "bci_user" --experiment "default"`
-				Running with fake data: `bcipy --fake`
-				Running without visualizations: `bcipy --noviz`
-				Running with alerts after each Task execution: `bcipy --alert`
-				Running with custom parameters: `bcipy --parameters "path/to/valid/parameters.json"`
+### Client Usage
+----------------
 
-		- Use the help flag to see other available input options: `bcipy --help`
+##### Run an experiment protocol or task
 
-#####  Example Usage as a Package
+Invoke an experiment protocol or task directly using command line utility `bcipy`.
+
+- Use the help flag to see other available input options: `bcipy --help`
+	- You can pass it attributes with flags, if desired.
+		- Running with a User ID and Task: 
+    		- `bcipy --user "bci_user" --task "RSVP Calibration"`
+		- Running with a User ID and Tasks with a registered Protocol: 
+    		- `bcipy --user "bci_user" --experiment "default"`
+		- Running with fake data: 
+    		- `bcipy --fake`
+		- Running without visualizations: 
+    		- `bcipy --noviz`
+		- Running with alerts after each Task execution: 
+    		- `bcipy --alert`
+		- Running with custom parameters: 
+    		- `bcipy --parameters "path/to/valid/parameters.json"`
+  
+##### Train a signal model with registered BciPy models
+
+To train a signal model (currently `PCARDAKDE`), run the following command after installing BciPy:
+
+`bcipy-train`
+
+- Use the help flag to see other available input options: `bcipy-train --help`
+	- You can pass it attributes with flags, if desired.
+		- Running without a window prompting for data session folder: 
+			- `bcipy-train -d path/to/data`
+		- Running with data visualizations (ERPs, etc.): 
+			- `bcipy-train -v`
+    	- Running with data visualizations that do not show, but save to file: 
+			- `bcipy-train -s`
+       - Running with balanced accuracy:
+           - `bcipy-train --balanced-acc`
+		- Running with alerts after each Task execution: 
+			- `bcipy-train --alert`
+		- Running with custom parameters: 
+			- `bcipy-train -p "path/to/valid/parameters.json"`
+  
+##### Visualize ERP data from a session with Target / Non-Target labels
+
+To generate plots that can be shown or saved after collection of data, run the following command after installing BciPy:
+
+`bcipy-erp-viz`
+
+- Use the help flag to see other available input options: `bcipy-erp-viz --help`
+	- You can pass it attributes with flags, if desired.
+		- Running without a window prompting for data session folder: 
+			- `bcipy-erp-viz -s path/to/data`
+		- Running with data visualizations (ERPs, etc.): 
+			- `bcipy-erp-viz --show`
+		- Running with data visualizations that do not show, but save to file: 
+			- `bcipy-erp-viz --save`
+		- Running with custom parameters (default is in bcipy/parameters/parameters.json): 
+			- `bcipy-erp-viz -p "path/to/valid/parameters.json"`
+
+##### BciPy Simulator Usage
+
+The simulator can be run using the command line utility `bcipy-sim`.
+
+Ex. 
+`bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+Run `bcipy-sim --help` for documentation or see the README in the simulator module.
+
+
+###  Package Usage
+-------------------
 
 ```python
 from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
 
-#### Example Usage through the GUI
+### GUI Usage
+-------------
 
 Run the following command in your terminal to start the BciPy GUI:
 ```sh
@@ -93,16 +154,6 @@ Alternately, if Make is installed, you may run the follow command to start the G
 ```sh
 make bci-gui
 ```
-
-
-#### Simulator Usage
-
-The simulator can be run using the command line utility `bcipy-sim`.
-
-Ex. 
-`bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
-
-Run `bcipy-sim --help` for documentation or see the README in the simulator module.
 
 
 ## Glossary
@@ -150,7 +201,7 @@ This a list of the major modules and their functionality. Each module will conta
 ## Paradigms
 ------------
 
-See `bcipy/task/README.md` for more information on all supported paradigms and modes. The following are the supported and validated paradigms:
+See `bcipy/task/README.md` for more information on all supported paradigms, tasks, actions and modes. The following are the supported and validated paradigms:
 
 
 > RSVPKeyboard
@@ -213,7 +264,6 @@ After running the above command, the recommended offset correction value will be
 ```bash
 # Let's say the recommneded offset value is 0.1
 python bcipy/helpers/offset.py --offset "0.1" -p
-
 ```
 
 Alternately, if Make is installed, you may run the follow command to run offset determination and display the results:
@@ -306,10 +356,11 @@ make type
 
 
 ### Contributions Welcome!
+--------------------------
 
 If you want to be added to the development team slack or have additional questions, please reach out to us at support@cambi.tech!
 
-### Contribution Guidelines
+#### Contribution Guidelines
 
 We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
@@ -325,7 +376,7 @@ Other guidelines:
 
 See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
-## Contributors
+### Contributors
 ---------------
 
 All contributions are greatly appreciated!

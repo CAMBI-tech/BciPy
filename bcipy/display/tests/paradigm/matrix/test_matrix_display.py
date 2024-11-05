@@ -143,7 +143,8 @@ class TestMatrixDisplay(unittest.TestCase):
                                        preview_inquiry_length=2,
                                        preview_inquiry_key_input='return',
                                        preview_inquiry_progress_method=2,
-                                       preview_inquiry_isi=1)
+                                       preview_inquiry_isi=1,
+                                       preview_box_text_size=0.1)
         matrix = MatrixDisplay(window=self.window,
                                experiment_clock=self.experiment_clock,
                                stimuli=self.stimuli,
@@ -181,7 +182,8 @@ class TestMatrixDisplay(unittest.TestCase):
                                        preview_inquiry_length=2,
                                        preview_inquiry_key_input='return',
                                        preview_inquiry_progress_method=2,
-                                       preview_inquiry_isi=1)
+                                       preview_inquiry_isi=1,
+                                       preview_box_text_size=0.1)
         matrix = MatrixDisplay(window=self.window,
                                experiment_clock=self.experiment_clock,
                                stimuli=self.stimuli,

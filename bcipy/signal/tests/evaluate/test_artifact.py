@@ -119,7 +119,7 @@ class TestArtifactDetection(unittest.TestCase):
 
     def test_default_artifact_parameters(self):
         """Test the DefaultArtifactParameters class."""
-        self.assertEqual(DefaultArtifactParameters.EOG_THRESHOLD.value, 75e-6)
+        self.assertEqual(DefaultArtifactParameters.EOG_THRESHOLD.value, 5.5e-05)
         self.assertEqual(DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value, 0.25)
         self.assertEqual(DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME.value, 'artifacts.fif')
 
