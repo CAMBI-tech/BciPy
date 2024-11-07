@@ -13,10 +13,10 @@ from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME)
 from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
 from bcipy.io.load import (choose_signal_model, choose_signal_models,
-                                copy_parameters, extract_mode,
-                                load_experiment_fields, load_experiments,
-                                load_fields, load_json_parameters,
-                                load_signal_model, load_users)
+                           copy_parameters, extract_mode,
+                           load_experiment_fields, load_experiments,
+                           load_fields, load_json_parameters,
+                           load_signal_model, load_users)
 from bcipy.data.parameters import Parameters
 
 MOCK_EXPERIMENT = {

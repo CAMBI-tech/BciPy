@@ -15,14 +15,14 @@ from bcipy.helpers.clock import Clock
 from bcipy.data.parameters import Parameters
 from bcipy.io.save import _save_session_related_data
 from bcipy.data.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
-                                   TargetPositions,
-                                   generate_calibration_inquiries)
+                                TargetPositions,
+                                generate_calibration_inquiries)
 from bcipy.data.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
 from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers,
-                                    offset_label)
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
 from bcipy.task import Task, TaskData, TaskMode
 
 import logging

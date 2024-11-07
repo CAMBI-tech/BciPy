@@ -3,29 +3,27 @@
 import logging
 import os
 import tarfile
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import List, Optional, Tuple
 
 import mne
-import numpy as np
 from enum import Enum
 from mne.io import RawArray
 from mne_bids import BIDSPath, write_raw_bids
 from tqdm import tqdm
-import bcipy.acquisition.devices as devices
-
 
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.config import (DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.io.load import load_json_parameters, load_raw_data
 from bcipy.data.raw_data import RawData
-from bcipy.data.triggers import trigger_decoder, TriggerType
-from bcipy.signal.process import Composition, get_default_transform
+from bcipy.data.triggers import trigger_decoder
+from bcipy.signal.process import Composition
+# from bcipy.signal.process import get_default_transform
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 FILE_LENGTH_LIMIT = 150
+
 
 class ConvertFormat(Enum):
 
@@ -36,7 +34,6 @@ class ConvertFormat(Enum):
 
     def __str__(self):
         return self.value
-
 
 
 def convert_to_bids(
@@ -69,12 +66,12 @@ def convert_to_bids(
     # load the parameters if not provided
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory={data_dir} does not exist")
-    
+
     # create file paths for raw data, triggers, and parameters
     raw_data_file = os.path.join(data_dir, f'{RAW_DATA_FILENAME}.csv')
     trigger_file = os.path.join(data_dir, TRIGGER_FILENAME)
     parameters_file = os.path.join(data_dir, DEFAULT_PARAMETERS_FILENAME)
-    
+
     # load the raw data
     raw_data = load_raw_data(raw_data_file)
     device_spec = preconfigured_device(raw_data.daq_type)
@@ -85,12 +82,12 @@ def convert_to_bids(
     trial_window = parameters.get("trial_window")
     if trial_window is None:
         trial_window = (0.0, 0.5)
-    
+
     if task_name is None:
         task = parameters.get("task")
         if task is None:
             raise ValueError("Task name must be provided or specified in the parameters")
-    
+
     window_length = trial_window[1] - trial_window[0]
 
     # load the triggers without removing any triggers other than system triggers (default)
@@ -101,7 +98,7 @@ def convert_to_bids(
     )
 
     # convert the raw data to MNE format
-    mne_data = convert_to_mne(raw_data,  volts=volts)
+    mne_data = convert_to_mne(raw_data, volts=volts, remove_system_channels=True)
     targetness_annotations = mne.Annotations(
         onset=trigger_timing,
         duration=[window_length] * len(trigger_timing),
@@ -132,7 +129,6 @@ def convert_to_bids(
         overwrite=True)
 
     return str(bids_path.root)
-
 
 
 def compress(tar_file_name: str, members: List[str]) -> None:
@@ -285,7 +281,8 @@ def convert_to_mne(
         channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
-        volts: bool = False) -> RawArray:
+        volts: bool = False,
+        remove_system_channels: bool = False) -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names
@@ -306,11 +303,21 @@ def convert_to_mne(
         volts - if True, assume data is already in volts. If false, assume data is in microvolts and convert to volts.
             MNE expects data to be in volts.
             See: https://mne.tools/dev/overview/implementation.html#internal-representation-units
+        remove_system_channels - if True, exclude the system and trigger channels from the MNE RawArray
+            (last two channels in BciPy data).
+
+    Returns
+    -------
+        MNE RawArray
     """
     # if no channel map provided, assume all channels are included
     if not channel_map:
-        channel_map = [1] * (len(raw_data.channels) - 2)
-        channel_map.extend([0, 0])  # exclude the system and trigger channels
+        # if remove_system_channels is True, exclude the system and trigger channels (last two channels)
+        if remove_system_channels:
+            channel_map = [1] * (len(raw_data.channels) - 2)
+            channel_map.extend([0, 0])  # exclude the system and trigger channels
+        else:
+            channel_map = [1] * len(raw_data.channels)
 
     data, channels, fs = raw_data.by_channel_map(channel_map, transform)
 
@@ -380,8 +387,9 @@ def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
     tobii_y = ((norm_units[1] * -1) / 2) + 0.5
     return (tobii_x, tobii_y)
 
+
 if __name__ == "__main__":
-    
+
     convert_to_bids(
         data_dir='/Users/scitab/Desktop/2024-10-25_13-58-11/RSVP_Calibration_2024-10-25_13-58-11',
         participant_id='04',

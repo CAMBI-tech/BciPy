@@ -16,7 +16,7 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
-                                load_raw_data)
+                           load_raw_data)
 from bcipy.gui.alert import confirm
 from bcipy.data.parameters import Parameters
 from bcipy.io.save import save_model

@@ -2,11 +2,37 @@
 
 To use at bcipy root,
 
-    `python bcipy/helpers/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
+    `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-from bcipy.io.convert import convert_to_edf, convert_to_bdf
+import os
+from bcipy.io.convert import convert_to_bids, ConvertFormat
 from bcipy.io.load import load_experimental_data
-from bcipy.helpers.visualization import plot_edf
+
+EXCLUDED_TASKS = ['Report', 'Offline', 'InterTask']
+
+
+def convert_study_to_bids(directory: str, experiment_id: str, format: ConvertFormat = ConvertFormat.BV):
+    """Converts the data in the study folder to BIDS format."""
+    participant_counter = 1
+    for participant in os.listdir(directory):
+        for experiment in os.listdir(os.path.join(directory, participant)):
+            if experiment == experiment_id:
+                # loop over the experiment sessions
+                session_counter = 1
+                for session in os.listdir(os.path.join(directory, participant, experiment)):
+                    # convert the session data to BIDS format
+                    for run in os.listdir(os.path.join(directory, participant, experiment, session)):
+                        if run not in EXCLUDED_TASKS:
+                            convert_to_bids(
+                                data_dir=os.path.join(directory, participant, experiment, session, run),
+                                participant_id=f'0{participant_counter}',
+                                session_id=f'0{session_counter}',
+                                run_id=run,
+                                output_dir=f'./bids/{experiment}/',
+                                format=format.value
+                            )
+                    session_counter += 1
+        participant_counter += 1
 
 
 if __name__ == '__main__':
@@ -18,34 +44,18 @@ if __name__ == '__main__':
         '--directory',
         help='Path to the directory with raw_data to be converted',
         required=False)
-    parser.add_argument(
-        '-p',
-        '--plot',
-        help='whether to plot the resulting edf file',
-        required=False
-    )
+
     args = parser.parse_args()
 
     path = args.directory
     if not path:
         path = load_experimental_data()
 
-    edf_path = convert_to_edf(
-        path,
-        use_event_durations=False,
-        write_targetness=True,
-        overwrite=True,
-        pre_filter=True)
-
-    bdf_path = convert_to_bdf(
-        path,
-        use_event_durations=False,
-        write_targetness=True,
-        overwrite=True,
-        pre_filter=True)
-
-    if args.plot:
-        plot_edf(edf_path)  # comment if not in an iPython notebook to plot using MNE
-
-    print(f"\nWrote edf file to {edf_path}")
-    print(f"\nWrote bdf file to {bdf_path}")
+    convert_to_bids(
+        data_dir=path,
+        participant_id='01',
+        session_id='01',
+        run_id='01',
+        output_dir='./bids/',
+        format=ConvertFormat.BV
+    )

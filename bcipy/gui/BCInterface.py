@@ -10,7 +10,7 @@ from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
                             contains_special_characters, contains_whitespaces,
                             invalid_length)
 from bcipy.io.load import (copy_parameters, load_experiments,
-                                load_json_parameters, load_users)
+                           load_json_parameters, load_users)
 from bcipy.task import TaskRegistry
 
 logger = logging.getLogger(PROTOCOL_LOG_FILENAME)

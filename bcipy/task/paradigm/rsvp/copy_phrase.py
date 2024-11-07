@@ -34,8 +34,8 @@ from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
                                 relative_triggers, target_info,
                                 trial_complete_message)
 from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers,
-                                    offset_label)
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview

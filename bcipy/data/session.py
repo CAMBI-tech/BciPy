@@ -20,7 +20,7 @@ from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
                           DEFAULT_PARAMETERS_FILENAME, EXPERIMENT_DATA_FILENAME,
                           SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
 from bcipy.io.load import (load_experiment_fields, load_experiments,
-                                load_json_parameters)
+                           load_json_parameters)
 from bcipy.helpers.validate import validate_field_data_written
 from bcipy.task.data import Session
 

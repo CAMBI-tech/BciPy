@@ -13,7 +13,6 @@ import seaborn as sns
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from mne import Epochs
-from mne.io import read_raw_edf
 from scipy import linalg
 
 import bcipy.acquisition.devices as devices
@@ -616,23 +615,6 @@ def visualize_results_all_symbols(
         plt.close()
 
     return fig
-
-
-def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):
-    """Plot data from the raw edf file. Note: this works from an iPython
-    session but seems to throw errors when provided in a script.
-
-    Parameters
-    ----------
-        edf_path - full path to the generated edf file
-        auto_scale - optional; if True will scale the EEG data; this is
-            useful for fake (random) data but makes real data hard to read.
-    """
-    edf = read_raw_edf(edf_path, preload=True)
-    if auto_scale:
-        edf.plot(scalings='auto')
-    else:
-        edf.plot()
 
 
 def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):

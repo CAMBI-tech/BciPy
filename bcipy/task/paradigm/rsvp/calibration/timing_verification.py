@@ -4,7 +4,7 @@ from typing import Any, Iterator, List
 
 from bcipy.data.parameters import Parameters
 from bcipy.data.stimuli import (PhotoDiodeStimuli, get_fixation,
-                                   jittered_timing)
+                                jittered_timing)
 from bcipy.task.calibration import Inquiry
 from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.calibration.calibration import \

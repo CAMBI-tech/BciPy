@@ -7,12 +7,12 @@ from mockito import any, mock, unstub, verify, when
 
 from bcipy.exceptions import BciPyCoreException
 from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, _calibration_trigger,
-                                    apply_offsets, exclude_types,
-                                    find_starting_offset, offset_device,
-                                    offset_label, read, read_data,
-                                    starting_offsets_by_device,
-                                    trigger_decoder)
+                                 TriggerType, _calibration_trigger,
+                                 apply_offsets, exclude_types,
+                                 find_starting_offset, offset_device,
+                                 offset_label, read, read_data,
+                                 starting_offsets_by_device,
+                                 trigger_decoder)
 
 
 class TestCalibrationTrigger(unittest.TestCase):
