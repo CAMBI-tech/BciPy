@@ -213,8 +213,8 @@ class TestExtractMode(unittest.TestCase):
 class TestModelLoad(unittest.TestCase):
     """Test loading one or more signal models"""
 
-    @patch("bcipy.helpers.load.pickle.load")
-    @patch("bcipy.helpers.load.open")
+    @patch("bcipy.io.load.pickle.load")
+    @patch("bcipy.io.load.open")
     def test_load_model(self, open_mock, pickle_mock):
         """Test loading a signal model"""
 
@@ -222,9 +222,9 @@ class TestModelLoad(unittest.TestCase):
         open_mock.assert_called_with("test-directory", 'rb')
         pickle_mock.assert_called_once()
 
-    @patch("bcipy.helpers.load.load_signal_model")
-    @patch("bcipy.helpers.load.ask_filename")
-    @patch("bcipy.helpers.load.preferences")
+    @patch("bcipy.io.load.load_signal_model")
+    @patch("bcipy.io.load.ask_filename")
+    @patch("bcipy.io.load.preferences")
     def test_choose_model(self, preferences_mock, ask_file_mock,
                           load_signal_model_mock):
         """Test choosing a model"""
@@ -245,9 +245,9 @@ class TestModelLoad(unittest.TestCase):
                          preferences_mock.signal_model_directory,
                          msg="Should have updated the preferences")
 
-    @patch("bcipy.helpers.load.load_signal_model")
-    @patch("bcipy.helpers.load.ask_filename")
-    @patch("bcipy.helpers.load.preferences")
+    @patch("bcipy.io.load.load_signal_model")
+    @patch("bcipy.io.load.ask_filename")
+    @patch("bcipy.io.load.preferences")
     def test_choose_model_with_cancel(self, preferences_mock, ask_file_mock,
                                       load_signal_model_mock):
         """Test choosing a model"""
@@ -268,7 +268,7 @@ class TestModelLoad(unittest.TestCase):
                          preferences_mock.signal_model_directory,
                          msg="Should not have updated the preferences")
 
-    @patch("bcipy.helpers.load.choose_signal_model")
+    @patch("bcipy.io.load.choose_signal_model")
     def test_choose_signal_models(self, choose_signal_model_mock):
         """Test choosing signal models"""
         eeg_mock = Mock()
@@ -278,7 +278,7 @@ class TestModelLoad(unittest.TestCase):
         models = choose_signal_models(['EEG', 'Eyetracker'])
         self.assertListEqual([eeg_mock, eyetracker_mock], models)
 
-    @patch("bcipy.helpers.load.choose_signal_model")
+    @patch("bcipy.io.load.choose_signal_model")
     def test_choose_signal_models_missing_model(self,
                                                 choose_signal_model_mock):
         """Test choosing signal models"""

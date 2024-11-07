@@ -90,7 +90,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.elements), 2)
 
     def test_create_header_is_called_once_compile(self):
-        with patch('bcipy.helpers.report.Report._construct_report_header') as mock_construct_header:
+        with patch('bcipy.data.report.Report._construct_report_header') as mock_construct_header:
             report = Report(self.temp_dir)
             summary = {
                 'session': 'session_name',
