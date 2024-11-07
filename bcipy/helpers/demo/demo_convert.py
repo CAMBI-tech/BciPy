@@ -4,8 +4,8 @@ To use at bcipy root,
 
     `python bcipy/helpers/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-from bcipy.helpers.convert import convert_to_edf, convert_to_bdf
-from bcipy.helpers.load import load_experimental_data
+from bcipy.io.convert import convert_to_edf, convert_to_bdf
+from bcipy.io.load import load_experimental_data
 from bcipy.helpers.visualization import plot_edf
 
 

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 from bcipy.exceptions import TaskConfigurationException
-from bcipy.helpers.parameters import Parameters
+from bcipy.data.parameters import Parameters
 from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,
                                                RawDataProcessor)

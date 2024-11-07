@@ -7,9 +7,9 @@ import numpy as np
 
 from scipy.stats import normaltest
 
-from bcipy.helpers.load import load_raw_data, ask_directory, load_json_parameters
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
+from bcipy.io.load import load_raw_data, ask_directory, load_json_parameters
+from bcipy.data.raw_data import RawData
+from bcipy.data.triggers import trigger_decoder, TriggerType
 
 from bcipy.config import (
     TRIGGER_FILENAME,

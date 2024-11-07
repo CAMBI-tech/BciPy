@@ -5,8 +5,8 @@ import logging
 
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import InquirySchedule
+from bcipy.data.parameters import Parameters
+from bcipy.data.stimuli import InquirySchedule
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler

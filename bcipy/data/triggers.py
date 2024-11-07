@@ -8,8 +8,8 @@ from psychopy import core, visual
 from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
 from bcipy.helpers.clock import Clock
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import resize_image
+from bcipy.data.parameters import Parameters
+from bcipy.data.stimuli import resize_image
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 

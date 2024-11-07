@@ -1,6 +1,6 @@
 import unittest
 
-from bcipy.helpers.symbols import alphabet
+from bcipy.data.symbols import alphabet
 
 
 class TestAlphabet(unittest.TestCase):

@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 from bcipy.exceptions import SignalException
-from bcipy.helpers.stimuli import InquiryReshaper
+from bcipy.data.stimuli import InquiryReshaper
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,

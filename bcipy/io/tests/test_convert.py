@@ -14,13 +14,13 @@ from mockito import mock, unstub, verify, verifyNoMoreInteractions, when
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
-from bcipy.helpers import convert
-from bcipy.helpers.convert import (archive_list, compress, convert_to_bdf,
+from bcipy.io import convert
+from bcipy.io.convert import (archive_list, compress, convert_to_bdf,
                                    convert_to_edf, convert_to_mne, decompress,
                                    norm_to_tobii, pyedf_convert, tobii_to_norm)
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import RawData, sample_data, write
-from bcipy.helpers.triggers import MOCK_TRIGGER_DATA
+from bcipy.data.parameters import Parameters
+from bcipy.data.raw_data import RawData, sample_data, write
+from bcipy.data.triggers import MOCK_TRIGGER_DATA
 from bcipy.signal.generator.generator import gen_random_data
 
 

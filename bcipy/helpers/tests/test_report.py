@@ -9,7 +9,7 @@ import numpy as np
 from reportlab.platypus import Paragraph, Image
 from reportlab.platypus import Flowable, KeepTogether
 
-from bcipy.helpers.report import Report, SessionReportSection, ReportSection, SignalReportSection
+from bcipy.data.report import Report, SessionReportSection, ReportSection, SignalReportSection
 
 
 class TestReport(unittest.TestCase):

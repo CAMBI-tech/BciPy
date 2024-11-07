@@ -6,7 +6,7 @@ from mockito import any, mock, when, unstub, verify
 from bcipy.task.orchestrator import SessionOrchestrator
 from bcipy.task import Task, TaskData
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.load import load_json_parameters
+from bcipy.io.load import load_json_parameters
 
 
 class TestSessionOrchestrator(unittest.TestCase):

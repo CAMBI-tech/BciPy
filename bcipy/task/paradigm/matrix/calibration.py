@@ -7,9 +7,9 @@ from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.save import save_stimuli_position_info
-from bcipy.helpers.system_utils import get_screen_info
+from bcipy.data.parameters import Parameters
+from bcipy.io.save import save_stimuli_position_info
+from bcipy.helpers.utils import get_screen_info
 from bcipy.task.calibration import BaseCalibrationTask
 
 

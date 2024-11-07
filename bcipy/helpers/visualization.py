@@ -22,12 +22,12 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME,
                           DEFAULT_PARAMETERS_PATH)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.convert import convert_to_mne
-from bcipy.helpers.load import choose_csv_file, load_raw_data, load_json_parameters
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.stimuli import mne_epochs
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.io.convert import convert_to_mne
+from bcipy.io.load import choose_csv_file, load_raw_data, load_json_parameters
+from bcipy.data.parameters import Parameters
+from bcipy.data.raw_data import RawData
+from bcipy.data.stimuli import mne_epochs
+from bcipy.data.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 

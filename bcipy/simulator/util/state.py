@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from bcipy.config import SESSION_DATA_FILENAME
-from bcipy.helpers.session import read_session
+from bcipy.data.session import read_session
 
 
 @dataclass

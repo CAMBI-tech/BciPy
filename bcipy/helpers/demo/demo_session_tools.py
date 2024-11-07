@@ -5,7 +5,7 @@ from pathlib import Path
 
 from bcipy.config import SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME
 from bcipy.gui.file_dialog import ask_directory
-from bcipy.helpers.session import (read_session, session_csv, session_data,
+from bcipy.data.session import (read_session, session_csv, session_data,
                                    session_db, session_excel)
 
 

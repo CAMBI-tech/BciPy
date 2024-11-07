@@ -5,7 +5,7 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from bcipy.helpers.symbols import alphabet
+from bcipy.data.symbols import alphabet
 from bcipy.language.main import LanguageModel, ResponseType
 
 # pylint: disable=unused-import

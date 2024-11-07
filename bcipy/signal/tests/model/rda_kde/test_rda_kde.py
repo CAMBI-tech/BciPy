@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
-from bcipy.helpers.symbols import alphabet
+from bcipy.data.symbols import alphabet
 from bcipy.signal.model import ModelEvaluationReport, RdaKdeModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import cross_validation

@@ -10,7 +10,7 @@ from bcipy.signal.model.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
 from bcipy.exceptions import SignalException
-from bcipy.helpers.stimuli import InquiryReshaper
+from bcipy.data.stimuli import InquiryReshaper
 
 
 class RdaKdeModel(SignalModel):

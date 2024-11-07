@@ -15,8 +15,8 @@ from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.exceptions import (BciPyCoreException,
                               InvalidExperimentException)
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import RawData
+from bcipy.data.parameters import Parameters
+from bcipy.data.raw_data import RawData
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
@@ -273,17 +273,6 @@ def load_raw_data(filename: Union[Path, str]) -> RawData:
     RawData object with data held in memory
     """
     return RawData.load(filename)
-
-
-def load_txt_data() -> str:
-    filename = ask_filename('*.txt')  # show dialog box and return the path
-    file_name = filename.split('/')[-1]
-
-    if 'txt' not in file_name:
-        raise Exception(
-            'File type unrecognized. Please use a supported text type')
-
-    return filename
 
 
 def load_users(data_save_loc: str) -> List[str]:

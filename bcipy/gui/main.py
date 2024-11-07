@@ -14,7 +14,7 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QLineEdit, QMessageBox, QPushButton, QScrollArea,
                              QSpinBox, QVBoxLayout, QWidget)
 
-from bcipy.helpers.parameters import parse_range
+from bcipy.data.parameters import parse_range
 
 
 def font(size: int = 16, font_family: str = 'Helvetica') -> QFont:

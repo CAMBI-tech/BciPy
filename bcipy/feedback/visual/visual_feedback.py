@@ -6,7 +6,7 @@ from typing import Tuple, List, Union
 
 from bcipy.feedback.feedback import Feedback
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import resize_image
+from bcipy.data.stimuli import resize_image
 
 
 class FeedbackType(Enum):

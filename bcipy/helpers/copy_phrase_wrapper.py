@@ -8,8 +8,8 @@ import numpy as np
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import histogram, with_min_prob
-from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.symbols import BACKSPACE_CHAR
+from bcipy.data.stimuli import InquirySchedule, StimuliOrder
+from bcipy.data.symbols import BACKSPACE_CHAR
 from bcipy.language.main import LanguageModel
 from bcipy.task.control.criteria import (CriteriaEvaluator,
                                          MaxIterationsCriteria,

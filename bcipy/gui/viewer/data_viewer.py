@@ -24,8 +24,8 @@ from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
-from bcipy.helpers.raw_data import settings
+from bcipy.data.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.data.raw_data import settings
 from bcipy.signal.process.transform import Downsample, get_default_transform
 
 

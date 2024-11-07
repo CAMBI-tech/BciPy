@@ -15,9 +15,9 @@ from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import DEFAULT_ENCODING
 from bcipy.exceptions import TaskConfigurationException
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import InquirySchedule
-from bcipy.helpers.triggers import TriggerHandler
+from bcipy.data.parameters import Parameters
+from bcipy.data.stimuli import InquirySchedule
+from bcipy.data.triggers import TriggerHandler
 from bcipy.task.data import EvidenceType, Session
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 

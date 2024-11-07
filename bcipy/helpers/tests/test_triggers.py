@@ -6,7 +6,7 @@ import psychopy
 from mockito import any, mock, unstub, verify, when
 
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
+from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, _calibration_trigger,
                                     apply_offsets, exclude_types,
                                     find_starting_offset, offset_device,

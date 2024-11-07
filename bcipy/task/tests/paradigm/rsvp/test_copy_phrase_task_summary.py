@@ -4,7 +4,7 @@ from typing import List
 
 from mock import patch
 
-from bcipy.helpers.triggers import Trigger
+from bcipy.data.triggers import Trigger
 from bcipy.task.data import EvidenceType, Inquiry, Session
 from bcipy.task.paradigm.rsvp.copy_phrase import TaskSummary
 

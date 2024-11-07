@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import json
 
 from bcipy.exceptions import UnsupportedResponseType
-from bcipy.helpers.symbols import DEFAULT_SYMBOL_SET
+from bcipy.data.symbols import DEFAULT_SYMBOL_SET
 from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 
 

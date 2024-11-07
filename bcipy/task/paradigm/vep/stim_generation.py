@@ -4,8 +4,8 @@ import math
 import random
 from typing import Any, List, Optional
 
-from bcipy.helpers.list import find_index, swapped
-from bcipy.helpers.stimuli import (InquirySchedule, get_fixation,
+from bcipy.data.list import find_index, swapped
+from bcipy.data.stimuli import (InquirySchedule, get_fixation,
                                    random_target_positions)
 
 

@@ -5,7 +5,7 @@ from typing import List, NamedTuple
 import numpy as np
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.helpers.stimuli import Reshaper
+from bcipy.data.stimuli import Reshaper
 from bcipy.signal.process import Composition
 
 

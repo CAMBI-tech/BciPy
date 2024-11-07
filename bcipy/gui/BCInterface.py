@@ -9,7 +9,7 @@ from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
                             AlertResponse, BCIGui, app,
                             contains_special_characters, contains_whitespaces,
                             invalid_length)
-from bcipy.helpers.load import (copy_parameters, load_experiments,
+from bcipy.io.load import (copy_parameters, load_experiments,
                                 load_json_parameters, load_users)
 from bcipy.task import TaskRegistry
 
