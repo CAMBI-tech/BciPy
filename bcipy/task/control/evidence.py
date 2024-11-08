@@ -6,13 +6,14 @@ from typing import List, Optional, Type
 import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
+from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.stimuli import TrialReshaper
 from bcipy.signal.model import SignalModel
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class EvidenceEvaluator:
@@ -110,7 +111,74 @@ class EEGEvaluator(EvidenceEvaluator):
             window_length - The length of the time between stimuli presentation
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
-        return self.signal_model.predict(data, symbols, self.symbol_set)
+        return self.signal_model.compute_likelihood_ratio(data, symbols, self.symbol_set)
+
+
+class GazeEvaluator(EvidenceEvaluator):
+    """EvidenceEvaluator that extracts symbol likelihoods from raw gaze data.
+
+    Parameters
+    ----------
+        symbol_set: set of possible symbols presented
+        gaze_model: trained gaze model
+    """
+    consumes = ContentType.EYETRACKER
+    produces = EvidenceType.EYE
+
+    def __init__(self, symbol_set: List[str], signal_model: SignalModel):
+        super().__init__(symbol_set, signal_model)
+
+        self.channel_map = analysis_channels(self.device_spec.channels,
+                                             self.device_spec)
+        self.transform = signal_model.metadata.transform
+        self.reshape = TrialReshaper()
+
+    def preprocess(self, raw_data: np.ndarray, times: List[float],
+                   target_info: List[str], window_length: float) -> np.ndarray:
+        """Preprocess the inquiry data.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            symbols - symbols displayed in the inquiry
+            times - timestamps associated with each symbol
+            target_info - target information about the stimuli;
+                ex. ['nontarget', 'nontarget', ...]
+            window_length - The length of the time between stimuli presentation
+        """
+        transformed_data, transform_sample_rate = self.transform(
+            raw_data, self.device_spec.sample_rate)
+
+        # The data from DAQ is assumed to have offsets applied
+        reshaped_data, _lbls = self.reshape(trial_targetness_label=target_info,
+                                            timing_info=times,
+                                            eeg_data=transformed_data,
+                                            sample_rate=transform_sample_rate,
+                                            channel_map=self.channel_map,
+                                            poststimulus_length=window_length)
+        return reshaped_data
+
+    # pylint: disable=arguments-differ
+    def evaluate(self, raw_data: np.ndarray, symbols: List[str],
+                 times: List[float], target_info: List[str],
+                 window_length: float) -> np.ndarray:
+        """Evaluate the evidence.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            symbols - symbols displayed in the inquiry
+            times - timestamps associated with each symbol
+            target_info - target information about the stimuli;
+                ex. ['nontarget', 'nontarget', ...]
+            window_length - The length of the time between stimuli presentation
+        """
+        data = self.preprocess(raw_data, times, target_info, window_length)
+        # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
+        # Therefore we need predict_proba method to get the likelihoods.
+        return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
 
 
 def get_evaluator(

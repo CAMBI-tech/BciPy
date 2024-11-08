@@ -1,14 +1,15 @@
 # mypy: disable-error-code="attr-defined,union-attr,arg-type"
 # needed for the ERPTransformParams
 import logging
-from typing import List, Dict, Optional, Tuple, Union
 from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mne
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from mne import Epochs
@@ -16,19 +17,21 @@ from mne.io import read_raw_edf
 from scipy import linalg
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, RAW_DATA_FILENAME,
-                          DEFAULT_GAZE_IMAGE_PATH, TRIGGER_FILENAME)
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_GAZE_IMAGE_PATH, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
+                          DEFAULT_PARAMETERS_PATH)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.convert import convert_to_mne
-from bcipy.helpers.load import choose_csv_file, load_raw_data
+from bcipy.helpers.load import choose_csv_file, load_raw_data, load_json_parameters
+from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.stimuli import mne_epochs
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def clip_to_display(data, screen_limits):
@@ -84,13 +87,13 @@ def visualize_erp(
     trial_length = trial_window[1] - 0.0
 
     # check for a baseline interval or set to None
-    if trial_window[0] < 0:
+    if trial_window[0] <= 0:
         baseline = (trial_window[0], 0.0)
     else:
         baseline = None
 
-    mne_data, _ = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trigger_timing, trigger_labels, trial_length, baseline=baseline)
+    mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
+    epochs = mne_epochs(mne_data, trial_length, trigger_timing, trigger_labels, baseline=baseline)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
@@ -207,6 +210,7 @@ def visualize_gaze(
             colorbar=True)
 
     if raw_plot:
+        # ax.scatter(lx, range(len(lx)), c='r', s=1)
         ax.scatter(lx, ly, c='r', s=1)
         ax.scatter(rx, ry, c='b', s=1)
 
@@ -279,10 +283,13 @@ def visualize_gaze_inquiries(
     ly = 1 - ly
     ry = 1 - ry
 
-    if means is not None:
-        means[:, 0] = np.clip(means[:, 0], 0, 1)
-        means[:, 1] = np.clip(means[:, 1], 0, 1)
-        means[:, 1] = 1 - means[:, 1]
+    # Define mns as a copy of means to avoid modifying the original array
+    mns = np.copy(means)
+
+    if mns is not None:
+        mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+        mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+        mns[:, 1] = 1 - mns[:, 1]
 
     # scale the eye data to the image
     fig, ax = plt.subplots()
@@ -307,11 +314,93 @@ def visualize_gaze_inquiries(
             colorbar=True)
 
     if raw_plot:
-        # ax.scatter(lx, ly, c='lightcoral', s=1)
+        ax.scatter(lx, ly, c='lightcoral', s=1)
         ax.scatter(rx, ry, c='bisque', s=1)
 
-    if means is not None:
-        for i, (mean, cov) in enumerate(zip(means, covs)):
+    if mns is not None:
+        for i, (mean, cov) in enumerate(zip(mns, covs)):
+            v, w = linalg.eigh(cov)
+            v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
+            u = w[0] / linalg.norm(w[0])
+
+            # Plot an ellipse to show the Gaussian component
+            angle = np.arctan(u[1] / u[0])
+            angle = 180.0 * angle / np.pi  # convert to degrees
+            ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+            ell.set_clip_box(ax)
+            ell.set_alpha(0.5)
+            ax.add_artist(ell)
+
+    ax.set_xticks([])
+    ax.set_yticks([])
+    ax.set_xticklabels([])
+    ax.set_yticklabels([])
+
+    plt.title(f'{title}Plot')
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
+    return fig
+
+
+def visualize_pupil_size(
+        means: Optional[np.ndarray] = None,
+        covs: Optional[np.ndarray] = None,
+        save_path: Optional[str] = None,
+        show: Optional[bool] = False,
+        img_path: Optional[str] = None,
+        screen_size: Tuple[int, int] = (1920, 1080),
+        heatmap: Optional[bool] = False,
+        raw_plot: Optional[bool] = False) -> Figure:
+    """Visualize Gaze Inquiries.
+
+    Assumes that the data is collected using BciPy and a Tobii-nano eye tracker. The default
+    image used is for the matrix calibration task on a 1920x1080 screen.
+
+    Generates a comparative matrix figure following the execution of offline analysis. Given a set of
+    trailed data (left & right eye), the gaze distribution for each prompted symbol are plotted, along
+    with the contour plots of mean and covariances calculated by the Gaussian Mixture Model.
+    The figures may be saved or shown in a window.
+
+    Returns a list of the figure handles created.
+
+    Parameters
+    ----------
+    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
+    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    save_path: Optional[str]: optional path to a save location of the figure generated
+    show: Optional[bool]: whether or not to show the figures generated. Default: False
+    img_path: Optional[str]: Image to be used as the background. Default: matrix.png
+    screen_size: Optional[Tuple[int, int]]: Size of the screen used for Calibration/Copy
+        Phrase tasks.
+        Default: (1920, 1080)
+    heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
+    raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
+    """
+
+    title = 'Pupil Size '
+    img = plt.imread(img_path)
+
+    # Define mns as a copy of means to avoid modifying the original array
+    mns = np.copy(means)
+
+    if mns is not None:
+        # mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+        # mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+        mns[:, 1] = 1 - mns[:, 1]
+
+    # scale the eye data to the image
+    fig, ax = plt.subplots()
+    ax.imshow(img, extent=[0, 1, 0, 1])
+
+    if mns is not None:
+        for i, (mean, cov) in enumerate(zip(mns, covs)):
             v, w = linalg.eigh(cov)
             v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
             u = w[0] / linalg.norm(w[0])
@@ -343,8 +432,7 @@ def visualize_gaze_inquiries(
 
 
 def visualize_centralized_data(
-        left_eye: np.ndarray,
-        right_eye: np.ndarray,
+        gaze_data: np.ndarray,
         save_path: Optional[str] = None,
         show: Optional[bool] = False,
         img_path: Optional[str] = None,
@@ -366,8 +454,7 @@ def visualize_centralized_data(
 
     Parameters
     ----------
-    left_eye: (np.ndarray): Data array for the centralized left eye data.
-    right_eye: (np.ndarray): Data array for the centralized right eye data.
+    gaze_data: (np.ndarray): Data array for the centralized left eye data.
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
@@ -387,33 +474,12 @@ def visualize_centralized_data(
 
     # Transform the eye data to fit the display. Clip values > 1 and < -1
     # The idea here is to have the center at (0,0)
-    lx = np.clip(left_eye[:, 0], -1, 1)
-    ly = np.clip(left_eye[:, 1], -1, 1)
-    rx = np.clip(right_eye[:, 0], -1, 1)
-    ry = np.clip(right_eye[:, 1], -1, 1)
+    dx = np.clip(gaze_data[:, 0], -1, 1)
+    dy = np.clip(gaze_data[:, 1], -1, 1)
     ax.imshow(img, extent=[-1, 1, -1, 1])
 
-    if heatmap:
-        # create a dataframe making a column for each x, y pair for both eyes and a column for the eye (left or right)
-        df = pd.DataFrame({
-            'x': np.concatenate((lx, rx)),
-            'y': np.concatenate((ly, ry)),
-            'eye': ['left'] * len(lx) + ['right'] * len(rx)
-        })
-        ax = sns.kdeplot(
-            data=df,
-            hue='eye',
-            x='x',
-            y='y',
-            fill=False,
-            thresh=0.05,
-            levels=10,
-            cmap="mako",
-            colorbar=True)
-
     if raw_plot:
-        ax.scatter(lx, ly, c='r', s=1)
-        ax.scatter(rx, ry, c='b', s=1)
+        ax.scatter(dx, dy, c='b', s=1)
 
     ax.set_xticks([])
     ax.set_yticks([])
@@ -456,10 +522,10 @@ def visualize_results_all_symbols(
 
     Parameters
     ----------
-    left_eye: (np.ndarray): Data array for the left eye data.
-    right_eye: (np.ndarray): Data array for the right eye data.
-    means: Optional[np.ndarray]: Means of the Gaussian Mixture Model
-    covs: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model
+    left_eye_all: (np.ndarray): Data array for the left eye data, for all symbols.
+    right_eye_all: (np.ndarray): Data array for the right eye data, for all symbols.
+    means_all: Optional[np.ndarray]: Means of the Gaussian Mixture Model, for all symbols
+    covs_all: Optional[np.ndarray]: Covariances of the Gaussian Mixture Model, for all symbols
     save_path: Optional[str]: optional path to a save location of the figure generated
     show: Optional[bool]: whether or not to show the figures generated. Default: False
     img_path: Optional[str]: Image to be used as the background. Default: matrix.png
@@ -489,10 +555,13 @@ def visualize_results_all_symbols(
         ly = 1 - ly
         ry = 1 - ry
 
-        if means is not None:
-            means[:, 0] = np.clip(means[:, 0], 0, 1)
-            means[:, 1] = np.clip(means[:, 1], 0, 1)
-            means[:, 1] = 1 - means[:, 1]
+        # Define mns as a copy of means to avoid modifying the original array
+        mns = np.copy(means)
+
+        if mns is not None:
+            mns[:, 0] = np.clip(mns[:, 0], 0, 1)
+            mns[:, 1] = np.clip(mns[:, 1], 0, 1)
+            mns[:, 1] = 1 - mns[:, 1]
 
         if heatmap:
             # create a dataframe making a column for each x, y pair for both eyes and
@@ -514,11 +583,11 @@ def visualize_results_all_symbols(
                 colorbar=True)
 
         if raw_plot:
-            # ax.scatter(lx, ly, c='lightcoral', s=1)
+            ax.scatter(lx, ly, c='lightcoral', s=1)
             ax.scatter(rx, ry, c='bisque', s=1)
 
-        if means is not None:
-            for i, (mean, cov) in enumerate(zip(means, covs)):
+        if mns is not None:
+            for i, (mean, cov) in enumerate(zip(mns, covs)):
                 v, w = linalg.eigh(cov)
                 v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
                 u = w[0] / linalg.norm(w[0])
@@ -596,7 +665,7 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
     plt.ylabel('Trigger Value')
     plt.xlabel('Samples')
 
-    log.info('Press Ctrl + C to exit!')
+    logger.info('Press Ctrl + C to exit!')
     # Show us the figure! Depending on your OS / IDE this may not close when
     #  The window is closed, see the message above
     plt.show()
@@ -665,7 +734,11 @@ def visualize_evokeds(epochs: Tuple[Epochs, Epochs],
     return fig
 
 
-def visualize_session_data(session_path: str, parameters: Union[dict, Parameters], show=True) -> Figure:
+def visualize_session_data(
+        session_path: str,
+        parameters: Union[dict, Parameters],
+        show=True,
+        save=True) -> Figure:
     """Visualize Session Data.
 
     This method is used to load and visualize EEG data after a session.
@@ -682,9 +755,9 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     Output:
         Figure of Session Data
     """
+    logger.info(f"Visualizing session data at {session_path}")
     # extract all relevant parameters
     trial_window = parameters.get("trial_window")
-    static_offset = parameters.get("static_trigger_offset")
 
     raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
@@ -707,7 +780,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
     )
     # Process triggers.txt files
     trigger_targetness, trigger_timing, _ = trigger_decoder(
-        offset=static_offset,
+        offset=device_spec.static_offset,
         trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         device_type='EEG',
@@ -728,7 +801,7 @@ def visualize_session_data(session_path: str, parameters: Union[dict, Parameters
         transform=default_transform,
         plot_average=True,
         plot_topomaps=True,
-        save_path=session_path,
+        save_path=session_path if save else None,
         show=show,
     )
 
@@ -744,11 +817,51 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
 
     Returns a list of the figure handles created.
     """
+    title = 'Overall Accuracy: '
 
     fig, ax = plt.subplots()
     ax.bar(accuracy_dict.keys(), accuracy_dict.values())
     ax.set_xlabel('Symbol')
     ax.set_ylabel('Accuracy')
-    ax.set_title('Overall Accuracy: ' + str(round(accuracy, 2)))
+    ax.set_title(title + str(round(accuracy, 2)))
+
+    if save_path is not None:
+        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_').replace(':', '')}plot.png", dpi=fig.dpi)
+
+    if show:
+        plt.show()
+    else:
+        plt.close()
 
     return fig
+
+
+def erp():
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Visualize ERP data')
+
+    parser.add_argument(
+        '-s', '--session_path',
+        type=str,
+        help='Path to the session directory',
+        required=True)
+    parser.add_argument(
+        '-p', '--parameters',
+        type=str,
+        help='Path to the parameters file',
+        default=DEFAULT_PARAMETERS_PATH)
+    parser.add_argument(
+        '--show',
+        action='store_true',
+        help='Whether to show the figure',
+        default=False)
+    parser.add_argument(
+        '--save',
+        action='store_true',
+        help='Whether to save the figure', default=True)
+
+    args = parser.parse_args()
+
+    parameters = load_json_parameters(args.parameters, value_cast=True)
+    visualize_session_data(args.session_path, parameters, args.show, args.save)

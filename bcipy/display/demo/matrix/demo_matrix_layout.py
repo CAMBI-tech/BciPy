@@ -35,7 +35,8 @@ matrix_height_pct = 1 - (2 * task_bar.height_pct)
 stim_properties = StimuliProperties(stim_font=font,
                                     stim_pos=[],
                                     stim_height=0.5,
-                                    is_txt_stim=True)
+                                    is_txt_stim=True,
+                                    layout='QWERTY')
 
 info = InformationProperties(
     info_color=['white'],
@@ -54,7 +55,6 @@ matrix_display = MatrixDisplay(win,
                                columns=7,
                                width_pct=0.7,
                                height_pct=matrix_height_pct)
-#    sort_order=qwerty_order(is_txt_stim=True))
 
 matrix_display.draw(grid_opacity=matrix_display.full_grid_opacity,
                     grid_color=matrix_display.grid_color,

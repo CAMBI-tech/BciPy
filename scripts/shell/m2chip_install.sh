@@ -27,6 +27,6 @@ export HDF5_DIR=/opt/homebrew/opt/hdf5
 python -m pip install pyaudio
 # your path may be different to the portaudio version
 pip install --global-option='build_ext' --global-option='-I/usr/local/Cellar/portaudio/19.7.0/include' --global-option='-L/usr/local/Cellar/portaudio/19.7.0/lib' pyo   
-pip install Psychopy==2023.2.1 --no-deps    # install psychopy without dependencies
+pip install Psychopy==2024.2.1 --no-deps    # install psychopy without dependencies
 pip install -e .
 pip install kenlm==0.1 --global-option="--max_order=12" # install kenlm with max_order=12 for language model. Not required for BciPy to run in most places.

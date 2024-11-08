@@ -8,7 +8,6 @@ from .main import (
     Display,
     InformationProperties,
     init_display_window,
-    PreviewInquiryProperties,
     StimuliProperties,
     VEPStimuliProperties
 )
@@ -20,5 +19,4 @@ __all__ = [
     'StimuliProperties',
     'VEPStimuliProperties',
     'InformationProperties',
-    'PreviewInquiryProperties'
 ]

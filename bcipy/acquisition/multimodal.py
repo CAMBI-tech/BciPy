@@ -9,8 +9,9 @@ from bcipy.acquisition.exceptions import (InsufficientDataException,
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
 from bcipy.helpers.system_utils import AutoNumberEnum
+from bcipy.config import SESSION_LOG_FILENAME
 
-log = logging.getLogger(__name__)
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class ContentType(AutoNumberEnum):
@@ -111,11 +112,12 @@ class ClientManager():
     def start_acquisition(self):
         """Start acquiring data for all clients"""
         for client in self.clients:
-            log.info(f"Connecting to {client.device_spec.name}...")
+            logger.info(f"Connecting to {client.device_spec.name}...")
             client.start_acquisition()
 
     def stop_acquisition(self):
         """Stop acquiring data for all clients"""
+        logger.info("Stopping acquisition...")
         for client in self.clients:
             client.stop_acquisition()
 
@@ -131,7 +133,9 @@ class ClientManager():
 
         Parameters
         ----------
-            start - start time (acquisition clock) of data window
+            start - start time (acquisition clock) of data window; NOTE: the
+                actual start time will be adjusted to by the static_offset
+                configured for each device.
             seconds - duration of data to return for each device
             content_types - specifies which devices to include; if not
                 unspecified, data for all types is returned.
@@ -144,19 +148,22 @@ class ClientManager():
         for content_type in content_types:
             name = content_type.name
             client = self.get_client(content_type)
+
+            adjusted_start = start + client.device_spec.static_offset
             if client.device_spec.sample_rate > 0:
                 count = round(seconds * client.device_spec.sample_rate)
-                log.info(f'Need {count} records for processing {name} data')
-                output[content_type] = client.get_data(start=start,
+                logger.info(f'Need {count} records for processing {name} data')
+                output[content_type] = client.get_data(start=adjusted_start,
                                                        limit=count)
                 data_count = len(output[content_type])
                 if strict and data_count < count:
                     msg = f'Needed {count} {name} records but received {data_count}'
+                    logger.error(msg)
                     raise InsufficientDataException(msg)
             else:
                 # Markers have an IRREGULAR_RATE.
-                output[content_type] = client.get_data(start=start,
-                                                       end=start + seconds)
+                output[content_type] = client.get_data(start=adjusted_start,
+                                                       end=adjusted_start + seconds)
         return output
 
     def cleanup(self):
@@ -170,4 +177,6 @@ class ClientManager():
         client = self.default_client
         if client:
             return client.__getattribute__(name)
+
+        logger.error(f"Missing attribute: {name}")
         raise AttributeError(f"Missing attribute: {name}")

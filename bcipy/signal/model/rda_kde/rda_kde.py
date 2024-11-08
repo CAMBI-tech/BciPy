@@ -9,7 +9,7 @@ from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.helpers.exceptions import SignalException
+from bcipy.exceptions import SignalException
 from bcipy.helpers.stimuli import InquiryReshaper
 
 from sklearn.utils.multiclass import unique_labels
@@ -18,6 +18,7 @@ from sklearn.utils.multiclass import unique_labels
 
 class RdaKdeModel(SignalModel):
     reshaper = InquiryReshaper()
+    name = "rda_kde"
 
     def __init__(self, k_folds: int, prior_type: str = "uniform"):
         self.k_folds = k_folds

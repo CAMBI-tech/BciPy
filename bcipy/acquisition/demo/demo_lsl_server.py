@@ -29,7 +29,7 @@ def main():
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
-        print("Keyboard Interrupt")
+        log.info("Keyboard Interrupt")
         server.stop()
 
 

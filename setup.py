@@ -17,11 +17,11 @@ Release:
 """
 
 import os
-import sys
 import platform
+import sys
 from shutil import rmtree
 
-from setuptools import find_packages, setup, Command
+from setuptools import Command, find_packages, setup
 
 # Package meta-data.
 NAME = 'bcipy'
@@ -29,7 +29,7 @@ DESCRIPTION = 'Python Software for Brain-Computer Interface.'
 URL = 'https://github.com/CAMBI-tech/BciPy'
 EMAIL = 'cambi_support@googlegroups.com'
 AUTHOR = 'CAMBI'
-REQUIRES_PYTHON = '>3.7,<3.10'
+REQUIRES_PYTHON = '>3.7,<3.11'
 
 VERSION = '2.0.0rc4'
 
@@ -100,9 +100,18 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=('tests', 'demo', 'data', )),
+    packages=find_packages(exclude=(
+        'tests',
+        'demo',
+        'data',
+    )),
     entry_points={
-        'console_scripts': ['bcipy = bcipy.main:bcipy_main'],
+        'console_scripts':
+        [
+            'bcipy = bcipy.main:bcipy_main',
+            'bcipy-erp-viz = bcipy.helpers.visualization:erp',
+            'bcipy-sim = bcipy.simulator:main',
+            "bcipy-train = bcipy.signal.model.offline_analysis:main"],
     },
     install_requires=REQUIRED,
     include_package_data=True,

@@ -35,7 +35,8 @@
             "X1", "X2", "X3",
             "A2"
         ],
-        "status": "active"
+        "status": "active",
+        "static_offset": 0.1
     },
     {
         "name": "DSI-VR300",
@@ -53,13 +54,14 @@
         "sample_rate": 300,
         "description": "Wearable Sensing DSI-VR300",
         "excluded_from_analysis": ["TRG", "F7"],
-        "status": "active"
+        "status": "active",
+        "static_offset": 0.1
     },
     {
         "name": "DSI-Flex",
         "content_type": "EEG",
         "channels": [
-            { "name": "F3", "label": "Fz", "units": "microvolts", "type": "EEG" },
+            { "name": "P4", "label": "Cz", "units": "microvolts", "type": "EEG" },
             { "name": "S2", "label": "Oz", "units": "microvolts", "type": "EEG" },
             { "name": "S3", "label": "P4", "units": "microvolts", "type": "EEG" },
             { "name": "S4", "label": "P3", "units": "microvolts", "type": "EEG" },
@@ -71,7 +73,8 @@
         "sample_rate": 300.0,
         "description": "Wearable Sensing DSI-Flex",
         "excluded_from_analysis": ["TRG"],
-        "status": "active"
+        "status": "active",
+        "static_offset": 0.1
     },
     {
         "name": "g.USBamp-1",
@@ -96,7 +99,8 @@
         ],
         "sample_rate": 256,
         "description": "GTec g.USBamp",
-        "status": "active"
+        "status": "active",
+        "static_offset": 0.1
     },
     {
         "name": "Tobii Nano",
@@ -114,6 +118,7 @@
         "sample_rate": 60.0,
         "description": "Tobii Nano. For use with the Tobii Pro SDK.",
         "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"],
-        "status": "active"
+        "status": "active",
+        "static_offset": 0.0
     }
 ]

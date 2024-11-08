@@ -17,7 +17,7 @@ BLACK = COLOR_INDEX[0]
 WHITE = COLOR_INDEX[1]
 YELLOW = COLOR_INDEX[5]
 from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
-                          DEFAULT_PARAMETER_FILENAME, EXPERIMENT_DATA_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, EXPERIMENT_DATA_FILENAME,
                           SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
 from bcipy.helpers.load import (load_experiment_fields, load_experiments,
                                 load_json_parameters)
@@ -37,7 +37,7 @@ def session_data(data_dir: str) -> Dict:
     not useful for debugging."""
 
     parameters = load_json_parameters(os.path.join(data_dir,
-                                                   DEFAULT_PARAMETER_FILENAME),
+                                                   DEFAULT_PARAMETERS_FILENAME),
                                       value_cast=True)
     session = read_session(os.path.join(data_dir, SESSION_DATA_FILENAME))
     data = session.as_dict(evidence_only=True)

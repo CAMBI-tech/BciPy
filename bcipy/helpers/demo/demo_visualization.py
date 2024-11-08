@@ -15,7 +15,7 @@ To use at bcipy root,
 """
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETER_FILENAME, RAW_DATA_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
@@ -44,7 +44,8 @@ if __name__ == '__main__':
     if not path:
         path = load_experimental_data()
 
-    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETER_FILENAME}', value_cast=True)
+    parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETERS_FILENAME}',
+                                      value_cast=True)
 
     # extract all relevant parameters
     trial_window = parameters.get("trial_window", (0, 0.5))
@@ -59,11 +60,15 @@ if __name__ == '__main__':
     filter_high = parameters.get("filter_high")
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
-    static_offset = parameters.get("static_trigger_offset")
+
     raw_data = load_raw_data(Path(path, f'{RAW_DATA_FILENAME}.csv'))
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
+
+    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
+    device_spec = devices.preconfigured_device(raw_data.daq_type)
+    static_offset = device_spec.static_offset
 
     # setup filtering
     default_transform = get_default_transform(
@@ -82,8 +87,6 @@ if __name__ == '__main__':
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 
-    devices.load(Path(path, DEFAULT_DEVICE_SPEC_FILENAME))
-    device_spec = devices.preconfigured_device(raw_data.daq_type)
     channel_map = analysis_channels(channels, device_spec)
 
     save_path = None if not args.save else path
@@ -94,9 +97,6 @@ if __name__ == '__main__':
         trigger_timing,
         labels,
         trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
         save_path=save_path,
         show=args.show
     )

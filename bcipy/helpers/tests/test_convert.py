@@ -11,7 +11,8 @@ from mne.io import read_raw_bdf, read_raw_edf
 from mockito import any as any_value
 from mockito import mock, unstub, verify, verifyNoMoreInteractions, when
 
-from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETER_FILENAME,
+import bcipy.acquisition.devices as devices
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers import convert
 from bcipy.helpers.convert import (archive_list, compress, convert_to_bdf,
@@ -33,8 +34,7 @@ def create_bcipy_session_artifacts(
             'filter_high': 30,
             'filter_order': 5,
             'notch_filter_frequency': 60,
-            'down_sampling_rate': 3,
-            'static_trigger_offset': 0.0
+            'down_sampling_rate': 3
         },
 ) -> Tuple[str, RawData, Parameters]:
     """Write BciPy session artifacts to a temporary directory.
@@ -44,7 +44,9 @@ def create_bcipy_session_artifacts(
     trg_data = MOCK_TRIGGER_DATA
     if isinstance(channels, int):
         channels = [f'ch{i}' for i in range(channels)]
-    data = sample_data(ch_names=channels, sample_rate=sample_rate, rows=samples)
+    data = sample_data(ch_names=channels, daq_type='SampleDevice', sample_rate=sample_rate, rows=samples)
+    devices.register(devices.DeviceSpec('SampleDevice', channels=channels, sample_rate=sample_rate))
+
     with open(Path(write_dir, TRIGGER_FILENAME), 'w', encoding=DEFAULT_ENCODING) as trg_file:
         trg_file.write(trg_data)
 
@@ -57,13 +59,12 @@ def create_bcipy_session_artifacts(
                                          time_prompt=0.5,
                                          time_flash=0.5,
                                          # define filter settings
-                                         static_trigger_offset=filter_settings['static_trigger_offset'],
                                          down_sampling_rate=filter_settings['down_sampling_rate'],
                                          notch_filter_frequency=filter_settings['notch_filter_frequency'],
                                          filter_high=filter_settings['filter_high'],
                                          filter_low=filter_settings['filter_low'],
                                          filter_order=filter_settings['filter_order'])
-    params.save(write_dir, DEFAULT_PARAMETER_FILENAME)
+    params.save(write_dir, DEFAULT_PARAMETERS_FILENAME)
     return trg_data, data, params
 
 
@@ -348,8 +349,7 @@ class TestPyedfconvert(unittest.TestCase):
             'filter_high': 30,
             'filter_order': 5,
             'notch_filter_frequency': 60,
-            'down_sampling_rate': 3,
-            'static_trigger_offset': 0.0
+            'down_sampling_rate': 3
         }
         create_bcipy_session_artifacts(
             self.temp_dir,
@@ -476,11 +476,12 @@ class TestMNEConvert(unittest.TestCase):
             'filter_high': 30,
             'filter_order': 5,
             'notch_filter_frequency': 60,
-            'down_sampling_rate': 3,
-            'static_trigger_offset': 0.0
+            'down_sampling_rate': 3
         }
         self.channels = ['timestamp', 'O1', 'O2', 'Pz']
         self.raw_data = RawData('SampleDevice', self.sample_rate, self.channels)
+        devices.register(devices.DeviceSpec('SampleDevice', channels=self.channels, sample_rate=self.sample_rate))
+
         # generate 100 random samples of data
         for _ in range(0, 100):
             channel_data = gen_random_data(low=-1000,
@@ -527,7 +528,7 @@ class TestMNEConvert(unittest.TestCase):
         def transform(x, fs):
             return x * multiplier, fs
 
-        data = convert_to_mne(self.raw_data, transform=transform)
+        data = convert_to_mne(self.raw_data, transform=transform, volts=True)
 
         self.assertTrue(len(data) > 0)
         self.assertEqual(data.ch_names, self.channels[1:])

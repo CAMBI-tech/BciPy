@@ -3,8 +3,6 @@ from typing import NamedTuple, Tuple
 import numpy as np
 from bcipy.signal.process.filter import Notch, Bandpass, FiniteImpulseResponse
 
-from bcipy.signal.process.filter import Bandpass, Notch
-
 
 class Composition:
     """Applies a sequence of transformations"""

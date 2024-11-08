@@ -6,21 +6,21 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
-                          SIGNAL_MODEL_FILE_SUFFIX)
+                          SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.helpers.exceptions import (BciPyCoreException,
-                                      InvalidExperimentException)
+from bcipy.exceptions import (BciPyCoreException,
+                              InvalidExperimentException)
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.raw_data import RawData
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
@@ -136,9 +136,10 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     "fake_data": {
         "value": "true",
         "section": "bci_config",
-        "readableName": "Fake Data Sessions",
+        "name": "Fake Data Sessions",
         "helpTip": "If true, fake data server used",
-        "recommended_values": "",
+        "recommended": "",
+        "editable": "true",
         "type": "bool"
         }
 
@@ -188,6 +189,54 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
     return models
 
 
+def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
+    """Prompt the user to load a signal model for each provided device.
+
+    Parameters
+    ----------
+        device_types - list of device content types (ex. 'EEG')
+    """
+    return [
+        model for model in map(choose_signal_model, set(device_types)) if model
+    ]
+
+
+def load_signal_model(file_path: str) -> SignalModel:
+    """Load signal model from persisted file.
+
+    Models are assumed to have been written using bcipy.helpers.save.save_model
+    function and should be serialized as pickled files. Note that reading
+    pickled files is a potential security concern so only load from trusted
+    directories."""
+
+    with open(file_path, "rb") as signal_file:
+        model = pickle.load(signal_file)
+        log.info(f"Loading model {model}")
+        return model
+
+
+def choose_signal_model(device_type: str) -> Optional[SignalModel]:
+    """Present a file dialog prompting the user to select a signal model for
+    the given device.
+
+    Parameters
+    ----------
+        device_type - ex. 'EEG' or 'Eyetracker'; this should correspond with
+            the content_type of the DeviceSpec of the model.
+    """
+
+    file_path = ask_filename(file_types=f"*{SIGNAL_MODEL_FILE_SUFFIX}",
+                             directory=preferences.signal_model_directory,
+                             prompt=f"Select the {device_type} signal model")
+
+    if file_path:
+        # update preferences
+        path = Path(file_path)
+        preferences.signal_model_directory = str(path)
+        return load_signal_model(str(path))
+    return None
+
+
 def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     """GUI prompt to select a csv file from the file system.
 
@@ -212,7 +261,7 @@ def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     return filename
 
 
-def load_raw_data(filename: str) -> RawData:
+def load_raw_data(filename: Union[Path, str]) -> RawData:
     """Reads the data (.csv) file written by data acquisition.
 
     Parameters
@@ -260,14 +309,11 @@ def load_users(data_save_loc: str) -> List[str]:
         return saved_users
 
     # grab all experiments in the directory and iterate over them to get the users
-    experiments = fast_scandir(path, return_path=True)
+    users = fast_scandir(path, return_path=True)
 
-    for experiment in experiments:
-        users = fast_scandir(experiment, return_path=False)
-        # If it is a new user, append it to the saved_user list
-        for user in users:
-            if user not in saved_users:
-                saved_users.append(user)
+    for user in users:
+        if user not in saved_users:
+            saved_users.append(user.split('/')[-1])
 
     return saved_users
 

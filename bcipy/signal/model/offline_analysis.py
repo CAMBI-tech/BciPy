@@ -1,42 +1,38 @@
 # mypy: disable-error-code="attr-defined"
-# needed for the ERPTransformParams
 import json
 import logging
+import subprocess
 from pathlib import Path
-from typing import Tuple
+from typing import List
 
 import numpy as np
-from matplotlib.figure import Figure
+
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
-from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, MATRIX_IMAGE_FILENAME,
-                          STATIC_AUDIO_PATH, TRIGGER_FILENAME)
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
+from bcipy.gui.alert import confirm
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import save_model
-from bcipy.helpers.stimuli import play_sound, update_inquiry_timing
+from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import (visualize_centralized_data,
-                                         visualize_erp, visualize_gaze,
-                                         visualize_gaze_accuracies,
-                                         visualize_gaze_inquiries,
-                                         visualize_results_all_symbols)
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GazeModelCombined,
-                                                 GazeModelIndividual)
+from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,
+                                                 KernelGP, KernelGPSampleAverage)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
@@ -74,7 +70,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc: bool,
                 save_figures=False, show_figures=False):
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
@@ -97,9 +93,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         show_figures (bool): If true, shows ERP figures after training.
     """
     # Extract relevant session information from parameters file
-    trial_window = None
+    trial_window = parameters.get("trial_window")
     if trial_window is None:
-        trial_window = (0.2, 0.8)
+        trial_window = (0.0, 0.5)
     window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
@@ -111,7 +107,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
-    static_offset = parameters.get("static_trigger_offset")
+    static_offset = device_spec.static_offset
 
     log.info(
         f"\nData processing settings: \n"
@@ -151,8 +147,9 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # Process triggers.txt files
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT],
         offset=static_offset,
+        remove_pre_fixation=True,
         device_type='EEG'
     )
 
@@ -190,40 +187,46 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     # # train and save the model as a pkl file
     log.info("Training model. This will take some time...")
     model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    try:
+        model.fit(data, labels)
+        model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                             transform=default_transform,
+                                             evidence_type="ERP",
+                                             auc=model.auc)
+        log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    except Exception as e:
+        log.error(f"Error training model: {e}")
+
+    try:
+        # Using an 80/20 split, report on balanced accuracy
+        if estimate_balanced_acc:
+            train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+            dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+            dummy_model.fit(train_data, train_labels)
+            probs = dummy_model.predict_proba(test_data)
+            preds = probs.argmax(-1)
+            score = balanced_accuracy_score(test_labels, preds)
+            log.info(f"Balanced acc with 80/20 split: {score}")
+            model.metadata.balanced_accuracy = score
+            del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+
+    except Exception as e:
+        log.error(f"Error calculating balanced accuracy: {e}")
 
     save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
 
-    score = None
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-
-    # this should have uncorrected trigger timing for display purposes
-    figure_handles = visualize_erp(
-        erp_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
-    return model, figure_handles
+    if save_figures or show_figures:
+        cmd = f'bcipy-erp-viz --session_path "{data_folder}" --parameters "{parameters["parameter_location"]}"'
+        if save_figures:
+            cmd += ' --save'
+        if show_figures:
+            cmd += ' --show'
+        subprocess.run(
+            cmd,
+            shell=True
+        )
+    return model
 
 
 def analyze_gaze(
@@ -257,19 +260,12 @@ def analyze_gaze(
             "Individual": Fits a separate Gaussian for each symbol. Default model
             "Centralized": Uses data from all symbols to fit a single centralized Gaussian
     """
-    figures = []
-    figure_handles = visualize_gaze(
-        gaze_data,
-        save_path=save_figures,
-        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-        show=show_figures,
-        raw_plot=plot_points,
-    )
-    figures.extend(figure_handles)
-
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate
+
+    flash_time = parameters.get("time_flash")  # duration of each stimulus
+    stim_size = parameters.get("stim_length")  # number of stimuli per inquiry
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -281,9 +277,13 @@ def analyze_gaze(
     data, _fs = gaze_data.by_channel()
 
     if model_type == "Individual":
-        model = GazeModelIndividual()
+        model = GMIndividual()
     elif model_type == "Centralized":
-        model = GazeModelCombined()
+        model = GMCentralized()
+    elif model_type == "GP":
+        model = KernelGP()
+    elif model_type == "GP_SampleAverage":
+        model = KernelGPSampleAverage()
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -300,19 +300,23 @@ def analyze_gaze(
     )
     ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
+    # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
+    symbol_set = alphabet()
+
     target_symbols = trigger_symbols[0::11]  # target symbols are the PROMPT triggers
     # Use trigger_timing to generate time windows for each letter flashing
     # Take every 10th trigger as the start point of timing.
     inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
-    symbol_set = alphabet()
-    inquiries = model.reshaper(
+    inquiries_dict, inquiries_list, _ = model.reshaper(
         inq_start_times=inq_start,
         target_symbols=target_symbols,
         gaze_data=data,
         sample_rate=sample_rate,
-        symbol_set=symbol_set
+        stimulus_duration=flash_time,
+        num_stimuli_per_inquiry=10,
+        symbol_set=alphabet()
     )
 
     # Extract the data for each target label and each eye separately.
@@ -320,145 +324,148 @@ def analyze_gaze(
     preprocessed_data = {i: [] for i in symbol_set}
     for i in symbol_set:
         # Skip if there's no evidence for this symbol:
-        if len(inquiries[i]) == 0:
+        if len(inquiries_dict[i]) == 0:
             continue
 
-        left_eye, right_eye = extract_eye_info(inquiries[i])
-        preprocessed_data[i] = np.array([left_eye, right_eye])    # Channels x Sample Size x Dimensions(x,y)
+        for j in range(len(inquiries_dict[i])):
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_dict[i][j])
+            preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))
+            # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
+        preprocessed_data[i] = np.array(preprocessed_data[i])
 
-    centralized_data_left = []
-    centralized_data_right = []
-    test_dict = {}
+    centralized_data = {i: [] for i in symbol_set}
+    time_average = {i: [] for i in symbol_set}
 
-    left_eye_all = []
-    right_eye_all = []
-    means_all = []
-    covs_all = []
     for sym in symbol_set:
         # Skip if there's no evidence for this symbol:
-        if len(inquiries[sym]) == 0:
-            test_dict[sym] = []
-            continue
-        le = preprocessed_data[sym][0]
-        re = preprocessed_data[sym][1]
+        try:
+            if len(inquiries_dict[sym]) == 0:
+                continue
 
-        # Train test split:
-        labels = np.array([sym] * len(le))  # Labels are the same for both eyes
-        train_le, test_le, train_labels_le, test_labels_le = subset_data(le, labels, test_size=0.2, swap_axes=False)
-        train_re, test_re, train_labels_re, test_labels_re = subset_data(re, labels, test_size=0.2, swap_axes=False)
-        test_dict[sym] = np.concatenate((test_le, test_re), axis=0)
+        except BaseException:
+            log.info(f"No evidence from symbol {sym}")
+            continue
 
         # Fit the model based on model type.
-        # Model 1: Fit Gaussian mixture (comp=2) on each symbol and each eye separately
         if model_type == "Individual":
-            model.fit(train_re)
+            # Model 1: Fit Gaussian mixture on each symbol separately
+            reshaped_data = preprocessed_data[sym].reshape(
+                (preprocessed_data[sym].shape[0] *
+                 preprocessed_data[sym].shape[2],
+                 preprocessed_data[sym].shape[1]))
+            model.fit(reshaped_data)
 
-            means, covs = model.evaluate(test_re)
-
-            # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                means, covs,
-                save_path=save_figures,
-                img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-                show=show_figures,
-                raw_plot=plot_points,
-            )
-            figures.extend(figure_handles)
-            left_eye_all.append(le)
-            right_eye_all.append(re)
-            means_all.append(means)
-            covs_all.append(covs)
-
-            # TODO: Calculate scores for the test set.
-            # scores, predictions = model.predict(test_re)
-
-        # Model 2: Fit Gaussian mixture (comp=1) on a centralized data
         if model_type == "Centralized":
-            # Centralize the data using symbol positions:
+            # Centralize the data using symbol positions and fit a single Gaussian.
             # Load json file.
-            with open(f"{BCIPY_ROOT}/parameters/symbol_positions.json", 'r') as params_file:
+            with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
                 symbol_positions = json.load(params_file)
+
             # Subtract the symbol positions from the data:
-            centralized_data_left.append(model.reshaper.centralize_all_data(train_le, symbol_positions[sym]))
-            centralized_data_right.append(model.reshaper.centralize_all_data(train_re, symbol_positions[sym]))
+            for j in range(len(preprocessed_data[sym])):
+                centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
+
+        if model_type == "GP_SampleAverage":
+            # Instead of centralizing, take the time average:
+            for j in range(len(preprocessed_data[sym])):
+                temp = np.mean(preprocessed_data[sym][j], axis=1)
+                time_average[sym].append(temp)
+                centralized_data[sym].append(
+                    model.substract_mean(
+                        preprocessed_data[sym][j],
+                        temp))  # Delta_t = X_t - mu
+            centralized_data[sym] = np.array(centralized_data[sym])
+            time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
 
     if model_type == "Individual":
-        # Takes in all means and covs from individual symbols, and
-        # calculates the likelihoods and predictions for each test point.
-        # Convert test_dict to a list of arrays:
         accuracy = 0
         acc_all_symbols = {}
         counter = 0
-        for sym in symbol_set:
-            # Skip if test_dict is empty for certain symbols:
-            if len(test_dict[sym]) == 0:
-                acc_all_symbols[sym] = 0
-                continue
-            likelihoods, predictions = model.predict(
-                test_dict[sym], np.squeeze(
-                    np.array(means_all)), np.squeeze(
-                    np.array(covs_all)))
-            acc_all_symbols[sym] = np.sum(predictions == counter) / len(predictions) * 100
-            accuracy += np.sum(predictions == counter) / len(predictions) * 100
-            print(f"""Correct predictions for {sym}: {np.sum(predictions == counter)} / {len(predictions)},
-                Accuracy {sym}: {np.sum(predictions == counter) / len(predictions) * 100:.2f}""")
-            counter += 1
-        accuracy /= counter
-        print(f"Overall accuracy: {accuracy:.2f}")
 
-        # Plot all accuracies as bar plot:
-        figure_handles = visualize_gaze_accuracies(acc_all_symbols, accuracy, save_path=None, show=True)
-        figures.extend(figure_handles)
+    if model_type == "GP_SampleAverage":
+        test_dict = {i: [] for i in symbol_set}
+        # Visualize different inquiries from the same target letter:
+        colors = ['r', 'g', 'b', 'y', 'm', 'c', 'k', 'w', 'orange', 'purple']
+        for sym in symbol_set:
+            if len(centralized_data[sym]) == 0:
+                continue
+
+        # Split the data into train and test sets & fit the model:
+        centralized_data_training_set = []
+        for sym in symbol_set:
+            if len(centralized_data[sym]) <= 1:
+                if len(centralized_data[sym]) == 1:
+                    test_dict[sym] = preprocessed_data[sym][-1]
+                continue
+            # Leave one out and add the rest to the training set:
+            for j in range(len(centralized_data[sym]) - 1):
+                centralized_data_training_set.append(centralized_data[sym][j])
+            # Add the last inquiry to the test set:
+            test_dict[sym] = preprocessed_data[sym][-1]
+
+        centralized_data_training_set = np.array(centralized_data_training_set)
+        reshaped_data = centralized_data_training_set.reshape((72, 720))
+
+        cov_matrix = np.cov(reshaped_data, rowvar=False)
+        time_horizon = 9
+        # Accuracy vs time horizon
+
+        for eye_coord_0 in range(4):
+            for eye_coord_1 in range(4):
+                for time_0 in range(180):
+                    for time_1 in range(180):
+                        l_ind = eye_coord_0 * 180 + time_0
+                        m_ind = eye_coord_1 * 180 + time_1
+                        if np.abs(time_1 - time_0) > time_horizon:
+                            cov_matrix[l_ind, m_ind] = 0
+                            # cov_matrix[m_ind, l_ind] = 0
+        reshaped_mean = np.mean(reshaped_data, axis=0)
+
+        eps = 0
+        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix)) * eps
+        try:
+            inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
+        except BaseException:
+            print("Singular matrix, using pseudo-inverse instead")
+            eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
+            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
+            # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
+        denominator = 0
+
+        # Find the likelihoods for the test case:
+        l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
+        log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
+        counter = 0
+        for i_sym0, sym0 in enumerate(symbol_set):
+            for i_sym1, sym1 in enumerate(symbol_set):
+                if len(centralized_data[sym1]) == 0:
+                    continue
+                if len(test_dict[sym0]) == 0:
+                    continue
+                # print(f"Target: {sym0}, Tested: {sym1}")
+                central_data = model.substract_mean(test_dict[sym0], time_average[sym1])
+                flattened_data = central_data.reshape((720,))
+                diff = flattened_data - reshaped_mean
+                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
+                log_likelihood = numerator - denominator
+                # print(f"{log_likelihood:.3E}")
+                log_likelihoods[i_sym0, i_sym1] = log_likelihood
+            # Find the max likelihood:
+            max_like = np.argmax(log_likelihoods[i_sym0, :])
+            # Check if it's the same as the target, and save the result:
+            if max_like == i_sym0:
+                # print("True")
+                counter += 1
 
     if model_type == "Centralized":
-        cent_left = np.concatenate(np.array(centralized_data_left, dtype=object))
-        cent_right = np.concatenate(np.array(centralized_data_right, dtype=object))
+        # Fit the model parameters using the centralized data:
+        # flatten the dict to a np array:
+        cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
+        # Merge the first and third dimensions:
+        cent_data = cent_data.reshape((cent_data.shape[0] * cent_data.shape[2], cent_data.shape[1]))
 
-        # Visualize the results:
-        figure_handles = visualize_centralized_data(
-            cent_left, cent_right,
-            save_path=save_figures,
-            img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-            show=show_figures,
-            raw_plot=plot_points,
-        )
-        figures.extend(figure_handles)
-
-        # Fit the model:
-        model.fit(cent_left)
-
-        # Add the means back to the symbol positions.
-        # Calculate scores for the test set.
-        for sym in symbol_set:
-            means, covs = model.evaluate(test_dict[sym][0], symbol_positions[sym])
-
-            le = preprocessed_data[sym][0]
-            re = preprocessed_data[sym][1]
-            # Visualize the results:
-            figure_handles = visualize_gaze_inquiries(
-                le, re,
-                means, covs,
-                save_path=save_figures,
-                img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-                show=show_figures,
-                raw_plot=plot_points,
-            )
-            figures.extend(figure_handles)
-            left_eye_all.append(le)
-            right_eye_all.append(re)
-            means_all.append(means)
-            covs_all.append(covs)
-
-    fig_handles = visualize_results_all_symbols(
-        left_eye_all, right_eye_all,
-        means_all, covs_all,
-        img_path=f'{data_folder}/{MATRIX_IMAGE_FILENAME}',
-        save_path=save_figures,
-        show=show_figures,
-        raw_plot=plot_points,
-    )
-    figures.extend(fig_handles)
+        # cent_data = np.concatenate(centralized_data, axis=0)
+        model.fit(cent_data)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None)
@@ -466,7 +473,7 @@ def analyze_gaze(
     save_model(
         model,
         Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
-    return model, figures
+    return model
 
 
 @report_execution_time
@@ -477,7 +484,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
-) -> Tuple[SignalModel, Figure]:
+) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
 
@@ -508,45 +515,75 @@ def offline_analysis(
     Returns:
     --------
         model (SignalModel): trained model
-        figure_handles (Figure): handles to the ERP figures
     """
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
         data_folder = load_experimental_data()
 
+    # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
-        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+        Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-    active_devices = (spec for spec in devices_by_name.values()
+    # Load the active devices used during a session; this will be used to exclude inactive devices
+    active_devices_by_name = devices.load(
+        Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+    active_devices = (spec for spec in active_devices_by_name.values()
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
+    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
+    assert len(data_file_paths) > 0, "No data files found for offline analysis."
+
     models = []
-    figure_handles = []
+    log.info(f"Starting offline analysis for {data_file_paths}")
     for raw_data_path in data_file_paths:
         raw_data = load_raw_data(raw_data_path)
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
-        if device_spec.content_type == "EEG":
-            erp_model, erp_figure_handles = analyze_erp(
-                raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
-            models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
 
-        if device_spec.content_type == "Eyetracker":
-            et_model, et_figure_handles = analyze_gaze(
+        if device_spec.content_type == "EEG" and device_spec.is_active:
+            erp_model = analyze_erp(
+                raw_data,
+                parameters,
+                device_spec,
+                data_folder,
+                estimate_balanced_acc,
+                save_figures,
+                show_figures)
+            models.append(erp_model)
+
+        if device_spec.content_type == "Eyetracker" and device_spec.is_active:
+            et_model = analyze_gaze(
                 raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
             models.append(et_model)
-            figure_handles.extend(et_figure_handles)
+
+    if len(models) > 1:
+        log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")
 
     if alert_finished:
-        play_sound(f"{STATIC_AUDIO_PATH}/{parameters['alert_sound_file']}")
-    return models, figure_handles
+        log.info("Alerting Offline Analysis Complete")
+        results = [f"{model.name}: {model.auc}" for model in models]
+        confirm(f"Offline analysis complete! \n Results={results}")
+    log.info("Offline analysis complete")
+    return models
 
 
-if __name__ == "__main__":
+def main():
+    """Main function for offline analysis client.
+
+    Parses command line arguments and runs offline analysis.
+
+    Command Line Arguments:
+
+    -d, --data_folder: Path to the folder containing the data to be analyzed.
+    -p, --parameters_file: Path to the parameters file. Default is DEFAULT_PARAMETERS_PATH.
+    -s, --save_figures: If true, saves data figures after training to the data folder.
+    -v, --show_figures: If true, shows data figures after training.
+    --alert: If true, alerts the user when offline analysis is complete.
+    --balanced-acc: If true, uses another model copy on an 80/20 split to estimate balanced accuracy.
+    """
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -564,6 +601,10 @@ if __name__ == "__main__":
 
     log.info(f"Loading params from {args.parameters_file}")
     parameters = load_json_parameters(args.parameters_file, value_cast=True)
+    log.info(
+        f"Starting offline analysis client with the following: Data={args.data_folder} || "
+        f"Save Figures={args.save_figures} || Show Figures={args.show_figures} || "
+        f"Alert={args.alert} || Calculate Balanced Accuracy={args.balanced}")
 
     offline_analysis(
         args.data_folder,
@@ -572,4 +613,7 @@ if __name__ == "__main__":
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures)
-    log.info("Offline Analysis complete.")
+
+
+if __name__ == "__main__":
+    main()

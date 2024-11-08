@@ -1,20 +1,18 @@
 import unittest
-
-from typing import List
 from collections import Counter
-from mockito import unstub, mock, when, verify, verifyStubbedInvocationsAreUsed
+from typing import List
 
 import numpy as np
 import psychopy
+from mockito import mock, unstub, verify, verifyStubbedInvocationsAreUsed, when
 
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.record import Record
-from bcipy.task.exceptions import InsufficientDataException
-
-from bcipy.helpers.task import (_float_val,
-                                calculate_stimulation_freq, construct_triggers,
+from bcipy.helpers.task import (_float_val, calculate_stimulation_freq,
+                                consecutive_incorrect, construct_triggers,
                                 generate_targets, get_data_for_decision,
                                 get_key_press, target_info)
+from bcipy.task.exceptions import InsufficientDataException
 
 
 class TestCalculateStimulationFreq(unittest.TestCase):
@@ -317,6 +315,20 @@ class TestGetDataForDecision(unittest.TestCase):
 
         with self.assertRaises(InsufficientDataException):
             get_data_for_decision(inquiry_timing, self.daq)
+
+
+class TestUtils(unittest.TestCase):
+    """Tests for utility functions"""
+
+    def test_consecutive_incorrect(self):
+        """Test calculation of consecutive incorrect"""
+        self.assertEqual(
+            0, consecutive_incorrect(target_text='', spelled_text=''))
+        self.assertEqual(0, consecutive_incorrect('WORLD', ''))
+        self.assertEqual(0, consecutive_incorrect('WORLD', 'W'))
+        self.assertEqual(0, consecutive_incorrect('WORLD', 'WORLD'))
+        self.assertEqual(1, consecutive_incorrect('WORLD', 'H'))
+        self.assertEqual(2, consecutive_incorrect('WORLD', 'WOHL'))
 
 
 if __name__ == '__main__':

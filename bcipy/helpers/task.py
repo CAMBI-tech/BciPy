@@ -8,12 +8,12 @@ from psychopy import core, event, visual
 
 from bcipy.acquisition.multimodal import ClientManager, ContentType
 from bcipy.acquisition.record import Record
-from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE
+from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE, SESSION_LOG_FILENAME
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
 
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def fake_copy_phrase_decision(copy_phrase: str, target_letter: str, text_task: str) -> Tuple[str, str, bool]:
@@ -180,7 +180,6 @@ def get_data_for_decision(inquiry_timing: List[Tuple[str, float]],
 def get_device_data_for_decision(
         inquiry_timing: List[Tuple[str, float]],
         daq: ClientManager,
-        offset: float = 0.0,
         prestim: float = 0.0,
         poststim: float = 0.0) -> Dict[ContentType, List[Record]]:
     """Queries the acquisition client manager for a slice of data from each
@@ -206,13 +205,13 @@ def get_device_data_for_decision(
     _, last_stim_time = inquiry_timing[-1]
 
     # adjust for offsets
-    time1 = first_stim_time + offset - prestim
-    time2 = last_stim_time + offset
+    time1 = first_stim_time - prestim
+    time2 = last_stim_time
 
     if time2 < time1:
         raise InsufficientDataException(
             f'Invalid data query [{time1}-{time2}] with parameters:'
-            f'[inquiry={inquiry_timing}, offset={offset}, prestim={prestim}, poststim={poststim}]'
+            f'[inquiry={inquiry_timing}, prestim={prestim}, poststim={poststim}]'
         )
 
     data = daq.get_data_by_device(start=time1,
@@ -445,3 +444,22 @@ def generate_targets(alp, stim_number):
     targets = [target for sublist in lists for target in sublist]
 
     return targets
+
+
+def consecutive_incorrect(target_text: str, spelled_text: str) -> int:
+    """Function that computes the number of consecutive symbols that
+    are incorrectly spelled.
+
+    >>> consecutive_incorrect('WORLD', 'H')
+    1
+    >>> consecutive_incorrect('WORLD', 'W')
+    0
+    >>> consecutive_incorrect('WORLD', 'WOHL')
+    2
+    """
+    if not target_text:
+        return len(spelled_text)
+    for i, character in enumerate(spelled_text):
+        if character != target_text[i]:
+            return len(spelled_text[i:])
+    return 0

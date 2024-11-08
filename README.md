@@ -40,7 +40,8 @@ If using zsh, instead of bash, you may encounter a segementation fault when runn
 ## Installation
 ---------------
 
-#### BciPy Setup
+### BciPy Setup
+----------------
 
 In order to run BciPy on your computer, after following the dependencies above, you will need to install the BciPy package.
 
@@ -62,21 +63,98 @@ Alternately, if [Make](http://www.mingw.org/) is installed, you may run the foll
 make dev-install
 ```
 
-#### Usage Locally
+### Client Usage
+----------------
 
-Two ways to get started using BciPy for data collection:
-	1. Run `python bcipy/gui/BCInterface.py` in your command prompt or terminal from from base BciPy directory. This will execute the main BCI GUI. You may also use the command `make bci-gui`. 
-	2. Invoke the experiment directly using command line utility `bcipy`.
-		- You can pass it attributes with flags, if desired.
-				Ex. `bcipy --user "bci_user" --task "RSVP Calibration"`
-		- Use the help flag to see other available input options: `bcipy --help`
+##### Run an experiment protocol or task
 
-##### Example usage as a package
+Invoke an experiment protocol or task directly using command line utility `bcipy`.
+
+- Use the help flag to see other available input options: `bcipy --help`
+	- You can pass it attributes with flags, if desired.
+		- Running with a User ID and Task: 
+    		- `bcipy --user "bci_user" --task "RSVP Calibration"`
+		- Running with a User ID and Tasks with a registered Protocol: 
+    		- `bcipy --user "bci_user" --experiment "default"`
+		- Running with fake data: 
+    		- `bcipy --fake`
+		- Running without visualizations: 
+    		- `bcipy --noviz`
+		- Running with alerts after each Task execution: 
+    		- `bcipy --alert`
+		- Running with custom parameters: 
+    		- `bcipy --parameters "path/to/valid/parameters.json"`
+  
+##### Train a signal model with registered BciPy models
+
+To train a signal model (currently `PCARDAKDE`), run the following command after installing BciPy:
+
+`bcipy-train`
+
+- Use the help flag to see other available input options: `bcipy-train --help`
+	- You can pass it attributes with flags, if desired.
+		- Running without a window prompting for data session folder: 
+			- `bcipy-train -d path/to/data`
+		- Running with data visualizations (ERPs, etc.): 
+			- `bcipy-train -v`
+    	- Running with data visualizations that do not show, but save to file: 
+			- `bcipy-train -s`
+       - Running with balanced accuracy:
+           - `bcipy-train --balanced-acc`
+		- Running with alerts after each Task execution: 
+			- `bcipy-train --alert`
+		- Running with custom parameters: 
+			- `bcipy-train -p "path/to/valid/parameters.json"`
+  
+##### Visualize ERP data from a session with Target / Non-Target labels
+
+To generate plots that can be shown or saved after collection of data, run the following command after installing BciPy:
+
+`bcipy-erp-viz`
+
+- Use the help flag to see other available input options: `bcipy-erp-viz --help`
+	- You can pass it attributes with flags, if desired.
+		- Running without a window prompting for data session folder: 
+			- `bcipy-erp-viz -s path/to/data`
+		- Running with data visualizations (ERPs, etc.): 
+			- `bcipy-erp-viz --show`
+		- Running with data visualizations that do not show, but save to file: 
+			- `bcipy-erp-viz --save`
+		- Running with custom parameters (default is in bcipy/parameters/parameters.json): 
+			- `bcipy-erp-viz -p "path/to/valid/parameters.json"`
+
+##### BciPy Simulator Usage
+
+The simulator can be run using the command line utility `bcipy-sim`.
+
+Ex. 
+`bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+Run `bcipy-sim --help` for documentation or see the README in the simulator module.
+
+
+###  Package Usage
+-------------------
 
 ```python
 from bcipy.helpers import system_utils
 system_utils.get_system_info()
 ```
+
+### GUI Usage
+-------------
+
+Run the following command in your terminal to start the BciPy GUI:
+```sh
+python bcipy/gui/BCInterface.py
+```
+
+Alternately, if Make is installed, you may run the follow command to start the GUI from the BciPy root directory:
+
+```sh
+make bci-gui
+```
+
 
 ## Glossary
 -----------
@@ -90,6 +168,8 @@ system_utils.get_system_info()
 ***Series***: Each series contains at least one inquiry. A letter/icon decision is made after a series in a spelling task.
 
 ***Session***: Data collected for a task. Comprised of metadata about the task and a list of Series.
+
+***Protocol***: A collection of tasks and actions to be executed in a session. This is defined as within experiments and can be registered using the BciPy GUI.
 
 ***Task***: An experimental design with stimuli, trials, inquiries and series for use in BCI. For instance, "RSVP Calibration" is a task.
 
@@ -115,10 +195,13 @@ This a list of the major modules and their functionality. Each module will conta
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `main`: executor of experiments. Main entry point into the application
 - `config`: configuration parameters for the application, including paths and data filenames.
+- `simulator`: provides support for running simulations based off of previously collected data.
 
 
 ## Paradigms
 ------------
+
+See `bcipy/task/README.md` for more information on all supported paradigms, tasks, actions and modes. The following are the supported and validated paradigms:
 
 
 > RSVPKeyboard
@@ -155,8 +238,39 @@ For example, you may run the main BciPy demo by:
 
 `python demo/bci_main_demo.py`
 
-This demo will load in parameters and execute a demo task defined in the file. There are demo files for all modules listed above except helpers and utils. Run them as a python script!
+This demo will load in parameters and execute a demo task defined in the file. There are demo files contained in most modules, excepting gui, signal and parameters. Run them as a python script!
 
+
+## Offset Determination and Correction
+--------------------------------------
+
+Static offset determination and correction are critical steps before starting an experiment. BciPy uses LSL to acquire EEG data and Psychopy to present stimuli. 
+
+[LSL synchronization documentation](https://labstreaminglayer.readthedocs.io/info/time_synchronization.html)
+[PsychoPy timing documentation](https://www.psychopy.org/general/timing/index.html)
+
+A static offset is the regular time difference between our signals and stimuli. This offset is determined through testing via a photodiode or other triggering mechanism. The offset correction is done by shifting the EEG signal by the determined offset using the `static_offset` parameter. 
+
+After running a timing verification task (such as, RSVPTimingVerification) with a photodiode attached to the display and connected to a device, the offset can be determined by analyzing the data. Use the `offset` module to recommend an offset correction value and display the results.
+
+To run the offset determination and print the results, use the following command:
+
+```bash
+python bcipy/helpers/offset.py -r
+```
+
+After running the above command, the recommended offset correction value will be displayed in the terminal and can be passed to determine system stability and display the results.
+
+```bash
+# Let's say the recommneded offset value is 0.1
+python bcipy/helpers/offset.py --offset "0.1" -p
+```
+
+Alternately, if Make is installed, you may run the follow command to run offset determination and display the results:
+
+```sh
+make offset-recommend
+```
 
 ## Testing
 ----------
@@ -242,26 +356,27 @@ make type
 
 
 ### Contributions Welcome!
+--------------------------
 
 If you want to be added to the development team slack or have additional questions, please reach out to us at support@cambi.tech!
 
-### Contribution Guidelines
+#### Contribution Guidelines
 
 We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: https://www.contributor-covenant.org/
 
 Other guidelines:
-- All features require tests and a demo.
+- All modules require tests and a demo.
 - All tests must pass to merge, even if they are seemingly unrelated to your work.
 - Use Spaces, not Tabs.
 - Use informative names for functions and classes.
 - Document the input and output of your functions / classes in the code. eg in-line commenting and typing.
 - Do not push IDE or other local configuration files.
 - All new modules or major functionality should be documented outside of the code with a README.md.
-	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing. There are many free online or your IDE may come with one.
+	See README.md in repo or go to this site for inspiration: https://github.com/matiassingers/awesome-readme. Always use a Markdown interpreter before pushing.
 
 See this resource for examples: http://docs.python-guide.org/en/latest/writing/style/
 
-## Contributors
+### Contributors
 ---------------
 
 All contributions are greatly appreciated!

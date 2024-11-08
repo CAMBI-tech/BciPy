@@ -21,13 +21,14 @@ from pandas import Series
 from PIL import Image
 from psychopy import core
 
-from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION
-from bcipy.helpers.exceptions import BciPyCoreException
+from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
+from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.list import grouper
+from bcipy.helpers.symbols import alphabet
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)
-log = logging.getLogger(__name__)
+log = logging.getLogger(SESSION_LOG_FILENAME)
 
 NO_TARGET_INDEX = None
 
@@ -88,6 +89,16 @@ class InquirySchedule(NamedTuple):
     stimuli: List[Any]
     durations: Union[List[List[float]], List[float]]
     colors: Union[List[List[str]], List[str]]
+
+    def inquiries(self) -> Iterator[Tuple]:
+        """Generator that iterates through each Inquiry. Yields tuples of
+        (stim, duration, color)."""
+        count = len(self.stimuli)
+        index = 0
+        while index < count:
+            yield (self.stimuli[index], self.durations[index],
+                   self.colors[index])
+            index += 1
 
 
 class Reshaper(ABC):
@@ -188,7 +199,7 @@ class InquiryReshaper:
             prestimulus_samples: int = 0) -> np.ndarray:
         """Extract Trials.
 
-        After using the InquiryReshaper, it may be necessary to further trial the data for processing.
+        After using the InquiryReshaper, it may be necessary to further extract the trials for processing.
         Using the number of samples and inquiry timing, the data is reshaped from Channels, Inquiry, Samples to
         Channels, Trials, Samples. These should match with the trials extracted from the TrialReshaper given the same
         slicing parameters.
@@ -235,38 +246,46 @@ class GazeReshaper:
                  target_symbols: List[str],
                  gaze_data: np.ndarray,
                  sample_rate: int,
-                 symbol_set: List[str],
+                 stimulus_duration: float,
+                 num_stimuli_per_inquiry: int,
+                 symbol_set: List[str] = alphabet(),
                  channel_map: Optional[List[int]] = None,
-                 ) -> dict:
-        """Extract inquiry data and labels. Different from the EEG inquiry, the gaze inquiry window starts with
-        the first flicker and ends with the last flicker in the inquiry. Each inquiry has a length of ~3 seconds.
-        The labels are provided in the target_symbols list. It returns a Dict, where keys are the target symbols and
-        the values are inquiries (appended in order of appearance) where the corresponding target symbol is prompted.
-        Optional outputs:
-        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are appended
-        in chronological order. labels returns the list of target symbols in each inquiry.
+                 ) -> Tuple[dict, list, List[str]]:
+        """Extract gaze trajectory data and labels.
 
-        Args:
+        Different from the EEG, gaze inquiry windows start with the first highlighted symbol and end with the
+        last highlighted symbol in the inquiry. Each inquiry has a length of (trial duration x num of trials)
+        seconds. Labels are provided in 'target_symbols'. It returns a Dict, where keys are the target symbols
+        and the values are inquiries (appended in order of appearance) where the corresponding target symbol is
+        prompted.
+
+        Optional outputs:
+        reshape_data is the list of data reshaped into (Inquiries, Channels, Samples), where inquirires are
+        appended in chronological order.
+        labels returns the list of target symbols in each inquiry.
+
+        Parameters
+        ----------
             inq_start_times (List[float]): Timestamp of each event in seconds
             target_symbols (List[str]): Prompted symbol in each inquiry
             gaze_data (np.ndarray): shape (channels, samples) eye tracking data
-            sample_rate (int): sample rate of data provided in eeg_data
+            sample_rate (int): sample rate of eye tracker data
+            stimulus_duration (float): duration of flash time (in seconds) for each trial
+            num_stimuli_per_inquiry (int): number of stimuli in each inquiry (default: 10)
+            symbol_set (List[str]): list of all symbols for the task
             channel_map (List[int], optional): Describes which channels to include or discard.
                 Defaults to None; all channels will be used.
 
-        Returns:
-            data_by_targets (dict): Dictionary where keys are the symbol set and values are the appended inquiries
-            for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
+        Returns
+        -------
+            data_by_targets (dict): Dictionary where keys consist of the symbol set, and values
+            the appended inquiries for each symbol. dict[Key] = (np.ndarray) of shape (Channels, Samples)
 
             reshaped_data (List[float]) [optional]: inquiry data of shape (Inquiries, Channels, Samples)
             labels (List[str]) [optional] : Target symbol in each inquiry.
         """
-        if channel_map:
-            # Remove the channels that we are not interested in
-            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
-            gaze_data = np.delete(gaze_data, channels_to_remove, axis=0)
-
-        # Find the value closest to (& greater than) inq_start_times
+        # Find the timestamp value closest to (& greater than) inq_start_times.
+        # Lsl timestamps are the last row in the gaze_data
         gaze_data_timing = gaze_data[-1, :].tolist()
 
         start_times = []
@@ -284,54 +303,45 @@ class GazeReshaper:
 
         # Create a dictionary with symbols as keys and data as values
         # 'A': [], 'B': [] ...
-        data_by_targets: Dict[str, list] = {}
+        data_by_targets_dict: Dict[str, list] = {}
         for symbol in symbol_set:
-            data_by_targets[symbol] = []
+            data_by_targets_dict[symbol] = []
 
-        window_length = 3  # seconds, total length of flickering after prompt for each inquiry
+        buffer = stimulus_duration / 5  # seconds, buffer for each inquiry
+        # NOTE: This buffer is used to account for the screen downtime between each stimulus.
+        # There is a "duty cycle" of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
+        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry   # in seconds
 
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
         for i, inquiry_index in enumerate(triggers):
             start = inquiry_index
-            stop = int(inquiry_index + (sample_rate * window_length))   # (60 samples * 3 seconds)
+            stop = int(inquiry_index + (sample_rate * window_length))
             # Check if the data exists for the inquiry:
             if stop > len(gaze_data[0, :]):
                 continue
-
-            reshaped_data.append(gaze_data[:, start:stop])
             # (Optional) extracted data (Inquiries x Channels x Samples)
+            reshaped_data.append(gaze_data[:, start:stop])
 
-            # Populate the dict by appending the inquiry to the correct key:
-            data_by_targets[labels[i]].append(gaze_data[:, start:stop])
+            # Populate the dict by appending the inquiry to the corresponding key:
+            data_by_targets_dict[labels[i]].append(gaze_data[:, start:stop])
 
-        # After populating, flatten the arrays in the dictionary to (Channels x Samples):
-        for symbol in symbol_set:
-            if len(data_by_targets[symbol]) > 0:
-                data_by_targets[symbol] = np.transpose(np.array(data_by_targets[symbol]), (1, 0, 2))
-                data_by_targets[symbol] = np.reshape(data_by_targets[symbol], (len(data_by_targets[symbol]), -1))
+        return data_by_targets_dict, reshaped_data, labels
 
-            # Note that this is a workaround to the issue of having different number of targetness in
-            # each symbol. If a target symbol is prompted more than once, the data is appended to the dict as a list.
-            # Which is why we need to convert it to a (np.ndarray) and flatten the dimensions.
-            # This is not ideal, but it works for now.
-
-        # return np.stack(reshaped_data, 0), labels
-        return data_by_targets
-
-    @staticmethod
-    def centralize_all_data(data, symbol_pos):
+    def centralize_all_data(self, data: np.ndarray, symbol_pos: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:
-            data (np.ndarray): Data in shape of num_channels x num_samples
+            data (np.ndarray): Data in shape of num_samples x num_dimensions
             symbol_pos (np.ndarray(float)): Array of the current symbol posiiton in Tobii units
         Returns:
-            data (np.ndarray): Centralized data in shape of num_channels x num_samples
+            new_data (np.ndarray): Centralized data in shape of num_samples x num_dimensions
         """
+        new_data = np.copy(data)
         for i in range(len(data)):
-            data[i] = data[i] - symbol_pos
-        return data
+            new_data[i] = data[i] - symbol_pos
+
+        return new_data
 
 
 class TrialReshaper(Reshaper):
@@ -391,26 +401,22 @@ class TrialReshaper(Reshaper):
         return np.stack(reshaped_trials, 1), targetness_labels
 
 
-def update_inquiry_timing(timing: List[List[float]], downsample: int) -> List[List[float]]:
+def update_inquiry_timing(timing: List[List[int]], downsample: int) -> List[List[int]]:
     """Update inquiry timing to reflect downsampling."""
-
     for i, inquiry in enumerate(timing):
         for j, time in enumerate(inquiry):
-            timing[i][j] = time // downsample
+            timing[i][j] = int(time // downsample)
 
     return timing
 
 
-def mne_epochs(
-        mne_data: RawArray,
-        trigger_timing: List[float],
-        trigger_labels: List[int],
-        trial_length: float,
-        channels: Optional[List[str]] = None,
-        detrend: Optional[int] = None,
-        baseline: Union[Tuple[float, float], None] = None,
-        preload: bool = True,
-        reject_by_annotation: bool = False) -> Epochs:
+def mne_epochs(mne_data: RawArray,
+               trial_length: float,
+               trigger_timing: Optional[List[float]] = None,
+               trigger_labels: Optional[List[int]] = None,
+               baseline: Optional[Tuple[Any, float]] = None,
+               reject_by_annotation: bool = False,
+               preload: bool = False) -> Epochs:
     """MNE Epochs.
 
     Using an MNE RawArray, reshape the data given trigger information. If two labels present [0, 1],
@@ -426,22 +432,31 @@ def mne_epochs(
         baseline (Optional[Tuple[float, float]]): Baseline interval to apply to epoch. Defaults to (0, 0).
         preload (bool, optional): Whether to preload the data into memory. Defaults to True.
     """
-    new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
     old_annotations = mne_data.annotations
-    all_annotations = new_annotations + old_annotations
+    if trigger_timing and trigger_labels:
+        new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+        all_annotations = new_annotations + old_annotations
+    else:
+        all_annotations = old_annotations
+
     tmp_data = mne_data.copy()
     tmp_data.set_annotations(all_annotations)
 
     events_from_annot, _ = mne.events_from_annotations(tmp_data)
+
+    if baseline is None:
+        baseline = (0, 0)
+        tmin = -0.1
+    else:
+        tmin = baseline[0]
+
     return Epochs(
         mne_data,
         events_from_annot,
-        picks=channels,
-        tmax=trial_length,
-        tmin=0,
-        detrend=detrend,
         baseline=baseline,
-        proj=False,
+        tmax=trial_length,
+        tmin=tmin,
+        proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
         reject_by_annotation=reject_by_annotation,
         preload=preload)
 

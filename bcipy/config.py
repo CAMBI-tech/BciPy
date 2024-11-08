@@ -8,19 +8,28 @@ from pathlib import Path
 DEFAULT_ENCODING = 'utf-8'
 DEFAULT_EVIDENCE_PRECISION = 5  # number of decimal places to round evidence to by default
 MARKER_STREAM_NAME = 'TRG_device_stream'
+DEFAULT_TRIGGER_CHANNEL_NAME = 'TRG'
+DIODE_TRIGGER = '\u25A0'
 
 # experiment configuration
 DEFAULT_EXPERIMENT_ID = 'default'
+DEFAULT_FRAME_RATE = 60
+CUSTOM_TASK_EXPERIMENT_ID = "CustomTaskExecution"
 EXPERIMENT_FILENAME = 'experiments.json'
 FIELD_FILENAME = 'fields.json'
 EXPERIMENT_DATA_FILENAME = 'experiment_data.json'
+MULTIPHRASE_FILENAME = 'phrases.json'
+PROTOCOL_FILENAME = 'protocol.json'
 BCIPY_ROOT = Path(__file__).resolve().parent
 ROOT = BCIPY_ROOT.parent
 DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'
 DEFAULT_FIELD_PATH = f'{BCIPY_ROOT}/parameters/field'
+DEFAULT_USER_ID = 'test_user'
+TASK_SEPERATOR = '->'
 
-DEFAULT_PARAMETER_FILENAME = 'parameters.json'
-DEFAULT_PARAMETERS_PATH = f'{BCIPY_ROOT}/parameters/{DEFAULT_PARAMETER_FILENAME}'
+DEFAULT_PARAMETERS_FILENAME = 'parameters.json'
+DEFAULT_DEVICES_PATH = f"{BCIPY_ROOT}/parameters"
+DEFAULT_PARAMETERS_PATH = f'{BCIPY_ROOT}/parameters/{DEFAULT_PARAMETERS_FILENAME}'
 DEFAULT_DEVICE_SPEC_FILENAME = 'devices.json'
 DEVICE_SPEC_PATH = f'{BCIPY_ROOT}/parameters/{DEFAULT_DEVICE_SPEC_FILENAME}'
 DEFAULT_LM_PARAMETERS_FILENAME = 'lm_params.json'
@@ -47,7 +56,8 @@ EYE_TRACKER_FILENAME_PREFIX = 'eyetracker_data'
 TRIGGER_FILENAME = 'triggers.txt'
 SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
-LOG_FILENAME = 'bcipy_system_log.txt'
+SESSION_LOG_FILENAME = 'session_log.txt'
+PROTOCOL_LOG_FILENAME = 'protocol_log.txt'
 STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
 
 # misc configuration

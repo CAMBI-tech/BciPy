@@ -2,12 +2,12 @@
 [run]
 omit =
         *__init__*
+        *__main__*
         */usr/local/lib*
         *tests*
         *test*
         *demo*
-        *exceptions.py
-        */gui/*
+        */gui/viewer/*
 
 [report]
 exclude_lines =
@@ -17,4 +17,4 @@ exclude_lines =
     raise NotImplementedError
     @abstract
     if __name__ == .__main__.:
-    log = logging.getLogger(__name__)
+    logging.getLogger(__name__)

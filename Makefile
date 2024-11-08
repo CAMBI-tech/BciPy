@@ -3,7 +3,7 @@ install:
 
 dev-install:
 	pip install -r dev_requirements.txt
-	pip install psychopy==2023.2.1 --no-deps
+	pip install psychopy==2024.2.1 --no-deps
 	pip install kenlm==0.1 --global-option="--max_order=12"
 	make install
 
@@ -49,3 +49,9 @@ bci-gui:
 
 viewer:
 	python bcipy/gui/viewer/data_viewer.py --file $(filepath)
+
+offset:
+	python bcipy/helpers/offset.py -p
+
+offset-recommend:
+	python bcipy/helpers/offset.py -r -p

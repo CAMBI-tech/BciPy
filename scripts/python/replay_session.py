@@ -1,31 +1,28 @@
 """Script that will replay sessions and allow us to simulate new model predictions on that data."""
 import json
 import logging as logger
-from typing import Tuple
-from pathlib import Path
 import pickle
+from pathlib import Path
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from bcipy.config import (
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_PARAMETER_FILENAME, SESSION_DATA_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME,
-    DEVICE_SPEC_PATH,
-)
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.task.data import EvidenceType
+
 import bcipy.acquisition.devices as devices
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          SESSION_DATA_FILENAME, TRIGGER_FILENAME)
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.list import grouper
 from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.symbols import alphabet
-from bcipy.signal.model import PcaRdaKdeModel
-from bcipy.signal.process import get_default_transform, filter_inquiries, ERPTransformParams
+from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.signal.model import PcaRdaKdeModel, SignalModel
+from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
+                                  get_default_transform)
 
 logger.getLogger().setLevel(logger.INFO)
 
@@ -66,7 +63,7 @@ def generate_replay_outputs(
     tuple - new_model_outputs, old_model_target_output, old_model_nontarget_output
     """
     k_folds = parameters.get("k_folds")
-    model = load_model(model_path, k_folds, model_class)
+    model: SignalModel = load_model(model_path, k_folds, model_class)
     logger.info(f"Loaded model from {model_path}")
 
     # get trial information; to make backwards compatible, we will try to get the trial length
@@ -158,7 +155,7 @@ def generate_replay_outputs(
     for i, (inquiry_trials, this_inquiry_letters, this_inquiry_labels) in enumerate(
         zip(inquiry_worth_of_trials, inquiry_worth_of_letters, inquiry_labels)
     ):
-        response = model.predict(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
+        response = model.compute_likelihood_ratio(inquiry_trials, this_inquiry_letters, symbol_set=symbol_set)
         if np.any(this_inquiry_labels == 1):
             index_of_target_trial = np.argwhere(this_inquiry_labels == 1)[0][0]
             target_letter = this_inquiry_letters[index_of_target_trial]
@@ -371,7 +368,7 @@ if __name__ == "__main__":
         if args.parameter_file is not None:
             params_file = args.parameter_file
         else:
-            params_file = Path(data_folder, DEFAULT_PARAMETER_FILENAME)
+            params_file = Path(data_folder, DEFAULT_PARAMETERS_FILENAME)
         logger.info(f"Loading params from {params_file}")
         params = load_json_parameters(params_file, value_cast=True)
 
@@ -392,25 +389,3 @@ if __name__ == "__main__":
     # breakpoint()
 
     logger.info("Replay complete.")
-
-    # compare the outputs of the new model with the outputs of the old model statistically
-    print("Comparing the outputs of the new model with the outputs of the old model statistically")
-    target_diffs = new_targets - np.array(targets_with_old_model)
-    nontarget_diffs = new_nontargets - np.array(nontargets_with_old_model)
-
-    normal_targets = stats.normaltest(target_diffs).pvalue > 0.05
-    print(f"Target diffs are normally distributed? {normal_targets}")
-    normal_nontargets = stats.normaltest(nontarget_diffs).pvalue > 0.05
-    print(f"Nontarget diffs are normally distributed? {normal_nontargets}")
-
-    # if not normal, set equal_var=False to use Welch's t-test
-    stats_target = stats.ttest_ind(targets_with_old_model, new_targets.tolist(), equal_var=normal_targets)
-    print(
-        f"The older model produced targets that were {stats_target.statistic} times as large as new target. "
-        f"Is this a significant difference? {stats_target.pvalue < 0.05} {stats_target.pvalue}")
-    stats_nontarget = stats.ttest_ind(nontargets_with_old_model, new_nontargets.tolist(), equal_var=normal_nontargets)
-    print(
-        f"The older model produced nontargets that were {stats_nontarget.statistic} times as large as new nontarget. "
-        f"Is this a significant difference? {stats_nontarget.pvalue < 0.05} {stats_nontarget.pvalue}")
-
-    print("Replay complete.")

@@ -13,10 +13,9 @@ from bcipy.config import (DEFAULT_ENCODING,
                           DEFAULT_EXPERIMENT_ID,
                           DEFAULT_LM_PARAMETERS_FILENAME,
                           DEFAULT_LM_PARAMETERS_PATH,
-                          DEFAULT_PARAMETER_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX,
                           STIMULI_POSITIONS_FILENAME)
-from bcipy.helpers.validate import validate_experiments
 from bcipy.signal.model.base_model import SignalModel
 
 
@@ -41,7 +40,6 @@ def save_experiment_data(
         fields: dict,
         location: str,
         name: str) -> str:
-    validate_experiments(experiments, fields)
     return save_json_data(experiments, location, name)
 
 
@@ -97,7 +95,7 @@ def init_save_data_structure(data_save_path: str,
         os.makedirs(save_directory)
         os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
-    copyfile(parameters, Path(save_directory, DEFAULT_PARAMETER_FILENAME))
+    copyfile(parameters, Path(save_directory, DEFAULT_PARAMETERS_FILENAME))
 
     copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
 
