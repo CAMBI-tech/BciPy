@@ -10,10 +10,11 @@ Process all sessions in a data folder and export the results to a csv file.
 
 from pathlib import Path
 
-from bcipy.helpers.process import load_data_inquiries, load_data_mne
+from bcipy.helpers.process import load_data_inquiries, load_data_mne, load_data_trials
 from bcipy.helpers.load import load_experimental_data, load_json_parameters
 from grid_search_classifier import crossvalidate_record, scores
 from bcipy.config import DEFAULT_PARAMETERS_PATH
+from train_bcipy_model import train_bcipy_model
 
 import mne
 from mne import grand_average
@@ -36,7 +37,7 @@ if __name__ == "__main__":
 
     path = load_experimental_data()
 
-    results = {}
+    # results = {}
     dropped = {}
     non_target = []
     target = []
@@ -49,7 +50,8 @@ if __name__ == "__main__":
         total=len(list(Path(path).iterdir())),
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n",
         colour='MAGENTA')
-
+    results = {}
+    results['all'] = []
     for session in progress_bar:                               
         if session.is_dir():
             session_folder = str(session.resolve())
@@ -59,10 +61,10 @@ if __name__ == "__main__":
                 results[session.name] = {}
                 progress_bar.set_description(f"Processing {session.name}...")
 
-                # # # uncomment to use the inquiry based filtering
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _ = load_data_inquiries(
-                    data_folder=session_folder
-                )
+                # # # # uncomment to use the inquiry based filtering
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _ = load_data_inquiries(
+                #     data_folder=session_folder
+                # )
 
                 # create epochs from inquiry data
                 # chanbel_type = 'eeg' * len(channels)
@@ -87,17 +89,22 @@ if __name__ == "__main__":
                 #     new_annotation_description)
 
                 # Whole dataset filter
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _  = load_data_mne(
-                #     data_folder=session_folder, drop_artifacts=False, parameters=parameters)
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _, device_spec  = load_data_mne(
+                    data_folder=session_folder, drop_artifacts=False, parameters=parameters)
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, device_spec = load_data_trials(session_folder)
 
                 # train the models and get the results. Provide a session name, to persist the models.
-                df = crossvalidate_record((data, labels))
-                for name in scores:
-                    results[session.name][name] = df[f'mean_test_{name}']
-                    results[session.name][f'std_{name}'] = df[f'std_test_{name}']
+                # df = crossvalidate_record((data, labels))
+                # for name in scores:
+                #     results[session.name][name] = df[f'mean_test_{name}']
+                #     results[session.name][f'std_{name}'] = df[f'std_test_{name}']
 
-                dropped[session.name] = dl
+                # dropped[session.name] = dl
 
+                # Train and save the PCA model trained using the data
+                model = train_bcipy_model(data, labels, session_folder, device_spec, default_transform)
+                results[session.name]['AUC'] = model.auc
+                results['all'].append(model.auc)
             except Exception as e:
                 print(f"Error processing session {session}: \n {e}")
                 raise e
@@ -108,14 +115,16 @@ if __name__ == "__main__":
     # of = NAR_OF_MDM_3_cov (1-20 Hz) OF
     # of_no_buffer = OF but no transformation buffer to prove the edge effects hypothesis
     # TODO: of hp only, check results for regular filter, try .1-75 Hz?
-    condition = 'NAR_OF_1_50Hz'
-    file_name = f'{condition}_all_models.csv'
+    # condition = 'NAR_OF_1_50Hz'
+    # file_name = f'{condition}_all_models.csv'
     
-    export = pd.DataFrame.from_dict(results).transpose()
-    export.to_csv(file_name)
+    # export = pd.DataFrame.from_dict(results).transpose()
+    # export.to_csv(file_name)
 
-    drop_export = pd.DataFrame.from_dict(dropped)
-    drop_export.to_csv(f'{condition}_all_models_dropped.csv')
+    # drop_export = pd.DataFrame.from_dict(dropped)
+    # drop_export.to_csv(f'{condition}_all_models_dropped.csv')
 
     progress_bar.close()
     print("Done!")
+    breakpoint()
+    # save the results dictionary

@@ -49,7 +49,7 @@ def load_data_inquiries(
     """
     # Load parameters
     parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
-    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length")
+    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length", 0.5)
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
     trials_per_inquiry = parameters.get("stim_length")
@@ -62,10 +62,10 @@ def load_data_inquiries(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = 20
-    filter_low = 1
-    filter_order = 8
-    static_offset = parameters.get("static_trigger_offset")
+    filter_high = parameters.get("filter_high")
+    filter_low = parameters.get("filter_low")
+    filter_order = parameters.get("filter_order")
+    static_offset = parameters.get("static_trigger_offset", 0.1)
 
     log.info(
         f"\nData processing settings: \n"
@@ -111,7 +111,9 @@ def load_data_inquiries(
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+        remove_pre_fixation=True,
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        device_type='EEG'
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
@@ -156,11 +158,11 @@ def load_data_mne(
         trial_length=None,
         pre_stim=0.0,
         drop_artifacts=False,
-        parameters=None):
+        parameters=None) -> tuple:
     """Loads raw data, filters using default transform with parameters, and reshapes into trials."""
     # Load parameters
     parameters = parameters if parameters else load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
-    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length")
+    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length", 0.5) 
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
     trials_per_inquiry = parameters.get("stim_length")
@@ -172,10 +174,10 @@ def load_data_mne(
     # get signal filtering information
     downsample_rate = parameters.get("down_sampling_rate")
     notch_filter = parameters.get("notch_filter_frequency")
-    filter_high = 20
-    filter_low = 1
-    filter_order = 8
-    static_offset = parameters.get("static_trigger_offset")
+    filter_high = parameters.get("filter_high")
+    filter_low = parameters.get("filter_low")
+    filter_order = parameters.get("filter_order")
+    static_offset = parameters.get("static_trigger_offset", 0.1)
 
     log.info(
         f"\nData processing settings: \n"
@@ -230,21 +232,22 @@ def load_data_mne(
     log.info(f'Channels used in analysis: {channels_used}')
 
     # Load data into MNE
-    mne_data, fs = convert_to_mne(raw_data, channel_map, transform=default_transform, volts=False)
+    mne_data, _ = convert_to_mne(raw_data, channel_map, transform=default_transform, volts=False)
 
     if mne_data_annotations is not None:
         mne_data.set_annotations(mne_data_annotations)
-    # remove any ignore annotations from the mn_data
+    # remove any ignore annotations from the mne_data
     mne_data.annotations.delete(mne_data.annotations.description == 'ignore')
 
     trigger_labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     epochs = mne_epochs(
         mne_data,
+        poststim_length,
         trigger_timing,
         trigger_labels,
-        poststim_length,
         baseline=None,
-        reject_by_annotation=drop_artifacts)
+        reject_by_annotation=drop_artifacts,
+        preload=True)
     
     # TODO use the epoch drop log? write to the session? Then we can use it via the inquiry based method
     
@@ -268,19 +271,20 @@ def load_data_mne(
     #     raise Exception("Not enough data to train model")
     
     # put back into BciPy format
-    trial_data = epochs.get_data(units='uV', tmin=0, tmax=poststim_length) # (epochs, channels, samples)
+    trial_data: np.ndarray = epochs.get_data(units='uV', tmin=0, tmax=poststim_length) # (epochs, channels, samples)
     drop_log = {'nontarget': nontarget, 'target': target, 'nontarget_orig': nontarget_orig, 'target_orig': target_orig}
 
     return (
         raw_data,
         trial_data,
-        labels,
+        trigger_labels,
         trigger_timing,
         channel_map,
         poststim_length,
         default_transform,
         drop_log,
-        epochs
+        epochs,
+        device_spec
     )
 
 def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
@@ -298,7 +302,7 @@ def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
     """
     # Load parameters
     parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
-    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length")
+    poststim_length = trial_length if trial_length is not None else parameters.get("trial_length", 0.5)
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
     trials_per_inquiry = parameters.get("stim_length")
@@ -313,7 +317,7 @@ def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
     filter_high = parameters.get("filter_high")
     filter_low = parameters.get("filter_low")
     filter_order = parameters.get("filter_order")
-    static_offset = parameters.get("static_trigger_offset")
+    static_offset = parameters.get("static_trigger_offset", 0.1)
 
     log.info(
         f"\nData processing settings: \n"
@@ -348,7 +352,9 @@ def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+        remove_pre_fixation=True,
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        device_type='EEG'
     )
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
@@ -364,4 +370,4 @@ def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
     
     trial_data = np.transpose(trial_data, (1, 0, 2)) # (epochs, channels, samples)
 
-    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform
+    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, device_spec

@@ -110,7 +110,7 @@
     "type": "float"
   },
   "filter_order": {
-    "value": "2",
+    "value": "5",
     "section": "signal_config",
     "name": "Filter Order",
     "helpTip": "Specifies the slope of the low-pass and high-pass filters. Default: 2",
