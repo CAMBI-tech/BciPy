@@ -62,9 +62,10 @@ if __name__ == "__main__":
                 progress_bar.set_description(f"Processing {session.name}...")
 
                 # # # # uncomment to use the inquiry based filtering
-                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _ = load_data_inquiries(
-                #     data_folder=session_folder
-                # )
+                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _, device_spec = load_data_inquiries(
+                    data_folder=session_folder,
+                    parameters=parameters
+                )
 
                 # create epochs from inquiry data
                 # chanbel_type = 'eeg' * len(channels)
@@ -89,8 +90,8 @@ if __name__ == "__main__":
                 #     new_annotation_description)
 
                 # Whole dataset filter
-                raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _, device_spec  = load_data_mne(
-                    data_folder=session_folder, drop_artifacts=False, parameters=parameters)
+                # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, dl, _, device_spec  = load_data_mne(
+                #     data_folder=session_folder, drop_artifacts=False, parameters=parameters)
                 # raw_data, data, labels, trigger_timing, channel_map, poststim_length, default_transform, device_spec = load_data_trials(session_folder)
 
                 # train the models and get the results. Provide a session name, to persist the models.

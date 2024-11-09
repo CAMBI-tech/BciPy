@@ -26,6 +26,7 @@ logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][
 
 def load_data_inquiries(
         data_folder: Path,
+        parameters=None,
         trial_length=None,
         pre_stim=0.0,
         apply_filter=True):
@@ -48,7 +49,8 @@ def load_data_inquiries(
 
     """
     # Load parameters
-    parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
+    if not parameters:
+        parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
     poststim_length = trial_length if trial_length is not None else parameters.get("trial_length", 0.5)
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
@@ -149,7 +151,7 @@ def load_data_inquiries(
         'nontarget_orig': trigger_targetness.count('nontarget'),
         'target_orig': trigger_targetness.count('target')}
 
-    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log, channels_used
+    return raw_data, trial_data, labels, trigger_timing, channel_map, poststim_length, default_transform, drop_log, channels_used, device_spec
 
 
 def load_data_mne(
