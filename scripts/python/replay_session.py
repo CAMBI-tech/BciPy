@@ -20,6 +20,7 @@ from bcipy.helpers.load import load_json_parameters, load_raw_data
 from bcipy.helpers.stimuli import InquiryReshaper, update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.task.data import EvidenceType
 from bcipy.signal.model import PcaRdaKdeModel, SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
@@ -81,7 +82,7 @@ def generate_replay_outputs(
     buffer_length = int(parameters.get("task_buffer_length") / 2)
 
     # get signal filtering information
-    static_offset = parameters.get("static_trigger_offset")
+    static_offset = parameters.get("static_trigger_offset", 0.1)
     k_folds = parameters.get("k_folds")
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
@@ -94,9 +95,9 @@ def generate_replay_outputs(
         f"Static offset: {static_offset}"
     )
 
-    data_list = load_raw_data(data_folder, [f"{RAW_DATA_FILENAME}.csv"])
+    raw_data = load_raw_data(f"{data_folder}/{RAW_DATA_FILENAME}.csv")
     # NOTE: With the current inputs this function only loads the EEG data. Update needed for eyetracker data.
-    raw_data = data_list[0]
+    raw_data = raw_data
     channels = raw_data.channels
     type_amp = raw_data.daq_type
     sample_rate = raw_data.sample_rate
@@ -221,10 +222,11 @@ def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list,
 
     all_target_eeg = []
     all_nontarget_eeg = []
-    for inquiries in series:
-        for inquiry in inquiries:
+    for series_id, inquiry_data in series.items():
+        for inquiry_id, inquiry in inquiry_data.items():
+            # for inquiry in inquiries:
             # There are cases in which an inquiry may have other evidence types but no ERP. Ex. InquiryPreview
-            if len(inquiry.evidences[EvidenceType.ERP]) < 1:
+            if len(inquiry) < 1:
                 print("Skipping Inquiry. No ERP evidence.")
                 continue
             else:
@@ -235,8 +237,8 @@ def load_eeg_evidence_from_session_json(session_json, symbol_set) -> Tuple[list,
                 targetness.pop(0)  # remove fixation cross
                 target = [index for index, label in zip(stim_indices, targetness) if label == "target"]
                 nontarget = [index for index, label in zip(stim_indices, targetness) if label == "nontarget"]
-                all_target_eeg.extend([inquiry.evidences[EvidenceType.ERP][pos] for pos in target])
-                all_nontarget_eeg.extend([inquiry.evidences[EvidenceType.ERP][pos] for pos in nontarget])
+                all_target_eeg.extend([inquiry['eeg_evidence'][pos] for pos in target])
+                all_nontarget_eeg.extend([inquiry['eeg_evidence'][pos] for pos in nontarget])
 
     return all_target_eeg, all_nontarget_eeg
 
