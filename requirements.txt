@@ -3,7 +3,7 @@ transformers==4.26.0
 torch==2.0.0
 construct==2.8.14
 mne==1.6.1
-mne-bids==0.15.0
+mne-bids==0.14.0
 pybv==0.7.5
 pyo==1.0.5
 pyglet<=1.5.27,>=1.4
