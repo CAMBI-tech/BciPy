@@ -10,7 +10,7 @@ import time
 from logging import Logger
 from typing import List, Type, Optional
 
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.helpers.utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (

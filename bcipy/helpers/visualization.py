@@ -23,10 +23,10 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.io.convert import convert_to_mne
 from bcipy.io.load import choose_csv_file, load_raw_data, load_json_parameters
-from bcipy.data.parameters import Parameters
-from bcipy.data.raw_data import RawData
-from bcipy.data.stimuli import mne_epochs
-from bcipy.data.triggers import TriggerType, trigger_decoder
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
+from bcipy.core.stimuli import mne_epochs
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 

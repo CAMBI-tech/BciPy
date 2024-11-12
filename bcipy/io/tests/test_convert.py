@@ -14,9 +14,9 @@ from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
 # from bcipy.io import convert
 from bcipy.io.convert import (archive_list, compress, convert_to_mne, decompress,
                               norm_to_tobii, tobii_to_norm)
-from bcipy.data.parameters import Parameters
-from bcipy.data.raw_data import RawData, sample_data, write
-from bcipy.data.triggers import MOCK_TRIGGER_DATA
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData, sample_data, write
+from bcipy.core.triggers import MOCK_TRIGGER_DATA
 from bcipy.signal.generator.generator import gen_random_data
 
 

@@ -17,7 +17,7 @@ from bcipy.io.load import (choose_signal_model, choose_signal_models,
                            load_experiment_fields, load_experiments,
                            load_fields, load_json_parameters,
                            load_signal_model, load_users)
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 
 MOCK_EXPERIMENT = {
     "test": {

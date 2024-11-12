@@ -7,7 +7,7 @@ from mockito import when, any, verify, unstub, mock
 
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.helpers import visualization
-from bcipy.data.raw_data import RawData
+from bcipy.core.raw_data import RawData
 from bcipy.io.load import load_json_parameters
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 

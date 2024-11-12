@@ -16,12 +16,12 @@ from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
-from bcipy.data.list import grouper
+from bcipy.core.list import grouper
 from bcipy.io.load import load_json_parameters, load_raw_data
-from bcipy.data.parameters import Parameters
-from bcipy.data.raw_data import RawData
-from bcipy.data.stimuli import update_inquiry_timing
-from bcipy.data.triggers import TriggerType, trigger_decoder
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
+from bcipy.core.stimuli import update_inquiry_timing
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)

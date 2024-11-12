@@ -1,5 +1,5 @@
 from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.data.symbols import alphabet
+from bcipy.core.symbols import alphabet
 from bcipy.language.main import ResponseType
 
 

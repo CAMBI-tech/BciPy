@@ -1,6 +1,6 @@
-# BciPy Data
+# BciPy Core Module
 
-Core data strucutres needed for BciPy operation. These include triggers, parameters, and raw data.
+Core data strucutres and methods needed for BciPy operation. These include triggers, parameters, and raw data.
 
 ## Contents
 
@@ -13,7 +13,6 @@ Core data strucutres needed for BciPy operation. These include triggers, paramet
 - `symbols`: methods for working with symbols and symbol lists. Ex. Alphabet, QWERTY, etc.
 - `triggers`: methods and data classes defining BciPy internal triggering
 
-  
 
 ## Triggers
 
@@ -21,7 +20,7 @@ Triggers consist of a label, type and a timestamp. These are what is used to ali
 
 A new Trigger may defined as follows:
 ```python
-from bcipy.data.triggers import Trigger, TriggerType
+from bcipy.core.triggers import Trigger, TriggerType
 
 # label can be any utf-8 compliant string
 nontarget_trigger = Trigger('nontarget_label', TriggerType.NONTARGET, 1.0111)
@@ -55,7 +54,7 @@ You will need three pieces of information to create a new handler for writing:
 3. a defined FlushFrequency. This sets how often the handler should write the data. Incrementally (FlushFrequency.EVERY) or at session end (FlushFrequency.END).
 
 ```python
-from bcipy.data.triggers import TriggerHandler, FlushFrequency
+from bcipy.core.triggers import TriggerHandler, FlushFrequency
 
 path_to_trigger_save_location = '.'
 trigger_file_name = 'triggers' # BciPy will add the correct extension. Currently, .txt is used.
@@ -79,7 +78,7 @@ handler.close() # this will call write one final time on any triggers added sinc
 To load a BciPy triggers.txt file, the TriggerHandler load method can be used. Because it is a staticmethod, the class does not need to be initialized before the load method is used.
 
 ```python
-from bcipy.data.triggers import TriggerHandler
+from bcipy.core.triggers import TriggerHandler
 
 path_to_trigger_save_location = './triggers.txt'
 
@@ -91,7 +90,7 @@ triggers = TriggerHandler.load(path_to_trigger_save_location)
 Alternately, you can pass offset and exclusion as keyword arguments to modify the behavior of `TriggerHandler.load`. Offset will add time to every timestamp loaded. Use this to correct any static system offsets! The default value for offset is 0.0. Exclusions can be used to pre-filter any unwanted Triggers, such as SYSTEM.
 
 ```python
-from bcipy.data.triggers import TriggerHandler
+from bcipy.core.triggers import TriggerHandler
 
 path_to_trigger_save_location = './triggers.txt'
 
@@ -135,7 +134,7 @@ Z nontarget 3496.9749562
 When multiple devices are in use, each device should provide its own starting_offset trigger. The trigger time should be the timestamp associated with the first sample in the data for that device.
 
 ```python
-from bcipy.data.triggers import Trigger, TriggerType, offset_label
+from bcipy.core.triggers import Trigger, TriggerType, offset_label
 
 # label can be any utf-8 compliant string
 eeg_offset = Trigger(offset_label(device_type='EEG'), TriggerType.OFFSET, -3400.0)
@@ -156,7 +155,7 @@ Y nontarget 3491.8722132
 Triggers can then be loaded with timestamps relative to a device's start.
 
 ```python
-from bcipy.data.triggers import trigger_decoder, TriggerType
+from bcipy.core.triggers import trigger_decoder, TriggerType
 
 types, times, labels = trigger_decoder('triggers.txt', device_type='EEG')
 # types == ['prompt', 'fixation', 'prompt']

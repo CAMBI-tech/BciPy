@@ -9,10 +9,10 @@ from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.helpers.clock import Clock
-from bcipy.data.stimuli import resize_image
-from bcipy.data.symbols import SPACE_CHAR
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import SPACE_CHAR
 from bcipy.helpers.utils import get_screen_info
-from bcipy.data.triggers import TriggerCallback, _calibration_trigger
+from bcipy.core.triggers import TriggerCallback, _calibration_trigger
 
 
 class RSVPDisplay(Display):

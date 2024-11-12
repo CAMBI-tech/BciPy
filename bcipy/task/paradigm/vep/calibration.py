@@ -12,8 +12,8 @@ from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
-from bcipy.data.parameters import Parameters
-from bcipy.data.triggers import TriggerType
+from bcipy.core.parameters import Parameters
+from bcipy.core.triggers import TriggerType
 from bcipy.task.calibration import BaseCalibrationTask, Inquiry
 from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries

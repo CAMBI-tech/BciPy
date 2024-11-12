@@ -17,10 +17,10 @@ from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
-from bcipy.data.list import expanded
-from bcipy.data.stimuli import resize_image
-from bcipy.data.symbols import alphabet
-from bcipy.data.triggers import _calibration_trigger
+from bcipy.core.list import expanded
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import alphabet
+from bcipy.core.triggers import _calibration_trigger
 
 
 class StimTime(NamedTuple):

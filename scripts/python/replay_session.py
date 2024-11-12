@@ -15,11 +15,11 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           SESSION_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.data.list import grouper
+from bcipy.core.list import grouper
 from bcipy.io.load import load_json_parameters, load_raw_data
-from bcipy.data.stimuli import InquiryReshaper, update_inquiry_timing
-from bcipy.data.symbols import alphabet
-from bcipy.data.triggers import TriggerType, trigger_decoder
+from bcipy.core.stimuli import InquiryReshaper, update_inquiry_timing
+from bcipy.core.symbols import alphabet
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.signal.model import PcaRdaKdeModel, SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)

@@ -8,8 +8,8 @@ import numpy as np
 from scipy.stats import normaltest
 
 from bcipy.io.load import load_raw_data, ask_directory, load_json_parameters
-from bcipy.data.raw_data import RawData
-from bcipy.data.triggers import trigger_decoder, TriggerType
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import trigger_decoder, TriggerType
 
 from bcipy.config import (
     TRIGGER_FILENAME,

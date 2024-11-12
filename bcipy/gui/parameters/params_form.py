@@ -13,7 +13,7 @@ from bcipy.config import BCIPY_ROOT
 from bcipy.gui.main import (BoolInput, DirectoryInput, FileInput, FloatInput,
                             FormInput, IntegerInput, RangeInput, SearchInput,
                             SelectionInput, TextInput, static_text_control)
-from bcipy.data.parameters import Parameters, changes_from_default
+from bcipy.core.parameters import Parameters, changes_from_default
 
 
 class ParamsForm(QWidget):

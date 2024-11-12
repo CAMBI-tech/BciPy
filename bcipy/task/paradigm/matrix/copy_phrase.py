@@ -7,7 +7,7 @@ from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.helpers.clock import Clock
 
 

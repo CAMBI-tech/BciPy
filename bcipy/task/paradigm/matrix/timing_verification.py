@@ -1,7 +1,7 @@
 from itertools import cycle, islice, repeat
 from typing import Iterator, List
 
-from bcipy.data.stimuli import (PhotoDiodeStimuli, get_fixation,
+from bcipy.core.stimuli import (PhotoDiodeStimuli, get_fixation,
                                 jittered_timing)
 from bcipy.task.calibration import Inquiry
 from bcipy.task import TaskMode

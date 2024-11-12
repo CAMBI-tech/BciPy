@@ -20,11 +20,11 @@ from bcipy.io.load import (
     load_json_parameters,
     load_raw_data,
 )
-from bcipy.data.stimuli import mne_epochs
+from bcipy.core.stimuli import mne_epochs
 from bcipy.io.convert import convert_to_mne
-from bcipy.data.raw_data import RawData
+from bcipy.core.raw_data import RawData
 from bcipy.signal.process import get_default_transform
-from bcipy.data.triggers import TriggerType, trigger_decoder
+from bcipy.core.triggers import TriggerType, trigger_decoder
 import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 

@@ -1,4 +1,4 @@
-from bcipy.data.session import collect_experiment_field_data
+from bcipy.core.session import collect_experiment_field_data
 from bcipy.config import DEFAULT_EXPERIMENT_ID
 
 

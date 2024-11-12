@@ -9,8 +9,8 @@ import bcipy.task.paradigm.rsvp.calibration.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
-from bcipy.data.parameters import Parameters
-from bcipy.data.triggers import TriggerHandler, TriggerType
+from bcipy.core.parameters import Parameters
+from bcipy.core.triggers import TriggerHandler, TriggerType
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
 

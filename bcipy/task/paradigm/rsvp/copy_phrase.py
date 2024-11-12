@@ -21,19 +21,19 @@ from bcipy.helpers.acquisition import (LslDataServer, active_content_types,
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.language_model import init_language_model
-from bcipy.data.list import destutter
+from bcipy.core.list import destutter
 from bcipy.io.load import choose_signal_models
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.io.save import _save_session_related_data
-from bcipy.data.session import session_excel
-from bcipy.data.stimuli import InquirySchedule, StimuliOrder
-from bcipy.data.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.core.session import session_excel
+from bcipy.core.stimuli import InquirySchedule, StimuliOrder
+from bcipy.core.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
                                 trial_complete_message)
-from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                  TriggerType, convert_timing_triggers,
                                  offset_label)
 from bcipy.language.main import LanguageModel

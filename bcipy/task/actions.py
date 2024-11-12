@@ -12,16 +12,16 @@ from bcipy.gui.file_dialog import ask_directory
 from bcipy.gui.intertask_gui import IntertaskGUI
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task, TaskMode, TaskData
-from bcipy.data.triggers import trigger_decoder, TriggerType
+from bcipy.core.triggers import trigger_decoder, TriggerType
 
 from bcipy.acquisition import devices
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.io.load import load_raw_data
-from bcipy.data.raw_data import RawData
+from bcipy.core.raw_data import RawData
 from bcipy.signal.process import get_default_transform
-from bcipy.data.report import SignalReportSection, SessionReportSection, Report, ReportSection
+from bcipy.core.report import SignalReportSection, SessionReportSection, Report, ReportSection
 from bcipy.config import SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.evaluate.artifact import ArtifactDetection

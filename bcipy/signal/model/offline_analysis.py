@@ -18,12 +18,12 @@ from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
                            load_raw_data)
 from bcipy.gui.alert import confirm
-from bcipy.data.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.io.save import save_model
-from bcipy.data.stimuli import update_inquiry_timing
-from bcipy.data.symbols import alphabet
+from bcipy.core.stimuli import update_inquiry_timing
+from bcipy.core.symbols import alphabet
 from bcipy.helpers.utils import report_execution_time
-from bcipy.data.triggers import TriggerType, trigger_decoder
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,

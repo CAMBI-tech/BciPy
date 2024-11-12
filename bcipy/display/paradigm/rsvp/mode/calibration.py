@@ -1,5 +1,5 @@
 from bcipy.display.paradigm.rsvp.display import RSVPDisplay
-from bcipy.data.symbols import SPACE_CHAR
+from bcipy.core.symbols import SPACE_CHAR
 
 
 class CalibrationDisplay(RSVPDisplay):

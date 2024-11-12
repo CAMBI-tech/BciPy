@@ -6,7 +6,7 @@ import psychopy
 from mockito import any, mock, unstub, verify, when
 
 from bcipy.exceptions import BciPyCoreException
-from bcipy.data.triggers import (FlushFrequency, Trigger, TriggerHandler,
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                  TriggerType, _calibration_trigger,
                                  apply_offsets, exclude_types,
                                  find_starting_offset, offset_device,
@@ -205,7 +205,7 @@ class TestTriggerHandler(unittest.TestCase):
 
         verify(self.handler, times=1).write()
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_load_returns_list_of_triggers(self, path_exists_mock):
         """Test static load method"""
         path_exists_mock.returnValue = True
@@ -217,7 +217,7 @@ class TestTriggerHandler(unittest.TestCase):
             response = self.handler.load('test_path_not_real.txt')
             self.assertEqual(response[0], trg)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_load_applies_offset(self, path_exists_mock):
         """Test that static load method applies offsets"""
         path_exists_mock.returnValue = True
@@ -228,7 +228,7 @@ class TestTriggerHandler(unittest.TestCase):
             response = self.handler.load('test_path_not_real.txt', offset=1)
             self.assertEqual(response[0].time, 2.5)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_load_exclusion(self, path_exists_mock):
         """Test that static load can exclude trigger types"""
         path_exists_mock.returnValue = True
@@ -241,7 +241,7 @@ class TestTriggerHandler(unittest.TestCase):
                                          exclusion=[TriggerType.NONTARGET])
             self.assertEqual(response[0], fixation_trg)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_data(self, path_exists_mock):
         """Test that trigger data is correctly read."""
         trg_data = '''starting_offset offset 3.47
@@ -263,7 +263,7 @@ class TestTriggerHandler(unittest.TestCase):
             self.assertEqual(triggers[1].time, 6.15)
             self.assertEqual(offset, 3.47)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_data_bad_format(self, path_exists_mock):
         """Test that exception is thrown when trigger type doesn't exist."""
         trg_data = '''start_offset offset
@@ -278,7 +278,7 @@ class TestTriggerHandler(unittest.TestCase):
 
             self.assertIn("line 1", ctx.exception.message)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_data_bad_trigger_type(self, path_exists_mock):
         """Test that exception is thrown when trigger type doesn't exist."""
         trg_data = '''start_offset offset 3.47
@@ -293,7 +293,7 @@ class TestTriggerHandler(unittest.TestCase):
 
             self.assertIn("line 3", ctx.exception.message)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_data_bad_timestamp(self, path_exists_mock):
         """Test that exception is thrown when timestamp can't be converted."""
         trg_data = '''starting_offset offset 3.47
@@ -309,7 +309,7 @@ class TestTriggerHandler(unittest.TestCase):
 
             self.assertIn("line 2", ctx.exception.message)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_data_unicode(self, path_exists_mock):
         """Test that trigger data is correctly read."""
         trg_data = '''starting_offset offset 3.47
@@ -391,7 +391,7 @@ class TestTriggerFunctions(unittest.TestCase):
         with self.assertRaises(BciPyCoreException):
             read_data(trg_data.split('\n'))
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_read_from_file(self, path_exists_mock):
         """Test reading triggers from a file"""
         trg_data = '''starting_offset offset 3.47
@@ -540,7 +540,7 @@ class TestTriggerFunctions(unittest.TestCase):
             all(trg.type in [TriggerType.NONTARGET, TriggerType.TARGET]
                 for trg in filtered))
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_trigger_decoder_defaults(self, path_exists_mock):
         """Test trigger decoder"""
         trg_data = '''starting_offset offset -3.47
@@ -566,7 +566,7 @@ class TestTriggerFunctions(unittest.TestCase):
             self.assertAlmostEqual(times[0], 5.11)
             self.assertAlmostEqual(times[-1], 7.83)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_trigger_decoder_with_device(self, path_exists_mock):
         """Test trigger decoder"""
         trg_data = '''starting_offset offset -3.47
@@ -593,7 +593,7 @@ class TestTriggerFunctions(unittest.TestCase):
             self.assertAlmostEqual(times[0], 4.13)
             self.assertAlmostEqual(times[-1], 6.85)
 
-    @patch('bcipy.data.triggers.os.path.exists')
+    @patch('bcipy.core.triggers.os.path.exists')
     def test_trigger_decoder_without_starting_offset(self, path_exists_mock):
         """Test trigger decoder"""
         trg_data = '''starting_offset offset -3.47

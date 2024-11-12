@@ -1,7 +1,7 @@
 import unittest
 
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.data.symbols import alphabet
+from bcipy.core.symbols import alphabet
 from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.task.data import EvidenceType
 

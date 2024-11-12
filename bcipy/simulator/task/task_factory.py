@@ -4,7 +4,7 @@ from typing import Dict, List, Type
 
 from bcipy.helpers.language_model import init_language_model
 from bcipy.io.load import load_json_parameters, load_signal_models
-from bcipy.data.parameters import DEFAULT_PARAMETERS_PATH
+from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
 from bcipy.simulator.data.data_process import init_data_processor

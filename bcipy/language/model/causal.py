@@ -5,7 +5,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 import itertools
 import heapq
 
-from bcipy.data.symbols import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 
 from bcipy.exceptions import InvalidLanguageModelException

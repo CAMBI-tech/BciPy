@@ -15,8 +15,8 @@ from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.exceptions import (BciPyCoreException,
                               InvalidExperimentException)
-from bcipy.data.parameters import Parameters
-from bcipy.data.raw_data import RawData
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 

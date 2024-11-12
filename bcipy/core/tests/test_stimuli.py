@@ -10,7 +10,7 @@ from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
 from bcipy.exceptions import BciPyCoreException
-from bcipy.data.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
+from bcipy.core.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
                                 StimuliOrder, TargetPositions,
                                 TrialReshaper, alphabetize,
                                 best_case_rsvp_inq_gen, best_selection,

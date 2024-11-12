@@ -15,8 +15,8 @@ from bcipy.acquisition.devices import preconfigured_device
 from bcipy.config import (DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.io.load import load_json_parameters, load_raw_data
-from bcipy.data.raw_data import RawData
-from bcipy.data.triggers import trigger_decoder
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import trigger_decoder
 from bcipy.signal.process import Composition
 # from bcipy.signal.process import get_default_transform
 
