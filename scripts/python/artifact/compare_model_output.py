@@ -41,6 +41,7 @@ import json
 import numpy as np
 from bcipy.gui.file_dialog import ask_filename
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 def load_json_file(path: str) -> dict:
     with open(path, 'r') as f:
@@ -216,6 +217,7 @@ def evaluate_model_output(score_results: dict) -> dict:
     return results
 
 def save_results(results: dict, path: str) -> None:
+    """Save the results to a json file."""
     with open(path, 'w') as f:
         json.dump(results, f)
 
@@ -248,7 +250,92 @@ def plot_average_evaluation_results(eval_results: dict) -> None:
             }
         }
     """
-    # get an average of BA and MCC
+    plot_confusion_matrix(eval_results)
+    plot_ba_mcc(eval_results)
+
+
+def plot_confusion_matrix(eval_results: dict) -> None:
+    """
+    Plot the confusion matrix of the evaluation results.
+    """
+    TP_values_of = []
+    FP_values_of = []
+    TN_values_of = []
+    FN_values_of = []
+
+    TP_values_cf = []
+    FP_values_cf = []
+    TN_values_cf = []
+    FN_values_cf = []
+
+    for user_id, user_data in eval_results.items():
+        TP_values_of.append(user_data['of']['TP'])
+        FP_values_of.append(user_data['of']['FP'])
+        TN_values_of.append(user_data['of']['TN'])
+        FN_values_of.append(user_data['of']['FN'])
+
+        TP_values_cf.append(user_data['cf']['TP'])
+        FP_values_cf.append(user_data['cf']['FP'])
+        TN_values_cf.append(user_data['cf']['TN'])
+        FN_values_cf.append(user_data['cf']['FN'])
+
+    # get the average values
+    avg_TP_of = np.mean(TP_values_of)
+    avg_FP_of = np.mean(FP_values_of)
+    avg_TN_of = np.mean(TN_values_of)
+    avg_FN_of = np.mean(FN_values_of)
+
+    avg_TP_cf = np.mean(TP_values_cf)
+    avg_FP_cf = np.mean(FP_values_cf)
+    avg_TN_cf = np.mean(TN_values_cf)
+    avg_FN_cf = np.mean(FN_values_cf)
+
+    # Make two plots for OF and CF
+    fig, ax = plt.subplots()
+    x = np.arange(4)
+    width = 0.4
+    values_of = [avg_TP_of, avg_FP_of, avg_TN_of, avg_FN_of]
+    ax.bar(x, values_of, width, label='OF', color='b')
+    ax.set_ylabel('Average')
+    labels = ['TP', 'FP', 'TN', 'FN']
+    ax.set_title('Model Evaluation Average Scores')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    # # Add the values to the bars
+    # for i, v in enumerate(values_of):
+    #     ax.text(i, v + 0.01, str(round(v, 2)), color='black', ha='center')
+
+    values_cf = [avg_TP_cf, avg_FP_cf, avg_TN_cf, avg_FN_cf]
+    ax.bar(x + width, values_cf, width, label='CF', color='r')
+    ax.set_xticks(x)
+    ax.legend()
+    plt.show()
+
+
+    # Now do a box plot for the values
+    fig, ax = plt.subplots()
+    x = np.arange(9)
+    values = [
+        TP_values_of, 
+        TP_values_cf,
+        FP_values_of,
+        FP_values_cf,
+        TN_values_of,
+        TN_values_cf,
+        FN_values_of,
+        FN_values_cf]
+    
+    labels = [' ', 'TP OF', 'TP CF', 'FP OF', 'FP CF', 'TN OF', 'TN CF', 'FN OF', 'FN CF']
+    ax.boxplot(values, showmeans=True, notch=True)
+    ax.set_title('Confusion Matrix Model Evaluation Scores')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    plt.tight_layout()
+    plt.show()
+
+def plot_ba_mcc(eval_results: dict) -> None:
+    """Plot the BA and MCC scores of the evaluation results."""
+     # get an average of BA and MCC
     ba_values_of = []
     mcc_values_of = []
     ba_values_cf = []
@@ -290,7 +377,7 @@ def plot_average_evaluation_results(eval_results: dict) -> None:
 
     plt.show()
 
-def plot_scatter_evaluation_results(eval_results):
+def plot_boxplot_evaluation_results(eval_results, run_stats=False) -> None:
     """
     Plot the evaluation results in a scatter plot.
 
@@ -331,10 +418,10 @@ def plot_scatter_evaluation_results(eval_results):
     
     # plot a box plot for the BA
     fig, ax = plt.subplots()
-    x = np.arange(2)
+    x = np.arange(3)
     ba_values = [ba_values_of, ba_values_cf]
-    labels = ['BA OF', 'BA CF']
-    ax.boxplot(ba_values)
+    labels = [' ', 'BA OF', 'BA CF']
+    ax.boxplot(ba_values, showmeans=True, notch=True)
     ax.set_title('BA Model Evaluation Scores')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
@@ -342,24 +429,28 @@ def plot_scatter_evaluation_results(eval_results):
 
     # plot a box plot for the MCC
     fig, ax = plt.subplots()
-    x = np.arange(2)
+    x = np.arange(3)
     mcc_values = [mcc_values_of, mcc_values_cf]
-    labels = ['MCC OF', 'MCC CF']
-    ax.boxplot(mcc_values)
+    labels = [' ', 'MCC OF', 'MCC CF']
+    ax.boxplot(mcc_values, showmeans=True, notch=True)
     ax.set_title('MCC Model Evaluation Scores')
     ax.set_xticks(x)
     ax.set_xticklabels(labels)
     plt.show()
 
-    # run a t-test to see if the scores are significantly different
+    if run_stats:
+        run_stats(ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf)
+
+
+def run_stats(ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf) -> tuple:
+    """Run a t-test on the values"""
+    # # run a t-test to see if the scores are significantly different
     from scipy.stats import ttest_ind
-    t, p = ttest_ind(ba_values_of, ba_values_cf)
-    print(f"BA T-Test: {t}, {p}")
-    t, p = ttest_ind(mcc_values_of, mcc_values_cf)
-    print(f"MCC T-Test: {t}, {p}")
-
-
-
+    ba_t, ba_p = ttest_ind(ba_values_of, ba_values_cf)
+    print(f"BA T-Test: {ba_t}, {ba_p}")
+    mcc_t, mcc_p = ttest_ind(mcc_values_of, mcc_values_cf)
+    print(f"MCC T-Test: {mcc_t}, {mcc_p}")
+    return (ba_t, ba_p), (mcc_t, mcc_p)
 
 
 if __name__ in "__main__":
@@ -370,5 +461,5 @@ if __name__ in "__main__":
     eval_results = evaluate_model_output(results)
     save_results(eval_results, 'eval_results.json')
     plot_average_evaluation_results(eval_results)
-    plot_scatter_evaluation_results(eval_results)
-    breakpoint()
+    plot_boxplot_evaluation_results(eval_results, run_stats=True)
+    # breakpoint()
