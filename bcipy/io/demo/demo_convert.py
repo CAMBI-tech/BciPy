@@ -44,6 +44,12 @@ if __name__ == '__main__':
         '--directory',
         help='Path to the directory with raw_data to be converted',
         required=False)
+    parser.add_argument(
+        '-e',
+        '--experiment',
+        help='Experiment ID to convert',
+        default='default',
+    )
 
     args = parser.parse_args()
 
@@ -51,11 +57,15 @@ if __name__ == '__main__':
     if not path:
         path = load_experimental_data()
 
-    convert_to_bids(
-        data_dir=path,
-        participant_id='01',
-        session_id='01',
-        run_id='01',
-        output_dir='./bids/',
-        format=ConvertFormat.BV
-    )
+    # uncomment to convert a single session
+    # convert_to_bids(
+    #     data_dir=path,
+    #     participant_id='01',
+    #     session_id='01',
+    #     run_id='01',
+    #     output_dir='./bids/',
+    #     format=ConvertFormat.BV
+    # )
+
+    # convert a study to BIDS format
+    convert_study_to_bids(path, args.experiment, ConvertFormat.BV)

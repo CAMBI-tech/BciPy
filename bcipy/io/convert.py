@@ -400,15 +400,3 @@ def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
     tobii_x = (norm_units[0] / 2) + 0.5
     tobii_y = ((norm_units[1] * -1) / 2) + 0.5
     return (tobii_x, tobii_y)
-
-
-if __name__ == "__main__":
-
-    convert_to_bids(
-        data_dir='/Users/scitab/Desktop/2024-10-25_13-58-11/RSVP_Calibration_2024-10-25_13-58-11',
-        participant_id='04',
-        session_id='01',
-        run_id='01',
-        output_dir='./bids/',
-        format=ConvertFormat.BV
-    )
