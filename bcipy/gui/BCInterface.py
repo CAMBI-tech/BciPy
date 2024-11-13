@@ -316,7 +316,7 @@ class BCInterface(BCIGui):
                     return None
 
             output = subprocess.check_output(
-                f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p "{self.parameter_location}"',
+                f'bcipy-params -p "{self.parameter_location}"',
                 shell=True)
             if output:
                 self.parameter_location = output.decode().strip()
