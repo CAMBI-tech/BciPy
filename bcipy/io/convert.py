@@ -35,6 +35,14 @@ class ConvertFormat(Enum):
     def __str__(self):
         return self.value
 
+    @staticmethod
+    def all():
+        return [format for format in ConvertFormat]
+
+    @staticmethod
+    def values():
+        return [format.value for format in ConvertFormat]
+
 
 def convert_to_bids(
         data_dir: str,
@@ -63,9 +71,15 @@ def convert_to_bids(
     -------
     The path to the BIDS formatted data
     """
-    # load the parameters if not provided
+    # validate the inputs
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory={data_dir} does not exist")
+    if not os.path.exists(output_dir):
+        raise FileNotFoundError(f"Output directory={output_dir} does not exist")
+    if format not in ConvertFormat.all():
+        raise ValueError(f"Unsupported format={format}")
+    if line_frequency not in [50, 60]:
+        raise ValueError("Line frequency must be 50 or 60 Hz")
 
     # create file paths for raw data, triggers, and parameters
     raw_data_file = os.path.join(data_dir, f'{RAW_DATA_FILENAME}.csv')
@@ -84,8 +98,8 @@ def convert_to_bids(
         trial_window = (0.0, 0.5)
 
     if task_name is None:
-        task = parameters.get("task")
-        if task is None:
+        task_name = parameters.get("task")
+        if task_name is None:
             raise ValueError("Task name must be provided or specified in the parameters")
 
     window_length = trial_window[1] - trial_window[0]
@@ -114,7 +128,7 @@ def convert_to_bids(
     bids_path = BIDSPath(
         subject=participant_id,
         session=session_id,
-        task=task,
+        task=task_name,
         run=run_id,
         datatype="eeg",
         root=output_dir

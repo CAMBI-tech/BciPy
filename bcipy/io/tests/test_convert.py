@@ -6,18 +6,29 @@ import unittest
 from pathlib import Path
 from typing import Tuple, Union
 
-from mockito import unstub, verifyNoMoreInteractions
-
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
 # from bcipy.io import convert
-from bcipy.io.convert import (archive_list, compress, convert_to_mne, decompress,
-                              norm_to_tobii, tobii_to_norm)
+from bcipy.io.convert import (
+    archive_list,
+    compress,
+    ConvertFormat,
+    convert_to_bids,
+    convert_to_mne,
+    decompress,
+    norm_to_tobii,
+    tobii_to_norm
+)
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData, sample_data, write
 from bcipy.core.triggers import MOCK_TRIGGER_DATA
 from bcipy.signal.generator.generator import gen_random_data
+
+
+CHANNEL_NAMES = [
+    'Fp1', 'Fp2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4',
+    'O1', 'O2', 'F7', 'F8', 'T3', 'T4', 'T5', 'T6', 'Fz', 'Cz', 'Pz']
 
 
 def create_bcipy_session_artifacts(
@@ -39,7 +50,8 @@ def create_bcipy_session_artifacts(
     """
     trg_data = MOCK_TRIGGER_DATA
     if isinstance(channels, int):
-        channels = [f'ch{i}' for i in range(channels)]
+
+        channels = [CHANNEL_NAMES[i] for i in range(channels)]
     data = sample_data(ch_names=channels, daq_type='SampleDevice', sample_rate=sample_rate, rows=samples)
     devices.register(devices.DeviceSpec('SampleDevice', channels=channels, sample_rate=sample_rate))
 
@@ -64,35 +76,170 @@ def create_bcipy_session_artifacts(
     return trg_data, data, params
 
 
-class TestEDFConvert(unittest.TestCase):
-    """Tests for EDF data format conversions."""
+class TestBIDSConversion(unittest.TestCase):
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
-        _, data, _ = create_bcipy_session_artifacts(self.temp_dir)
-        self.channels = data.channels
+        self.trg_data, self.data, self.params = create_bcipy_session_artifacts(self.temp_dir)
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
-        # verifyNoMoreInteractions()
-        # unstub()
 
+    def test_convert_to_bids_generates_bids_strucutre(self):
+        """Test the convert_to_bids function"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='01',
+            session_id='01',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        # Assert that the BIDS structure was created
+        self.assertTrue(os.path.exists(f"{self.temp_dir}"))
+        # Assert the session directory was created with eeg
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/sub-01/ses-01/eeg/"))
+        # Assert the eeg file was created (default of BV format)
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_eeg.vhdr"))
+        # Assert the events file was created
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_events.tsv"))
+        # Assert the channels file was created
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_channels.tsv"))
 
-class TestBDFConvert(unittest.TestCase):
-    """Tests for BDF data format conversions."""
+    def test_convert_to_bids_reflects_participant_id(self):
+        """Test the convert_to_bids function with a participant id"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='100',
+            session_id='01',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/sub-100/"))
 
-    def setUp(self):
-        """Override; set up the needed path for load functions."""
+    def test_convert_to_bids_reflects_session_id(self):
+        """Test the convert_to_bids function with a session id"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='01',
+            session_id='100',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/sub-01/ses-100/"))
 
-        self.temp_dir = tempfile.mkdtemp()
-        _, data, _ = create_bcipy_session_artifacts(self.temp_dir)
-        self.channels = data.channels
+    def test_convert_to_bids_reflects_run_id(self):
+        """Test the convert_to_bids function with a run id"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='01',
+            session_id='01',
+            run_id='100',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-100_eeg.vhdr"))
 
-    def tearDown(self):
-        """Override"""
-        shutil.rmtree(self.temp_dir)
-        verifyNoMoreInteractions()
-        unstub()
+    def test_convert_to_bids_reflects_task_name(self):
+        """Test the convert_to_bids function with a task name"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='01',
+            session_id='01',
+            run_id='01',
+            task_name='TestTaskEtc',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTaskEtc_run-01_eeg.vhdr"))
+
+    def test_convert_to_bids_edf(self):
+        """Test the convert_to_bids function with edf format"""
+        response = convert_to_bids(
+            f"{self.temp_dir}",
+            participant_id='01',
+            session_id='01',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+            format=ConvertFormat.EDF
+        )
+
+        self.assertTrue(os.path.exists(response))
+        # Assert that the BIDS structure was created
+        self.assertTrue(os.path.exists(f"{self.temp_dir}"))
+        # Assert the session directory was created with eeg
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/sub-01/ses-01/eeg/"))
+        # Assert the eeg file was created (edf format)
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_eeg.edf"))
+        # Assert the events file was created
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_events.tsv"))
+        # Assert the channels file was created
+        self.assertTrue(os.path.exists(
+            f"{self.temp_dir}/sub-01/ses-01/eeg/sub-01_ses-01_task-TestTask_run-01_channels.tsv"))
+
+    def test_convert_to_bids_raises_error_with_invalid_format(self):
+        """Test the convert_to_bids function raises an error with invalid format"""
+        with self.assertRaises(ValueError):
+            convert_to_bids(
+                f"{self.temp_dir}",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir,
+                format='invalid_format'
+            )
+
+    def test_convert_to_bids_raises_error_with_invalid_output_dir(self):
+        """Test the convert_to_bids function raises an error with invalid output directory"""
+        with self.assertRaises(FileNotFoundError):
+            convert_to_bids(
+                f"{self.temp_dir}",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir='invalid_output_dir'
+            )
+
+    def test_convert_to_bids_raises_error_with_invalid_data_dir(self):
+        """Test the convert_to_bids function raises an error with invalid output directory"""
+        with self.assertRaises(FileNotFoundError):
+            convert_to_bids(
+                'invalid_data_dir',
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir
+            )
+
+    def test_convert_to_bids_raises_error_with_invalid_line_freq(self):
+        """Test the convert_to_bids function raises an error with invalid line frequency"""
+        with self.assertRaises(ValueError):
+            convert_to_bids(
+                f"{self.temp_dir}",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir,
+                line_frequency=0
+            )
 
 
 class TestMNEConvert(unittest.TestCase):
