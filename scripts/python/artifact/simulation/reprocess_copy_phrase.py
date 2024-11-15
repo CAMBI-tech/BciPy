@@ -148,10 +148,11 @@ def get_model_results(
         model: SignalModel,
         trials: np.ndarray,
         trigger_symbols: np.ndarray,
-        trials_per_inquiry,
-        inquiries,
-        inquiry_labels,
-        symbol_set) -> dict:
+        trials_per_inquiry: int,
+        inquiries: np.ndarray,
+        inquiry_labels: np.ndarray,
+        symbol_set: list,
+        counter) -> dict:
      # get the model outputs using the reshaped data
     outputs = {}
     inquiry_worth_of_trials = np.split(trials, inquiries.shape[1], 1)
@@ -170,7 +171,7 @@ def get_model_results(
             target_index_in_alphabet = None
             nontarget_idx_in_alphabet = [symbol_set.index(q) for q in this_inquiry_letters]
 
-        outputs[i] = {
+        outputs[i + counter] = {
             "eeg_likelihood_evidence": list(response),
             "target_idx": target_index_in_alphabet,
             "nontarget_idx": nontarget_idx_in_alphabet,
@@ -202,34 +203,68 @@ def main(directory: Path, parameters: Parameters) -> dict:
             results[user_id][condition_prefix] = {}
             model = load_model(condition_prefix, directory / user_id / "CAL")
             # loop over the NP folders
-            np_folders = next(user_path.glob("NP*"), [])
-            if not np_folders:
-                logger.warning(f"No NP folders found for {user_id}")
+            data_folders = user_path.glob("*P*")
+            if not data_folders:
+                logger.warning(f"No data folders found for {user_id}")
                 break
-            for np_folder in np_folders.iterdir():
-                if not np_folder.is_dir():
-                    continue
 
-                # # load the data
-                trials, trigger_symbols, trials_per_inquiry, inquiries, inquiry_labels = load_data(np_folder, parameters)
-                # get the model results
-                outputs = get_model_results(
-                    model,
-                    trials,
-                    trigger_symbols,
-                    trials_per_inquiry,
-                    inquiries,
-                    inquiry_labels,
-                    SYMBOL_SET)
-                results[user_id][condition_prefix]['model'] = outputs
-                print(f"Processed {np_folder.name}")
+            inquiry_counter = 0
+            results[user_id][condition_prefix]['model'] = {}
+            for np_folders in data_folders:
+                for np_folder in np_folders.iterdir():
+                    if not np_folder.is_dir():
+                        continue
+
+                    # # load the data
+                    trials, trigger_symbols, trials_per_inquiry, inquiries, inquiry_labels = load_data(np_folder, parameters)
+                    # get the model results
+                    outputs = get_model_results(
+                        model,
+                        trials,
+                        trigger_symbols,
+                        trials_per_inquiry,
+                        inquiries,
+                        inquiry_labels,
+                        SYMBOL_SET,
+                        counter=inquiry_counter)
+                    results[user_id][condition_prefix]['model'].update(outputs)
+                    inquiry_counter += len(outputs)
+                    print(f"Processed {np_folder.name}")
+                print(f"Processed {condition_prefix} for {user_id}. Total inquiries: {inquiry_counter}")
+                # get estimated # of selections using the output, where the decision threshold is 0.8
+            selections = estimate_selections_from_output(results[user_id][condition_prefix]['model'])
+            results[user_id][condition_prefix]['selections'] = selections
     # save the results dict
     timestamp = time.strftime("%Y_%m_%d-%H_%M_%S")
-    with open(f"reprocess_copy_phrase_{timestamp}.json", "w") as f:
+    with open(f"reprocess_all_copy_phrase_{timestamp}.json", "w") as f:
         json.dump(results, f)
 
     return results
 
+def estimate_selections_from_output(output: dict, threshold: float = 0.8) -> list:
+    """Estimate the number of selections based on the output."""
+    total_selections = 0
+    previous_probs = None
+    for inquiry in output:
+        # covert the likelihoods to probabilities
+        likelihoods = output[inquiry]['eeg_likelihood_evidence']
+
+        # if we have a previous probability, use it via multiplication
+        if previous_probs is not None:
+            likelihoods = np.multiply(likelihoods, previous_probs)
+        probabilities = np.exp(likelihoods) / (1 + np.exp(likelihoods))
+
+        # get the number of selections
+        selections = np.sum(probabilities > threshold)
+
+        # a selection
+        if selections > 0:
+            previous_probs = None
+            total_selections += 1
+        else:
+            previous_probs = probabilities
+
+    return total_selections
 
 
 if __name__ in "__main__":

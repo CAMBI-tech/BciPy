@@ -4,6 +4,10 @@ Compare Model Output
 
 This script takes in a json file with the following format:
 
+## Paired T-test results
+# BA T-Test: 1.6688799601136604, 0.10813634332002026
+# MCC T-Test: 1.038312827493233, 0.30947283622952343
+
 {
     "user_id": { # note there are 25 users
         "of: {
@@ -43,18 +47,60 @@ from bcipy.gui.file_dialog import ask_filename
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+
+class ConfusionMatrix:
+    """Confusion Matrix.
+
+    Confusion matrix for evaluating model outputs.
+    
+    TP = True Positive
+    FP = False Positive
+    TN = True Negative
+    FN = False Negative
+    """
+
+    def __init__(self, TP: int, FP: int, TN: int, FN: int):
+        self.TP = TP
+        self.FP = FP
+        self.TN = TN
+        self.FN = FN
+
+    def __repr__(self):
+        return f"TP: {self.TP}, FP: {self.FP}, TN: {self.TN}, FN: {self.FN}"
+    
+    @property
+    def count(self) -> int:
+        return self.TP + self.FP + self.TN + self.FN
+
+    @property
+    def accuracy(self) -> float:
+        return (self.TP + self.TN) / (self.TP + self.TN + self.FP + self.FN)
+    
+    @property
+    def balanced_accuracy(self) -> float:
+        return 0.5 * (self.TP / (self.TP + self.FN) + self.TN / (self.TN + self.FP))
+    
+    @property
+    def mcc(self) -> float:
+        return (
+            (self.TP * self.TN - self.FP * self.FN)
+             / np.sqrt((self.TP + self.FP) * (self.TP + self.FN) * (self.TN + self.FP) * (self.TN + self.FN))
+            )
+
+
 def load_json_file(path: str) -> dict:
     with open(path, 'r') as f:
         data = json.load(f)
     return data
 
-def extract_and_score_model_output(data: dict) -> dict:
+def extract_and_score_model_output(data: dict, trials_per_inquiry: int = 10) -> dict:
     results = {}
     for user_id, user_data in data.items():
         results[user_id] = {}
         for model_type, model_data in user_data.items():
             # This will either be 'of' or 'cf'
             results[user_id][model_type] = {}
+            results[user_id][model_type]['selections'] = model_data['selections']
 
             # Loop over model data and score whether the model correctly identified the target letter
             # Where a value of > 1.0 for a target letter indicates the model correctly identified the target
@@ -72,10 +118,18 @@ def extract_and_score_model_output(data: dict) -> dict:
                 eeg_likelihood_evidence = inquiry_data['eeg_likelihood_evidence']
                 target_idx = inquiry_data['target_idx']
                 nontarget_idx = inquiry_data['nontarget_idx']
-                if target_idx:
+                if target_idx is not None:
                     value = eeg_likelihood_evidence[target_idx]
                     results[user_id][model_type][inquiry_number]['target'] = value
-            
+
+                if target_idx is None:
+                    # If there are no target letters, then there should be trials_per_inquiry nontarget letters
+                    if not len(nontarget_idx) == trials_per_inquiry:
+                        raise ValueError(f"Expected {trials_per_inquiry} nontarget letters. {len(nontarget_idx)} were found.")
+                else:
+                    # If there are target letters, then there should be trials_per_inquiry - 1 nontarget letters
+                    if not len(nontarget_idx) == trials_per_inquiry - 1:
+                        raise ValueError(f"Expected {trials_per_inquiry - 1} nontarget letters. {len(nontarget_idx)} were found.")
                 for idx in nontarget_idx:
                     value = eeg_likelihood_evidence[idx]
                     results[user_id][model_type][inquiry_number]['nontarget'].append(value)
@@ -106,7 +160,7 @@ def extract_and_score_model_output(data: dict) -> dict:
     return results
 
 
-def evaluate_model_output(score_results: dict) -> dict:
+def evaluate_model_output(score_results: dict, trials_per_inquiry: int = 10) -> dict:
     """
     Evaluate the model output using the FP, FN, TP, TN scores.
 
@@ -186,18 +240,27 @@ def evaluate_model_output(score_results: dict) -> dict:
             print("-------------------------------------------------")
             # print(f"{results}")
 
+            inquiry_counter = 0
+            selection_estimate = model_data['selections']
+            # pop the selections from the model data
+            model_data.pop('selections')
             for inquiry_number, inquiry_data in model_data.items():
+                inquiry_counter += 1
                 print(f"{user_id}-{inquiry_number}-{inquiry_data}")
                 target_score = inquiry_data['target_score']
                 nontarget_scores = inquiry_data['nontarget_score']
 
+                all_non_target_scores = False
                 if target_score == 'NA':
-                    continue
+                    print('NA')
+                    all_non_target_scores = True
                 elif target_score == 'TP':
                     results[user_id][model_type]['TP'] += 1
                 else:
                     results[user_id][model_type]['FN'] += 1
 
+                if all_non_target_scores:
+                    assert len(nontarget_scores) == 10, f"There should be 10 nontarget scores. {len(nontarget_scores)} were found."
                 for score in nontarget_scores:
                     if score == 'FP':
                         results[user_id][model_type]['FP'] += 1
@@ -209,18 +272,72 @@ def evaluate_model_output(score_results: dict) -> dict:
             FP = results[user_id][model_type]['FP']
             TN = results[user_id][model_type]['TN']
             FN = results[user_id][model_type]['FN']
+            conf_matrix = ConfusionMatrix(TP, FP, TN, FN)
 
-            results[user_id][model_type]['ACC'] = (TP + TN) / (TP + TN + FP + FN)
-            results[user_id][model_type]['BA'] = 0.5 * (TP / (TP + FN) + TN / (TN + FP))
-            results[user_id][model_type]['MCC'] = (TP * TN - FP * FN) / np.sqrt((TP + FP) * (TP + FN) * (TN + FP) * (TN + FN))
+            # validate the count of the confusion matrix and the number of inquiries match
+            assert conf_matrix.count == (inquiry_counter * trials_per_inquiry), \
+                ("The count of the confusion matrix should equal the number of inquiries. "
+                 f"{conf_matrix.count} != {inquiry_counter}")
+            
+            selection_estimate = selection_estimate
+            assert selection_estimate <= inquiry_counter, (
+                "The selection estimate should be less than or equal to the number of inquiries.")
+            inquiries_per_selection = inquiry_counter / selection_estimate
+
+            # Calculate the scores
+            results[user_id][model_type]['ACC'] = conf_matrix.accuracy
+            results[user_id][model_type]['BA'] = conf_matrix.balanced_accuracy
+            results[user_id][model_type]['MCC'] = conf_matrix.mcc
+
+            # Calculate estimated ITR
+            results[user_id][model_type]['ITR'] = calculate_itr(
+                conf_matrix,
+                trials_per_inquiry=10,
+                flash_time=0.2,
+                inquiries_per_selection=inquiries_per_selection
+            )
 
     return results
+
+
+def calculate_itr(
+        conf_matrix: ConfusionMatrix,
+        trials_per_inquiry: int = 10,
+        flash_time: float = 0.2,
+        inquiries_per_selection: float = 1.0) -> None:
+    """
+    conf_matrix: ConfusionMatrix = ConfusionMatrix(TP, FP, TN, FN)
+    trials_per_inquiry: int = 10 * referred to as stim_number in BciPy
+    flash_time: float = 0.2 * referred to as time_flash in BciPy
+    buffer: float = 1.0 * referred to as task_buffer_length in BciPy is the time in seconds between trials
+    """
+    # Calculate ITR (bit per second)
+    # ITR = B * Q
+    # B = log2(N) + P * log2(P) + (1 - P) * log2((1 - P) / (N - 1))
+    # Q = S / T
+    # N = number of targets
+    # P = accuracy
+    # S = number of inquiries
+    # T = total time in minutes as estimated by the formula below (T_min)
+    N = conf_matrix.TP + conf_matrix.FN
+    trial_count = N + conf_matrix.FP + conf_matrix.TN
+    isi_time = 0.1
+    fixation_time = 0.5
+    T_inquiry = (trials_per_inquiry * flash_time) + (trials_per_inquiry * isi_time) + fixation_time # seconds per inquiry
+    N_inquiry = trial_count / trials_per_inquiry # number of inquiries
+    T_sec = (N_inquiry * T_inquiry) * inquiries_per_selection # total time in seconds
+    T_min = (T_sec / 60) # total time in minutes
+    Q = N_inquiry / T_sec
+    P = conf_matrix.accuracy
+    B = np.log2(N) + P * np.log2(P) + (1 - P) * np.log2((1 - P) / (N - 1))
+    ITR = B * Q
+    print(f"ITR: {ITR}")
+    return ITR
 
 def save_results(results: dict, path: str) -> None:
     """Save the results to a json file."""
     with open(path, 'w') as f:
         json.dump(results, f)
-
 
 def plot_average_evaluation_results(eval_results: dict) -> None:
     """
@@ -377,6 +494,46 @@ def plot_ba_mcc(eval_results: dict) -> None:
 
     plt.show()
 
+def plot_itrs(eval_results: dict) -> None:
+    """Plot the ITRs of the evaluation results."""
+    
+    itr_cf = []
+    itr_of = []
+
+    for user_id, user_data in eval_results.items():
+        itr_of.append(user_data['of']['ITR'])
+        itr_cf.append(user_data['cf']['ITR'])
+
+    # plot the results with a bar chart (0-1) and add labels with the values
+    fig, ax = plt.subplots()
+    x = np.arange(2)
+    width = 0.35
+    itr_values = [np.mean(itr_of), np.mean(itr_cf)]
+    labels = ['ITR OF', 'ITR CF']
+    ax.bar(x, itr_values, width, label='Scores')
+    ax.set_ylabel('Scores')
+    ax.set_title('Model Evaluation ITR Scores')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    # Add the values to the bars
+    for i, v in enumerate(itr_values):
+        ax.text(i, v + 0.01, str(round(v, 2)), color='black', ha='center')
+    
+    plt.show()
+
+    # box plot the results
+    fig, ax = plt.subplots()
+    x = np.arange(3)
+    values = [itr_of, itr_cf]
+    labels = [' ', 'ITR OF', 'ITR CF']
+    ax.boxplot(values, showmeans=True, notch=True)
+    ax.set_title('ITR Model Evaluation Scores')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    plt.show()
+
+    return itr_of, itr_cf
+
 def plot_boxplot_evaluation_results(eval_results, run_stats=False) -> None:
     """
     Plot the evaluation results in a scatter plot.
@@ -438,28 +595,31 @@ def plot_boxplot_evaluation_results(eval_results, run_stats=False) -> None:
     ax.set_xticklabels(labels)
     plt.show()
 
-    if run_stats:
-        run_stats(ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf)
+    return ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf
 
 
-def run_stats(ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf) -> tuple:
+def run_ttest(ba_values_of, ba_values_cf, mcc_values_of, mcc_values_cf, itr_of, itr_cf) -> tuple:
     """Run a t-test on the values"""
     # # run a t-test to see if the scores are significantly different
-    from scipy.stats import ttest_ind
-    ba_t, ba_p = ttest_ind(ba_values_of, ba_values_cf)
+    from scipy.stats import ttest_rel
+    ba_t, ba_p = ttest_rel(ba_values_of, ba_values_cf)
     print(f"BA T-Test: {ba_t}, {ba_p}")
-    mcc_t, mcc_p = ttest_ind(mcc_values_of, mcc_values_cf)
+    mcc_t, mcc_p = ttest_rel(mcc_values_of, mcc_values_cf)
     print(f"MCC T-Test: {mcc_t}, {mcc_p}")
-    return (ba_t, ba_p), (mcc_t, mcc_p)
+    itr_t, itr_p = ttest_rel(itr_of, itr_cf)
+    print(f"ITR T-Test: {itr_t}, {itr_p}")
+    return (ba_t, ba_p), (mcc_t, mcc_p), (itr_t, itr_p)
 
 
 if __name__ in "__main__":
     path = ask_filename('*json')
     data = load_json_file(path)
     results = extract_and_score_model_output(data)
-    save_results(results, 'score_results.json')
+    save_results(results, 'score_results_2.json')
     eval_results = evaluate_model_output(results)
-    save_results(eval_results, 'eval_results.json')
+    save_results(eval_results, 'eval_results_2.json')
     plot_average_evaluation_results(eval_results)
-    plot_boxplot_evaluation_results(eval_results, run_stats=True)
+    ba_mcc_results = plot_boxplot_evaluation_results(eval_results)
+    itr_results = plot_itrs(eval_results)
+    run_ttest(*ba_mcc_results, *itr_results)
     # breakpoint()
