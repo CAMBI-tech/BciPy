@@ -36,6 +36,7 @@ Our final release candidate before the official 2.0 release!
     - Offline analysis to support multimodal fusion. Initial release of GazeModel, GazeReshaper, and Gaze Visualization #294
     - Updates to ensure seamless offline analysis for both EEG and Gaze data #305
     - Offline analysis support for EEG and (multiple) gaze models. Updates to support Eye Tracker Evidence class #360
+    - Fusion model analysis and performance metrics support. Bugfixes in gaze model #366
 - Language Model
   - Add Oracle model #316
   - Random Uniform model #311
