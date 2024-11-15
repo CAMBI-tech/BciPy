@@ -12,43 +12,14 @@ import warnings
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 
-class KernelGP(SignalModel):
-    def __init__(self):
-        reshaper = GazeReshaper()
-
-    def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
-        training_data = np.asarray(training_data)
-
-    def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
-        ...
-
-    def predict(self, test_data: np.ndarray, inquiry, symbol_set) -> np.ndarray:
-        ...
-
-    def predict_proba(self, test_data: np.ndarray) -> np.ndarray:
-        ...
-
-    def save(self, path: Path):
-        ...
-
-    def load(self, path: Path):
-        ...
-
-
-class KernelGPSampleAverage(SignalModel):
+class GaussianProcess(SignalModel):
     reshaper = GazeReshaper()
 
     def __init__(self):
         self.ready_to_predict = False
 
     def fit(self, training_data: np.ndarray):
-        training_data = np.array(training_data)
-        # Training data shape = inquiry x features x samples
-        # reshape training data to inquiry x (features x samples)
-        reshaped_data = training_data.reshape((len(training_data), -1))
-        cov_matrix = np.cov(reshaped_data, rowvar=False)
-        # cov_matrix_shape = (features x samples) x (features x samples)
-        reshaped_mean = np.mean(reshaped_data, axis=0)
+        ...
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
