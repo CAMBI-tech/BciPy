@@ -289,7 +289,7 @@ def load_data_mne(
         device_spec
     )
 
-def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
+def load_data_trials(data_folder: Path, parameters=None, trial_length=None, pre_stim=0.0):
     """Loads raw data, and performs preprocessing by notch filtering, bandpass filtering, and downsampling.
 
     Args:
@@ -303,7 +303,8 @@ def load_data_trials(data_folder: Path, trial_length=None, pre_stim=0.0):
         int: sampling rate (Hz)
     """
     # Load parameters
-    parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
+    if not parameters:
+        parameters = load_json_parameters(Path(data_folder, "parameters.json"), value_cast=True)
     poststim_length = trial_length if trial_length is not None else parameters.get("trial_length", 0.5)
     pre_stim = pre_stim if pre_stim > 0.0 else parameters.get("prestim_length")
 
