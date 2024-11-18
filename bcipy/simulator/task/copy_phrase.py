@@ -1,7 +1,7 @@
 # mypy: disable-error-code="union-attr"
 """Simulates the Copy Phrase task"""
-from typing import Any, Dict, List, Optional, Tuple
 import logging
+from typing import Any, Dict, List, Optional, Tuple
 
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
@@ -12,9 +12,9 @@ from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
 from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.simulator.util.state import SimState
+from bcipy.task import TaskMode
 from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
-from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
@@ -133,7 +133,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             # This assumes that sampling is independent. Changes to the sampler API are needed if
             # we need to provide the trial context of the last sample.
             sampled_data = sampler.sample_data(current_state)
-            evidence = model.compute_class_probabilities(
+            evidence = model.compute_likelihood_ratio(
                 sampled_data,
                 self.current_symbols(),
                 self.alp)
