@@ -13,7 +13,8 @@ def train_bcipy_model(
         labels: List[int],
         output_path: str,
         device_spec: DeviceSpec,
-        default_transform: Composition) -> PcaRdaKdeModel:
+        default_transform: Composition,
+        condition: str) -> PcaRdaKdeModel:
     """
     Train a BciPy model on the data and labels provided.
 
@@ -28,5 +29,5 @@ def train_bcipy_model(
                                          evidence_type="ERP",
                                          auc=model.auc)
     print(f"Training complete [AUC={model.auc:0.4f}].")
-    save_model(model, Path(output_path, f"of_model_{model.auc:0.4f}.pkl"))
+    save_model(model, Path(output_path, f"{condition}_model_{model.auc:0.4f}.pkl"))
     return model
