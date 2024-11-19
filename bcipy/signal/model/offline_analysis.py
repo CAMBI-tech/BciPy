@@ -554,10 +554,10 @@ def offline_analysis(
                 show_figures)
             models.append(erp_model)
 
-        if device_spec.content_type == "Eyetracker" and device_spec.is_active:
-            et_model = analyze_gaze(
-                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
-            models.append(et_model)
+        # if device_spec.content_type == "Eyetracker" and device_spec.is_active:
+        #     et_model = analyze_gaze(
+        #         raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
+        #     models.append(et_model)
 
     if len(models) > 1:
         log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")

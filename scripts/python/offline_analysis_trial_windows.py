@@ -32,7 +32,7 @@ import numpy as np
 import seaborn as sns
 
 # Define the window sizes to test
-TRIAL_WINDOWS: List[tuple] = [(0, 0.5), (0.2, 0.7)]
+TRIAL_WINDOWS: List[tuple] = ["0.0:0.5",  "0.2:0.7"]
 TIMESTAMP = time.strftime("%Y%m%d-%H%M%S")
 # TRIAL_WINDOWS: List[tuple] = [
 #     (0, 0.3), (0, 0.5), (0, 0.7),
@@ -58,30 +58,24 @@ def save_output_csv(data: pd.DataFrame, output_path: Path) -> None:
     data.to_csv(csv_path, index=False, header=True)
 
 
-def plot_output_results(data: pd.DataFrame, output_path: Path) -> None:
+def plot_output_results(df: pd.DataFrame, output_path: Path) -> None:
     """Plot the output data to a bar chart.
     
     Args:
-        data: The data to plot.
-            Expected format: {'trial_window': auc}
+        data: the data to plot. window x auc
         output_path: The path to save the file to
     
     Returns:
         None
     """
-    df = data.T
-    df.columns = ['AUC']
-    df = df.reset_index()
-    df = df.rename(columns={'index': 'Trial Window'})
-    df = df.sort_values(by='AUC', ascending=False)
+    save_path = os.path.join(output_path, f'trial_window_analysis_{TIMESTAMP}.png')
+    df.columns = ['Trial Window', 'AUC']
     plt.figure(figsize=(10, 5))
     sns.barplot(x='Trial Window', y='AUC', data=df, palette='viridis')
     plt.title('AUC by Trial Window')
-    plt.xticks(rotation=45)
     plt.tight_layout()
+    plt.savefig(save_path, dpi=100)
     plt.show()
-    plt.savefig(os.path.join(output_path, f'trial_window_analysis_{TIMESTAMP}.png'))
-
 
 def train_default_bcipy_model(data_path: Path, parameters: Parameters) -> SignalModel:
     """Train a model using the provided data and parameters.
@@ -94,7 +88,7 @@ def train_default_bcipy_model(data_path: Path, parameters: Parameters) -> Signal
         SignalModel: The trained model
     """
     model = offline_analysis(
-        data_path,
+        str(data_path),
         parameters,
         alert_finished = False,
         estimate_balanced_acc = False,
@@ -104,7 +98,7 @@ def train_default_bcipy_model(data_path: Path, parameters: Parameters) -> Signal
     assert len(model) == 1, "Expected a single model to be returned."
     return model[0]
 
-def main(data_path: Path, parameters: Parameters, output_path: Path, windows: List[tuple]) -> None:
+def main(data_path: Path, parameters: Parameters, output_path: Path, windows: List[str]) -> None:
     """Main function to run the analysis.
     
     Args:
@@ -114,23 +108,23 @@ def main(data_path: Path, parameters: Parameters, output_path: Path, windows: Li
         output_path: The path to save the output data to.
         windows: The trial windows to test. Each window should be a tuple of (start_time, end_time).
     """
-    output_data = {}
+    output_data = []
 
     # Train a model for each window size
     for window in windows:
-        output_data[window] = {}
         # Update the parameters with the current window
         parameters['trial_window'] = window
 
         model = train_default_bcipy_model(data_path, parameters)
-        output_data[window] = model.auc
+        output_data.append((window, model.auc))
     
     # Print the output data to the console
-    print(output_data)
-    # Save the output data to a csv file and plot the results
-    df = pd.DataFrame(output_data)
-    save_output_csv(df, output_path)
-    plot_output_results(df, output_path)
+    print(f'Window\t AUC')
+    for window, auc in output_data:
+        print(f'{window}\t {auc}')
+    output_df = pd.DataFrame(output_data, columns=['trial_window', 'auc'])
+    save_output_csv(output_df.T, output_path)
+    plot_output_results(output_df, output_path)
     
 
 if __name__ in "__main__":
@@ -155,7 +149,7 @@ if __name__ in "__main__":
         type=str,
         action="append",
         required=False,
-        metavar="start_time end_time",
+        metavar="start_time:end_time",
         help=(
             f"The trial windows to test. Defaults are {TRIAL_WINDOWS}. "
              "Use this flag to override the defaults. "
@@ -166,9 +160,11 @@ if __name__ in "__main__":
     windows = args.window
     # Parse the windows into a list of tuples
     if windows:
-        windows = [tuple(map(float, window.split())) for window in windows]
+        assert len(windows) > 0, "At least one window must be provided."
     else:
         windows = TRIAL_WINDOWS
+
+    print(f"Running offline analysis for trial windows: {windows}")
     path = load_experimental_data()
 
     parameter_path = os.path.join(path, DEFAULT_PARAMETERS_FILENAME)
