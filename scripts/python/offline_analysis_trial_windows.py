@@ -32,16 +32,15 @@ import numpy as np
 import seaborn as sns
 
 # Define the window sizes to test
-TRIAL_WINDOWS: List[tuple] = ["0.0:0.5",  "0.2:0.7"]
 TIMESTAMP = time.strftime("%Y%m%d-%H%M%S")
-# TRIAL_WINDOWS: List[tuple] = [
-#     (0, 0.3), (0, 0.5), (0, 0.7),
-#     (0.1, 0.4), (0.1, 0.6), (0.1, 0.8),
-#     (0.2, 0.5), (0.2, 0.7),
-#     (0.3, 0.6), (0.3, 0.8),
-#     (0.4, 0.7),
-#     (0.5, 0.8)
-#     ]
+TRIAL_WINDOWS: List[str] = [
+    "0:0.3", "0:0.5", "0:0.7",
+    "0.1:0.4", "0.1:0.6", "0.1:0.8",
+    "0.2:0.5", "0.2:0.7",
+    "0.3:0.6", "0.3:0.8",
+    "0.4:0.7",
+    "0.5:0.8"
+    ]
 
 def save_output_csv(data: pd.DataFrame, output_path: Path) -> None:
     """Save the output data to a csv file.
@@ -114,7 +113,7 @@ def main(data_path: Path, parameters: Parameters, output_path: Path, windows: Li
     for window in windows:
         # Update the parameters with the current window
         parameters['trial_window'] = window
-
+ 
         model = train_default_bcipy_model(data_path, parameters)
         output_data.append((window, model.auc))
     
