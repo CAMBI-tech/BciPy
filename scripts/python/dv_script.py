@@ -17,9 +17,12 @@ user_id/ * this is what the user should load from the file dialog
 
 We want the following averaged measures:
 
-Accuracy
-Copy_Rate
-Correct_Rate
+Accuracy: The accuracy of the copy phrase task based on correct/incorrect selections.
+DV_Accuracy: The accuracy of the copy phrase task based on actual typed text, excluding all corrections.
+DV_Copy_Rate: DV_Accuracy divided by the total time spent on the task.
+DV_Correct_Count: The number of correct selections based on the actual typed text.
+Copy_Rate: The number of correct selections divided by the total time spent on the task.
+Correct_Rate: The number of correct selections divided by the total number of selections.
 Inquiries_per_selection
 Inquiry_Total
 Selections_Correct
@@ -70,6 +73,9 @@ MEASURES = [
     "Date",
     "Date_Time",
     "Accuracy",
+    "DV_Accuracy",
+    "DV_Copy_Rate",
+    "DV_Correct_Count",
     "Copy_Rate",
     "Correct_Rate",
     "Inquiries_Per_Selection",
@@ -155,21 +161,53 @@ def calculate_summary_measures(data: dict, experiment_id: str) -> dict:
                 measures['Switch_Total'].append(MISSING_MEASURE)
                 measures['Switch_Response_Time'].append(MISSING_MEASURE)
             
+            # pull the very last series and inquiry to get the final typed phrase, taking the last five characters
+            last_series = str(len(session['series']))
+            # get the last inquiry in the last series which is zero indexed
+            last_inquiry = str(len(session['series'][last_series]) - 1)
+            target_text = session['series'][last_series][last_inquiry]['target_text']
+            last_display_state = session['series'][last_series][last_inquiry]['next_display_state']
+            target_phrase = target_text.split("_")
+            final_typed = last_display_state.split("_")
+
+            # catch the case were the final typed phrase is less than the target phrase. 
+            # This is likely due to a backspacing too far and not being able to correct it.
+            if len(final_typed) < len(target_phrase):
+                correct_copy = 0
+                copy_accuracy = 0
+                copy_rate = 0
+            else:
+                target_phrase = target_phrase[-1]
+                final_typed = final_typed[-1]
+                # determine the copy accuracy by comparing the target phrase to the final typed phrase
+                correct_copy = 0
+                for i, j in zip(target_phrase, final_typed):
+                    if i == j:
+                        correct_copy += 1
+                    else:
+                        break
+                # find the first in
+                copy_accuracy = correct_copy / len(target_phrase)
+                copy_rate = copy_accuracy / float(session['total_minutes'])
+            
+            measures['DV_Accuracy'].append(copy_accuracy)
+            measures['DV_Copy_Rate'].append(copy_rate)
+            measures['DV_Correct_Count'].append(correct_copy)
 
     # calculate the average of the measures
     for measure_id in MEASURES:
-        try:
-            measures[measure_id] = sum(measures[measure_id]) / len(measures[measure_id])
-        except ZeroDivisionError:
-            measures[measure_id] = MISSING_MEASURE
-        except TypeError:
-            measures[measure_id] = MISSING_MEASURE
-        except ValueError:
-            measures[measure_id] = MISSING_MEASURE
+        if 'count' in measure_id.lower():
+            measures[measure_id] = sum(measures[measure_id])
+        else:
+            try:
+                measures[measure_id] = sum(measures[measure_id]) / len(measures[measure_id])
+            except ZeroDivisionError:
+                measures[measure_id] = MISSING_MEASURE
+            except TypeError:
+                measures[measure_id] = MISSING_MEASURE
+            except ValueError:
+                measures[measure_id] = MISSING_MEASURE
     return measures
-
-def calculate_correct_backspace(data: dict) -> int:
-    pass
 
 def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
     """Iterate over the experiment data.
@@ -209,6 +247,8 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
                     if not copy_phrase_paths:
                         print(f"No copy phrase data found for {user_id} on {date_time}")
                         continue
+
+                    print(f"Processing {user_id} on {date_time}")
                     # load the session data
                     i = 0
                     for copy_phrase_data in copy_phrase_paths:
