@@ -221,7 +221,6 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
     # grab the user_id from the path
     user_id = os.path.basename(user_data_path)
     session_data = {}
-    measures_all = {}
     # iterate over the user directories
     for date in os.listdir(user_data_path):
         if not os.path.isdir(os.path.join(user_data_path, date)):
@@ -315,6 +314,3 @@ if __name__ in "__main__":
     
     # iterate over the experiment data
     iterate_experiment_data(path, args.experiment, output)
-    
-
-    
