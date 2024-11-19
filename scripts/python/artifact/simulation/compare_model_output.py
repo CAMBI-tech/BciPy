@@ -318,6 +318,7 @@ def calculate_itr(
     # N = number of targets
     # P = accuracy
     # S = number of inquiries
+    # N = symbol set
     # T = total time in minutes as estimated by the formula below (T_min)
     N = conf_matrix.TP + conf_matrix.FN
     trial_count = N + conf_matrix.FP + conf_matrix.TN
