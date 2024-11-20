@@ -3,8 +3,8 @@ import logging
 from typing import Dict, List, Type
 
 from bcipy.helpers.language_model import init_language_model
-from bcipy.helpers.load import load_json_parameters, load_signal_models
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH
+from bcipy.helpers.load import load_json_parameters, load_signal_model
+from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
 from bcipy.simulator.data.data_process import init_data_processor
@@ -15,18 +15,34 @@ from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
 
+def update_latest_params(parameters: Parameters) -> None:
+    """Update the given parameters with the latest missing values"""
+    default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH,
+                                          value_cast=True)
+    added_params = [
+        key for key, change in default_params.diff(parameters).items()
+        if change.original_value is None
+    ]
+    if added_params:
+        logger.info(
+            f"Added missing parameters using default values: {added_params}")
+        parameters.add_missing_items(default_params)
+
+
 class TaskFactory():
     """Constructs the hierarchy of objects necessary for initializing a task."""
 
     def __init__(
             self,
             params_path: str,
-            model_path: str,
             source_dirs: List[str],
+            signal_model_paths: List[str],
             sampling_strategy: Type[Sampler] = TargetNontargetSampler,
             task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask):
+
         self.params_path = params_path
-        self.model_path = model_path
+        self.signal_model_paths = signal_model_paths
+
         self.source_dirs = source_dirs
         self.sampling_strategy = sampling_strategy
         self.simulation_task = task
@@ -34,20 +50,12 @@ class TaskFactory():
         logger.info("Loading parameters")
         self.parameters = load_json_parameters(self.params_path,
                                                value_cast=True)
-        default_params = load_json_parameters(DEFAULT_PARAMETERS_PATH,
-                                              value_cast=True)
-
-        added_params = [
-            key
-            for key, change in default_params.diff(self.parameters).items()
-            if change.original_value is None
-        ]
-        logger.info(
-            f"Added missing parameters using default values: {added_params}")
-        self.parameters.add_missing_items(default_params)
+        update_latest_params(self.parameters)
 
         logger.info("Loading signal models")
-        self.signal_models = load_signal_models(directory=self.model_path)
+        self.signal_models = [
+            load_signal_model(path) for path in signal_model_paths
+        ]
         logger.debug(self.signal_models)
 
         logger.info("Initializing language model")
