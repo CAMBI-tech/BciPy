@@ -172,11 +172,15 @@ def prompt_filter() -> str:
 
 def select_data(parent_folder: Optional[str] = None) -> List[Path]:
     """Select data to use for the simulation."""
+    if parent_folder:
+        path = Path(parent_folder)
+    else:
+        selected = select_data_folder()
+        path = Path(selected)
 
-    path = Path(parent_folder or select_data_folder())
     glob_pattern = prompt_filter()
     paths = sorted([
-        Path(p) for p in glob(str(Path(path, glob_pattern)))
+        Path(p) for p in glob(str(Path(path, glob_pattern)), recursive=True)
         if not excluded(Path(p))
     ])
     print_directories(path, paths)
@@ -224,6 +228,14 @@ def get_acq_mode(params_path: str):
         return params['acq_mode'].get('value', 'EEG')
 
 
+def command(params: str, models: List[str], source_dirs: List[str]) -> None:
+    """Command equivalent to to the result of the interactive selection of
+    simulator inputs."""
+    model_args = ' '.join([f"-m {path}" for path in models])
+    dir_args = ' '.join(f"-d {source}" for source in source_dirs)
+    return f"bcipy-sim -p {params} {model_args} {dir_args}"
+
+
 def main(args: Dict[str, Any]) -> TaskFactory:
     """Main function"""
     params = args.get('parameters', None)
@@ -236,6 +248,7 @@ def main(args: Dict[str, Any]) -> TaskFactory:
 
     source_dirs = select_data(args.get('data_folder', None))
 
+    logger.info(command(params, model_paths, source_dirs))
     return TaskFactory(params_path=params,
                        source_dirs=source_dirs,
                        signal_model_paths=model_paths,
