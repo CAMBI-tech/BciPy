@@ -224,7 +224,7 @@ class FormInput(QWidget):
                  value: str,
                  help_tip: Optional[str] = None,
                  options: Optional[List[str]] = None,
-                 editable: bool = True,
+                 editable: Optional[bool] = True,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
@@ -273,8 +273,10 @@ class FormInput(QWidget):
         # Default is a text input
         return QLineEdit(value)
 
-    def init_editable(self, value: bool) -> QWidget:
+    def init_editable(self, value: bool) -> Optional[QWidget]:
         "Override. Another checkbox is needed for editable"
+        if value is None:
+            return None
         editable_checkbox = QCheckBox("Editable")
         editable_checkbox.setChecked(value)
         editable_checkbox.setFont(font(size=12))
