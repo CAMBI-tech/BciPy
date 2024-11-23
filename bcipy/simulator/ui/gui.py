@@ -5,24 +5,23 @@ import argparse
 import fnmatch
 import os
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QFileDialog, QHBoxLayout,
-                             QLabel, QLineEdit, QPushButton, QScrollArea,
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout,
+                             QLineEdit, QPushButton, QScrollArea, QSpinBox,
                              QTreeWidget, QTreeWidgetItem, QVBoxLayout,
                              QWidget)
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.gui.file_dialog import FileDialog
-from bcipy.gui.main import (DirectoryInput, FileInput, IntegerInput,
-                            static_text_control)
+from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
 from bcipy.helpers.parameters import Parameters
 from bcipy.preferences import preferences
 from bcipy.simulator.ui.cli import excluded
+from bcipy.simulator.util.artifact import DEFAULT_SAVE_LOCATION
 
 
 def walk_directory(directory: Path,
@@ -70,11 +69,12 @@ class DirectoryTree(QWidget):
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
+        self.label = "Selected Data Dictionaries"
         self.tree = self.make_tree()
         self.layout = QVBoxLayout()
+        self.layout.addWidget(LabeledWidget(self.label, self.tree))
         self.layout.addWidget(self.tree)
         self.setLayout(self.layout)
-        self.hide()
 
     def update(self, parent_directory: str,
                selected_subdirectories: List[str]) -> None:
@@ -82,13 +82,10 @@ class DirectoryTree(QWidget):
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
-        self.layout.removeWidget(self.tree)
-        if self.parent_directory and self.paths:
+        clear_layout(self.layout)
+        if self.parent_directory:
             self.tree = self.make_tree()
-            self.layout.addWidget(self.tree)
-            self.show()
-        else:
-            self.hide()
+            self.layout.addWidget(LabeledWidget(self.label, self.tree))
 
     def make_tree(self) -> QTreeWidget:
         """Initialize the tree widget"""
@@ -108,72 +105,126 @@ class DirectoryTree(QWidget):
             return False
         return True
 
-    def show(self):
-        """Show this widget, and all child widgets."""
-        self.tree.setVisible(True)
 
-    def hide(self):
-        """Hide this widget, and all child widgets."""
-        self.tree.setVisible(False)
+class ChooseFileInput(QWidget):
+    """Text field and button which pops open a file selection dialog."""
 
+    def __init__(self,
+                 value: Optional[str] = None,
+                 file_selector: str = "*",
+                 prompt: str = "Select a file",
+                 change_event: Optional[Callable] = None):
 
-class ParameterFileInput(FileInput):
-    """Prompts for a parameters file."""
+        super().__init__()
+        self.file_selector = file_selector
+        self.prompt = prompt
+        self.change_event = change_event
+        self.control = QLineEdit(value)
+        self.control.textChanged.connect(self.change)
 
-    def __init__(self, param_change_event: Callable, **kwargs):
-        super().__init__(**kwargs)
-        self.parameters: Optional[Parameters] = None
-        self.param_change_event = param_change_event
-        self.control.textChanged.connect(self.on_parameter_change)
+        btn = QPushButton('...')
+        btn.setFixedWidth(40)
+        btn.clicked.connect(self.update_path)
+        hbox = QHBoxLayout()
+        hbox.setContentsMargins(0, 0, 0, 0)
+        hbox.addWidget(self.control)
+        hbox.addWidget(btn)
+        self.setLayout(hbox)
 
     def prompt_path(self) -> str:
         """Prompts the user with a FileDialog. Returns the selected value or None."""
         dialog = FileDialog()
         directory = preferences.last_directory
-        filename = dialog.ask_file("*.json",
+        filename = dialog.ask_file(self.file_selector,
                                    directory,
-                                   prompt="Select a parameters file")
-
-        # update last directory preference
+                                   prompt=self.prompt)
         path = Path(filename)
         if filename and path.is_file():
             preferences.last_directory = str(path.parent)
         return filename
 
-    def on_parameter_change(self):
-        """Connected to a change in the user input parameters."""
-        if self.value() is not None and Path(self.value()).is_file():
-            self.parameters = Parameters(self.value(), cast_values=True)
-        else:
-            self.parameters = None
-        self.param_change_event()
+    def update_path(self) -> None:
+        """Prompts the user for a value and updates the control's value if one was input."""
+        name = self.prompt_path()
+        if name:
+            self.control.setText(name)
+
+    def change(self):
+        """Called when the path changes"""
+        if self.change_event:
+            self.change_event()
+
+    def value(self) -> Optional[str]:
+        """Path value"""
+        return self.control.text()
 
 
-class ParentDirectoryInput(DirectoryInput):
-    """Input for the parent directory. Notifies on change."""
+class ChooseDirectoryInput(ChooseFileInput):
+    """Text field and button which pops open a directory selection dialog."""
 
-    def __init__(self, change_event: Optional[Callable], **kwargs):
-        super().__init__(**kwargs)
-        self.change_event = change_event
-        self.control.textChanged.connect(self.change)
+    def __init__(self,
+                 value: Optional[str] = None,
+                 prompt: str = "Select a directory",
+                 change_event: Optional[Callable] = None):
+        super().__init__(value=value, prompt=prompt, change_event=change_event)
 
     def prompt_path(self):
         dialog = FileDialog()
         directory = ''
         if preferences.last_directory:
             directory = str(Path(preferences.last_directory).parent)
-        name = dialog.ask_directory(directory,
-                                    prompt="Select a parent data directory")
+        name = dialog.ask_directory(directory, prompt=self.prompt)
         if name and Path(name).is_dir():
             preferences.last_directory = name
         return name
 
-    def separator(self) -> QWidget:
-        line = QLabel()
-        line.setFixedHeight(0)
-        return line
+
+class ParameterFileInput(ChooseFileInput):
+    """Prompts for a parameters file."""
+
+    def __init__(self, **kwargs):
+        kwargs['file_selector'] = "*.json"
+        kwargs['prompt'] = "Select a parameters file"
+        super().__init__(**kwargs)
+        self.parameters: Optional[Parameters] = None
 
     def change(self):
+        """Connected to a change in the user input parameters."""
+        value = self.value()
+        if value is not None and Path(value).is_file():
+            self.parameters = Parameters(value, cast_values=True)
+        else:
+            self.parameters = None
+        if self.change_event:
+            self.change_event()
+
+
+class DirectoryFilters(QWidget):
+    """Fields that filter the selected directories"""
+
+    def __init__(self, change_event: Optional[Callable], **kwargs):
+        super().__init__(**kwargs)
+        self.change_event = change_event
+        self.layout = QVBoxLayout()
+
+        self.nested_filter_control = QCheckBox("Include nested directories")
+        self.nested_filter_control.setChecked(True)
+        self.nested_filter_control.checkStateChanged.connect(self.change)
+
+        # self.name_filter_control_label = QLabel("Name contains")
+        self.name_filter_control = QLineEdit("")
+        self.name_filter_control.textChanged.connect(self.change)
+        self.layout.addWidget(self.nested_filter_control)
+
+        form = QFormLayout()
+        form.setFormAlignment(Qt.AlignmentFlag.AlignLeft)
+        form.addRow("Name contains", self.name_filter_control)
+
+        self.layout.addLayout(form)
+        self.setLayout(self.layout)
+
+    def change(self):
+        """Called when a filter field is modified."""
         if self.change_event:
             self.change_event()
 
@@ -183,36 +234,31 @@ class DataDirectorySelect(QWidget):
     Includes an input for a parent directory and optional filters.
     """
 
-    def __init__(self, parent_directory: Optional[str] = None):
+    def __init__(self,
+                 parent_directory: Optional[str] = None,
+                 change_event: Optional[Callable] = None):
         super().__init__()
         self.layout = QVBoxLayout()
+        self.change_event = change_event
 
-        self.parent_directory_control = ParentDirectoryInput(
+        self.parent_directory_control = ChooseDirectoryInput(
             change_event=self.update_directory_tree,
-            label="Data Parent Directory",
-            value=parent_directory,
-            help_tip="Parent directory for data folders",
-            editable=None)
+            prompt="Select a parent data directory",
+            value=parent_directory)
 
-        self.nested_filter_control = QCheckBox("Include nested directories")
-        self.nested_filter_control.setChecked(True)
-        self.nested_filter_control.checkStateChanged.connect(
-            self.update_directory_tree)
-
-        self.name_filter_control_label = QLabel("Name contains")
-        self.name_filter_control = QLineEdit("")
-        self.name_filter_control.textChanged.connect(
-            self.update_directory_tree)
-
+        self.directory_filter_control = DirectoryFilters(
+            change_event=self.update_directory_tree)
         self.directory_tree = DirectoryTree()
 
-        self.layout.addWidget(self.parent_directory_control)
+        self.parent_directory_control.layout().setContentsMargins(0, 0, 0, 0)
+        self.directory_filter_control.layout.setContentsMargins(0, 0, 0, 0)
+        # self.directory_filter_control.setVisible(False)
+        # self.directory_tree.setVisible(False)
 
-        self.layout.addWidget(self.nested_filter_control)
-        self.layout.addWidget(self.name_filter_control_label)
-        self.layout.addWidget(self.name_filter_control)
         self.layout.addWidget(
-            static_text_control(self, label="Selected Data Directories"))
+            LabeledWidget("Data Parent Directory",
+                          self.parent_directory_control))
+        self.layout.addWidget(self.directory_filter_control)
         self.layout.addWidget(self.directory_tree)
 
         self.setLayout(self.layout)
@@ -225,9 +271,14 @@ class DataDirectorySelect(QWidget):
 
     def match_pattern(self) -> str:
         """Pattern used to match a directory with fnmatch."""
-        if self.name_filter_control.text():
-            return f"*{self.name_filter_control.text().strip(' *')}*"
+        name_filter = self.directory_filter_control.name_filter_control.text()
+        if name_filter:
+            return f"*{name_filter.strip(' *')}*"
         return "*"
+
+    def use_nested(self) -> bool:
+        """Include nested directories"""
+        return self.directory_filter_control.nested_filter_control.isChecked()
 
     def data_directories(self) -> Optional[List[Path]]:
         """Compute the data directories of interest."""
@@ -237,7 +288,7 @@ class DataDirectorySelect(QWidget):
 
         pattern = self.match_pattern()
         subdirs = []
-        if self.nested_filter_control.isChecked():
+        if self.use_nested():
             for cur_path, directories, _files in os.walk(parent, topdown=True):
                 for name in fnmatch.filter(directories, pattern):
                     path = Path(cur_path, name)
@@ -253,18 +304,30 @@ class DataDirectorySelect(QWidget):
 
     def update_directory_tree(self):
         """Update the directory tree"""
-        self.directory_tree.update(self.parent_directory(),
-                                   self.data_directories())
+        # self.directory_filter_control.setVisible(False)
+        # self.directory_tree.setVisible(False)
+        if self.parent_directory():
+            # self.directory_filter_control.setVisible(True)
+            # self.directory_tree.setVisible(True)
+            self.directory_tree.update(self.parent_directory(),
+                                       self.data_directories())
+        # notify any listeners of the change
+        if self.change_event:
+            self.change_event()
 
 
-class ModelFileInput(FileInput):
+class ModelFileInput(ChooseFileInput):
     """Prompts for a parameters file."""
 
-    def prompt_path(self) -> str:
-        """Prompts the user with a FileDialog. Returns the selected value or None."""
-        name, _ = QFileDialog.getOpenFileName(caption='Select a model',
-                                              filter='*.pkl')
-        return name
+    def __init__(self,
+                 value: Optional[str] = None,
+                 file_selector: str = "*.pkl",
+                 prompt: str = "Select a model",
+                 change_event: Optional[Callable] = None):
+        super().__init__(value=value,
+                         file_selector=file_selector,
+                         prompt=prompt,
+                         change_event=change_event)
 
 
 class ModelInputs(QWidget):
@@ -273,7 +336,11 @@ class ModelInputs(QWidget):
     def __init__(self, content_types: Optional[List[str]] = None):
         super().__init__()
 
-        self.layout = QVBoxLayout()
+        self.layout = QFormLayout()
+        self.layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft
+                                     | Qt.AlignmentFlag.AlignVCenter)
+        self.layout.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.controls = self._create_inputs(content_types or ['EEG'])
         self._add_controls()
         self.setLayout(self.layout)
@@ -283,20 +350,43 @@ class ModelInputs(QWidget):
         self.controls = self._create_inputs(value)
         self._add_controls()
 
-    def _create_inputs(self, content_types: List[str]) -> List[QWidget]:
+    def _create_inputs(self,
+                       content_types: List[str]) -> List[Tuple[str, QWidget]]:
         """Create a path input for each model based on the configured acq_mode."""
-        return [
-            ModelFileInput(label=f"{content_type} Model",
-                           value=None,
-                           help_tip=f"Path to the {content_type} model.",
-                           editable=None) for content_type in content_types
-        ]
+        return [(f"{content_type} Model", ModelFileInput())
+                for content_type in content_types]
 
     def _add_controls(self) -> None:
         """Add each model input to the layout."""
         clear_layout(self.layout)
-        for control in self.controls:
-            self.layout.addWidget(control)
+        for (label, control) in self.controls:
+            self.layout.addRow(label, control)
+
+
+class LabeledWidget(QWidget):
+    """Renders a widget with a label above it."""
+
+    def __init__(self, label: str, widget: QWidget, label_size: int = 14):
+        super().__init__()
+        vbox = QVBoxLayout()
+        label = static_text_control(None, label, size=label_size)
+        label.setMargin(0)
+        vbox.setSpacing(0)
+        vbox.setContentsMargins(-1, 0, -1, -1)
+        vbox.addWidget(label)
+        vbox.addWidget(widget)
+        self.setLayout(vbox)
+
+
+def sim_runs_control(value: int = 1) -> QWidget:
+    """Create a widget for entering simulation runs."""
+    # TODO: event
+    spin_box = QSpinBox()
+    spin_box.setMinimum(1)
+    spin_box.setMaximum(1000)
+    spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+    spin_box.setValue(value)
+    return spin_box
 
 
 class SimConfigForm(QWidget):
@@ -313,25 +403,39 @@ class SimConfigForm(QWidget):
 
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        self.setFixedWidth(width)
+        # self.setFixedWidth(width)
 
         self.parameter_control = ParameterFileInput(
-            param_change_event=self.update_parameters,
-            label="Parameters",
-            value=None,
-            help_tip="Path to the simulation parameters.json file.",
-            editable=None)
+            change_event=self.update_parameters)
 
         self.directory_control = DataDirectorySelect()
         self.model_input_control = ModelInputs()
-        self.runs_control = IntegerInput(label='Simulation Runs',
-                                         value=1,
-                                         editable=None)
+        self.runs_control = sim_runs_control()
+        self.output_control = ChooseDirectoryInput(value=DEFAULT_SAVE_LOCATION)
 
-        self.layout.addWidget(self.parameter_control)
+        form = QFormLayout()
+        form.setFormAlignment(Qt.AlignmentFlag.AlignLeft
+                              | Qt.AlignmentFlag.AlignVCenter)
+        form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        select_file = ChooseFileInput(file_selector="*.json",
+                                      prompt="Select a parameters file")
+        form.addRow("Simulation Runs:", sim_runs_control())
+        form.addRow("Output Directory:", self.output_control)
+        form.addRow("Sim Parameters:", self.parameter_control)
+
+        # self.layout.addWidget(
+        #     static_text_control(None, "Simulation Parameters", size=14))
+        # self.layout.addWidget(LabeledWidget("Simulation Parameters", self.parameter_control))
+
+        self.layout.addLayout(form)
         self.layout.addWidget(self.model_input_control)
         self.layout.addWidget(self.directory_control)
-        self.layout.addWidget(self.runs_control)
+        # self.layout.addWidget(self.output_control)
+        # self.layout.addWidget(self.runs_control)
+
+        # self.layout.setSpacing(0)
+        # self.layout.setContentsMargins(0, 0, 0, 0)
         self.show()
 
     @property
@@ -339,10 +443,17 @@ class SimConfigForm(QWidget):
         """Configured parameters"""
         return self.parameter_control.parameters
 
-    def command(self, params: str, models: List[str],
-                source_dirs: List[str]) -> None:
+    def command_valid(self) -> bool:
+        """Returns True if all necessary fields are input."""
+        # TODO:
+        return False
+
+    def command(self) -> str:
         """Command equivalent to to the result of the interactive selection of
         simulator inputs."""
+        params = ''
+        models = []
+        source_dirs = []
 
         model_args = ' '.join([f"-m {path}" for path in models])
         dir_args = ' '.join(f"-d {source}" for source in source_dirs)
@@ -374,149 +485,6 @@ def clear_layout(layout):
             clear_layout(child.layout())
 
 
-def do_to_widgets(layout, action):
-    """Perform some action on all widgets, including those nested in
-    child layouts."""
-    for i in range(layout.count()):
-        child = layout.itemAt(i)
-        if child.widget() is not None:
-            action(child.widget())
-        elif child.layout() is not None:
-            do_to_widgets(child.layout(), action)
-
-
-def show_all(layout):
-    """Show all items in a layout"""
-    do_to_widgets(layout, lambda widget: widget.setVisible(True))
-
-
-def hide_all(layout):
-    """Hide all items in a layout"""
-    do_to_widgets(layout, lambda widget: widget.setVisible(False))
-
-
-# class ChangeItems(QWidget):
-#     """Line items showing parameter changes."""
-
-#     def __init__(self, json_file: str):
-#         super().__init__()
-#         self.changes = changes_from_default(json_file)
-#         self.layout = QVBoxLayout()
-#         self._init_changes()
-#         self.setLayout(self.layout)
-
-#     def _init_changes(self):
-#         """Initialize the line items for changes."""
-#         if not self.changes:
-#             self.layout.addWidget(
-#                 static_text_control(None,
-#                                     label="None",
-#                                     size=12,
-#                                     color='darkgray'))
-
-#         for _key, param_change in self.changes.items():
-#             param = param_change.parameter
-#             hbox = QHBoxLayout()
-
-#             lbl = static_text_control(
-#                 None,
-#                 label=f"* {param['name']}: {param['value']}",
-#                 size=13,
-#                 color="darkgreen")
-
-#             original_value = static_text_control(
-#                 None,
-#                 label=f"(default: {param_change.original_value})",
-#                 color='darkgray',
-#                 size=12)
-#             hbox.addWidget(lbl)
-#             hbox.addWidget(original_value)
-#             self.layout.addLayout(hbox)
-
-#     @property
-#     def is_empty(self) -> bool:
-#         """Boolean indicating whether there are any changes"""
-#         return not bool(self.changes)
-
-#     def update_changes(self, json_file: str):
-#         """Update the changed items"""
-#         self.clear()
-#         self.changes = changes_from_default(json_file)
-#         self._init_changes()
-
-#     def show(self):
-#         """Show the changes"""
-#         show_all(self.layout)
-
-#     def hide(self):
-#         """Hide the changes"""
-#         hide_all(self.layout)
-
-#     def clear(self):
-#         """Clear items"""
-#         clear_layout(self.layout)
-
-# class ParamsChanges(QWidget):
-#     """Displays customizations from the default parameters in a scroll area
-#     with buttons to show / hide the list of items."""
-
-#     def __init__(self, json_file: str):
-#         super().__init__()
-#         self.change_items = ChangeItems(json_file)
-#         self.collapsed = self.change_items.is_empty
-
-#         self.show_label = '[+]'
-#         self.hide_label = '[-]'
-
-#         self.layout = QVBoxLayout()
-
-#         self.changes_area = QScrollArea()
-#         self.changes_area.setVerticalScrollBarPolicy(
-#             Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-#         self.changes_area.setHorizontalScrollBarPolicy(
-#             Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-#         self.changes_area.setWidgetResizable(True)
-#         self.changes_area.setWidget(self.change_items)
-#         self.changes_area.setVisible(not self.collapsed)
-
-#         control_box = QHBoxLayout()
-#         control_box.addWidget(
-#             static_text_control(None, label='Changed Parameters:'))
-#         self.toggle_button = QPushButton(
-#             self.show_label if self.collapsed else self.hide_label)
-#         self.toggle_button.setFlat(True)
-#         self.toggle_button.setFixedWidth(40)
-#         self.toggle_button.clicked.connect(self.toggle)
-#         control_box.addWidget(self.toggle_button)
-
-#         self.layout.addLayout(control_box)
-#         self.layout.addWidget(self.changes_area)
-#         self.setLayout(self.layout)
-
-#     def update_changes(self, json_file: str):
-#         """Update the changed items"""
-#         self.change_items.update_changes(json_file)
-#         self.changes_area.repaint()
-
-#     def toggle(self):
-#         """Toggle visibility of items"""
-#         if self.collapsed:
-#             self.show()
-#         else:
-#             self.collapse()
-#         self.collapsed = not self.collapsed
-
-#     def show(self):
-#         """Show the changes"""
-#         self.changes_area.setVisible(True)
-#         self.toggle_button.setText(self.hide_label)
-
-#     def collapse(self):
-#         """Hide the changes"""
-#         self.changes_area.setVisible(False)
-#         self.toggle_button.setText(self.show_label)
-
-
 class MainPanel(QWidget):
     """Main GUI window.
     Parameters:
@@ -534,38 +502,33 @@ class MainPanel(QWidget):
         self.command = ''
 
         self.form = SimConfigForm(width=self.size[0])
-        # self.changes = ParamsChanges(self.json_file)
         self.flash_msg = ''
-        self.initUI()
+        self.init_ui()
 
-    def initUI(self):
+    def init_ui(self):
         """Initialize the UI"""
         vbox = QVBoxLayout()
 
         header_box = QHBoxLayout()
-        header_box.addSpacing(5)
-        self.edit_msg = static_text_control(self,
-                                            label='Simulation Configuration',
-                                            size=14,
-                                            color='dimgray')
-        header_box.addWidget(self.edit_msg)
+        header_box.addSpacing(4)
+        header_box.addWidget(
+            static_text_control(self,
+                                label='BciPy Simulator Configuration',
+                                size=16,
+                                color='dimgray'))
         vbox.addLayout(header_box)
-
-        # self.changes_panel = QHBoxLayout()
-        # self.changes_panel.addWidget(self.changes)
-        # vbox.addLayout(self.changes_panel)
 
         self.form_panel = QScrollArea()
         self.form_panel.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
         self.form_panel.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.form_panel.setWidgetResizable(True)
-        self.form_panel.setFixedWidth(self.size[0])
+        self.form_panel.setMinimumWidth(self.size[0])
         self.form_panel.setWidget(self.form)
 
         vbox.addWidget(self.form_panel)
-        vbox.addSpacing(5)
+        vbox.addSpacing(4)
 
         # Controls
         control_box = QHBoxLayout()
@@ -577,11 +540,11 @@ class MainPanel(QWidget):
 
         vbox.addLayout(control_box)
 
-        self.save_msg = static_text_control(self,
-                                            label='',
-                                            size=12,
-                                            color='darkgray')
-        vbox.addWidget(self.save_msg)
+        self.command_msg = static_text_control(self,
+                                               label='',
+                                               size=12,
+                                               color='darkgray')
+        vbox.addWidget(self.command_msg)
         self.setLayout(vbox)
         self.setFixedHeight(self.size[1])
         self.setWindowTitle(self.title)
@@ -589,15 +552,13 @@ class MainPanel(QWidget):
 
     def on_run(self):
         """Event handler for running the simulation."""
-        if self.form.save():
-            self.save_msg.setText(f'Last saved: {datetime.now()}')
-            self.save_msg.repaint()
 
-            # self.changes.update_changes(self.json_file)
-            # self.changes.repaint()
+        if self.form.command_valid():
+            self.command_msg.setText(self.form.command())
+            self.command_msg.repaint()
 
 
-def init(title='BCI Simulator', size=(750, 800)) -> str:
+def init(title='BCI Simulator', size=(750, 600)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)
     panel = MainPanel(title, size)
