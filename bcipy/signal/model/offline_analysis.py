@@ -311,7 +311,8 @@ def analyze_gaze(
 
     # Apply preprocessing:
     inquiry_length = inquiries_list[0].shape[1]  # number of time samples in each inquiry
-    preprocessed_array = np.zeros((len(inquiries_list), 4, inquiry_length))
+    predefined_dimensions = 4  # left_x, left_y, right_x, right_y
+    preprocessed_array = np.zeros((len(inquiries_list), predefined_dimensions, inquiry_length))
     # Extract left_x, left_y, right_x, right_y for each inquiry
     for j in range(len(inquiries_list)):
         left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_list[j])
@@ -367,7 +368,7 @@ def analyze_gaze(
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
                 time_average[sym].append(temp)
                 centralized_data[sym].append(
-                    model.substract_mean(
+                    model.subtract_mean(
                         preprocessed_data[sym][j],
                         temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
@@ -377,14 +378,15 @@ def analyze_gaze(
         # Split the data into train and test sets & fit the model:
         centralized_gaze_data = np.zeros_like(preprocessed_array)
         for i, (_, sym) in enumerate(zip(preprocessed_array, target_symbols)):
-            centralized_gaze_data[i] = model.substract_mean(preprocessed_array[i], time_average[sym])
-        reshaped_data = centralized_gaze_data.reshape((len(centralized_gaze_data), inquiry_length * 4))
+            centralized_gaze_data[i] = model.subtract_mean(preprocessed_array[i], time_average[sym])
+        reshaped_data = centralized_gaze_data.reshape(
+            (len(centralized_gaze_data), inquiry_length * predefined_dimensions))
 
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
 
-        for eye_coord_0 in range(4):
-            for eye_coord_1 in range(4):
+        for eye_coord_0 in range(predefined_dimensions):
+            for eye_coord_1 in range(predefined_dimensions):
                 for time_0 in range(inquiry_length):
                     for time_1 in range(inquiry_length):
                         l_ind = eye_coord_0 * inquiry_length + time_0
@@ -510,6 +512,9 @@ def offline_analysis(
                 et_model = analyze_gaze(
                     raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP")
                 models.append(et_model)
+    else:
+        log.info("User opted out of offline analysis.")
+        models = []
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")

@@ -1,14 +1,14 @@
 import numpy as np
 from sklearn.utils import resample
+from typing import Tuple
 
 from bcipy.config import (TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.stimuli import update_inquiry_timing
-from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GaussianProcess)
+from bcipy.signal.model.gaussian_mixture import GaussianProcess
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
@@ -21,7 +21,7 @@ def calculate_eeg_gaze_fusion_acc(
         device_spec_gaze,
         symbol_set,
         parameters,
-        data_folder):
+        data_folder) -> Tuple[float, float, float]:
     """
     Preprocess the EEG and gaze data. Calculate the accuracy of the fusion of EEG and Gaze models.
     Args:
@@ -52,17 +52,14 @@ def calculate_eeg_gaze_fusion_acc(
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
-    # static_offset = parameters.get("static_trigger_offset")
-    static_offset = 0.0
+    static_offset = device_spec_eeg.static_offset
+
     # Get the flash time (for gaze analysis)
     flash_time = parameters.get("time_flash")
 
     eeg_channels = eeg_data.channels
-    eeg_type_amp = eeg_data.daq_type
+    eeg_channel_map = analysis_channels(eeg_channels, device_spec_eeg)
     eeg_sample_rate = eeg_data.sample_rate
-
-    gaze_channels = gaze_data.channels
-    gaze_type_amp = gaze_data.daq_type
     gaze_sample_rate = gaze_data.sample_rate
 
     # setup filtering
@@ -74,15 +71,6 @@ def calculate_eeg_gaze_fusion_acc(
         bandpass_order=transform_params.filter_order,
         downsample_factor=transform_params.down_sampling_rate,
     )
-
-    eeg_channel_map = analysis_channels(eeg_channels, device_spec_eeg)
-    gaze_channel_map = analysis_channels(gaze_channels, device_spec_gaze)
-
-    # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
-    # The timestamp column [0] is already excluded.
-    eeg_channels_used = [eeg_channels[i] for i, keep in enumerate(eeg_channel_map) if keep == 1]
-
-    gaze_channels_used = [gaze_channels[i] for i, keep in enumerate(gaze_channel_map) if keep == 1]
 
     # Define the model object before reshaping the data
     k_folds = parameters.get("k_folds")
@@ -118,8 +106,6 @@ def calculate_eeg_gaze_fusion_acc(
                       for idx, targetness in enumerate(trigger_targetness_gaze) if targetness == 'prompt']
     inq_start = trigger_timing_gaze[1::11]  # inquiry start times, exluding prompt and fixation
 
-    symbol_set = alphabet()
-
     # update the trigger timing list to account for the initial trial window
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
@@ -147,7 +133,7 @@ def calculate_eeg_gaze_fusion_acc(
         gaze_data=trajectory_data,
         sample_rate=gaze_sample_rate,
         stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=10,
+        num_stimuli_per_inquiry=trials_per_inquiry,
         symbol_set=symbol_set
     )
 
@@ -158,7 +144,8 @@ def calculate_eeg_gaze_fusion_acc(
 
     # More gaze preprocessing:
     inquiry_length = gaze_inquiries_list[0].shape[1]  # number of time samples in each inquiry
-    preprocessed_gaze_data = np.zeros((len(gaze_inquiries_list), 4, inquiry_length))
+    predefined_dimensions = 4  # left_x, left_y, right_x, right_y
+    preprocessed_gaze_data = np.zeros((len(gaze_inquiries_list), predefined_dimensions, inquiry_length))
     # Extract left_x, left_y, right_x, right_y for each inquiry
     for j in range(len(gaze_inquiries_list)):
         left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_list[j])
@@ -189,7 +176,7 @@ def calculate_eeg_gaze_fusion_acc(
             temp = np.mean(preprocessed_gaze_dict[sym][j], axis=1)
             time_average_per_symbol[sym].append(temp)
             centralized_data_dict[sym].append(
-                gaze_model.substract_mean(
+                gaze_model.subtract_mean(
                     preprocessed_gaze_dict[sym][j],
                     temp))  # Delta_t = X_t - mu
         centralized_data_dict[sym] = np.array(centralized_data_dict[sym])
@@ -198,7 +185,7 @@ def calculate_eeg_gaze_fusion_acc(
     # Take the time average of the gaze data:
     centralized_gaze_data = np.zeros_like(preprocessed_gaze_data)
     for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
-        centralized_gaze_data[i] = gaze_model.substract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
+        centralized_gaze_data[i] = gaze_model.subtract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
 
     '''Use bootstrap resampling for both EEG and Gaze data'''
     n_iterations = 1
@@ -221,7 +208,8 @@ def calculate_eeg_gaze_fusion_acc(
         test_eeg_inquiry_timing = eeg_inquiry_timing[test_indices]
         inquiry_symbols_test = np.array([])
         for t_i in test_indices:
-            inquiry_symbols_test = np.append(inquiry_symbols_test, inquiry_symbols[t_i * 10:(t_i + 1) * 10])
+            inquiry_symbols_test = np.append(inquiry_symbols_test,
+                                             inquiry_symbols[t_i * trials_per_inquiry:(t_i + 1) * trials_per_inquiry])
         inquiry_symbols_test = inquiry_symbols_test.tolist()
 
         # Now extract the inquiries from trials for eeg model fitting:
@@ -249,14 +237,15 @@ def calculate_eeg_gaze_fusion_acc(
         symbol_to_index = {symbol: i for i, symbol in enumerate(symbol_set)}
 
         # train and save the gaze model as a pkl file:
-        reshaped_data = centralized_gaze_data_train.reshape((len(centralized_gaze_data_train), inquiry_length * 4))
+        reshaped_data = centralized_gaze_data_train.reshape(
+            (len(centralized_gaze_data_train), inquiry_length * predefined_dimensions))
         units = 1e4
         reshaped_data *= units
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
 
-        for eye_coord_0 in range(4):
-            for eye_coord_1 in range(4):
+        for eye_coord_0 in range(predefined_dimensions):
+            for eye_coord_1 in range(predefined_dimensions):
                 for time_0 in range(inquiry_length):
                     for time_1 in range(inquiry_length):
                         l_ind = eye_coord_0 * inquiry_length + time_0
@@ -265,8 +254,6 @@ def calculate_eeg_gaze_fusion_acc(
                             cov_matrix[l_ind, m_ind] = 0
 
         reshaped_mean = np.mean(reshaped_data, axis=0)
-
-        # eps = 5e+3
         eps = 0
         regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix)) * eps
         try:
@@ -299,8 +286,8 @@ def calculate_eeg_gaze_fusion_acc(
                 if time_average_per_symbol[sym] == []:
                     gaze_log_likelihoods[test_idx, idx] = -100000  # set a very small value
                 else:
-                    central_data = gaze_model.substract_mean(test_data, time_average_per_symbol[sym])
-                    flattened_data = central_data.reshape((inquiry_length * 4,))
+                    central_data = gaze_model.subtract_mean(test_data, time_average_per_symbol[sym])
+                    flattened_data = central_data.reshape((inquiry_length * predefined_dimensions,))
                     flattened_data *= units
                     diff = flattened_data - reshaped_mean
                     diff_list.append(diff)
@@ -322,11 +309,11 @@ def calculate_eeg_gaze_fusion_acc(
                 counter_gaze += 1
 
             # to compute eeg likelihoods, take the next 10 indices of the eeg test data every time in this loop:
-            start = test_idx * 10
-            end = (test_idx + 1) * 10
+            start = test_idx * trials_per_inquiry
+            end = (test_idx + 1) * trials_per_inquiry
             eeg_tst_data = preprocessed_test_eeg[:, start:end, :]
             inq_sym = inquiry_symbols_test[start: end]
-            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(eeg_tst_data, inq_sym, alphabet())
+            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(eeg_tst_data, inq_sym, symbol_set)
             unnormalized_log_likelihood_eeg = np.log(eeg_likelihood_ratios)
             eeg_log_likelihoods[test_idx, :] = unnormalized_log_likelihood_eeg
             normalized_posterior_eeg_only = np.exp(
@@ -358,7 +345,7 @@ def calculate_eeg_gaze_fusion_acc(
 
             # stop if posterior has nan values:
             if posterior.any() == np.nan:
-                breakpoint()
+                break
 
         eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg / len(test_indices)))
         gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze / len(test_indices)))

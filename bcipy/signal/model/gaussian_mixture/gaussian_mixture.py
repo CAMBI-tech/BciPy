@@ -52,7 +52,7 @@ class GaussianProcess(SignalModel):
 
         return new_data
 
-    def substract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
+    def subtract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:
