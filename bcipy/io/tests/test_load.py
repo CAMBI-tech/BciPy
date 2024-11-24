@@ -397,6 +397,14 @@ class TestLoadBciPyData(unittest.TestCase):
         self.assertIn(desired_datetime, datetimes)
         self.assertNotIn(self.datetimes[1], datetimes)
 
+    def test_load_bcipy_data_with_anonymize(self):
+        """Test that the user ids are not in the response when anonymize is True"""
+        response = load_bcipy_data(self.data_dir, anonymize=True)
+
+        users = [file.user_id for file in response]
+        self.assertNotIn(self.user_ids[0], users)
+        self.assertNotIn(self.user_ids[1], users)
+
 
 if __name__ == '__main__':
     unittest.main()
