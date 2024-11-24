@@ -15,6 +15,7 @@ from bcipy.acquisition.protocols.lsl.lsl_connector import (channel_names,
 from bcipy.acquisition.util import StoppableProcess
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.raw_data import RawDataWriter
+from bcipy.helpers.utils import log_to_stdout
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -239,8 +240,6 @@ def main(path: str, seconds: int = 5, debug: bool = False):
     """Function to demo the LslRecorder. Expects LSL data streams to be already
     running."""
     if debug:
-        # pylint: disable=import-outside-toplevel
-        from bcipy.helpers.utils import log_to_stdout
         log_to_stdout()
     recorder = LslRecorder(path)
     print(f"\nCollecting data for {seconds}s...")

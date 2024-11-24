@@ -4,35 +4,51 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-import os
+from typing import Optional
 from bcipy.io.convert import convert_to_bids, ConvertFormat
-from bcipy.io.load import load_experimental_data
+from bcipy.gui.file_dialog import ask_directory
+from bcipy.io.load import load_bcipy_data
 
-EXCLUDED_TASKS = ['Report', 'Offline', 'InterTask']
+EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
 
-def convert_study_to_bids(directory: str, experiment_id: str, format: ConvertFormat = ConvertFormat.BV):
+def convert_experiment_to_bids(
+        directory: str,
+        experiment_id: str,
+        format: ConvertFormat = ConvertFormat.BV,
+        output_dir: Optional[str] = None) -> None:
     """Converts the data in the study folder to BIDS format."""
-    participant_counter = 1
-    for participant in os.listdir(directory):
-        for experiment in os.listdir(os.path.join(directory, participant)):
-            if experiment == experiment_id:
-                # loop over the experiment sessions
-                session_counter = 1
-                for session in os.listdir(os.path.join(directory, participant, experiment)):
-                    # convert the session data to BIDS format
-                    for run in os.listdir(os.path.join(directory, participant, experiment, session)):
-                        if run not in EXCLUDED_TASKS:
-                            convert_to_bids(
-                                data_dir=os.path.join(directory, participant, experiment, session, run),
-                                participant_id=f'0{participant_counter}',
-                                session_id=f'0{session_counter}',
-                                run_id=run,
-                                output_dir=f'./bids/{experiment}/',
-                                format=format.value
-                            )
-                    session_counter += 1
-        participant_counter += 1
+
+    experiment_data = load_bcipy_data(
+        directory,
+        experiment_id=experiment_id,
+        excluded_tasks=EXCLUDED_TASKS,
+        anonymize=False)
+    if not output_dir:
+        output_dir = directory
+
+    errors = []
+    for data in experiment_data:
+        try:
+            convert_to_bids(
+                data_dir=data.path,
+                participant_id=data.user_id,
+                session_id=data.session_id,
+                run_id=data.run,
+                task_name=data.task_name,
+                output_dir=f'{output_dir}/bids_{experiment_id}/',
+                format=format
+            )
+        except Exception as e:
+            print(f"Error converting {data.path} - {e}")
+            errors.append(str(data.path))
+
+    print("--------------------")
+    if errors:
+        print(f"Errors converting the following data: {errors}")
+
+    print(f"\nData converted to BIDS format in {output_dir}/bids_{experiment_id}/")
+    print("--------------------")
 
 
 if __name__ == '__main__':
@@ -48,24 +64,14 @@ if __name__ == '__main__':
         '-e',
         '--experiment',
         help='Experiment ID to convert',
-        default='default',
+        default='SCRD',
     )
 
     args = parser.parse_args()
 
     path = args.directory
     if not path:
-        path = load_experimental_data()
-
-    # uncomment to convert a single session
-    # convert_to_bids(
-    #     data_dir=path,
-    #     participant_id='01',
-    #     session_id='01',
-    #     run_id='01',
-    #     output_dir='./bids/',
-    #     format=ConvertFormat.BV
-    # )
+        path = ask_directory("Select the directory with data to be converted")
 
     # convert a study to BIDS format
-    convert_study_to_bids(path, args.experiment, ConvertFormat.BV)
+    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV)

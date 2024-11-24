@@ -204,18 +204,6 @@ class TestBIDSConversion(unittest.TestCase):
                 format='invalid_format'
             )
 
-    def test_convert_to_bids_raises_error_with_invalid_output_dir(self):
-        """Test the convert_to_bids function raises an error with invalid output directory"""
-        with self.assertRaises(FileNotFoundError):
-            convert_to_bids(
-                f"{self.temp_dir}",
-                participant_id='01',
-                session_id='01',
-                run_id='01',
-                task_name='TestTask',
-                output_dir='invalid_output_dir'
-            )
-
     def test_convert_to_bids_raises_error_with_invalid_data_dir(self):
         """Test the convert_to_bids function raises an error with invalid output directory"""
         with self.assertRaises(FileNotFoundError):

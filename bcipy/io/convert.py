@@ -75,7 +75,10 @@ def convert_to_bids(
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory={data_dir} does not exist")
     if not os.path.exists(output_dir):
-        raise FileNotFoundError(f"Output directory={output_dir} does not exist")
+        try:
+            os.mkdir(output_dir)
+        except OSError as e:
+            raise OSError(f"Failed to create output directory={output_dir}") from e
     if format not in ConvertFormat.all():
         raise ValueError(f"Unsupported format={format}")
     if line_frequency not in [50, 60]:

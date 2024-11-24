@@ -10,7 +10,8 @@ from typing import List, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
-                          EXPERIMENT_FILENAME, FIELD_FILENAME, ROOT,
+                          DEFAULT_PARAMETERS_FILENAME,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.exceptions import (BciPyCoreException,
@@ -204,7 +205,7 @@ def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
 def load_signal_model(file_path: str) -> SignalModel:
     """Load signal model from persisted file.
 
-    Models are assumed to have been written using bcipy.helpers.save.save_model
+    Models are assumed to have been written using bcipy.io.save.save_model
     function and should be serialized as pickled files. Note that reading
     pickled files is a potential security concern so only load from trusted
     directories."""
@@ -282,29 +283,12 @@ def load_users(data_save_loc: str) -> List[str]:
     If the save data directory is not found, this method returns an empty list assuming no experiments
     have been run yet.
     """
-    # build a saved users list, pull out the data save location from parameters
-    saved_users: List[str] = []
-
-    # check the directory is valid, if it is, set path as data save location
-    if os.path.isdir(data_save_loc):
-        path = data_save_loc
-
-    # check the directory is valid after adding bcipy, if it is, set path as data save location
-    elif os.path.isdir(f'{ROOT}/{data_save_loc}'):
-        path = f'{ROOT}/{data_save_loc}'
-
-    else:
-        log.info(f'User save data location not found at [{data_save_loc}]! Returning empty user list.')
-        return saved_users
-
-    # grab all experiments in the directory and iterate over them to get the users
-    users = fast_scandir(path, return_path=True)
-
-    for user in users:
-        if user not in saved_users:
-            saved_users.append(user.split('/')[-1])
-
-    return saved_users
+    try:
+        bcipy_data = BciPyCollection(data_directory=data_save_loc)
+        bcipy_data.load_users()
+    except FileNotFoundError:
+        return []
+    return bcipy_data.users
 
 
 def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
@@ -318,3 +302,297 @@ def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
         return [f.path for f in os.scandir(directory_name) if f.is_dir()]
 
     return [f.name for f in os.scandir(directory_name) if f.is_dir()]
+
+
+class BciPySessionTaskData:
+    """Session Task Data.
+
+    This class is used to represent a single task data session. It is used to store the
+    path to the task data, as well as the parameters and other information about the task.
+
+    /<local_path>/<user_id>/<date>/<experiment_id>/<date_time>/
+        protocol.json
+        <task_date_time>/
+            parameters.json
+            **task_data**
+
+    """
+
+    def __init__(
+            self,
+            path: str,
+            user_id: str,
+            date: str,
+            experiment_id: str,
+            date_time: str,
+            task: str,
+            run: int = 1) -> None:
+
+        self.user_id = user_id
+        self.date = date
+        self.experiment_id = experiment_id.replace('_', '')
+        self.date_time = date_time.replace("_", "").replace("-", "")
+        self.session_id = f'{self.experiment_id}{self.date_time}'
+        self.date_time = date_time
+        self.task = task
+        self.run = str(run)
+        self.path = path
+        self.parameters = self.get_parameters()
+        self.task_name = self.parameters.get('task', 'unknown').replace(' ', '')
+        self.info = {
+            'user_id': user_id,
+            'date': date,
+            'experiment_id': self.experiment_id,
+            'date_time': self.date_time,
+            'task': task,
+            'task_name': self.task_name,
+            'run': run,
+            'path': path
+        }
+
+    def get_parameters(self) -> Parameters:
+        return load_json_parameters(
+            f'{self.path}/{DEFAULT_PARAMETERS_FILENAME}',
+            value_cast=True)
+
+    def __str__(self):
+        return f'BciPySessionTaskData: {self.info=}'
+
+    def __repr__(self):
+        return f'BciPySessionTaskData: {self.info=}'
+
+
+class BciPyCollection:
+    """BciPy Data.
+
+    This class is used to represent a full BciPy data collection.
+    """
+
+    def __init__(
+            self,
+            data_directory: str,
+            experiment_id: Optional[str] = None,
+            user_id: Optional[str] = None,
+            date: Optional[str] = None,
+            date_time: Optional[str] = None,
+            excluded_tasks: Optional[List[str]] = None,
+            anonymize: bool = False) -> None:
+        if not os.path.isdir(data_directory):
+            raise FileNotFoundError(
+                f'Data directory not found at [{data_directory}]')
+        self.data_directory = data_directory
+
+        self.experiment_id = experiment_id
+        self.user_id = user_id
+        self.date = date
+        self.date_time = date_time
+        self.excluded_tasks = excluded_tasks
+        self.anonymize = anonymize
+
+        self.session_task_data = []
+        self.user_paths = []
+        self.users = []
+
+        self.date_paths = []
+        self.dates = []
+
+        self.experiment_paths = []
+        self.experiments = []
+
+        self.date_time_paths = []
+        self.date_times = []
+
+        self.task_paths = []
+        self.tasks = []
+
+    def collect(self) -> List[BciPySessionTaskData]:
+        if not self.session_task_data:
+            self.load_tasks()
+
+        # if anonymize is set, return the anonymized data. Make a map of user_id to anonymized id
+        if self.anonymize:
+            user_map = {}
+            user_id_increment = 1
+            for task in self.session_task_data:
+                if task.user_id not in user_map:
+                    user_map[task.user_id] = f'ID{user_id_increment}'
+                    user_id_increment += 1
+                task.user_id = user_map[task.user_id]
+
+        return self.session_task_data
+
+    def load_users(self):
+        user_paths = fast_scandir(self.data_directory, return_path=True)
+        users = []
+        for user in user_paths:
+            if self.user_id:
+                if self.user_id in user:
+                    users.append(user)
+            else:
+                users.append(user)
+
+        self.user_paths = users
+        self.users = [user.split('/')[-1] for user in users]
+
+    def load_dates(self):
+        if not self.user_paths:
+            self.load_users()
+
+        date_data = []
+        for user in self.user_paths:
+            data_paths = fast_scandir(user, return_path=True)
+            for data in data_paths:
+                if self.date:
+                    if self.date in data:
+                        date_data.append(data)
+                else:
+                    date_data.append(data)
+
+        self.date_paths = date_data
+        self.dates = [date.split('/')[-1] for date in date_data]
+
+    def load_experiments(self):
+        if not self.date_paths:
+            self.load_dates()
+
+        experiment_paths = []
+        for date in self.date_paths:
+            data_paths = fast_scandir(date, return_path=True)
+            for data in data_paths:
+                if self.experiment_id:
+                    if self.experiment_id in data:
+                        experiment_paths.append(data)
+                else:
+                    experiment_paths.append(data)
+
+        self.experiment_paths = experiment_paths
+        self.experiments = [experiment.split('/')[-1] for experiment in experiment_paths]
+        # remove duplicates from the list
+        self.experiments = list(set(self.experiments))
+
+    def load_date_times(self):
+        if not self.experiment_paths:
+            self.load_experiments()
+
+        date_time_paths = []
+        for experiment in self.experiment_paths:
+            data_paths = fast_scandir(experiment, return_path=True)
+            for data in data_paths:
+                if self.date_time:
+                    if self.date_time in data:
+                        date_time_paths.append(data)
+                else:
+                    date_time_paths.append(data)
+
+        self.date_time_paths = date_time_paths
+        self.date_times = [date_time.split('/')[-1] for date_time in date_time_paths]
+
+    def sort_tasks(self, tasks: List[str]) -> List[str]:
+        """Sort Tasks.
+
+        Sorts the tasks in the order they were run using the timestamp at the end of the task path.
+        """
+        return sorted(tasks, key=lambda x: x.split('_')[-1])
+
+    def load_tasks(self) -> List[BciPySessionTaskData]:
+        if not self.date_time_paths:
+            self.load_date_times()
+
+        experiment_task_data: List[BciPySessionTaskData] = []
+        for date_time in self.date_time_paths:
+            tasks = fast_scandir(date_time, return_path=True)
+            run = 1
+            tasks = self.sort_tasks(tasks)
+            for task in tasks:
+                task_path = Path(task)
+                task = task_path.parts[-1]
+
+                # skip excluded tasks
+                for excluded_task in self.excluded_tasks:
+                    if excluded_task in task:
+                        log.info(f'Skipping excluded task [{task}]')
+                        skip = True
+                        break
+                    else:
+                        skip = False
+
+                if skip:
+                    continue
+
+                user_id = task_path.parts[-5]
+                date = task_path.parts[-4]
+                experiment_id = task_path.parts[-3]
+                date_time = task_path.parts[-2]
+                experiment_task_data.append(
+                    BciPySessionTaskData(
+                        path=task_path,
+                        user_id=user_id,
+                        date=date,
+                        experiment_id=experiment_id,
+                        date_time=date_time,
+                        run=run,
+                        task=task
+                    )
+                )
+                run += 1
+
+        self.task_paths = [task.path for task in experiment_task_data]
+        self.tasks = [task.task_name for task in experiment_task_data]
+        self.session_task_data = experiment_task_data
+
+        return experiment_task_data
+
+
+def load_bcipy_data(
+        data_directory: str,
+        experiment_id: Optional[str] = None,
+        user_id: Optional[str] = None,
+        date: Optional[str] = None,
+        date_time: Optional[str] = None,
+        excluded_tasks: Optional[List[str]] = None,
+        anonymize: bool = False) -> List[BciPySessionTaskData]:
+    """Load BciPy Data.
+
+    Walks a data directory and returns a list of data paths for the given experiment id, user id, and date.
+
+    The BciPy data directory is structured as follows:
+    data_directory/
+        user_ids/
+            dates/
+                experiment_ids/
+                    datetimes/
+                        protocol.json
+                        logs/
+                        tasks/
+                            raw_data.csv
+                            triggers.txt
+
+    data_directory: the bcipy data directory to walk
+    experiment_id: the experiment id to filter by
+    user_id: the user id to filter by
+    date: the date to filter by
+    date_time: the date time to filter by
+    excluded_tasks: a list of tasks to exclude from the returned list of experiment data
+    anonymize: whether or not to anonymize the user ids
+
+    Returns:
+    --------
+    a list of BciPySessionTaskData objects representing the experiment data
+    """
+    if not excluded_tasks:
+        excluded_tasks = []
+
+    # add logs to the excluded tasks
+    excluded_tasks.append('logs')
+
+    bcipy_data = BciPyCollection(
+        data_directory=data_directory,
+        experiment_id=experiment_id,
+        user_id=user_id,
+        date=date,
+        date_time=date_time,
+        excluded_tasks=excluded_tasks,
+        anonymize=anonymize
+    )
+
+    return bcipy_data.collect()
