@@ -389,21 +389,18 @@ class BciPyCollection:
         self.excluded_tasks = excluded_tasks
         self.anonymize = anonymize
 
-        self.session_task_data = []
-        self.user_paths = []
-        self.users = []
-
-        self.date_paths = []
-        self.dates = []
-
-        self.experiment_paths = []
-        self.experiments = []
-
-        self.date_time_paths = []
-        self.date_times = []
-
-        self.task_paths = []
-        self.tasks = []
+        # Initialize the data lists
+        self.session_task_data: List[BciPySessionTaskData] = []
+        self.user_paths: List[str] = []
+        self.users: List[str] = []
+        self.date_paths: List[str] = []
+        self.dates: List[str] = []
+        self.experiment_paths: List[str] = []
+        self.experiments: List[str] = []
+        self.date_time_paths: List[str] = []
+        self.date_times: List[str] = []
+        self.task_paths: List[str] = []
+        self.tasks: List[str] = []
 
     def collect(self) -> List[BciPySessionTaskData]:
         if not self.session_task_data:

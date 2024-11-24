@@ -398,7 +398,5 @@ class TestLoadBciPyData(unittest.TestCase):
         self.assertNotIn(self.datetimes[1], datetimes)
 
 
-
-
 if __name__ == '__main__':
     unittest.main()
