@@ -96,9 +96,7 @@ def convert_to_bids(
 
     # load the parameters
     parameters = load_json_parameters(parameters_file, value_cast=True)
-    trial_window = parameters.get("trial_window")
-    if trial_window is None:
-        trial_window = (0.0, 0.5)
+    trial_window = parameters.get("trial_window", (0.0, 0.5))
 
     if task_name is None:
         task_name = parameters.get("task")
@@ -145,7 +143,7 @@ def convert_to_bids(
         allow_preload=True,
         overwrite=True)
 
-    return str(bids_path.root)
+    return bids_path.root
 
 
 def compress(tar_file_name: str, members: List[str]) -> None:
