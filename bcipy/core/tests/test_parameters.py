@@ -6,7 +6,7 @@ from collections import abc, namedtuple
 from pathlib import Path
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.parameters import Parameters, parse_range
+from bcipy.core.parameters import Parameters, parse_range
 
 
 class TestParameters(unittest.TestCase):

@@ -1,5 +1,5 @@
 from typing import Optional, List, Tuple
-from bcipy.helpers.symbols import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.main import LanguageModel, ResponseType
 from bcipy.exceptions import InvalidLanguageModelException
 import json

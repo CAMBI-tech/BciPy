@@ -9,7 +9,7 @@ import numpy as np
 from reportlab.platypus import Paragraph, Image
 from reportlab.platypus import Flowable, KeepTogether
 
-from bcipy.helpers.report import Report, SessionReportSection, ReportSection, SignalReportSection
+from bcipy.core.report import Report, SessionReportSection, ReportSection, SignalReportSection
 
 
 class TestReport(unittest.TestCase):
@@ -90,7 +90,7 @@ class TestReport(unittest.TestCase):
         self.assertEqual(len(report.elements), 2)
 
     def test_create_header_is_called_once_compile(self):
-        with patch('bcipy.helpers.report.Report._construct_report_header') as mock_construct_header:
+        with patch('bcipy.core.report.Report._construct_report_header') as mock_construct_header:
             report = Report(self.temp_dir)
             summary = {
                 'session': 'session_name',

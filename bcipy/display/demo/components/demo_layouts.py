@@ -15,7 +15,7 @@ from bcipy.display.components.layout import (Layout, at_top, centered,
                                              scaled_size)
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.symbols import alphabet
 
 
 def make_window():

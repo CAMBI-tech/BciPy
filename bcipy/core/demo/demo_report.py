@@ -1,6 +1,6 @@
 from pathlib import Path
-from bcipy.helpers.load import load_json_parameters, load_raw_data, load_experimental_data
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
+from bcipy.io.load import load_json_parameters, load_raw_data, load_experimental_data
+from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.config import (
     BCIPY_ROOT,
     DEFAULT_PARAMETERS_FILENAME,
@@ -13,7 +13,7 @@ from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.process import get_default_transform
 from bcipy.signal.evaluate.artifact import ArtifactDetection
-from bcipy.helpers.report import Report, SignalReportSection, SessionReportSection
+from bcipy.core.report import Report, SignalReportSection, SessionReportSection
 
 
 if __name__ == "__main__":

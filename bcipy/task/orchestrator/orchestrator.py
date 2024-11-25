@@ -10,8 +10,8 @@ import time
 from logging import Logger
 from typing import List, Type, Optional
 
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.system_utils import get_system_info, configure_logger
+from bcipy.core.parameters import Parameters
+from bcipy.helpers.utils import get_system_info, configure_logger
 from bcipy.task import Task, TaskData, TaskMode
 from bcipy.config import (
     DEFAULT_EXPERIMENT_ID,
@@ -23,7 +23,7 @@ from bcipy.config import (
     PROTOCOL_LOG_FILENAME,
     SESSION_LOG_FILENAME,
 )
-from bcipy.helpers.load import load_json_parameters
+from bcipy.io.load import load_json_parameters
 
 
 class SessionOrchestrator:

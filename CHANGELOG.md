@@ -1,3 +1,21 @@
+# 2.0.0
+
+## Contributions
+
+- BIDS
+  - Bundling support and refactor of `convert` module. See `demo_convert.py` #362
+- Library Refactor
+  - Refactor `helpers` into `io` and `core` #362
+- Dependencies
+  - Upgrade
+    - `seaborn` #362
+  - Add
+    - `mne-bids` #362
+    - `pybv` #362
+    - `EDFlib-Python` #362
+  - Remove
+    - `pyedflib` #362
+
 # 2.0.0-rc.4
 
 Our final release candidate before the official 2.0 release!

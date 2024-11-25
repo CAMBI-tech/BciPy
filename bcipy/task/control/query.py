@@ -4,7 +4,7 @@ from typing import List, Optional
 
 import numpy as np
 
-from bcipy.helpers.stimuli import best_selection
+from bcipy.core.stimuli import best_selection
 
 
 class StimuliAgent(ABC):

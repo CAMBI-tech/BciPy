@@ -15,9 +15,9 @@ from bcipy.helpers.offset import (
     sample_rate_diffs,
     lsl_timestamp_diffs
 )
-from bcipy.helpers.load import load_raw_data
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
+from bcipy.io.load import load_raw_data
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
 
 pwd = Path(__file__).absolute().parent

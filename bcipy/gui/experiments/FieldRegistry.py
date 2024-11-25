@@ -2,8 +2,8 @@ import sys
 from bcipy.gui.main import BCIGui, app, AlertMessageType, AlertMessageResponse
 
 from bcipy.config import DEFAULT_FIELD_PATH, FIELD_FILENAME
-from bcipy.helpers.load import load_fields
-from bcipy.helpers.save import save_field_data
+from bcipy.io.load import load_fields
+from bcipy.io.save import save_field_data
 
 
 class FieldRegistry(BCIGui):

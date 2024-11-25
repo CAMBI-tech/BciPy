@@ -1,7 +1,7 @@
 import numpy as np
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.symbols import alphabet
 from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.signal.model import PcaRdaKdeModel
 

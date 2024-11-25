@@ -1,7 +1,7 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
 from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.symbols import alphabet
 from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
 from bcipy.exceptions import KenLMInstallationException
