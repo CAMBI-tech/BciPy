@@ -9,10 +9,10 @@ from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QHBoxLayout,
-                             QLineEdit, QPushButton, QScrollArea, QSpinBox,
-                             QTreeWidget, QTreeWidgetItem, QVBoxLayout,
-                             QWidget)
+from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QGroupBox,
+                             QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
+                             QSpinBox, QTreeWidget, QTreeWidgetItem,
+                             QVBoxLayout, QWidget)
 
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.gui.file_dialog import FileDialog
@@ -248,7 +248,7 @@ class DataDirectorySelect(QWidget):
                  parent_directory: Optional[str] = None,
                  change_event: Optional[Callable] = None):
         super().__init__(parent=parent)
-        self.layout = QVBoxLayout()
+        vbox = QVBoxLayout()
         self.change_event = change_event
 
         self.parent_directory_control = ChooseDirectoryInput(
@@ -262,16 +262,15 @@ class DataDirectorySelect(QWidget):
 
         self.parent_directory_control.layout().setContentsMargins(0, 0, 0, 0)
         self.directory_filter_control.layout.setContentsMargins(0, 0, 0, 0)
-        # self.directory_filter_control.setVisible(False)
-        # self.directory_tree.setVisible(False)
+        self.directory_filter_control.setEnabled(False)
+        self.directory_tree.setEnabled(False)
 
-        self.layout.addWidget(
+        vbox.addWidget(
             LabeledWidget("Data Parent Directory",
                           self.parent_directory_control))
-        self.layout.addWidget(self.directory_filter_control)
-        self.layout.addWidget(self.directory_tree)
-
-        self.setLayout(self.layout)
+        vbox.addWidget(self.directory_filter_control)
+        vbox.addWidget(self.directory_tree)
+        self.setLayout(vbox)
 
     def parent_directory(self) -> Optional[str]:
         """Parent directory"""
@@ -314,11 +313,11 @@ class DataDirectorySelect(QWidget):
 
     def update_directory_tree(self):
         """Update the directory tree"""
-        # self.directory_filter_control.setVisible(False)
-        # self.directory_tree.setVisible(False)
+        self.directory_filter_control.setEnabled(False)
+        self.directory_tree.setEnabled(False)
         if self.parent_directory():
-            # self.directory_filter_control.setVisible(True)
-            # self.directory_tree.setVisible(True)
+            self.directory_filter_control.setEnabled(True)
+            self.directory_tree.setEnabled(True)
             self.directory_tree.update(self.parent_directory(),
                                        self.data_directories())
         # notify any listeners of the change
@@ -347,34 +346,63 @@ class ModelInputs(QWidget):
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
-                 content_types: Optional[List[str]] = None):
+                 content_types: Optional[List[str]] = None,
+                 change_event: Optional[Callable] = None):
         super().__init__(parent=parent)
-
+        self.change_event = change_event
         self.layout = QFormLayout()
         self.layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft
                                      | Qt.AlignmentFlag.AlignVCenter)
         self.layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        self.controls = self._create_inputs(content_types or ['EEG'])
+        self.content_types = content_types or ['EEG']
+        self.controls = self._create_inputs()
         self._add_controls()
         self.setLayout(self.layout)
 
+    def value(self) -> List[str]:
+        """Model paths"""
+        return [control[1].value() for control in self.controls]
+
     def set_content_types(self, value: List[str]):
         """Set the content_content types and re-generate inputs."""
-        self.controls = self._create_inputs(value)
+        self.content_types = value
+        self.controls = self._create_inputs(initialized=True)
         self._add_controls()
 
     def _create_inputs(self,
-                       content_types: List[str]) -> List[Tuple[str, QWidget]]:
-        """Create a path input for each model based on the configured acq_mode."""
-        return [(f"{content_type} Model", ModelFileInput(parent=self))
-                for content_type in content_types]
+                       initialized: bool = False) -> List[Tuple[str, QWidget]]:
+        """Create a path input to a model for each content type"""
+        return [(self._label(content_type),
+                 ModelFileInput(
+                     parent=self,
+                     change_event=self.change,
+                     value=self._path(content_type) if initialized else None))
+                for content_type in self.content_types]
+
+    def _path(self, content_type: str) -> Optional[str]:
+        """Get the input path for the provided content type"""
+        matches = [
+            control for control in self.controls
+            if control[0] == self._label(content_type)
+        ]
+        if matches:
+            return matches[0][1].value()
+        return None
+
+    def _label(self, content_type: str) -> str:
+        return f"{content_type} Model"
 
     def _add_controls(self) -> None:
         """Add each model input to the layout."""
         clear_layout(self.layout)
         for (label, control) in self.controls:
             self.layout.addRow(label, control)
+
+    def change(self):
+        """Called when a model path changes"""
+        if self.change_event:
+            self.change_event()
 
 
 class LabeledWidget(QWidget):
@@ -398,7 +426,6 @@ class LabeledWidget(QWidget):
 
 def sim_runs_control(value: int = 1) -> QWidget:
     """Create a widget for entering simulation runs."""
-    # TODO: event
     spin_box = QSpinBox()
     spin_box.setMinimum(1)
     spin_box.setMaximum(1000)
@@ -416,78 +443,109 @@ class SimConfigForm(QWidget):
     width - optional; used to set the width of the form controls.
   """
 
-    def __init__(self, width: int = 400):
+    def __init__(self,
+                 width: int = 400,
+                 change_event: Optional[Callable] = None):
         super().__init__()
 
-        self.layout = QVBoxLayout()
-        self.setLayout(self.layout)
-        # self.setFixedWidth(width)
+        vbox = QVBoxLayout()
+        self.setFixedWidth(width)
+
+        self.change_event = change_event
+        self.parameters_path = None
+        self.model_paths = []
+        self.data_paths = []
+
+        self.runs_control = sim_runs_control()
+        self.output_control = ChooseDirectoryInput(
+            value=DEFAULT_SAVE_LOCATION, change_event=self.update_data_paths)
 
         self.parameter_control = ParameterFileInput(
             change_event=self.update_parameters)
-
-        self.directory_control = DataDirectorySelect()
-        self.model_input_control = ModelInputs()
-        self.runs_control = sim_runs_control()
-        self.output_control = ChooseDirectoryInput(value=DEFAULT_SAVE_LOCATION)
+        self.directory_control = DataDirectorySelect(
+            change_event=self.update_data_paths)
+        self.model_input_control = ModelInputs(change_event=self.update_models)
 
         form = QFormLayout()
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft
                               | Qt.AlignmentFlag.AlignVCenter)
         form.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
-        select_file = ChooseFileInput(file_selector="*.json",
-                                      prompt="Select a parameters file")
-        form.addRow("Simulation Runs:", sim_runs_control())
+        form.addRow("Simulation Runs:", self.runs_control)
         form.addRow("Output Directory:", self.output_control)
         form.addRow("Sim Parameters:", self.parameter_control)
 
-        # self.layout.addWidget(
-        #     static_text_control(None, "Simulation Parameters", size=14))
-        # self.layout.addWidget(LabeledWidget("Simulation Parameters", self.parameter_control))
-
-        self.layout.addLayout(form)
-        self.layout.addWidget(self.model_input_control)
-        self.layout.addWidget(self.directory_control)
-        # self.layout.addWidget(self.output_control)
-        # self.layout.addWidget(self.runs_control)
-
-        # self.layout.setSpacing(0)
-        # self.layout.setContentsMargins(0, 0, 0, 0)
+        vbox.addLayout(form)
+        vbox.addWidget(self.create_model_group())
+        vbox.addWidget(self.create_data_group())
+        self.setLayout(vbox)
         self.show()
 
-    @property
-    def parameters(self) -> Optional[Parameters]:
-        """Configured parameters"""
-        return self.parameter_control.parameters
+    def create_data_group(self) -> QWidget:
+        """Create a group box for data inputs."""
+        group_box = QGroupBox("Data")
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.directory_control)
+        group_box.setLayout(vbox)
+        return group_box
+
+    def create_model_group(self) -> QWidget:
+        """Create a group box for model inputs"""
+        group = QGroupBox("Models")
+        vbox = QVBoxLayout()
+        vbox.addWidget(self.model_input_control)
+        group.setLayout(vbox)
+        return group
 
     def command_valid(self) -> bool:
         """Returns True if all necessary fields are input."""
-        # TODO:
-        return False
+        return bool(self.parameters_path and self.model_paths
+                    and self.data_paths)
 
     def command(self) -> str:
         """Command equivalent to to the result of the interactive selection of
         simulator inputs."""
-        params = ''
-        models = []
-        source_dirs = []
+        if not self.command_valid:
+            return ''
 
-        model_args = ' '.join([f"-m {path}" for path in models])
-        dir_args = ' '.join(f"-d {source}" for source in source_dirs)
-        return f"bcipy-sim -p {params} {model_args} {dir_args}"
+        outdir = self.output_control.value()
+        args = []
+        if outdir:
+            args.append(f"-o {self.output_control.value()}")
+        args.append(f"-p {self.parameters_path}")
+        args.extend([f"-m {path}" for path in self.model_paths])
+        args.extend([f"-d {source}" for source in self.data_paths])
+
+        runs = self.runs_control.text()
+        args.append(f"-n {runs}")
+
+        return f"bcipy-sim {' '.join(args)}"
 
     def update_parameters(self) -> None:
         """When simulation parameters are updated include an input for each model."""
-        print("Updating parameters")
+        self.parameters_path = self.parameter_control.value()
         params = self.parameter_control.parameters
         if params:
             content_types = active_content_types(params.get('acq_mode', 'EEG'))
         else:
             content_types = ['EEG']
-        print("content types:")
-        print(content_types)
         self.model_input_control.set_content_types(content_types)
+        self.change()
+
+    def update_models(self) -> None:
+        """Update the model paths from the input controls"""
+        self.model_paths = self.model_input_control.value()
+        self.change()
+
+    def update_data_paths(self) -> None:
+        """Update the data paths from the directory inputs"""
+        self.data_paths = self.directory_control.data_directories()
+        self.change()
+
+    def change(self):
+        """Announce change to any registered change events."""
+        if self.change_event:
+            self.change_event()
 
 
 def clear_layout(layout):
@@ -519,7 +577,8 @@ class MainPanel(QWidget):
 
         self.command = ''
 
-        self.form = SimConfigForm(width=self.size[0])
+        self.form = SimConfigForm(width=self.size[0],
+                                  change_event=self.on_params_change)
         self.flash_msg = ''
         self.init_ui()
 
@@ -551,10 +610,11 @@ class MainPanel(QWidget):
         # Controls
         control_box = QHBoxLayout()
         control_box.addStretch()
-        run_button = QPushButton('Run')
-        run_button.setFixedWidth(80)
-        run_button.clicked.connect(self.on_run)
-        control_box.addWidget(run_button)
+        self.run_button = QPushButton('Run')
+        self.run_button.setFixedWidth(80)
+        self.run_button.clicked.connect(self.on_run)
+        self.run_button.setEnabled(False)
+        control_box.addWidget(self.run_button)
 
         vbox.addLayout(control_box)
 
@@ -574,6 +634,12 @@ class MainPanel(QWidget):
         if self.form.command_valid():
             self.command_msg.setText(self.form.command())
             self.command_msg.repaint()
+
+    def on_params_change(self) -> None:
+        if self.form.command_valid():
+            self.run_button.setEnabled(True)
+        else:
+            self.run_button.setEnabled(False)
 
 
 def init(title='BCI Simulator', size=(750, 600)) -> str:
