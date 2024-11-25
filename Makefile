@@ -43,6 +43,15 @@ clean:
 	find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
 	find . -path "*/*.pyo"  -delete
 	find . -path "*/*.pyc"  -delete
+	find . -path "*/*/__pycache__"  -delete
+	rm -rf .pytest_cache
+	rm -rf .mypy_cache
+	rm -rf .coverage
+	rm -rf htmlcov
+	rm -rf dist
+	rm -rf build
+	rm -rf bcipy.egg-info
+	rm -rf bcipy_cache
 
 bci-gui:
 	python bcipy/gui/BCInterface.py
