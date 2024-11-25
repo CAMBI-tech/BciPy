@@ -114,7 +114,7 @@ omit = [
     "*gui/viewer/*",
     "*gui/BCInterface.py",
 ]
-source = "bcipy"
+source = ["bcipy"]
 
 [tool.coverage.report]
 exclude_lines = [
