@@ -54,6 +54,8 @@ dependencies = [
     "tqdm==4.62.2",
     "reportlab==4.2.0",
     "tables==3.7.0",
+    "kenlm==0.1",
+    "pyWinhook==1.6.2;python_version=='3.9' and platform_system=='Windows'",
     "WxPython==4.2.1;platform_system!='Linux'",
 ]
 
@@ -65,6 +67,7 @@ dev = [
     "autopep8==1.6.0",
     "coverage>=6.0",
     "flake8==5.0.4",
+    "Flake8-pyproject==1.2.3",
     "mypy==1.6.1",
     "lxml",
     "mock",
@@ -111,6 +114,7 @@ omit = [
     "*gui/viewer/*",
     "*gui/BCInterface.py",
 ]
+source = "bcipy"
 
 [tool.coverage.report]
 exclude_lines = [
@@ -135,6 +139,7 @@ ignore = [
     "F841",
     "F821",
     "E402",
+    "E501",
     "C901",
     "W503",
     "W504",

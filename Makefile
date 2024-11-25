@@ -2,9 +2,7 @@ install:
 	pip install -e .
 
 dev-install:
-	pip install -r dev_requirements.txt
-	pip install psychopy==2024.2.1 --no-deps
-	pip install kenlm==0.1 --global-option="--max_order=12"
+	pip install -e ".[dev]"
 	make install
 
 test-all:
@@ -19,11 +17,11 @@ integration-test:
 	pytest --mpl -k "slow"
 
 coverage-report:
-	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage report
 
 coverage-html:
-	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage html
 
 lint:

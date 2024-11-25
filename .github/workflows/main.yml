@@ -37,6 +37,7 @@ jobs:
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
         pip install attrdict3
+        brew install labstreaminglayer/tap/lsl
     - name: Install dependencies
       run: |
         make dev-install
@@ -79,10 +80,6 @@ jobs:
     - name: update pip & install custom dependencies
       run: |
         python -m pip install --upgrade pip
-    - name: install manually downloaded pyWinhook wheel for Python 3.9
-      if: matrix.python-version == 3.9
-      run: |
-        pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl
     - name: install dependencies
       run: |
         make dev-install
@@ -129,5 +126,3 @@ jobs:
     - name: lint
       run: |
         make lint
-
-    
