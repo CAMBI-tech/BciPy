@@ -195,7 +195,6 @@ def calculate_eeg_gaze_fusion_acc(
     for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
         centralized_gaze_data[i] = gaze_model.subtract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
 
-
     """
     Calculate the accuracy of the fusion of EEG and Gaze models. Use the number of iterations to change bootstraping.
     """

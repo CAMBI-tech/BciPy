@@ -472,7 +472,7 @@ def offline_analysis(
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
     assert len(data_file_paths) >= 1 and len(data_file_paths) < 3, (
-        "Offline analysis requires at least one data file and at most two data files."
+        f"Offline analysis requires at least one data file and at most two data files. Found: {len(data_file_paths)}"
     )
 
     fusion = False
@@ -500,7 +500,6 @@ def offline_analysis(
                 data_folder
             )
 
-            
             log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
 
     # Ask the user if they want to proceed with full dataset model training

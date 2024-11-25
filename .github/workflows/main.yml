@@ -61,6 +61,9 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: integration-test
+      run: |
+        make integration-test
 
   build-windows:
 
@@ -96,6 +99,9 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: integration-test
+      run: |
+        make integration-test
 
   build-macos:
 
@@ -129,5 +135,8 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: integration-test
+      run: |
+        make integration-test
 
     
