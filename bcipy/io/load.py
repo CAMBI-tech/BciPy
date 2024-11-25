@@ -365,16 +365,17 @@ class BciPySessionTaskData:
 class BciPyCollection:
     """BciPy Data.
 
-    This class is used to represent a full BciPy data collection.
+    This class is used to represent a full BciPy data collection. It is used to collect data from the
+    data directory and filter based on the provided filters.
     """
 
     def __init__(
             self,
             data_directory: str,
-            experiment_id: Optional[str] = None,
-            user_id: Optional[str] = None,
-            date: Optional[str] = None,
-            date_time: Optional[str] = None,
+            experiment_id_filter: Optional[str] = None,
+            user_id_filter: Optional[str] = None,
+            date_filter: Optional[str] = None,
+            date_time_filter: Optional[str] = None,
             excluded_tasks: Optional[List[str]] = None,
             anonymize: bool = False) -> None:
         if not os.path.isdir(data_directory):
@@ -382,10 +383,10 @@ class BciPyCollection:
                 f'Data directory not found at [{data_directory}]')
         self.data_directory = data_directory
 
-        self.experiment_id = experiment_id
-        self.user_id = user_id
-        self.date = date
-        self.date_time = date_time
+        self.experiment_id_filter = experiment_id_filter
+        self.user_id_filter = user_id_filter
+        self.date_filter = date_filter
+        self.date_time_filter = date_time_filter
         self.excluded_tasks = excluded_tasks
         self.anonymize = anonymize
 
@@ -403,6 +404,10 @@ class BciPyCollection:
         self.tasks: List[str] = []
 
     def collect(self) -> List[BciPySessionTaskData]:
+        """Collect.
+
+        Collects the BciPy data from the data directory and returns a list of BciPySessionTaskData objects.
+        """
         if not self.session_task_data:
             self.load_tasks()
 
@@ -420,69 +425,61 @@ class BciPyCollection:
 
     def load_users(self):
         user_paths = fast_scandir(self.data_directory, return_path=True)
-        users = []
-        for user in user_paths:
-            if self.user_id:
-                if self.user_id in user:
-                    users.append(user)
-            else:
-                users.append(user)
+        if self.user_id_filter:
+            self.user_paths = [user for user in user_paths if self.user_id_filter in user]
+        else:
+            self.user_paths = user_paths
+        self.users = [user.split('/')[-1] for user in self.user_paths]
 
-        self.user_paths = users
-        self.users = [user.split('/')[-1] for user in users]
 
     def load_dates(self):
         if not self.user_paths:
             self.load_users()
 
-        date_data = []
         for user in self.user_paths:
             data_paths = fast_scandir(user, return_path=True)
-            for data in data_paths:
-                if self.date:
-                    if self.date in data:
-                        date_data.append(data)
-                else:
-                    date_data.append(data)
+            if self.date_filter:
+                self.data_paths = [data for data in data_paths if self.date_filter in data]
+            else:
+                self.data_paths = data_paths
 
-        self.date_paths = date_data
-        self.dates = [date.split('/')[-1] for date in date_data]
+        self.dates = [date.split('/')[-1] for date in self.date_data]
 
     def load_experiments(self):
+        """Load Experiments.
+        
+        Walks the data directory and returns a list of experiment ids. It will filter by the experiment id if provided.
+        """
         if not self.date_paths:
             self.load_dates()
 
-        experiment_paths = []
         for date in self.date_paths:
             data_paths = fast_scandir(date, return_path=True)
-            for data in data_paths:
-                if self.experiment_id:
-                    if self.experiment_id in data:
-                        experiment_paths.append(data)
-                else:
-                    experiment_paths.append(data)
+            if self.experiment_id_filter:
+                self.experiment_paths = [data for data in data_paths if self.experiment_id_filter in data]
+            else:
+                self.experiment_paths = data_paths
 
-        self.experiment_paths = experiment_paths
-        self.experiments = [experiment.split('/')[-1] for experiment in experiment_paths]
+        self.experiments = [experiment.split('/')[-1] for experiment in self.experiment_paths]
         # remove duplicates from the list
         self.experiments = list(set(self.experiments))
 
     def load_date_times(self):
+        """Load Date Times.
+
+        Walks the data directory and returns a list of date times. It will filter by the date time if provided.
+        """
         if not self.experiment_paths:
             self.load_experiments()
 
-        date_time_paths = []
         for experiment in self.experiment_paths:
             data_paths = fast_scandir(experiment, return_path=True)
-            for data in data_paths:
-                if self.date_time:
-                    if self.date_time in data:
-                        date_time_paths.append(data)
-                else:
-                    date_time_paths.append(data)
+            if self.date_time_filter:
+                self.date_time_paths = [data for data in data_paths if self.date_time_filter in data]
+            else:
+                self.date_time_paths = data_paths
 
-        self.date_time_paths = date_time_paths
-        self.date_times = [date_time.split('/')[-1] for date_time in date_time_paths]
+        self.date_times = [date_time.split('/')[-1] for date_time in self.date_time_paths]
 
     def sort_tasks(self, tasks: List[str]) -> List[str]:
         """Sort Tasks.
@@ -492,6 +489,11 @@ class BciPyCollection:
         return sorted(tasks, key=lambda x: x.split('_')[-1])
 
     def load_tasks(self) -> List[BciPySessionTaskData]:
+        """Load Tasks.
+        
+        Walks the data directory and returns a list of BciPySessionTaskData objects representing the experiment data.
+        It will exclude tasks that are in the excluded_tasks list.
+        """
         if not self.date_time_paths:
             self.load_date_times()
 
@@ -584,10 +586,10 @@ def load_bcipy_data(
 
     bcipy_data = BciPyCollection(
         data_directory=data_directory,
-        experiment_id=experiment_id,
-        user_id=user_id,
-        date=date,
-        date_time=date_time,
+        experiment_id_filter=experiment_id,
+        user_id_filter=user_id,
+        date_filter=date,
+        date_time_filter=date_time,
         excluded_tasks=excluded_tasks,
         anonymize=anonymize
     )
