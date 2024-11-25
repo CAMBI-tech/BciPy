@@ -37,7 +37,6 @@ jobs:
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
         pip install attrdict3
-        brew install labstreaminglayer/tap/lsl
     - name: Install dependencies
       run: |
         make dev-install
