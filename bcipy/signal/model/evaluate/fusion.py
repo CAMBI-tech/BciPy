@@ -1,27 +1,34 @@
 import numpy as np
 from sklearn.utils import resample
-from typing import Tuple
+from typing import List, Tuple
 
 from bcipy.config import (TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModelMetadata
+from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.gaussian_mixture import GaussianProcess
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.helpers.parameters import Parameters
 
 
 def calculate_eeg_gaze_fusion_acc(
-        eeg_data,
-        gaze_data,
-        device_spec_eeg,
-        device_spec_gaze,
-        symbol_set,
-        parameters,
-        data_folder) -> Tuple[float, float, float]:
+        eeg_data: RawData,
+        gaze_data: RawData,
+        device_spec_eeg: DeviceSpec,
+        device_spec_gaze: DeviceSpec,
+        symbol_set: List[str],
+        parameters: Parameters,
+        data_folder: str,
+        n_iterations: int = 10,
+        eeg_model: SignalModel = PcaRdaKdeModel,
+        gaze_model: SignalModel = GaussianProcess) -> Tuple[float, float, float]:
     """
     Preprocess the EEG and gaze data. Calculate the accuracy of the fusion of EEG and Gaze models.
     Args:
@@ -32,15 +39,16 @@ def calculate_eeg_gaze_fusion_acc(
         symbol_set: Set of symbols used in the experiment. (Default = alphabet())
         parameters: Parameters file containing the experiment-specific parameters.
         data_folder: Folder containing the raw data and the results.
+        n_iterations: Number of iterations to bootstrap the accuracy calculation. (Default = 10)
+        eeg_model: EEG model to use for the fusion. (Default = PcaRdaKdeModel)
+        gaze_model: Gaze model to use for the fusion. (Default = GaussianProcess)
     Returns:
         eeg_acc: accuracy of the EEG model only
         gaze_acc: accuracy of the gaze model only
         fusion_acc: accuracy of the fusion
     """
 # Extract relevant session information from parameters file
-    trial_window = parameters.get("trial_window")
-    if trial_window is None:
-        trial_window = (0.0, 0.5)
+    trial_window = parameters.get("trial_window", (0.0, 0.5))
     window_length = trial_window[1] - trial_window[0]  # eeg window length, in seconds
 
     prestim_length = parameters.get("prestim_length")
@@ -74,17 +82,17 @@ def calculate_eeg_gaze_fusion_acc(
 
     # Define the model object before reshaping the data
     k_folds = parameters.get("k_folds")
-    eeg_model = PcaRdaKdeModel(k_folds=k_folds)
+    eeg_model = eeg_model(k_folds=k_folds)
     # Select between the two (or three) gaze models to test:
-    gaze_model = GaussianProcess()
+    gaze_model = gaze_model()
 
     # Process triggers.txt files for eeg data:
     trigger_targetness, trigger_timing, inquiry_symbols = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         remove_pre_fixation=True,
         offset=static_offset,
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-        device_type='EEG'
+        exclusion=[
+            TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
     )
 
     # Same as above, but with the 'prompt' triggers added for gaze analysis:
@@ -187,14 +195,16 @@ def calculate_eeg_gaze_fusion_acc(
     for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
         centralized_gaze_data[i] = gaze_model.subtract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
 
-    '''Use bootstrap resampling for both EEG and Gaze data'''
-    n_iterations = 1
+
+    """
+    Calculate the accuracy of the fusion of EEG and Gaze models. Use the number of iterations to change bootstraping.
+    """
     eeg_acc = []
     gaze_acc = []
     fusion_acc = []
     # selection length is the length of eeg or gaze data, whichever is smaller:
     selection_length = min(len(eeg_inquiries[1]), len(preprocessed_gaze_data))
-    for iter in range(n_iterations):
+    for _ in range(n_iterations):
         # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
         train_indices = resample(list(range(selection_length)), replace=True, n_samples=100)
         test_indices = np.array([x for x in list(range(selection_length)) if x not in train_indices])

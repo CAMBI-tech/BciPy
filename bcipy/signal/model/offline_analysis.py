@@ -94,9 +94,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         show_figures (bool): If true, shows ERP figures after training.
     """
     # Extract relevant session information from parameters file
-    trial_window = parameters.get("trial_window")
-    if trial_window is None:
-        trial_window = (0.0, 0.5)
+    trial_window = parameters.get("trial_window", (0.0, 0.5))
     window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
@@ -473,31 +471,48 @@ def offline_analysis(
                              for device_spec in active_devices)
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
-    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
-    assert len(data_file_paths) > 0, "No data files found for offline analysis."
+    assert len(data_file_paths) >= 1 and len(data_file_paths) < 3, (
+        "Offline analysis requires at least one data file and at most two data files."
+    )
 
+    fusion = False
     if len(data_file_paths) == 2:
-        # Note that the models trained here are not saved/used for the online system.
-        log.info("Multiple Devices Found. Starting fusion analysis...")
-        eeg_data = load_raw_data(data_file_paths[0])
-        device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
-        gaze_data = load_raw_data(data_file_paths[1])
-        device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
-        symbol_set = alphabet()
-        eeg_acc, gaze_acc, fusion_acc = calculate_eeg_gaze_fusion_acc(
-            eeg_data, gaze_data, device_spec_eeg, device_spec_gaze, symbol_set, parameters, data_folder)
-        log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+        # Ensure there is an EEG and Eyetracker device
+        if confirm("Would you like to proceed with fusion training?"):
+            fusion = True
+            # Note that the models trained here are not saved/used for the online system.
+            log.info("Multiple Devices Found. Starting fusion analysis...")
+
+            eeg_data = load_raw_data(data_file_paths[0])
+            device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
+            assert device_spec_eeg.content_type == "EEG", "First device must be EEG"
+            gaze_data = load_raw_data(data_file_paths[1])
+            device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
+            assert device_spec_gaze.content_type == "Eyetracker", "Second device must be Eyetracker"
+            symbol_set = alphabet()
+            eeg_acc, gaze_acc, fusion_acc = calculate_eeg_gaze_fusion_acc(
+                eeg_data,
+                gaze_data,
+                device_spec_eeg,
+                device_spec_gaze,
+                symbol_set,
+                parameters,
+                data_folder
+            )
+
+            
+            log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
 
     # Ask the user if they want to proceed with full dataset model training
-    if confirm("Would you like to proceed with model training?"):
-        models = []
-        log.info(f"Starting offline analysis for {data_file_paths}")
-        for raw_data_path in data_file_paths:
-            raw_data = load_raw_data(raw_data_path)
-            device_spec = devices_by_name.get(raw_data.daq_type)
-            # extract relevant information from raw data object eeg
+    models = []
+    log.info(f"Starting offline analysis for {data_file_paths}")
+    for raw_data_path in data_file_paths:
+        raw_data = load_raw_data(raw_data_path)
+        device_spec = devices_by_name.get(raw_data.daq_type)
+        # extract relevant information from raw data object eeg
 
-            if device_spec.content_type == "EEG" and device_spec.is_active:
+        if device_spec.content_type == "EEG" and device_spec.is_active:
+            if not fusion or confirm("Would you like to proceed with ERP model training?"):
                 erp_model = analyze_erp(
                     raw_data,
                     parameters,
@@ -507,14 +522,16 @@ def offline_analysis(
                     save_figures,
                     show_figures)
                 models.append(erp_model)
+            else:
+                log.info("User opted out of ERP model training.")
 
-            if device_spec.content_type == "Eyetracker" and device_spec.is_active:
+        if device_spec.content_type == "Eyetracker" and device_spec.is_active:
+            if not fusion or confirm("Would you like to proceed with Gaze model training?"):
                 et_model = analyze_gaze(
                     raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP")
                 models.append(et_model)
-    else:
-        log.info("User opted out of offline analysis.")
-        models = []
+            else:
+                log.info("User opted out of Eyetracker model training.")
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")
