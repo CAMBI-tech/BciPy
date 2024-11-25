@@ -63,9 +63,10 @@ class DirectoryTree(QWidget):
     """Display a tree of directories"""
 
     def __init__(self,
+                 parent: Optional[QWidget] = None,
                  parent_directory: Optional[str] = None,
                  selected_subdirectories: Optional[List[str]] = None):
-        super().__init__()
+        super().__init__(parent=parent)
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
@@ -110,12 +111,13 @@ class ChooseFileInput(QWidget):
     """Text field and button which pops open a file selection dialog."""
 
     def __init__(self,
+                 parent: Optional[QWidget] = None,
                  value: Optional[str] = None,
                  file_selector: str = "*",
                  prompt: str = "Select a file",
                  change_event: Optional[Callable] = None):
 
-        super().__init__()
+        super().__init__(parent=parent)
         self.file_selector = file_selector
         self.prompt = prompt
         self.change_event = change_event
@@ -163,10 +165,14 @@ class ChooseDirectoryInput(ChooseFileInput):
     """Text field and button which pops open a directory selection dialog."""
 
     def __init__(self,
+                 parent: Optional[QWidget] = None,
                  value: Optional[str] = None,
                  prompt: str = "Select a directory",
                  change_event: Optional[Callable] = None):
-        super().__init__(value=value, prompt=prompt, change_event=change_event)
+        super().__init__(parent=parent,
+                         value=value,
+                         prompt=prompt,
+                         change_event=change_event)
 
     def prompt_path(self):
         dialog = FileDialog()
@@ -202,8 +208,11 @@ class ParameterFileInput(ChooseFileInput):
 class DirectoryFilters(QWidget):
     """Fields that filter the selected directories"""
 
-    def __init__(self, change_event: Optional[Callable], **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self,
+                 parent: Optional[QWidget] = None,
+                 change_event: Optional[Callable] = None,
+                 **kwargs):
+        super().__init__(parent=parent, **kwargs)
         self.change_event = change_event
         self.layout = QVBoxLayout()
 
@@ -235,9 +244,10 @@ class DataDirectorySelect(QWidget):
     """
 
     def __init__(self,
+                 parent: Optional[QWidget] = None,
                  parent_directory: Optional[str] = None,
                  change_event: Optional[Callable] = None):
-        super().__init__()
+        super().__init__(parent=parent)
         self.layout = QVBoxLayout()
         self.change_event = change_event
 
@@ -320,11 +330,13 @@ class ModelFileInput(ChooseFileInput):
     """Prompts for a parameters file."""
 
     def __init__(self,
+                 parent: Optional[QWidget] = None,
                  value: Optional[str] = None,
                  file_selector: str = "*.pkl",
                  prompt: str = "Select a model",
                  change_event: Optional[Callable] = None):
-        super().__init__(value=value,
+        super().__init__(parent=parent,
+                         value=value,
                          file_selector=file_selector,
                          prompt=prompt,
                          change_event=change_event)
@@ -333,8 +345,10 @@ class ModelFileInput(ChooseFileInput):
 class ModelInputs(QWidget):
     """Provide a model path input for each configured content type."""
 
-    def __init__(self, content_types: Optional[List[str]] = None):
-        super().__init__()
+    def __init__(self,
+                 parent: Optional[QWidget] = None,
+                 content_types: Optional[List[str]] = None):
+        super().__init__(parent=parent)
 
         self.layout = QFormLayout()
         self.layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft
@@ -353,7 +367,7 @@ class ModelInputs(QWidget):
     def _create_inputs(self,
                        content_types: List[str]) -> List[Tuple[str, QWidget]]:
         """Create a path input for each model based on the configured acq_mode."""
-        return [(f"{content_type} Model", ModelFileInput())
+        return [(f"{content_type} Model", ModelFileInput(parent=self))
                 for content_type in content_types]
 
     def _add_controls(self) -> None:
@@ -366,8 +380,12 @@ class ModelInputs(QWidget):
 class LabeledWidget(QWidget):
     """Renders a widget with a label above it."""
 
-    def __init__(self, label: str, widget: QWidget, label_size: int = 14):
-        super().__init__()
+    def __init__(self,
+                 label: str,
+                 widget: QWidget,
+                 label_size: int = 14,
+                 parent: Optional[QWidget] = None):
+        super().__init__(parent=parent)
         vbox = QVBoxLayout()
         label = static_text_control(None, label, size=label_size)
         label.setMargin(0)
