@@ -2,7 +2,7 @@ from pathlib import Path
 from typing import List
 from enum import Enum
 
-from bcipy.helpers.stimuli import GazeReshaper
+from bcipy.core.stimuli import GazeReshaper
 from bcipy.signal.model import SignalModel
 
 from sklearn.mixture import GaussianMixture

@@ -23,8 +23,8 @@ from psychopy import core
 
 from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.list import grouper
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.list import grouper
+from bcipy.core.symbols import alphabet
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)

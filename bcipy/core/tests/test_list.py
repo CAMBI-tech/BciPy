@@ -1,6 +1,6 @@
 """Tests for list processing utilities"""
 import unittest
-from bcipy.helpers.list import destutter, grouper
+from bcipy.core.list import destutter, grouper
 
 
 class TestListUtilities(unittest.TestCase):

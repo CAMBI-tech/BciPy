@@ -9,8 +9,8 @@ from PyQt6.QtWidgets import (
     QScrollArea,
 )
 from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton, run_bciui
-from bcipy.helpers.load import load_fields, load_experiments
-from bcipy.helpers.save import save_experiment_data
+from bcipy.io.load import load_fields, load_experiments
+from bcipy.io.save import save_experiment_data
 from bcipy.config import (
     DEFAULT_ENCODING,
     DEFAULT_EXPERIMENT_PATH,

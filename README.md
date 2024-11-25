@@ -181,18 +181,20 @@ make bci-gui
 This a list of the major modules and their functionality. Each module will contain its own README, demo and tests. Please check them out for more information!
 
 - `acquisition`: acquires data, gives back desired time series, saves to file at end of session.
+- `config`: configuration parameters for the application, including paths and data filenames.
+- `core`: core data structures and methods needed for BciPy operation. These include triggers, parameters, and raw data.
 - `display`: handles display of stimuli on screen and passes back stimuli timing.
-- `signal`: eeg signal models, gaze signal models, filters, processing, evaluators and viewers.
+- `feedback`: feedback mechanisms for sound and visual stimuli.
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
-- `helpers`: helpful functions needed for interactions between modules, basic I/O, and data visualization.
+- `helpers`: helpful functions needed for interactions between modules and general utility.
+- `io`: load, save, and convert data files. Ex. BrainVision, EDF, MNE, CSV, JSON, etc.
 - `language`: gives probabilities of next symbols during typing.
+- `main`: executor of experiments. Main entry point into the application
 - `parameters`: location of json parameters. This includes parameters.json (main experiment / app configuration) and device.json (device registry and configuration).
+- `signal`: eeg signal models, gaze signal models, filters, processing, evaluators and viewers.
+- `simulator`: provides support for running simulations based off of previously collected data.
 - `static`: image and sound stimuli, misc manuals, and readable texts for gui.
 - `task`: bcipy implemented user tasks. Main collection of bci modules for use during various experimentation. Ex. RSVP Calibration.
-- `feedback`: feedback mechanisms for sound and visual stimuli.
-- `main`: executor of experiments. Main entry point into the application
-- `config`: configuration parameters for the application, including paths and data filenames.
-- `simulator`: provides support for running simulations based off of previously collected data.
 
 ## Paradigms
 

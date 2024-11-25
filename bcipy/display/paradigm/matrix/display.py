@@ -11,9 +11,9 @@ from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.display.paradigm.matrix.layout import symbol_positions
-from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.symbols import alphabet, frequency_order, qwerty_order
-from bcipy.helpers.triggers import _calibration_trigger
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import alphabet, frequency_order, qwerty_order
+from bcipy.core.triggers import _calibration_trigger
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 

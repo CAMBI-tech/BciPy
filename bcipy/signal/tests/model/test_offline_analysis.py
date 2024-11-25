@@ -10,8 +10,7 @@ import random
 import gzip
 
 from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
-from bcipy.helpers.load import load_json_parameters
-from bcipy.signal.model import SignalModel
+from bcipy.io.load import load_json_parameters
 from bcipy.signal.model.offline_analysis import offline_analysis
 
 pwd = Path(__file__).absolute().parent

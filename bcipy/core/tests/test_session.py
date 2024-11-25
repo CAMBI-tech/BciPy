@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 
 from bcipy.config import SESSION_DATA_FILENAME
-from bcipy.helpers.session import read_session, session_csv, session_data
+from bcipy.core.session import read_session, session_csv, session_data
 
 
 class TestSessionHelper(unittest.TestCase):

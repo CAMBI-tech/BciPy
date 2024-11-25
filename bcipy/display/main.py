@@ -9,7 +9,7 @@ from bcipy.display.components.button_press_handler import (
     AcceptButtonPressHandler, ButtonPressHandler,
     PreviewOnlyButtonPressHandler, RejectButtonPressHandler)
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.system_utils import get_screen_info
+from bcipy.helpers.utils import get_screen_info
 
 
 class Display(ABC):

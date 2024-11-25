@@ -10,18 +10,18 @@ from mockito import any, mock, unstub, verify, when
 from psychopy import core
 
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
-                                   StimuliOrder, TargetPositions,
-                                   TrialReshaper, alphabetize,
-                                   best_case_rsvp_inq_gen, best_selection,
-                                   distributed_target_positions,
-                                   generate_calibration_inquiries,
-                                   generate_inquiry, generate_targets,
-                                   get_fixation, inquiry_nontarget_counts,
-                                   inquiry_target, inquiry_target_counts,
-                                   jittered_timing, play_sound,
-                                   random_target_positions, soundfiles,
-                                   target_index, update_inquiry_timing)
+from bcipy.core.stimuli import (DEFAULT_FIXATION_PATH, InquiryReshaper,
+                                StimuliOrder, TargetPositions,
+                                TrialReshaper, alphabetize,
+                                best_case_rsvp_inq_gen, best_selection,
+                                distributed_target_positions,
+                                generate_calibration_inquiries,
+                                generate_inquiry, generate_targets,
+                                get_fixation, inquiry_nontarget_counts,
+                                inquiry_target, inquiry_target_counts,
+                                jittered_timing, play_sound,
+                                random_target_positions, soundfiles,
+                                target_index, update_inquiry_timing)
 
 MOCK_FS = 44100
 

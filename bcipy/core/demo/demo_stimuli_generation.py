@@ -1,4 +1,4 @@
-from bcipy.helpers.stimuli import StimuliOrder, generate_calibration_inquiries, best_case_rsvp_inq_gen
+from bcipy.core.stimuli import StimuliOrder, generate_calibration_inquiries, best_case_rsvp_inq_gen
 import numpy as np
 
 

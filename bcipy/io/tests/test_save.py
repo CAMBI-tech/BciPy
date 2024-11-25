@@ -9,8 +9,8 @@ from bcipy.config import (
     DEFAULT_PARAMETERS_FILENAME,
     DEFAULT_EXPERIMENT_ID,
     STIMULI_POSITIONS_FILENAME)
-from bcipy.helpers import save
-from bcipy.helpers.save import init_save_data_structure, save_stimuli_position_info
+from bcipy.io import save
+from bcipy.io.save import init_save_data_structure, save_stimuli_position_info
 from mockito import any, unstub, when
 
 
