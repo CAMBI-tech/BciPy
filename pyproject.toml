@@ -64,7 +64,7 @@ file = "LICENSE.md"
 
 [project.optional-dependencies]
 dev = [
-    "autopep8==2.3.1",
+    "autopep8==1.5.7",
     "coverage>=6.0",
     "flake8==5.0.4",
     "Flake8-pyproject==1.2.3",
