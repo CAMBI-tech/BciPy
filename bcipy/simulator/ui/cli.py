@@ -4,7 +4,7 @@ import json
 import logging
 from glob import glob
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from rich import print as rprint
 from rich.filesize import decimal
@@ -190,7 +190,7 @@ def select_data(parent_folder: Optional[str] = None) -> List[Path]:
     return paths
 
 
-def choose_sampling_strategy() -> type[Sampler]:
+def choose_sampling_strategy() -> Type[Sampler]:
     """Choose a sampling strategy"""
     classes = [InquirySampler, TargetNontargetSampler]
     options = {klass.__name__: klass for klass in classes}
@@ -200,7 +200,7 @@ def choose_sampling_strategy() -> type[Sampler]:
     return options[selected]
 
 
-def choose_task() -> type[RSVPCopyPhraseTask]:
+def choose_task() -> Type[RSVPCopyPhraseTask]:
     """Choose a task to simulate"""
     classes = [SimulatorCopyPhraseTask]
     options = {klass.__name__: klass for klass in classes}
