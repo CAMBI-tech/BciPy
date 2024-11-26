@@ -89,7 +89,7 @@ bcipy-sim = "bcipy.simulator:main"
 bcipy-train = "bcipy.signal.model.offline_analysis:main"
 
 [project.urls]
-"Homepage" = "https://bcipy.github.io/"
+"Homepage" = "https://www.cambi.tech/"
 "Documentation" = "https://bcipy.github.io/"
 "Source" = "https://github.com/CAMBI-tech/BciPy"
 
