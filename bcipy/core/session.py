@@ -1,3 +1,4 @@
+# mypy: disable-error-code="arg-type"
 """Helper functions for managing and parsing session.json data."""
 import csv
 import itertools
