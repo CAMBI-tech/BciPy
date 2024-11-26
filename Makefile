@@ -28,7 +28,7 @@ lint:
 	flake8 bcipy
 
 lint-fix:
-	autopep8 --in-place --aggressive --max-line-length 120 -r bcipy
+	autopep8 --in-place --aggressive --max-line-length 120 --ignore "E402,E226,E24,W50,W690" -r bcipy
 	flake8 bcipy
 
 type:
