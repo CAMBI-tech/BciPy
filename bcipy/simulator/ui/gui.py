@@ -253,7 +253,7 @@ class DataDirectorySelect(QWidget):
         super().__init__(parent=parent)
         vbox = QVBoxLayout()
         self.change_event = change_event
-
+        self.filters_enabled = False
         self.parent_directory_control = ChooseDirectoryInput(
             change_event=self.update_directory_tree,
             prompt="Select a parent data directory",
@@ -265,8 +265,8 @@ class DataDirectorySelect(QWidget):
 
         self.parent_directory_control.layout().setContentsMargins(0, 0, 0, 0)
         self.directory_filter_control.layout.setContentsMargins(0, 0, 0, 0)
-        self.directory_filter_control.setEnabled(False)
-        self.directory_tree.setEnabled(False)
+        self.directory_filter_control.setEnabled(self.filters_enabled)
+        self.directory_tree.setEnabled(self.filters_enabled)
 
         form = QFormLayout()
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft
@@ -320,13 +320,18 @@ class DataDirectorySelect(QWidget):
 
     def update_directory_tree(self):
         """Update the directory tree"""
-        self.directory_filter_control.setEnabled(False)
-        self.directory_tree.setEnabled(False)
+
         if self.parent_directory():
-            self.directory_filter_control.setEnabled(True)
-            self.directory_tree.setEnabled(True)
+            if not self.filters_enabled:
+                self.filters_enabled = True
+                self.directory_filter_control.setEnabled(True)
+                self.directory_tree.setEnabled(True)
             self.directory_tree.update(self.parent_directory(),
                                        self.data_directories())
+        else:
+            self.filters_enabled = False
+            self.directory_filter_control.setEnabled(False)
+            self.directory_tree.setEnabled(False)
         # notify any listeners of the change
         if self.change_event:
             self.change_event()
