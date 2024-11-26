@@ -64,19 +64,22 @@ file = "LICENSE.md"
 
 [project.optional-dependencies]
 dev = [
-    "autopep8==1.6.0",
+    "autopep8==2.3.1",
     "coverage>=6.0",
     "flake8==5.0.4",
     "Flake8-pyproject==1.2.3",
-    "mypy==1.6.1",
+    "mypy==1.13",
     "lxml",
     "mock",
     "mockito",
     "pylint",
     "pytest",
     "pytest-mpl",
-    "wheel",
+]
+release = [
     "twine==3.2.0",
+    "build==1.2.2.post1",
+    "wheel==0.43.0",
 ]
 
 [project.scripts]
@@ -100,6 +103,9 @@ zip-safe = true
 # distribution package (and therefore become importable)
 [tool.setuptools.packages.find]
 exclude = ["tests", "demo", "data"]
+
+[tool.distutils.bdist_wheel]
+universal = true
 
 [tool.coverage.run]
 omit = [

@@ -28,7 +28,7 @@ lint:
 	flake8 bcipy
 
 lint-fix:
-	autopep8 --in-place --aggressive -r bcipy
+	autopep8 --in-place --aggressive --max-line-length 120 -r bcipy
 	flake8 bcipy
 
 type:

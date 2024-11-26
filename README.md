@@ -353,6 +353,40 @@ Alternately, if Make is installed, you may run the follow command to run mypy:
 make type
 ```
 
+## Release
+----------
+
+The process to release a new version of BciPy is as follows:
+
+### Install release dependencies
+
+```sh
+pip install -e ".[release]"
+```
+
+### Create a universal wheel
+
+Configuration for the distribution is in `pyproject.toml`. To create a universal wheel, run:
+```sh
+python -m build --sdist --wheel
+```
+
+### Upload to PyPi
+
+```sh
+twine upload dist/*
+```
+
+### Tag the release on GitHub
+
+```sh
+git tag v*add_version*
+git push --tags'
+```
+
+### Create a release on GitHub
+
+Using the tag you just created, create a release on GitHub. Include the release notes from the CHANGELOG in the description.
 
 ### Contributions Welcome!
 --------------------------
