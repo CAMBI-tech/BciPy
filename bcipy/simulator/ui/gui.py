@@ -4,17 +4,18 @@
 import argparse
 import fnmatch
 import os
+import subprocess
 import sys
 from pathlib import Path
 from typing import Callable, List, Optional, Tuple, Union
 
 from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QGroupBox,
-                             QHBoxLayout, QLineEdit, QPushButton, QScrollArea,
+                             QHBoxLayout, QLabel, QLineEdit, QPushButton,
                              QSpinBox, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
-from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.gui.file_dialog import FileDialog
 from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
@@ -70,10 +71,11 @@ class DirectoryTree(QWidget):
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
-        self.label = "Selected Data Dictionaries"
+        self.label = "Selected Directories"
         self.tree = self.make_tree()
         self.layout = QVBoxLayout()
-        self.layout.addWidget(LabeledWidget(self.label, self.tree))
+        self.layout.addWidget(
+            LabeledWidget(self.label, self.tree, label_size=12))
         self.layout.addWidget(self.tree)
         self.setLayout(self.layout)
 
@@ -86,7 +88,8 @@ class DirectoryTree(QWidget):
         clear_layout(self.layout)
         if self.parent_directory:
             self.tree = self.make_tree()
-            self.layout.addWidget(LabeledWidget(self.label, self.tree))
+            self.layout.addWidget(
+                LabeledWidget(self.label, self.tree, label_size=12))
 
     def make_tree(self) -> QTreeWidget:
         """Initialize the tree widget"""
@@ -265,9 +268,13 @@ class DataDirectorySelect(QWidget):
         self.directory_filter_control.setEnabled(False)
         self.directory_tree.setEnabled(False)
 
-        vbox.addWidget(
-            LabeledWidget("Data Parent Directory",
-                          self.parent_directory_control))
+        form = QFormLayout()
+        form.setFormAlignment(Qt.AlignmentFlag.AlignLeft
+                              | Qt.AlignmentFlag.AlignVCenter)
+        form.setFieldGrowthPolicy(
+            QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form.addRow("Data Parent Directory", self.parent_directory_control)
+        vbox.addLayout(form)
         vbox.addWidget(self.directory_filter_control)
         vbox.addWidget(self.directory_tree)
         self.setLayout(vbox)
@@ -415,11 +422,13 @@ class LabeledWidget(QWidget):
                  parent: Optional[QWidget] = None):
         super().__init__(parent=parent)
         vbox = QVBoxLayout()
-        label = static_text_control(None, label, size=label_size)
-        label.setMargin(0)
-        vbox.setSpacing(0)
-        vbox.setContentsMargins(-1, 0, -1, -1)
-        vbox.addWidget(label)
+        lbl = QLabel()
+        lbl.setText(label)
+        if label_size:
+            lbl.setFont(QFont(None, label_size))
+
+        vbox.setContentsMargins(0, 0, 0, 0)
+        vbox.addWidget(lbl)
         vbox.addWidget(widget)
         self.setLayout(vbox)
 
@@ -476,7 +485,9 @@ class SimConfigForm(QWidget):
         form.addRow("Sim Parameters:", self.parameter_control)
 
         vbox.addLayout(form)
+        vbox.addSpacing(2)
         vbox.addWidget(self.create_model_group())
+        vbox.addSpacing(2)
         vbox.addWidget(self.create_data_group())
         self.setLayout(vbox)
         self.show()
@@ -594,17 +605,7 @@ class MainPanel(QWidget):
                                 size=16,
                                 color='dimgray'))
         vbox.addLayout(header_box)
-
-        self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.form_panel.setHorizontalScrollBarPolicy(
-            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        self.form_panel.setWidgetResizable(True)
-        self.form_panel.setMinimumWidth(self.size[0])
-        self.form_panel.setWidget(self.form)
-
-        vbox.addWidget(self.form_panel)
+        vbox.addWidget(self.form)
         vbox.addSpacing(4)
 
         # Controls
@@ -628,14 +629,22 @@ class MainPanel(QWidget):
         self.setWindowTitle(self.title)
         self.show()
 
+    def cli_output(self) -> str:
+        """Returns the command with arguments."""
+        if self.form.command_valid():
+            return self.form.command()
+        return ''
+
     def on_run(self):
         """Event handler for running the simulation."""
 
         if self.form.command_valid():
-            self.command_msg.setText(self.form.command())
+            self.command_msg.setText(self.cli_output())
             self.command_msg.repaint()
+            self.close()
 
     def on_params_change(self) -> None:
+        """Event performed when form parameters change."""
         if self.form.command_valid():
             self.run_button.setEnabled(True)
         else:
@@ -647,8 +656,11 @@ def init(title='BCI Simulator', size=(750, 600)) -> str:
     app = QApplication(sys.argv)
     panel = MainPanel(title, size)
     app.exec()
-    command = panel.command
+    command = panel.cli_output()
     app.quit()
+    if command:
+        print(command, file=sys.stdout)
+        subprocess.run(command, shell=True)
     return command
 
 
@@ -656,15 +668,11 @@ def main():
     """Process command line arguments and initialize the GUI."""
     parser = argparse.ArgumentParser()
 
-    # Command line utility for adding arguments/ paths via command line
-    parser.add_argument('-p',
-                        '--parameters',
-                        default=DEFAULT_PARAMETERS_PATH,
-                        help='Path to parameters.json configuration file.')
+    parser.add_argument('--width', default=600, type=int)
+    parser.add_argument('--height', default=750, type=int)
+
     args = parser.parse_args()
-    # Note that this write to stdout is important for the interaction with
-    # the BCInterface main GUI.
-    print(init(args.parameters), file=sys.stdout)
+    init(size=(args.width, args.height))
 
 
 if __name__ == '__main__':

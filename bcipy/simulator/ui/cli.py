@@ -190,7 +190,7 @@ def select_data(parent_folder: Optional[str] = None) -> List[Path]:
     return paths
 
 
-def choose_sampling_strategy() -> Sampler:
+def choose_sampling_strategy() -> type[Sampler]:
     """Choose a sampling strategy"""
     classes = [InquirySampler, TargetNontargetSampler]
     options = {klass.__name__: klass for klass in classes}
@@ -200,7 +200,7 @@ def choose_sampling_strategy() -> Sampler:
     return options[selected]
 
 
-def choose_task() -> RSVPCopyPhraseTask:
+def choose_task() -> type[RSVPCopyPhraseTask]:
     """Choose a task to simulate"""
     classes = [SimulatorCopyPhraseTask]
     options = {klass.__name__: klass for klass in classes}
@@ -210,7 +210,7 @@ def choose_task() -> RSVPCopyPhraseTask:
     return options.get(selected, SimulatorCopyPhraseTask)
 
 
-def select_models(acq_mode: str) -> List[str]:
+def select_models(acq_mode: str) -> List[Path]:
     """Select the signal models to use in simulation."""
     signal_models = choose_model_paths(active_content_types(acq_mode))
     return signal_models
@@ -228,7 +228,7 @@ def get_acq_mode(params_path: str):
         return params['acq_mode'].get('value', 'EEG')
 
 
-def command(params: str, models: List[str], source_dirs: List[str]) -> None:
+def command(params: str, models: List[str], source_dirs: List[str]) -> str:
     """Command equivalent to to the result of the interactive selection of
     simulator inputs."""
     model_args = ' '.join([f"-m {path}" for path in models])
@@ -246,9 +246,11 @@ def main(args: Dict[str, Any]) -> TaskFactory:
     if not model_paths:
         model_paths = select_models(get_acq_mode(params))
 
-    source_dirs = select_data(args.get('data_folder', None))
+    source_dirs = [
+        str(path) for path in select_data(args.get('data_folder', None))
+    ]
 
-    logger.info(command(params, model_paths, source_dirs))
+    print(command(params, model_paths, source_dirs))
     return TaskFactory(params_path=params,
                        source_dirs=source_dirs,
                        signal_model_paths=model_paths,

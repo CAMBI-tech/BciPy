@@ -50,26 +50,31 @@ def main():
     glob_help = ('glob pattern to select a subset of data folders'
                  ' Ex. "*RSVP_Copy_Phrase*"'
                  ' Used with a single data_folder')
+    data_help = (
+        'Raw data folders to be processed.'
+        ' Multiple values can be provided, or a single parent folder.')
     parser = argparse.ArgumentParser()
-    parser.add_argument("-i",
-                        "--interactive",
-                        required=False,
-                        default=False,
-                        action='store_true',
-                        help="Use interactive mode for selecting simulator inputs")
+    parser.add_argument(
+        "-i",
+        "--interactive",
+        required=False,
+        default=False,
+        action='store_true',
+        help="Use interactive mode for selecting simulator inputs")
     parser.add_argument("-d",
                         "--data_folder",
                         type=Path,
                         required=False,
                         action='append',
-                        help="Raw data folders to be processed. Multiple values can be provided, or a single parent folder.")
+                        help=data_help)
     parser.add_argument('-g', '--glob_pattern', help=glob_help, default="*")
-    parser.add_argument("-m",
-                        "--model_path",
-                        type=Path,
-                        action='append',
-                        required=False,
-                        help="Signal models to be used. Multiple models can be provided.")
+    parser.add_argument(
+        "-m",
+        "--model_path",
+        type=Path,
+        action='append',
+        required=False,
+        help="Signal models to be used. Multiple models can be provided.")
     parser.add_argument("-p",
                         "--parameters",
                         type=Path,
@@ -99,14 +104,15 @@ def main():
         if len(source_dirs) == 1:
             parent = source_dirs[0]
             source_dirs = [
-                Path(d) for d in glob(str(Path(parent, sim_args['glob_pattern'])))
+                Path(d)
+                for d in glob(str(Path(parent, sim_args['glob_pattern'])))
                 if Path(d).is_dir()
             ]
         task_factory = TaskFactory(params_path=sim_args['parameters'],
-                            source_dirs=source_dirs,
-                            signal_model_paths=sim_args['model_path'],
-                            sampling_strategy=TargetNontargetSampler,
-                            task=SimulatorCopyPhraseTask)
+                                   source_dirs=source_dirs,
+                                   signal_model_paths=sim_args['model_path'],
+                                   sampling_strategy=TargetNontargetSampler,
+                                   task=SimulatorCopyPhraseTask)
 
     runner = TaskRunner(save_dir=sim_dir,
                         task_factory=task_factory,
