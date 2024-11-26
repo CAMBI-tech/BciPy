@@ -112,7 +112,8 @@ def calculate_eeg_gaze_fusion_acc(
 
     target_symbols = [trigger_symbols[idx]
                       for idx, targetness in enumerate(trigger_targetness_gaze) if targetness == 'prompt']
-    inq_start = trigger_timing_gaze[1::11]  # inquiry start times, exluding prompt and fixation
+    total_len = trials_per_inquiry + 1    # inquiry length + the prompt symbol
+    inq_start = trigger_timing_gaze[1::total_len]  # inquiry start times, exluding prompt and fixation
 
     # update the trigger timing list to account for the initial trial window
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
