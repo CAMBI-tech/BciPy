@@ -5,6 +5,10 @@ dev-install:
 	pip install -e ".[dev]"
 	make install
 
+make-build:
+	pip install -e ".[release]"
+	python -m build --sdist --wheel
+
 test-all:
 	make coverage-report
 	make type

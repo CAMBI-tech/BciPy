@@ -356,22 +356,27 @@ make type
 ## Release
 ----------
 
-The process to release a new version of BciPy is as follows:
+The process to release a new version of BciPy is done through the below steps. An admin PyPi account is required to upload the package with a valid token. An admin GitHub account is also required to create tag the release. Reach out to the development team for more information.
 
-### Install release dependencies
+### Install release dependencies and create a universal wheel
+
+Configuration for the distribution is in `pyproject.toml`. To create a universal wheel, run:
+
 
 ```sh
 pip install -e ".[release]"
-```
-
-### Create a universal wheel
-
-Configuration for the distribution is in `pyproject.toml`. To create a universal wheel, run:
-```sh
 python -m build --sdist --wheel
 ```
 
+Alternately, if Make is installed, you may run the follow command to build the wheel:
+
+```sh
+make build
+```
+
 ### Upload to PyPi
+
+To upload the package to [PyPi](https://pypi.org/project/bcipy/), run:
 
 ```sh
 twine upload dist/*
@@ -384,9 +389,9 @@ git tag v*add_version*
 git push --tags'
 ```
 
-### Create a release on GitHub
+### Create GitHub Release
 
-Using the tag you just created, create a release on GitHub. Include the release notes from the CHANGELOG in the description.
+Using the tag you just created, create a release on GitHub. Include the release notes from the CHANGELOG in the description. See https://github.com/CAMBI-tech/BciPy/releases for examples.
 
 ### Contributions Welcome!
 --------------------------
