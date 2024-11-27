@@ -65,7 +65,7 @@ file = "LICENSE.md"
 [project.optional-dependencies]
 dev = [
     "autopep8==1.5.7",
-    "coverage>=6.0",
+    "coverage>=7.0",
     "flake8==5.0.4",
     "Flake8-pyproject==1.2.3",
     "mypy==1.13",
@@ -116,14 +116,14 @@ omit = [
     "*test*",
     "*demo*",
     "*exceptions.py",
-    "*gui/experiments/*",
-    "*gui/viewer/*",
-    "*gui/BCInterface.py",
+    "*visualization.py",
+    "*/gui/*",
 ]
 source = ["bcipy"]
+branch = true
 
 [tool.coverage.report]
-exclude_lines = [
+exclude_also = [
     "pragma: no cover",
     "def __repr__",
     "def __str__",
@@ -131,7 +131,11 @@ exclude_lines = [
     "@abstract",
    "if __name__ == .__main__.:",
     "logging.getLogger(__name__)",
+    "raise AssertionError",
+    "@(abc\\.)?abstractmethod",
+    "pass",
 ]
+
 
 [tool.flake8]
 
