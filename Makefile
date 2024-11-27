@@ -5,7 +5,7 @@ dev-install:
 	pip install -e ".[dev]"
 	make install
 
-make-build:
+build:
 	pip install -e ".[release]"
 	python -m build --sdist --wheel
 
