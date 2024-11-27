@@ -22,4 +22,3 @@ sudo apt-get install xvfb
 
 # run headless without a display connected. All commands must have xvfb-run preceeding them. 
 # ex. $ xvfb-run pytest
-# sudo apt-get install xvfb
