@@ -196,7 +196,7 @@ def choose_sampling_strategy() -> Type[Sampler]:
     options = {klass.__name__: klass for klass in classes}
     selected = Prompt.ask("Choose a sampling strategy",
                           choices=options.keys(),
-                          default='TargetNonTargetSampler')
+                          default='TargetNontargetSampler')
     return options[selected]
 
 
@@ -228,12 +228,13 @@ def get_acq_mode(params_path: str):
         return params['acq_mode'].get('value', 'EEG')
 
 
-def command(params: str, models: List[str], source_dirs: List[str]) -> str:
+def command(params: str, models: List[str], source_dirs: List[str], sampler: Type[Sampler]) -> str:
     """Command equivalent to to the result of the interactive selection of
     simulator inputs."""
     model_args = ' '.join([f"-m {path}" for path in models])
     dir_args = ' '.join(f"-d {source}" for source in source_dirs)
-    return f"bcipy-sim -p {params} {model_args} {dir_args}"
+    sampler_args = f"-s {sampler.__name__}"
+    return f"bcipy-sim -p {params} {model_args} {sampler_args} {dir_args}"
 
 
 def main(args: Dict[str, Any]) -> TaskFactory:
@@ -250,11 +251,13 @@ def main(args: Dict[str, Any]) -> TaskFactory:
         str(path) for path in select_data(args.get('data_folder', None))
     ]
 
-    print(command(params, model_paths, source_dirs))
+    sampler = choose_sampling_strategy()
+
+    print(command(params, model_paths, source_dirs, sampler))
     return TaskFactory(params_path=params,
                        source_dirs=source_dirs,
                        signal_model_paths=model_paths,
-                       sampling_strategy=TargetNontargetSampler,
+                       sampling_strategy=sampler,
                        task=SimulatorCopyPhraseTask)
 
 
