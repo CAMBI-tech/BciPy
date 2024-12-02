@@ -2,10 +2,12 @@
 
 import argparse
 import logging
-from glob import glob
+import sys
 from pathlib import Path
 
-from bcipy.simulator.data.sampler import TargetNontargetSampler
+# pylint: disable=unused-import
+# flake8: noqa
+from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.ui import cli
@@ -15,6 +17,11 @@ from bcipy.simulator.util.artifact import (DEFAULT_SAVE_LOCATION,
                                            init_simulation_dir)
 
 logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
+
+
+def classify(classname):
+    """Convert the given class name to a class."""
+    return getattr(sys.modules[__name__], classname)
 
 
 class TaskRunner():
@@ -67,7 +74,6 @@ def main():
                         required=False,
                         action='append',
                         help=data_help)
-    parser.add_argument('-g', '--glob_pattern', help=glob_help, default="*")
     parser.add_argument(
         "-m",
         "--model_path",
@@ -85,6 +91,12 @@ def main():
                         required=False,
                         default=1,
                         help="Number of times to run the simulation")
+    parser.add_argument("-s",
+                        "--sampler",
+                        type=str,
+                        required=False,
+                        default='TargetNontargetSampler',
+                        help="Sampling strategy")
     parser.add_argument("-o",
                         "--output",
                         type=Path,
@@ -100,18 +112,10 @@ def main():
     if args.interactive:
         task_factory = cli.main(sim_args)
     else:
-        source_dirs = sim_args['data_folder']
-        if len(source_dirs) == 1:
-            parent = source_dirs[0]
-            source_dirs = [
-                Path(d)
-                for d in glob(str(Path(parent, sim_args['glob_pattern'])))
-                if Path(d).is_dir()
-            ]
         task_factory = TaskFactory(params_path=sim_args['parameters'],
-                                   source_dirs=source_dirs,
+                                   source_dirs=sim_args['data_folder'],
                                    signal_model_paths=sim_args['model_path'],
-                                   sampling_strategy=TargetNontargetSampler,
+                                   sampling_strategy=classify(sim_args['sampler']),
                                    task=SimulatorCopyPhraseTask)
 
     runner = TaskRunner(save_dir=sim_dir,
