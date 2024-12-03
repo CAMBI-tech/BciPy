@@ -273,7 +273,7 @@ class FormInput(QWidget):
         # Default is a text input
         return QLineEdit(value)
 
-    def init_editable(self, value: bool) -> Optional[QWidget]:
+    def init_editable(self, value: Optional[bool]) -> Optional[QWidget]:
         "Override. Another checkbox is needed for editable"
         if value is None:
             return None
