@@ -4,7 +4,7 @@ from collections import abc
 from json import dump, load
 from pathlib import Path
 from re import fullmatch
-from typing import Optional, Any, Dict, NamedTuple, Tuple
+from typing import Any, Dict, NamedTuple, Optional, Tuple
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
@@ -79,10 +79,7 @@ class Parameters(dict):
         self.source = source
         self.cast_values = cast_values
 
-        self.required_keys = set([
-            'value', 'section', 'name', 'helpTip',
-            'recommended', 'editable', 'type'
-        ])
+        self.required_keys = set(Parameter._fields)
         self.conversions = {
             'int': int,
             'float': float,

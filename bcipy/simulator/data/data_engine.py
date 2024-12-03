@@ -183,7 +183,7 @@ class RawDataEngine(DataEngine):
                    for filt in filters), "Filters must all be valid"
         assert samples >= 1, "Insufficient number of samples requested"
 
-        expr = 'and '.join([self.query_condition(filt) for filt in filters])
+        expr = ' and '.join([self.query_condition(filt) for filt in filters])
         filtered_data = self._trials_df.query(expr)
         if filtered_data is None or len(filtered_data) < samples:
             raise TaskConfigurationException(
