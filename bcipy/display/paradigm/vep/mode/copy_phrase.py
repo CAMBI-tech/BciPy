@@ -1,17 +1,9 @@
-from psychopy import visual
-from bcipy.display.paradigm.rsvp.display import VEPDisplay
-
-"""Note:
-
-"""
+from bcipy.display.paradigm.vep.display import VEPDisplay
+from bcipy.helpers.symbols import SPACE_CHAR
 
 
-class CopyPhraseDisplayVEP(VEPDisplay):
-    """ Copy Phrase display object of VEP
-
-        Custom attributes:
-            None
-    """
+class CalibrationDisplayVEP(VEPDisplay):
+    """Calibration Display."""
 
     def __init__(
             self,
@@ -26,7 +18,6 @@ class CopyPhraseDisplayVEP(VEPDisplay):
             flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
             should_prompt_target: bool = True,
             frame_rate: Optional[float] = None):
-        """ Initializes Copy Phrase Task Objects """
 
         super().__init__(window,
                          clock,

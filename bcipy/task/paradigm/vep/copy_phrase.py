@@ -18,8 +18,8 @@ from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries
 
 
-class VEPCalibrationTask(BaseCalibrationTask):
-    """VEP Calibration Task.
+class VEPCopyPhraseTask(BaseCalibrationTask):
+    """VEP Copy Phrase Task.
 
     A task begins setting up variables --> initializing eeg -->
         awaiting user input to start -->

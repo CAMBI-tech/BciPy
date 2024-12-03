@@ -57,7 +57,8 @@ class TaskType(AutoNumberEnum):
         return [
             task for task in cls if (
                 task.name.endswith('CALIBRATION') and 'COPY_PHRASE' not in task.name
-            ) or task.name == 'VEP_COPY_PHRASE'
+                or task.name == 'VEP_COPY_PHRASE'
+            )
         ]
 
     @classmethod
