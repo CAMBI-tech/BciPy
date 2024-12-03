@@ -10,7 +10,7 @@ from pathlib import Path
 from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
-from bcipy.simulator.ui import cli
+from bcipy.simulator.ui import cli, gui
 from bcipy.simulator.util.artifact import (DEFAULT_SAVE_LOCATION,
                                            TOP_LEVEL_LOGGER_NAME,
                                            configure_run_directory,
@@ -67,7 +67,13 @@ def main():
         required=False,
         default=False,
         action='store_true',
-        help="Use interactive mode for selecting simulator inputs")
+        help="Use interactive command line for selecting simulator inputs")
+    parser.add_argument(
+        "--gui",
+        required=False,
+        default=False,
+        action='store_true',
+        help="Use interactive GUI for selecting simulator inputs")
     parser.add_argument("-d",
                         "--data_folder",
                         type=Path,
@@ -106,10 +112,12 @@ def main():
     args = parser.parse_args()
     sim_args = vars(args)
 
-    sim_dir = init_simulation_dir(save_location=sim_args['output'])
-    logger.info(sim_dir)
+    runs = sim_args['n']
+    outdir = sim_args['output']
 
-    if args.interactive:
+    if args.gui:
+        runs, outdir, task_factory = gui.configure()
+    elif args.interactive:
         task_factory = cli.main(sim_args)
     else:
         task_factory = TaskFactory(params_path=sim_args['parameters'],
@@ -118,10 +126,14 @@ def main():
                                    sampling_strategy=classify(sim_args['sampler']),
                                    task=SimulatorCopyPhraseTask)
 
-    runner = TaskRunner(save_dir=sim_dir,
-                        task_factory=task_factory,
-                        runs=sim_args['n'])
-    runner.run()
+    if task_factory:
+        sim_dir = init_simulation_dir(save_location=outdir)
+        logger.info(sim_dir)
+
+        runner = TaskRunner(save_dir=sim_dir,
+                            task_factory=task_factory,
+                            runs=runs)
+        runner.run()
 
 
 if __name__ == '__main__':

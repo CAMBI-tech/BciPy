@@ -110,7 +110,6 @@ setup(
             'bcipy = bcipy.main:bcipy_main',
             'bcipy-erp-viz = bcipy.helpers.visualization:erp',
             'bcipy-sim = bcipy.simulator:main',
-            'bcipy-sim-gui = bcipy.simulator.ui.gui:main',
             'bcipy-train = bcipy.signal.model.offline_analysis:main',
             'bcipy-params = bcipy.gui.parameters.params_form:main'
         ],

@@ -21,6 +21,9 @@ from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
 from bcipy.helpers.parameters import Parameters
 from bcipy.preferences import preferences
+from bcipy.simulator.data.sampler import TargetNontargetSampler
+from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
+from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.ui.cli import excluded
 from bcipy.simulator.util.artifact import DEFAULT_SAVE_LOCATION
 
@@ -513,6 +516,14 @@ class SimConfigForm(QWidget):
         group.setLayout(vbox)
         return group
 
+    def runs(self) -> int:
+        """Number of runs"""
+        return int(self.runs_control.text())
+
+    def outdir(self) -> str:
+        """Output directory"""
+        return self.output_control.value()
+
     def command_valid(self) -> bool:
         """Returns True if all necessary fields are input."""
         return bool(self.parameters_path and self.model_paths
@@ -524,16 +535,14 @@ class SimConfigForm(QWidget):
         if not self.command_valid:
             return ''
 
-        outdir = self.output_control.value()
         args = []
-        if outdir:
-            args.append(f"-o {self.output_control.value()}")
+        if self.outdir():
+            args.append(f"-o {self.outdir()}")
         args.append(f"-p {self.parameters_path}")
         args.extend([f"-m {path}" for path in self.model_paths])
         args.extend([f"-d {source}" for source in self.data_paths])
 
-        runs = self.runs_control.text()
-        args.append(f"-n {runs}")
+        args.append(f"-n {self.runs()}")
 
         return f"bcipy-sim {' '.join(args)}"
 
@@ -669,7 +678,36 @@ def init(title='BCI Simulator', size=(750, 600)) -> str:
     return command
 
 
-def main():
+def configure(
+    title='BCI Simulator',
+    size=(600, 750)
+) -> Tuple[int, str, Optional[TaskFactory]]:
+    """Main function"""
+    app = QApplication(sys.argv)
+    panel = MainPanel(title, size)
+    app.exec()
+    command = panel.cli_output()
+
+    runs = panel.form.runs()
+    outdir = panel.form.outdir()
+    params = panel.form.parameters_path
+    data_paths = panel.form.data_paths
+    model_paths = panel.form.model_paths
+
+    app.quit()
+
+    factory = None
+    if command:
+        print(command, file=sys.stdout)
+        factory = TaskFactory(params_path=params,
+                              source_dirs=data_paths,
+                              signal_model_paths=model_paths,
+                              sampling_strategy=TargetNontargetSampler,
+                              task=SimulatorCopyPhraseTask)
+    return (runs, outdir, factory)
+
+
+def run():
     """Process command line arguments and initialize the GUI."""
     parser = argparse.ArgumentParser()
 
@@ -681,4 +719,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run()
