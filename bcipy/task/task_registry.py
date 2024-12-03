@@ -55,8 +55,9 @@ class TaskType(AutoNumberEnum):
     @classmethod
     def calibration_tasks(cls) -> List['TaskType']:
         return [
-            task for task in cls if task.name.endswith('CALIBRATION') and
-            'COPY_PHRASE' not in task.name
+            task for task in cls if (
+                task.name.endswith('CALIBRATION') and 'COPY_PHRASE' not in task.name
+            ) or task.name == 'VEP_COPY_PHRASE'
         ]
 
     @classmethod
