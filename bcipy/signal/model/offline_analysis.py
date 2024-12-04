@@ -469,7 +469,7 @@ def offline_analysis(
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
-    data_file_paths = [path for path in active_raw_data_paths if path.exists()]
+    data_file_paths = [str(path) for path in active_raw_data_paths if path.exists()]
 
     assert len(data_file_paths) >= 1 and len(data_file_paths) < 3, (
         f"Offline analysis requires at least one data file and at most two data files. Found: {len(data_file_paths)}"
@@ -525,7 +525,7 @@ def offline_analysis(
                 log.info("User opted out of ERP model training.")
 
         if device_spec.content_type == "Eyetracker" and device_spec.is_active:
-            if not fusion or confirm("Would you like to proceed with Gaze model training?"):
+            if fusion or confirm("Would you like to proceed with Gaze model training?"):
                 et_model = analyze_gaze(
                     raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP")
                 models.append(et_model)
