@@ -87,7 +87,7 @@ Invoke an experiment protocol or task directly using command line utility `bcipy
   
 ##### Train a signal model with registered BciPy models
 
-To train a signal model (currently `PCARDAKDE`), run the following command after installing BciPy:
+To train a signal model (currently `PCARDAKDE` and `GazeModels`), run the following command after installing BciPy:
 
 `bcipy-train`
 

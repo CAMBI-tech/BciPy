@@ -422,6 +422,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
+    n_iterations: int = 10
 ) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -471,14 +472,16 @@ def offline_analysis(
                              for device_spec in active_devices)
     data_file_paths = [str(path) for path in active_raw_data_paths if path.exists()]
 
-    assert len(data_file_paths) >= 1 and len(data_file_paths) < 3, (
-        f"Offline analysis requires at least one data file and at most two data files. Found: {len(data_file_paths)}"
+    num_devices = len(data_file_paths)
+    assert num_devices >= 1 and num_devices < 3, (
+        f"Offline analysis requires at least one data file and at most two data files. Found: {num_devices}"
     )
 
     fusion = False
-    if len(data_file_paths) == 2:
+    if num_devices == 2:
         # Ensure there is an EEG and Eyetracker device
-        if confirm("Would you like to proceed with fusion training?"):
+        if confirm("Would you like to proceed with fusion analysis? \n"
+                   f"It will run for {n_iterations} iterations. Hit cancel to train models separately."):
             fusion = True
             # Note that the models trained here are not saved/used for the online system.
             log.info("Multiple Devices Found. Starting fusion analysis...")
@@ -497,7 +500,8 @@ def offline_analysis(
                 device_spec_gaze,
                 symbol_set,
                 parameters,
-                data_folder
+                data_folder,
+                n_iterations=n_iterations,
             )
 
             log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
@@ -557,11 +561,24 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data_folder", default=None)
-    parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
-    parser.add_argument("-s", "--save_figures", action="store_true")
-    parser.add_argument("-v", "--show_figures", action="store_true")
-    parser.add_argument("--alert", dest="alert", action="store_true")
+    parser.add_argument(
+        "-d",
+        "--data_folder",
+        default=None,
+        help="Path to the folder containing the BciPy data to be analyzed.")
+    parser.add_argument(
+        "-p",
+        "--parameters_file",
+        default=DEFAULT_PARAMETERS_PATH,
+        help="Path to the BciPy parameters file.")
+    parser.add_argument("-s", "--save_figures", action="store_true", help="Save figures after training.")
+    parser.add_argument("-v", "--show_figures", action="store_true", help="Show figures after training.")
+    parser.add_argument("-i", "--iterations", type=int, default=10, help="Number of iterations for fusion analysis.")
+    parser.add_argument(
+        "--alert",
+        dest="alert",
+        action="store_true",
+        help="Alert the user when offline analysis is complete.")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
@@ -582,7 +599,8 @@ def main():
         alert_finished=args.alert,
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
-        show_figures=args.show_figures)
+        show_figures=args.show_figures,
+        n_iterations=args.iterations)
 
 
 if __name__ == "__main__":

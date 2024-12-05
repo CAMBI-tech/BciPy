@@ -13,6 +13,8 @@ warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 
 class GaussianProcess(SignalModel):
+
+    name = "GaussianProcessGazeModel"
     reshaper = GazeReshaper()
 
     def __init__(self):

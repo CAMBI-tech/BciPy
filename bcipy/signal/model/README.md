@@ -35,6 +35,34 @@ This model involves the following stages:
 5. In order to make a Bayesian update, we need to compute the ratio of the generative likelihood terms for the presented letter (`p(eeg | +)` and `p(eeg | -)`). This ratio is obtained from the final kernel density estimation step and is used in the final decision rule. See `rda_kde/rda_kde.py`.
 
 
+### Fusion Analyis
+
+TODO: Add documentation for fusion analysis.
+
+### Offline Analysis Training
+
+To train a signal model (currently `PCARDAKDE` and `GazeModel`), run the following command after installing BciPy:
+
+`bcipy-train`
+
+- Use the help flag to see other available input options: `bcipy-train --help`
+	- You can pass it attributes with flags, if desired.
+		- Running without a window prompting for data session folder: 
+			- `bcipy-train -d path/to/data`
+		- Running with data visualizations (ERPs, etc.): 
+			- `bcipy-train -v`
+    	- Running with data visualizations that do not show, but save to file: 
+			- `bcipy-train -s`
+        - Running with balanced accuracy:
+           - `bcipy-train --balanced-acc`
+		- Running with alerts after each Task execution: 
+			- `bcipy-train --alert`
+		- Running with custom parameters: 
+			- `bcipy-train -p "path/to/valid/parameters.json"`
+    	- Running with custom number of iterations for fusion analysis (by default 10):
+        	- `bcipy-train -i 10`
+
+
 # Testing
 
 Run tests for this module as follows (from the root directory):

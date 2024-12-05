@@ -1,8 +1,10 @@
 import numpy as np
 from sklearn.utils import resample
 from typing import List, Tuple
+import logging
+from tqdm import tqdm
 
-from bcipy.config import (TRIGGER_FILENAME)
+from bcipy.config import (TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.raw_data import RawData
 from bcipy.helpers.stimuli import update_inquiry_timing
@@ -16,6 +18,9 @@ from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.helpers.parameters import Parameters
+
+
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def calculate_eeg_gaze_fusion_acc(
@@ -47,7 +52,8 @@ def calculate_eeg_gaze_fusion_acc(
         gaze_acc: accuracy of the gaze model only
         fusion_acc: accuracy of the fusion
     """
-# Extract relevant session information from parameters file
+    logger.info(f"Calculating EEG [{eeg_model.name}] and Gaze [{gaze_model.name}] model fusion accuracy.")
+    # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window", (0.0, 0.5))
     window_length = trial_window[1] - trial_window[0]  # eeg window length, in seconds
 
@@ -204,7 +210,14 @@ def calculate_eeg_gaze_fusion_acc(
     fusion_acc = []
     # selection length is the length of eeg or gaze data, whichever is smaller:
     selection_length = min(len(eeg_inquiries[1]), len(preprocessed_gaze_data))
-    for _ in range(n_iterations):
+
+    progress_bar = tqdm(
+        range(n_iterations),
+        total=n_iterations,
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n",
+        colour='MAGENTA')
+    for _progress in progress_bar:
+        progress_bar.set_description(f"Running iteration {_progress + 1}/{n_iterations}")
         # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
         train_indices = resample(list(range(selection_length)), replace=True, n_samples=100)
         test_indices = np.array([x for x in list(range(selection_length)) if x not in train_indices])
@@ -363,5 +376,7 @@ def calculate_eeg_gaze_fusion_acc(
         eeg_acc.append(eeg_acc_in_iteration)
         gaze_acc.append(gaze_acc_in_iteration)
         fusion_acc.append(fusion_acc_in_iteration)
+
+    progress_bar.close()
 
     return eeg_acc, gaze_acc, fusion_acc
