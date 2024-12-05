@@ -36,15 +36,30 @@ def extract_eye_info(data):
         # Apply padding instead of deleting samples:
         for j in range(len(left_eye)):
             if np.isnan(left_eye[j]).any():
-                left_eye[j] = left_eye[j - 1]
+                if left_eye[j - 1].all() is not None:   # If the previous sample is not NaN
+                    left_eye[j] = left_eye[j - 1]
+                else:
+                    # Find the next non-NaN sample:
+                    for k in range(j, len(left_eye)):
+                        if left_eye[k].all() is not None:
+                            left_eye[j] = left_eye[k]
+                            break
 
     # Same for the right eye:
     right_eye_nan_idx = np.isnan(right_eye).any(axis=1)
     if right_eye_nan_idx.sum() != 0:
         for i in range(len(right_eye)):
             if np.isnan(right_eye[i]).any():
-                right_eye[i] = right_eye[i - 1]
+                if right_eye[i - 1].all() is not None:
+                    right_eye[i] = right_eye[i - 1]
+                else:
+                    for k in range(i, len(right_eye)):
+                        if right_eye[k].all() is not None:
+                            right_eye[i] = right_eye[k]
+                            break
 
+    if np.isnan(left_eye).any(axis=1).sum() != 0 or np.isnan(right_eye).any(axis=1).sum() != 0:
+        raise SignalException('There are still NaN values in the data.')
     try:
         len(left_eye) != len(right_eye)
     except AssertionError:

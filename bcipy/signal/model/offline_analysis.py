@@ -27,10 +27,11 @@ from bcipy.helpers.triggers import TriggerType, trigger_decoder
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,
-                                                 KernelGP, KernelGPSampleAverage)
+                                                 GaussianProcess)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
+from bcipy.signal.model.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
@@ -93,9 +94,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         show_figures (bool): If true, shows ERP figures after training.
     """
     # Extract relevant session information from parameters file
-    trial_window = parameters.get("trial_window")
-    if trial_window is None:
-        trial_window = (0.0, 0.5)
+    trial_window = parameters.get("trial_window", (0.0, 0.5))
     window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
@@ -229,7 +228,7 @@ def analyze_gaze(
         save_figures=None,
         show_figures=False,
         plot_points=False,
-        model_type="Individual"):
+        model_type="Individual_GM"):
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
     Extract timing information from trigger file.
@@ -248,9 +247,8 @@ def analyze_gaze(
         save_figures (bool): If true, saves ERP figures after training to the data folder.
         show_figures (bool): If true, shows ERP figures after training.
         plot_points (bool): If true, plots the gaze points on the matrix image.
-        model_type (str): Type of gaze model to be used. Options are:
-            "Individual": Fits a separate Gaussian for each symbol. Default model
-            "Centralized": Uses data from all symbols to fit a single centralized Gaussian
+        model_type (str): Type of gaze model to be used. Options are: "Individual_GM", "Centralized_GM",
+        or "GaussianProcess".
     """
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -268,14 +266,12 @@ def analyze_gaze(
 
     data, _fs = gaze_data.by_channel()
 
-    if model_type == "Individual":
+    if model_type == "Individual_GM":
         model = GMIndividual()
-    elif model_type == "Centralized":
+    elif model_type == "Centralized_GM":
         model = GMCentralized()
     elif model_type == "GP":
-        model = KernelGP()
-    elif model_type == "GP_SampleAverage":
-        model = KernelGPSampleAverage()
+        model = GaussianProcess()
 
     # Extract all Triggers info
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
@@ -311,8 +307,15 @@ def analyze_gaze(
         symbol_set=alphabet()
     )
 
-    # Extract the data for each target label and each eye separately.
     # Apply preprocessing:
+    inquiry_length = inquiries_list[0].shape[1]  # number of time samples in each inquiry
+    predefined_dimensions = 4  # left_x, left_y, right_x, right_y
+    preprocessed_array = np.zeros((len(inquiries_list), predefined_dimensions, inquiry_length))
+    # Extract left_x, left_y, right_x, right_y for each inquiry
+    for j in range(len(inquiries_list)):
+        left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_list[j])
+        preprocessed_array[j] = np.concatenate((left_eye.T, right_eye.T,), axis=0)
+
     preprocessed_data = {i: [] for i in symbol_set}
     for i in symbol_set:
         # Skip if there's no evidence for this symbol:
@@ -339,7 +342,7 @@ def analyze_gaze(
             continue
 
         # Fit the model based on model type.
-        if model_type == "Individual":
+        if model_type == "Individual_GM":
             # Model 1: Fit Gaussian mixture on each symbol separately
             reshaped_data = preprocessed_data[sym].reshape(
                 (preprocessed_data[sym].shape[0] *
@@ -347,7 +350,7 @@ def analyze_gaze(
                  preprocessed_data[sym].shape[1]))
             model.fit(reshaped_data)
 
-        if model_type == "Centralized":
+        if model_type == "Centralized_GM":
             # Centralize the data using symbol positions and fit a single Gaussian.
             # Load json file.
             with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
@@ -357,99 +360,42 @@ def analyze_gaze(
             for j in range(len(preprocessed_data[sym])):
                 centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
 
-        if model_type == "GP_SampleAverage":
+        if model_type == "GP":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
                 time_average[sym].append(temp)
                 centralized_data[sym].append(
-                    model.substract_mean(
+                    model.subtract_mean(
                         preprocessed_data[sym][j],
                         temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
 
-    if model_type == "Individual":
-        accuracy = 0
-        acc_all_symbols = {}
-        counter = 0
-
-    if model_type == "GP_SampleAverage":
-        test_dict = {i: [] for i in symbol_set}
-        # Visualize different inquiries from the same target letter:
-        colors = ['r', 'g', 'b', 'y', 'm', 'c', 'k', 'w', 'orange', 'purple']
-        for sym in symbol_set:
-            if len(centralized_data[sym]) == 0:
-                continue
-
+    if model_type == "GP":
         # Split the data into train and test sets & fit the model:
-        centralized_data_training_set = []
-        for sym in symbol_set:
-            if len(centralized_data[sym]) <= 1:
-                if len(centralized_data[sym]) == 1:
-                    test_dict[sym] = preprocessed_data[sym][-1]
-                continue
-            # Leave one out and add the rest to the training set:
-            for j in range(len(centralized_data[sym]) - 1):
-                centralized_data_training_set.append(centralized_data[sym][j])
-            # Add the last inquiry to the test set:
-            test_dict[sym] = preprocessed_data[sym][-1]
-
-        centralized_data_training_set = np.array(centralized_data_training_set)
-        reshaped_data = centralized_data_training_set.reshape((72, 720))
+        centralized_gaze_data = np.zeros_like(preprocessed_array)
+        for i, (_, sym) in enumerate(zip(preprocessed_array, target_symbols)):
+            centralized_gaze_data[i] = model.subtract_mean(preprocessed_array[i], time_average[sym])
+        reshaped_data = centralized_gaze_data.reshape(
+            (len(centralized_gaze_data), inquiry_length * predefined_dimensions))
 
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         time_horizon = 9
-        # Accuracy vs time horizon
 
-        for eye_coord_0 in range(4):
-            for eye_coord_1 in range(4):
-                for time_0 in range(180):
-                    for time_1 in range(180):
-                        l_ind = eye_coord_0 * 180 + time_0
-                        m_ind = eye_coord_1 * 180 + time_1
+        for eye_coord_0 in range(predefined_dimensions):
+            for eye_coord_1 in range(predefined_dimensions):
+                for time_0 in range(inquiry_length):
+                    for time_1 in range(inquiry_length):
+                        l_ind = eye_coord_0 * inquiry_length + time_0
+                        m_ind = eye_coord_1 * inquiry_length + time_1
                         if np.abs(time_1 - time_0) > time_horizon:
                             cov_matrix[l_ind, m_ind] = 0
-                            # cov_matrix[m_ind, l_ind] = 0
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        eps = 0
-        regularized_cov_matrix = cov_matrix + np.eye(len(cov_matrix)) * eps
-        try:
-            inv_cov_matrix = np.linalg.inv(regularized_cov_matrix)
-        except BaseException:
-            print("Singular matrix, using pseudo-inverse instead")
-            eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
-            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
-            # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
-        denominator = 0
+        # Save model parameters which are mean and covariance matrix
 
-        # Find the likelihoods for the test case:
-        l_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
-        log_likelihoods = np.zeros((len(symbol_set), len(symbol_set)))
-        counter = 0
-        for i_sym0, sym0 in enumerate(symbol_set):
-            for i_sym1, sym1 in enumerate(symbol_set):
-                if len(centralized_data[sym1]) == 0:
-                    continue
-                if len(test_dict[sym0]) == 0:
-                    continue
-                # print(f"Target: {sym0}, Tested: {sym1}")
-                central_data = model.substract_mean(test_dict[sym0], time_average[sym1])
-                flattened_data = central_data.reshape((720,))
-                diff = flattened_data - reshaped_mean
-                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
-                log_likelihood = numerator - denominator
-                # print(f"{log_likelihood:.3E}")
-                log_likelihoods[i_sym0, i_sym1] = log_likelihood
-            # Find the max likelihood:
-            max_like = np.argmax(log_likelihoods[i_sym0, :])
-            # Check if it's the same as the target, and save the result:
-            if max_like == i_sym0:
-                # print("True")
-                counter += 1
-
-    if model_type == "Centralized":
+    if model_type == "Centralized_GM":
         # Fit the model parameters using the centralized data:
         # flatten the dict to a np array:
         cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
@@ -476,6 +422,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
+    n_iterations: int = 10
 ) -> List[SignalModel]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -523,11 +470,43 @@ def offline_analysis(
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
-    data_file_paths = [path for path in active_raw_data_paths if path.exists()]
+    data_file_paths = [str(path) for path in active_raw_data_paths if path.exists()]
 
-    assert len(data_file_paths) < 3, "BciPy only supports up to 2 devices for offline analysis."
-    assert len(data_file_paths) > 0, "No data files found for offline analysis."
+    num_devices = len(data_file_paths)
+    assert num_devices >= 1 and num_devices < 3, (
+        f"Offline analysis requires at least one data file and at most two data files. Found: {num_devices}"
+    )
 
+    fusion = False
+    if num_devices == 2:
+        # Ensure there is an EEG and Eyetracker device
+        if confirm("Would you like to proceed with fusion analysis? \n"
+                   f"It will run for {n_iterations} iterations. Hit cancel to train models separately."):
+            fusion = True
+            # Note that the models trained here are not saved/used for the online system.
+            log.info("Multiple Devices Found. Starting fusion analysis...")
+
+            eeg_data = load_raw_data(data_file_paths[0])
+            device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
+            assert device_spec_eeg.content_type == "EEG", "First device must be EEG"
+            gaze_data = load_raw_data(data_file_paths[1])
+            device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
+            assert device_spec_gaze.content_type == "Eyetracker", "Second device must be Eyetracker"
+            symbol_set = alphabet()
+            eeg_acc, gaze_acc, fusion_acc = calculate_eeg_gaze_fusion_acc(
+                eeg_data,
+                gaze_data,
+                device_spec_eeg,
+                device_spec_gaze,
+                symbol_set,
+                parameters,
+                data_folder,
+                n_iterations=n_iterations,
+            )
+
+            log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+
+    # Ask the user if they want to proceed with full dataset model training
     models = []
     log.info(f"Starting offline analysis for {data_file_paths}")
     for raw_data_path in data_file_paths:
@@ -536,23 +515,26 @@ def offline_analysis(
         # extract relevant information from raw data object eeg
 
         if device_spec.content_type == "EEG" and device_spec.is_active:
-            erp_model = analyze_erp(
-                raw_data,
-                parameters,
-                device_spec,
-                data_folder,
-                estimate_balanced_acc,
-                save_figures,
-                show_figures)
-            models.append(erp_model)
+            if not fusion or confirm("Would you like to proceed with ERP model training?"):
+                erp_model = analyze_erp(
+                    raw_data,
+                    parameters,
+                    device_spec,
+                    data_folder,
+                    estimate_balanced_acc,
+                    save_figures,
+                    show_figures)
+                models.append(erp_model)
+            else:
+                log.info("User opted out of ERP model training.")
 
         if device_spec.content_type == "Eyetracker" and device_spec.is_active:
-            et_model = analyze_gaze(
-                raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="Individual")
-            models.append(et_model)
-
-    if len(models) > 1:
-        log.info("Multiple Models Trained. Fusion Analysis Not Yet Implemented.")
+            if fusion or confirm("Would you like to proceed with Gaze model training?"):
+                et_model = analyze_gaze(
+                    raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP")
+                models.append(et_model)
+            else:
+                log.info("User opted out of Eyetracker model training.")
 
     if alert_finished:
         log.info("Alerting Offline Analysis Complete")
@@ -579,11 +561,24 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("-d", "--data_folder", default=None)
-    parser.add_argument("-p", "--parameters_file", default=DEFAULT_PARAMETERS_PATH)
-    parser.add_argument("-s", "--save_figures", action="store_true")
-    parser.add_argument("-v", "--show_figures", action="store_true")
-    parser.add_argument("--alert", dest="alert", action="store_true")
+    parser.add_argument(
+        "-d",
+        "--data_folder",
+        default=None,
+        help="Path to the folder containing the BciPy data to be analyzed.")
+    parser.add_argument(
+        "-p",
+        "--parameters_file",
+        default=DEFAULT_PARAMETERS_PATH,
+        help="Path to the BciPy parameters file.")
+    parser.add_argument("-s", "--save_figures", action="store_true", help="Save figures after training.")
+    parser.add_argument("-v", "--show_figures", action="store_true", help="Show figures after training.")
+    parser.add_argument("-i", "--iterations", type=int, default=10, help="Number of iterations for fusion analysis.")
+    parser.add_argument(
+        "--alert",
+        dest="alert",
+        action="store_true",
+        help="Alert the user when offline analysis is complete.")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=False)
@@ -604,7 +599,8 @@ def main():
         alert_finished=args.alert,
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
-        show_figures=args.show_figures)
+        show_figures=args.show_figures,
+        n_iterations=args.iterations)
 
 
 if __name__ == "__main__":

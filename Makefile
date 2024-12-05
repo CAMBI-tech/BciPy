@@ -11,6 +11,7 @@ test-all:
 	make coverage-report
 	make type
 	make lint
+	make integration-test
 
 unit-test:
 	pytest --mpl -k "not slow"

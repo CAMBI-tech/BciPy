@@ -157,6 +157,8 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
 
 def load_experimental_data() -> str:
     filename = ask_directory()  # show dialog box and return the path
+    if not filename:
+        raise BciPyCoreException('No file selected in GUI. Exiting...')
     log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
@@ -255,7 +257,7 @@ def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     file_name = filename.split('/')[-1]
 
     if 'csv' not in file_name:
-        raise Exception(
+        raise TypeError(
             'File type unrecognized. Please use a supported csv type')
 
     return filename
@@ -280,7 +282,7 @@ def load_txt_data() -> str:
     file_name = filename.split('/')[-1]
 
     if 'txt' not in file_name:
-        raise Exception(
+        raise TypeError(
             'File type unrecognized. Please use a supported text type')
 
     return filename
