@@ -128,7 +128,7 @@ def write_summary_measures(measures: dict, output: str):
         df = pd.DataFrame(measures, index=[0])
         df.to_csv(csv_output, mode='a', header=False, index=False)
 
-def calculate_summary_measures(data: dict, experiment_id: str) -> dict:
+def calculate_summary_measures(data: dict, experiment_id: str, parameters: dict) -> dict:
     # Calculate the summary measures using an average across all the sessions
     measures = {}
     # intialize the measures
@@ -167,6 +167,8 @@ def calculate_summary_measures(data: dict, experiment_id: str) -> dict:
             last_inquiry = str(len(session['series'][last_series]) - 1)
             target_text = session['series'][last_series][last_inquiry]['target_text']
             last_display_state = session['series'][last_series][last_inquiry]['next_display_state']
+
+            # split the target phrase and the final typed phrase
             target_phrase = target_text.split("_")
             final_typed = last_display_state.split("_")
 
@@ -188,13 +190,14 @@ def calculate_summary_measures(data: dict, experiment_id: str) -> dict:
                         break
                 # find the first in
                 copy_accuracy = correct_copy / len(target_phrase)
-                copy_rate = copy_accuracy / float(session['total_minutes'])
+                copy_rate = correct_copy / float(session['total_minutes'])
             
             measures['DV_Accuracy'].append(copy_accuracy)
             measures['DV_Copy_Rate'].append(copy_rate)
             measures['DV_Correct_Count'].append(correct_copy)
 
-    # calculate the average of the measures
+    # calculate the average of the measures. ADD the number of items included in the average (0/20) & the number of copy phrases.
+    # Add mean or count to the variable name
     for measure_id in MEASURES:
         if 'count' in measure_id.lower():
             measures[measure_id] = sum(measures[measure_id])
@@ -261,7 +264,7 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
                         f"{copy_phrase_data}/{DEFAULT_PARAMETERS_FILENAME}",
                         value_cast=True)
                     # calculate the summary measures
-                    measures = calculate_summary_measures(session_data, experiment_id)
+                    measures = calculate_summary_measures(session_data, experiment_id, parameters)
                     measures['User_ID'] = user_id
                     measures['Date'] = date
                     measures['Date_Time'] = date_time
