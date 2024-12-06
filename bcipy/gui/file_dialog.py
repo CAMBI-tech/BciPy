@@ -1,11 +1,13 @@
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
 from pathlib import Path
+from typing import Union
 
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
 
 from bcipy.preferences import preferences
+from bcipy.exceptions import BciPyCoreException
 
 DEFAULT_FILE_TYPES = "All Files (*)"
 
@@ -61,8 +63,8 @@ class FileDialog(QWidget):
 def ask_filename(
         file_types: str = DEFAULT_FILE_TYPES,
         directory: str = "",
-        prompt: str = "Select File") -> str:
-    """Prompt for a file.
+        prompt: str = "Select File") -> Union[str, BciPyCoreException]:
+    """Prompt for a file using a GUI.
 
     Parameters
     ----------
@@ -72,7 +74,7 @@ def ask_filename(
 
     Returns
     -------
-    path to file or None if the user cancelled the dialog.
+    path to file or raises an exception if the user cancels the dialog.
     """
     app = QApplication(sys.argv)
     dialog = FileDialog()
@@ -84,18 +86,24 @@ def ask_filename(
     if filename and path.is_file():
         preferences.last_directory = str(path.parent)
 
-    # Alternatively, we could use `app.closeAllWindows()`
-    app.quit()
+        # Alternatively, we could use `app.closeAllWindows()`
+        app.quit()
 
-    return filename
+        return filename
+    
+    raise BciPyCoreException('No file selected.')
 
 
-def ask_directory(prompt: str = "Select Directory") -> str:
-    """Prompt for a directory.
+def ask_directory(prompt: str = "Select Directory") -> Union[str, BciPyCoreException]:
+    """Prompt for a directory using a GUI.
+
+    Parameters
+    ----------
+    prompt : optional prompt message to display to users
 
     Returns
     -------
-    path to directory or None if the user cancelled the dialog.
+    path to directory or raises an exception if the user cancels the dialog.
     """
     app = QApplication(sys.argv)
 
@@ -107,7 +115,9 @@ def ask_directory(prompt: str = "Select Directory") -> str:
     if name and Path(name).is_dir():
         preferences.last_directory = name
 
-    # Alternatively, we could use `app.closeAllWindows()`
-    app.quit()
+        # Alternatively, we could use `app.closeAllWindows()`
+        app.quit()
 
-    return name
+        return name
+    
+    raise BciPyCoreException('No directory selected.')
