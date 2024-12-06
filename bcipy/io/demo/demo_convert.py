@@ -6,7 +6,7 @@ To use at bcipy root,
 """
 from typing import Optional, List
 from pathlib import Path
-from bcipy.io.convert import convert_to_bids, ConvertFormat
+from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData
 
@@ -48,7 +48,7 @@ def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTask
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
-                session_id="01",
+                session_id=1,
                 run=1,
                 task_name=task_name
             )
@@ -60,7 +60,8 @@ def convert_experiment_to_bids(
         directory: str,
         experiment_id: str,
         format: ConvertFormat = ConvertFormat.BV,
-        output_dir: Optional[str] = None) -> None:
+        output_dir: Optional[str] = None,
+        include_eye_tracker: bool = False) -> None:
     """Converts the data in the study folder to BIDS format."""
 
     experiment_data = load_bcipy_data(
@@ -73,7 +74,7 @@ def convert_experiment_to_bids(
     errors = []
     for data in experiment_data:
         try:
-            convert_to_bids(
+            bids_path = convert_to_bids(
                 data_dir=data.path,
                 participant_id=data.user_id,
                 session_id=data.session_id,
@@ -82,6 +83,20 @@ def convert_experiment_to_bids(
                 output_dir=f'{output_dir}/bids_{experiment_id}/',
                 format=format
             )
+
+            if include_eye_tracker:
+                # Convert the eye tracker data
+                # The eye tracker data is in the same folder as the EEG data, but should be saved in a different folder
+                bids_path = Path(bids_path).parent
+                convert_eyetracking_to_bids(
+                    raw_data_path=data.path,
+                    participant_id=data.user_id,
+                    session_id=data.session_id,
+                    run_id=data.run,
+                    output_dir=bids_path,
+                    task_name=data.task_name
+                )
+
         except Exception as e:
             print(f"Error converting {data.path} - {e}")
             errors.append(str(data.path))
@@ -117,4 +132,4 @@ if __name__ == '__main__':
         path = ask_directory("Select the directory with data to be converted")
 
     # convert a study to BIDS format
-    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV, output_dir=".")
+    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV, output_dir=".", include_eye_tracker=True)
