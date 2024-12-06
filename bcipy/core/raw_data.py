@@ -402,3 +402,17 @@ def sample_data(rows: int = 1000,
         data.append([timestamp] + channel_data + [trg])
 
     return data
+
+
+def get_1020_channels():
+    """Returns the standard 10-20 channel names"""
+    return [
+        'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'T3', 'C3', 'Cz', 'C4',
+        'T4', 'T5', 'P3', 'Pz', 'P4', 'T6', 'O1', 'O2'
+    ]
+
+
+def get_1020_channel_map(channels_name):
+    """Returns the standard 10-20 channel names"""
+    valid_channels = get_1020_channels()
+    return [1 if name in valid_channels else 0 for name in channels_name]
