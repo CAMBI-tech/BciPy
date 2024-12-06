@@ -1,9 +1,7 @@
 """SCRD DV Script.
 
 This script is used to generate the SCRD DV report. It will output the summary measures across a single
-participant's copy phrase data.
-
-The data is expected to be in the following format:
+participant's copy phrase data. The data is expected to be in the following format:
 
 user_id/ * this is what the user should load from the file dialog
     /date
@@ -17,25 +15,30 @@ user_id/ * this is what the user should load from the file dialog
 
 We want the following averaged measures:
 
-Accuracy: The accuracy of the copy phrase task based on correct/incorrect selections.
-DV_Accuracy: The accuracy of the copy phrase task based on actual typed text, excluding all corrections.
-DV_Copy_Rate: DV_Accuracy divided by the total time spent on the task.
-DV_Correct_Count: The number of correct selections based on the actual typed text.
-Copy_Rate: The number of correct selections divided by the total time spent on the task.
-Correct_Rate: The number of correct selections divided by the total number of selections.
-Inquiries_per_selection
-Inquiry_Total
-Selections_Correct
-Selections_Correct_Backspace
-Selections_Correct_Letters
-Selections_Incorrect
-Selections_Total
-Session_Length
-Session_Minutes
-IP_Condition
-Switch_per_selection
-Switch_Total
-Switch_Response_Time
+    Accuracy: The accuracy of the copy phrase task based on correct/incorrect selections.
+    DV_Accuracy: The accuracy of the copy phrase task based on actual typed text, excluding all corrections.
+    DV_Copy_Rate: DV_Accuracy divided by the total time spent on the task.
+    DV_Correct_Count: The number of correct selections based on the actual typed text.
+    Copy_Rate: The number of correct selections divided by the total time spent on the task.
+    Correct_Rate: The number of correct selections divided by the total number of selections.
+    Inquiries_per_selection: Average number of inquiries per selection.
+    Inquiry_Total: Total number of inquiries.
+    Selections_Correct: Average number of correct selections.
+    Selections_Correct_Letters: Average number of correct selections based on letters.
+    Selections_Incorrect: Average number of incorrect selections.
+    Selections_Total: Average number of selections.
+    Session_Length: Average session length in seconds.
+    Session_Minutes: Average session length in minutes.
+    IP_Condition: The condition of the inquiry progress method. NP, IPO, PTC, PTS.
+    Switch_per_selection: Average number of switches per selection.
+    Switch_Total: Average number of switch hits.
+    Switch_Response_Time: Average switch response time.
+
+We want the following count measures:
+
+    Copy_Phrase_Count: The number of copy phrases completed for that date time / run.
+    Selections_Total_Count: The total number of selections for that date time / run.
+    DV_Correct_Count: The total number of correct selections based on the actual typed text for that date time / run.
 
 Missing measures will be written as "N/A".
 
@@ -67,28 +70,30 @@ from bcipy.config import SESSION_DATA_FILENAME, DEFAULT_PARAMETERS_FILENAME
 from bcipy.helpers.load import load_json_parameters
 
 DEFAULT_EXPERIMENT = "SCRD_Control"
-MEASURES = [
+OUTPUT_MEASURES = [
     "User_ID",
     "Experiment",
     "Date",
     "Date_Time",
-    "Accuracy",
-    "DV_Accuracy",
-    "DV_Copy_Rate",
+    "Copy_Phrase_Count",
+    "Accuracy_Avg",
+    "DV_Accuracy_Avg",
+    "DV_Copy_Rate_Avg",
     "DV_Correct_Count",
-    "Copy_Rate",
-    "Correct_Rate",
-    "Inquiries_Per_Selection",
-    "Inquiry_Total",
-    "Selections_Correct",
-    "Selections_Correct_Letters",
-    "Selections_Incorrect",
-    "Selections_Total",
-    "Session_Length",
-    "Session_Minutes",
-    "Switch_per_selection",
-    "Switch_Total",
-    "Switch_Response_Time",
+    "Copy_Rate_Avg",
+    "Correct_Rate_Avg",
+    "Inquiries_Per_Selection_Avg",
+    "Inquiry_Total_Avg",
+    "Selections_Correct_Avg",
+    "Selections_Correct_Letters_Avg",
+    "Selections_Incorrect_Avg",
+    "Selections_Total_Avg",
+    "Selections_Total_Count",
+    "Session_Length_Avg",
+    "Session_Minutes_Avg",
+    "Switch_per_selection_Avg",
+    "Switch_Total_Avg",
+    "Switch_Response_Time_Avg",
     "IP_Condition"
 ]
 MISSING_MEASURE = "N/A"
@@ -115,6 +120,7 @@ def write_summary_measures(measures: dict, output: str):
         measures (dict): The summary measures.
         output (str): The path to the output directory.
     """
+    print(f"Writing session measures to {output}")
     csv_output = os.path.join(output, "dv_summary.csv")
     # write csv but don't write the row if date time already exists
     if not os.path.exists(csv_output):
@@ -128,89 +134,118 @@ def write_summary_measures(measures: dict, output: str):
         df = pd.DataFrame(measures, index=[0])
         df.to_csv(csv_output, mode='a', header=False, index=False)
 
-def calculate_summary_measures(data: dict, experiment_id: str, parameters: dict) -> dict:
+def calculate_summary_measures(data: dict, experiment_id: str, date_time: str) -> dict:
+    """Calculate the summary measures for the given data.
+    
+    Data is expected to be in the following format:
+        data[experiment_id][date_time][session_id]
+
+    We assume there may be multiple sessions for a given date_time. The summary measures are calculated by
+    averaging across all the sessions unless otherwise specified by COUNT in the measure name.
+    
+    Args:
+        data (dict): The data to calculate the summary measures from.
+        experiment_id (str): The experiment id.
+        date_time (str): The date time.
+    """
     # Calculate the summary measures using an average across all the sessions
-    measures = {}
+    calculated_measures = {}
     # intialize the measures
-    for measure_id in MEASURES:
-        measures[measure_id] = []
+    for measure_id in OUTPUT_MEASURES:
+        calculated_measures[measure_id] = []
 
-    for date_time in data[experiment_id]:
-        session_data = data[experiment_id][date_time]
+    session_data = data[experiment_id][date_time]
 
-        # iterate over the sessions and cast the measures to the correct type
-        for session in session_data.values():
-            measures['Accuracy'].append(float(session['task_summary']['typing_accuracy']))
-            measures['Copy_Rate'].append(float(session['task_summary']['copy_rate']))
-            measures['Correct_Rate'].append(float(session['task_summary']['correct_rate']))
-            measures['Inquiries_Per_Selection'].append(int(session['inquiries_per_selection']))
-            measures['Inquiry_Total'].append(int(session['total_inquiries']))
-            measures['Selections_Total'].append(int(session['total_selections']))
-            measures['Selections_Correct'].append(int(session['task_summary']['selections_correct']))
-            measures['Selections_Incorrect'].append(int(session['task_summary']['selections_incorrect']))
-            measures['Selections_Correct_Letters'].append(int(session['task_summary']['selections_correct_symbols']))
-            measures['Session_Length'].append(float(session['total_time_spent']))
-            measures['Session_Minutes'].append(float(session['total_minutes']))
-            switch_response_time = session['task_summary']['switch_response_time']
-            if switch_response_time:
-                measures['Switch_per_selection'].append(float(session['task_summary']['switch_per_selection']))
-                measures['Switch_Total'].append(int(session['task_summary']['switch_total']))
-                measures['Switch_Response_Time'].append(switch_response_time)
-            else:
-                measures['Switch_per_selection'].append(MISSING_MEASURE)
-                measures['Switch_Total'].append(MISSING_MEASURE)
-                measures['Switch_Response_Time'].append(MISSING_MEASURE)
-            
-            # pull the very last series and inquiry to get the final typed phrase, taking the last five characters
-            last_series = str(len(session['series']))
-            # get the last inquiry in the last series which is zero indexed
-            last_inquiry = str(len(session['series'][last_series]) - 1)
-            target_text = session['series'][last_series][last_inquiry]['target_text']
-            last_display_state = session['series'][last_series][last_inquiry]['next_display_state']
+    # iterate over the sessions and cast the measures to the correct type
+    for session in session_data.values():
+        calculated_measures['Copy_Phrase_Count'].append(1)
+        calculated_measures['Accuracy_Avg'].append(float(session['task_summary']['typing_accuracy']))
+        calculated_measures['Copy_Rate_Avg'].append(float(session['task_summary']['copy_rate']))
+        calculated_measures['Correct_Rate_Avg'].append(float(session['task_summary']['correct_rate']))
+        calculated_measures['Inquiries_Per_Selection_Avg'].append(int(session['inquiries_per_selection']))
+        calculated_measures['Inquiry_Total_Avg'].append(int(session['total_inquiries']))
+        calculated_measures['Selections_Total_Avg'].append(int(session['total_selections']))
+        calculated_measures['Selections_Total_Count'].append(int(session['total_selections']))
+        calculated_measures['Selections_Correct_Avg'].append(int(session['task_summary']['selections_correct']))
+        calculated_measures['Selections_Incorrect_Avg'].append(int(session['task_summary']['selections_incorrect']))
+        calculated_measures['Selections_Correct_Letters_Avg'].append(int(session['task_summary']['selections_correct_symbols']))
+        calculated_measures['Session_Length_Avg'].append(float(session['total_time_spent']))
+        calculated_measures['Session_Minutes_Avg'].append(float(session['total_minutes']))
+        switch_response_time = session['task_summary']['switch_response_time']
+        if switch_response_time:
+            calculated_measures['Switch_per_selection_Avg'].append(float(session['task_summary']['switch_per_selection']))
+            calculated_measures['Switch_Total_Avg'].append(int(session['task_summary']['switch_total']))
+            calculated_measures['Switch_Response_Time_Avg'].append(switch_response_time)
+        else:
+            calculated_measures['Switch_per_selection_Avg'].append(MISSING_MEASURE)
+            calculated_measures['Switch_Total_Avg'].append(MISSING_MEASURE)
+            calculated_measures['Switch_Response_Time_Avg'].append(MISSING_MEASURE)
+        
+        # pull the very last series and inquiry to get the final typed phrase, taking the last five characters
+        last_series = str(len(session['series']))
+        # get the last inquiry in the last series which is zero indexed
+        last_inquiry = str(len(session['series'][last_series]) - 1)
 
-            # split the target phrase and the final typed phrase
-            target_phrase = target_text.split("_")
-            final_typed = last_display_state.split("_")
+        target_text = session['series'][last_series][last_inquiry]['target_text']
+        last_display_state = session['series'][last_series][last_inquiry]['next_display_state']
+        initial_display_state = session['series']['1']['0']['next_display_state']
+        pre_typed_chars = len(initial_display_state)
+        final_target_typed_chars = len(target_text)
 
-            # catch the case were the final typed phrase is less than the target phrase. 
-            # This is likely due to a backspacing too far and not being able to correct it.
-            if len(final_typed) < len(target_phrase):
-                correct_copy = 0
-                copy_accuracy = 0
-                copy_rate = 0
-            else:
-                target_phrase = target_phrase[-1]
-                final_typed = final_typed[-1]
-                # determine the copy accuracy by comparing the target phrase to the final typed phrase
-                correct_copy = 0
-                for i, j in zip(target_phrase, final_typed):
-                    if i == j:
-                        correct_copy += 1
-                    else:
-                        break
-                # find the first in
-                copy_accuracy = correct_copy / len(target_phrase)
-                copy_rate = correct_copy / float(session['total_minutes'])
-            
-            measures['DV_Accuracy'].append(copy_accuracy)
-            measures['DV_Copy_Rate'].append(copy_rate)
-            measures['DV_Correct_Count'].append(correct_copy)
+        print(f"Target text: {target_text}, "
+                f"Initial Display State: {initial_display_state}, "
+                f"Final Display State: {last_display_state}")
 
-    # calculate the average of the measures. ADD the number of items included in the average (0/20) & the number of copy phrases.
-    # Add mean or count to the variable name
-    for measure_id in MEASURES:
+        phrase_length = final_target_typed_chars - pre_typed_chars
+        # # check that the target is a 5 character phrase
+        # assert phrase_length == 5, \
+        #     f"Target phrase is not 5 characters: found {phrase_length} characters"
+
+        # split the target phrase and the final typed phrase
+        target_phrase = target_text.split("_")
+        final_typed = last_display_state.split("_")
+
+        # catch the case were the final typed phrase is less than the target phrase. 
+        # This is likely due to a backspacing too far and not being able to correct it.
+        if len(final_typed) < len(target_phrase):
+            correct_copy = 0
+            copy_accuracy = 0
+            copy_rate = 0
+        else:
+            target_phrase = target_phrase[-1]
+            # get the typed text after pre_typed_chars
+            final_typed = last_display_state[pre_typed_chars:]
+
+            # determine the copy accuracy by comparing the target phrase to the final typed phrase
+            correct_copy = 0
+            for i, j in zip(target_phrase, final_typed):
+                if i == j:
+                    correct_copy += 1
+                else:
+                    break
+
+            # calculate the copy accuracy and copy rate
+            copy_accuracy = correct_copy / len(target_phrase)
+            copy_rate = correct_copy / float(session['total_minutes'])
+        
+        calculated_measures['DV_Accuracy_Avg'].append(copy_accuracy)
+        calculated_measures['DV_Copy_Rate_Avg'].append(copy_rate)
+        calculated_measures['DV_Correct_Count'].append(correct_copy)
+
+    # calculate the average of the measures.
+    for measure_id in OUTPUT_MEASURES:
         if 'count' in measure_id.lower():
-            measures[measure_id] = sum(measures[measure_id])
+            calculated_measures[measure_id] = sum(calculated_measures[measure_id])
         else:
             try:
-                measures[measure_id] = sum(measures[measure_id]) / len(measures[measure_id])
+                calculated_measures[measure_id] = sum(calculated_measures[measure_id]) / len(calculated_measures[measure_id])
             except ZeroDivisionError:
-                measures[measure_id] = MISSING_MEASURE
+                calculated_measures[measure_id] = MISSING_MEASURE
             except TypeError:
-                measures[measure_id] = MISSING_MEASURE
+                calculated_measures[measure_id] = MISSING_MEASURE
             except ValueError:
-                measures[measure_id] = MISSING_MEASURE
-    return measures
+                calculated_measures[measure_id] = MISSING_MEASURE
+    return calculated_measures
 
 def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
     """Iterate over the experiment data.
@@ -221,9 +256,9 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
         output (str): The path to the output directory.
 
     """
+    print(f"Processing {experiment} data")
     # grab the user_id from the path
     user_id = os.path.basename(user_data_path)
-    session_data = {}
     # iterate over the user directories
     for date in os.listdir(user_data_path):
         if not os.path.isdir(os.path.join(user_data_path, date)):
@@ -264,24 +299,24 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
                         f"{copy_phrase_data}/{DEFAULT_PARAMETERS_FILENAME}",
                         value_cast=True)
                     # calculate the summary measures
-                    measures = calculate_summary_measures(session_data, experiment_id, parameters)
-                    measures['User_ID'] = user_id
-                    measures['Date'] = date
-                    measures['Date_Time'] = date_time
-                    measures['Experiment'] = experiment_id
+                    summary_measures = calculate_summary_measures(session_data, experiment_id, date_time)
+                    summary_measures['User_ID'] = user_id
+                    summary_measures['Date'] = date
+                    summary_measures['Date_Time'] = date_time
+                    summary_measures['Experiment'] = experiment_id
                     if parameters['show_preview_inquiry']:
                         preview_inquiry_progress_method = parameters['preview_inquiry_progress_method']
                         if preview_inquiry_progress_method == 0:
-                            measures['IP_Condition'] = "IPO"
+                            summary_measures['IP_Condition'] = "IPO"
                         elif preview_inquiry_progress_method == 1:
-                            measures['IP_Condition'] = "PTC"
+                            summary_measures['IP_Condition'] = "PTC"
                         elif preview_inquiry_progress_method == 2:
-                            measures['IP_Condition'] = "PTS"
+                            summary_measures['IP_Condition'] = "PTS"
                     else:
-                        measures['IP_Condition'] = MISSING_MEASURE
+                        summary_measures['IP_Condition'] = MISSING_MEASURE
 
                     # write the summary measures
-                    write_summary_measures(measures, output)
+                    write_summary_measures(summary_measures, output)
                     
 
 if __name__ in "__main__":
