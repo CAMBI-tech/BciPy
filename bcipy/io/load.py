@@ -307,10 +307,10 @@ def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
 class BciPySessionTaskData:
     """Session Task Data.
 
-    This class is used to represent a single task data session. It is used to store the
+    This class is used to represent a single task session. It is used to store the
     path to the task data, as well as the parameters and other information about the task.
 
-    /<local_path>/<user_id>/<date>/<experiment_id>/<date_time>/
+    /<path>/
         protocol.json
         <task_date_time>/
             parameters.json
@@ -323,28 +323,26 @@ class BciPySessionTaskData:
             path: str,
             user_id: str,
             experiment_id: str,
-            session_id: Optional[str] = None,
+            date_time: Optional[str] = None,
             task_name: Optional[str] = None,
+            session_id: int = 1,
             run: int = 1) -> None:
 
         self.user_id = user_id
         self.experiment_id = experiment_id.replace('_', '')
-        self.session_id = session_id
-        self.run = str(run)
+        self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
+        self.date_time = date_time
+        self.run = f'0{str(run)}' if run < 10 else str(run)
         self.path = path
         self.task_name = task_name
         self.info = {
             'user_id': user_id,
             'experiment_id': self.experiment_id,
             'task_name': self.task_name,
+            'date_time': self.date_time,
             'run': run,
             'path': path
         }
-
-    def get_parameters(self) -> Parameters:
-        return load_json_parameters(
-            f'{self.path}/{DEFAULT_PARAMETERS_FILENAME}',
-            value_cast=True)
 
     def __str__(self):
         return f'BciPySessionTaskData: {self.info=}'
@@ -544,11 +542,10 @@ class BciPyCollection:
                     BciPySessionTaskData(
                         path=task_path,
                         user_id=user_id,
-                        date=date,
+                        date_time=date,
                         experiment_id=experiment_id,
-                        date_time=date_time,
                         run=run,
-                        task=task
+                        task_name=task.split(date)[0].strip('_')
                     )
                 )
                 run += 1
