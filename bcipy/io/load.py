@@ -322,29 +322,20 @@ class BciPySessionTaskData:
             self,
             path: str,
             user_id: str,
-            date: str,
             experiment_id: str,
-            date_time: str,
-            task: str,
+            session_id: Optional[str] = None,
+            task_name: Optional[str] = None,
             run: int = 1) -> None:
 
         self.user_id = user_id
-        self.date = date
         self.experiment_id = experiment_id.replace('_', '')
-        self.date_time = date_time.replace("_", "").replace("-", "")
-        self.session_id = f'{self.experiment_id}{self.date_time}'
-        self.date_time = date_time
-        self.task = task
+        self.session_id = session_id
         self.run = str(run)
         self.path = path
-        self.parameters = self.get_parameters()
-        self.task_name = self.parameters.get('task', 'unknown').replace(' ', '')
+        self.task_name = task_name
         self.info = {
             'user_id': user_id,
-            'date': date,
             'experiment_id': self.experiment_id,
-            'date_time': self.date_time,
-            'task': task,
             'task_name': self.task_name,
             'run': run,
             'path': path
@@ -578,7 +569,7 @@ def load_bcipy_data(
     Walks a data directory and returns a list of data paths for the given experiment id, user id, and date.
 
     The BciPy data directory is structured as follows:
-    data_directory/
+    data/
         user_ids/
             dates/
                 experiment_ids/

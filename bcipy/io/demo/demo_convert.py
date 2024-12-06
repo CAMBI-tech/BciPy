@@ -4,12 +4,56 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-from typing import Optional
+from typing import Optional, List
+from pathlib import Path
 from bcipy.io.convert import convert_to_bids, ConvertFormat
 from bcipy.gui.file_dialog import ask_directory
-from bcipy.io.load import load_bcipy_data
+from bcipy.io.load import BciPySessionTaskData
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
+# Note: We can share the eye tracking data as-is but we need 
+# sub1/eeg/.tsv sub1/eyetracker/.tsv
+
+def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTaskData]:
+    """Load the data from the given directory.
+    
+    The expected directory structure is:
+
+    directory/
+        user1/
+            task_run/
+                raw_data.csv
+        user2/
+            task_run/
+                raw_data.csv
+    """
+
+    data = Path(directory)
+    experiment_data = []
+    for participant in data.iterdir():
+        
+        # Skip files
+        if not participant.is_dir():
+            continue
+
+        # pull out the user id. This is the name of the folder
+        user_id = participant.name
+
+        for task_run in participant.iterdir():
+            if not task_run.is_dir():
+                continue
+
+            task_name = "MatrixCalibration"
+            session_data = BciPySessionTaskData(
+                path=task_run,
+                user_id=user_id,
+                experiment_id=experiment_id,
+                session_id="01",
+                run=1,
+                task_name=task_name
+            )
+            experiment_data.append(session_data)
+    return experiment_data
 
 
 def convert_experiment_to_bids(
@@ -21,9 +65,8 @@ def convert_experiment_to_bids(
 
     experiment_data = load_bcipy_data(
         directory,
-        experiment_id=experiment_id,
-        excluded_tasks=EXCLUDED_TASKS,
-        anonymize=False)
+        experiment_id=experiment_id)
+
     if not output_dir:
         output_dir = directory
 
@@ -64,7 +107,7 @@ if __name__ == '__main__':
         '-e',
         '--experiment',
         help='Experiment ID to convert',
-        default='SCRD',
+        default='Matrix Multimodal Experiment',
     )
 
     args = parser.parse_args()
@@ -74,4 +117,4 @@ if __name__ == '__main__':
         path = ask_directory("Select the directory with data to be converted")
 
     # convert a study to BIDS format
-    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV)
+    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV, output_dir=".")

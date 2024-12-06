@@ -95,13 +95,8 @@ def convert_to_bids(
     volts = True if device_spec.channel_specs[0].units == 'volts' else False
 
     # load the parameters
-    parameters = load_json_parameters(parameters_file, value_cast=True)
-    trial_window = parameters.get("trial_window", (0.0, 0.5))
-
-    if task_name is None:
-        task_name = parameters.get("task")
-        if task_name is None:
-            raise ValueError("Task name must be provided or specified in the parameters")
+    # parameters = load_json_parameters(parameters_file, value_cast=True)
+    trial_window = (0.0, 0.5)
 
     window_length = trial_window[1] - trial_window[0]
 
@@ -113,6 +108,7 @@ def convert_to_bids(
     )
 
     # convert the raw data to MNE format
+    breakpoint()
     mne_data = convert_to_mne(raw_data, volts=volts, remove_system_channels=True)
     targetness_annotations = mne.Annotations(
         onset=trigger_timing,
