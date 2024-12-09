@@ -11,8 +11,9 @@ from bcipy.acquisition import (ClientManager, LslAcquisitionClient,
                                discover_device_spec)
 from bcipy.acquisition.devices import (DeviceSpec, DeviceStatus,
                                        preconfigured_device, with_content_type)
-from bcipy.config import BCIPY_ROOT, RAW_DATA_FILENAME, SESSION_LOG_FILENAME
+from bcipy.config import BCIPY_ROOT
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
+from bcipy.config import RAW_DATA_FILENAME, SESSION_LOG_FILENAME
 from bcipy.helpers.save import save_device_specs
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -62,9 +63,7 @@ def init_acquisition(
             # Start the server before init_device so it is discoverable.
             await_start(dataserver)
 
-        device_spec = init_device(content_type, device_name)
-        if status:
-            device_spec.status = status
+        device_spec = init_device(content_type, device_name, status)
         raw_data_name = raw_data_filename(device_spec)
 
         client = init_lsl_client(parameters, device_spec, save_folder, raw_data_name)
@@ -93,7 +92,8 @@ def raw_data_filename(device_spec: DeviceSpec) -> str:
 
 
 def init_device(content_type: str,
-                device_name: Optional[str] = None) -> DeviceSpec:
+                device_name: Optional[str] = None,
+                status_override: Optional[DeviceStatus] = None) -> DeviceSpec:
     """Initialize a DeviceSpec for the given content type.
 
     If a device_name is provided, the DeviceSpec will be looked up from the list
@@ -108,12 +108,18 @@ def init_device(content_type: str,
         content_type - LSL content type (EEG, Gaze, etc).
         device_name - optional; name of the device. If provided, the DeviceSpec
             must be a preconfigured device.
+        status - optional; if provided this value will be used to override the
+            preconfigured status
     """
     if device_name:
-        return preconfigured_device(device_name, strict=True)
-    discovered_spec = discover_device_spec(content_type)
-    configured_spec = preconfigured_device(discovered_spec.name, strict=False)
-    return configured_spec or discovered_spec
+        spec = preconfigured_device(device_name, strict=True)
+    else:
+        discovered_spec = discover_device_spec(content_type)
+        configured_spec = preconfigured_device(discovered_spec.name, strict=False)
+        spec = configured_spec or discovered_spec
+    if status_override is not None:
+        spec.status = status_override
+    return spec
 
 
 def server_spec(content_type: str,

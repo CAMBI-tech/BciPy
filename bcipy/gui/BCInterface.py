@@ -1,10 +1,10 @@
+import logging
 import subprocess
 import sys
-import logging
 from typing import List
 
 from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
-                          STATIC_IMAGES_PATH, PROTOCOL_LOG_FILENAME)
+                          PROTOCOL_LOG_FILENAME, STATIC_IMAGES_PATH)
 from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
                             AlertResponse, BCIGui, app,
                             contains_special_characters, contains_whitespaces,
@@ -316,7 +316,7 @@ class BCInterface(BCIGui):
                     return None
 
             output = subprocess.check_output(
-                f'python {BCIPY_ROOT}/gui/parameters/params_form.py -p {self.parameter_location}',
+                f'bcipy-params -p "{self.parameter_location}"',
                 shell=True)
             if output:
                 self.parameter_location = output.decode().strip()

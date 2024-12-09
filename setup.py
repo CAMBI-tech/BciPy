@@ -51,7 +51,7 @@ about = {'__version__': VERSION}
 
 class UploadCommand(Command):
     """Support setup.py upload.
-    
+
     Modified from https://github.com/kennethreitz/setup.py
     """
 
@@ -106,12 +106,13 @@ setup(
         'data',
     )),
     entry_points={
-        'console_scripts':
-        [
+        'console_scripts': [
             'bcipy = bcipy.main:bcipy_main',
             'bcipy-erp-viz = bcipy.helpers.visualization:erp',
             'bcipy-sim = bcipy.simulator:main',
-            "bcipy-train = bcipy.signal.model.offline_analysis:main"],
+            'bcipy-train = bcipy.signal.model.offline_analysis:main',
+            'bcipy-params = bcipy.gui.parameters.params_form:main'
+        ],
     },
     install_requires=REQUIRED,
     include_package_data=True,
