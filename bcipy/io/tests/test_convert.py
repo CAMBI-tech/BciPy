@@ -551,6 +551,58 @@ class TestConvertETBIDS(unittest.TestCase):
         # Assert the et tsv file was created with the correct name
         self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-01_task-TestTaskEtc_run-01_eyetracking.tsv"))
 
+    def test_convert_et_raises_error_with_invalid_data_dir(self):
+        """Test the convert_eyetracking_to_bids function raises an error with invalid output directory"""
+        with self.assertRaises(FileNotFoundError):
+            convert_eyetracking_to_bids(
+                'invalid_data_dir',
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir
+            )
+
+    def test_convert_et_raises_error_with_output_dir_not_exist(self):
+        """Test the convert_eyetracking_to_bids function raises an error with invalid output directory"""
+        with self.assertRaises(FileNotFoundError):
+            convert_eyetracking_to_bids(
+                f"{self.temp_dir}/",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir='invalid_output_dir'
+            )
+
+    def test_convert_et_raises_error_with_no_data_file(self):
+        """Test the convert_eyetracking_to_bids function raises an error with no data file"""
+        # remove the csv file
+        os.remove(f"{self.temp_dir}/eyetracker.csv")
+        with self.assertRaises(FileNotFoundError):
+            convert_eyetracking_to_bids(
+                f"{self.temp_dir}/",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir,
+            )
+
+    def test_convert_et_raises_error_with_multiple_data_files(self):
+        """Test the convert_eyetracking_to_bids function raises an error with multiple data files"""
+        # create a second data file
+        write(self.eyetracking_data, Path(self.temp_dir, f'eyetracker_2.csv'))
+        with self.assertRaises(ValueError):
+            convert_eyetracking_to_bids(
+                f"{self.temp_dir}/",
+                participant_id='01',
+                session_id='01',
+                run_id='01',
+                task_name='TestTask',
+                output_dir=self.temp_dir,
+            )
+
 
 if __name__ == '__main__':
     unittest.main()
