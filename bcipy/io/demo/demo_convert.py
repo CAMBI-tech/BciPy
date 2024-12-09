@@ -11,12 +11,13 @@ from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
-# Note: We can share the eye tracking data as-is but we need 
+# Note: We can share the eye tracking data as-is but we need
 # sub1/eeg/.tsv sub1/eyetracker/.tsv
+
 
 def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTaskData]:
     """Load the data from the given directory.
-    
+
     The expected directory structure is:
 
     directory/
@@ -31,7 +32,7 @@ def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTask
     data = Path(directory)
     experiment_data = []
     for participant in data.iterdir():
-        
+
         # Skip files
         if not participant.is_dir():
             continue

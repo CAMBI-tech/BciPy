@@ -324,6 +324,7 @@ class BciPySessionTaskData:
             user_id: str,
             experiment_id: str,
             date_time: Optional[str] = None,
+            date: Optional[str] = None,
             task_name: Optional[str] = None,
             session_id: int = 1,
             run: int = 1) -> None:
@@ -332,16 +333,19 @@ class BciPySessionTaskData:
         self.experiment_id = experiment_id.replace('_', '')
         self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
         self.date_time = date_time
+        self.date = date
         self.run = f'0{str(run)}' if run < 10 else str(run)
         self.path = path
         self.task_name = task_name
         self.info = {
-            'user_id': user_id,
+            'user_id': self.user_id,
             'experiment_id': self.experiment_id,
             'task_name': self.task_name,
+            'session_id': self.session_id,
+            'run': self.run,
+            'date': self.date,
             'date_time': self.date_time,
-            'run': run,
-            'path': path
+            'path': self.path
         }
 
     def __str__(self):
@@ -542,7 +546,8 @@ class BciPyCollection:
                     BciPySessionTaskData(
                         path=task_path,
                         user_id=user_id,
-                        date_time=date,
+                        date_time=date_time,
+                        date=date,
                         experiment_id=experiment_id,
                         run=run,
                         task_name=task.split(date)[0].strip('_')

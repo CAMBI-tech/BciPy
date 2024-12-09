@@ -190,16 +190,16 @@ def convert_eyetracking_to_bids(
     # check that the raw data path exists
     if not os.path.exists(raw_data_path):
         raise FileNotFoundError(f"Raw eye tracking data path={raw_data_path} does not exist")
-    
+
     if not os.path.exists(output_dir):
         raise FileNotFoundError(f"Output directory={output_dir} does not exist")
-    
+
     found_files = glob.glob(f"{raw_data_path}/eyetracker*.csv")
     if len(found_files) == 0:
         raise FileNotFoundError(f"No raw eye tracking data found in directory={raw_data_path}")
     if len(found_files) > 1:
         raise ValueError(f"Multiple raw eye tracking data files found in directory={raw_data_path}")
-    
+
     eye_tracking_file = found_files[0]
     logger.info(f"Found raw eye tracking data file={eye_tracking_file}")
 
@@ -218,6 +218,7 @@ def convert_eyetracking_to_bids(
     data.to_csv(output_path, sep='\t', index=False)
     logger.info(f"Eye tracking data saved to {output_path}")
     return output_path
+
 
 def compress(tar_file_name: str, members: List[str]) -> None:
     """
@@ -370,7 +371,7 @@ def convert_to_mne(
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
         volts: bool = False,
-        remove_system_channels: bool = True) -> RawArray:
+        remove_system_channels: bool = False) -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names

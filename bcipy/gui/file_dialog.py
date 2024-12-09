@@ -90,7 +90,7 @@ def ask_filename(
         app.quit()
 
         return filename
-    
+
     raise BciPyCoreException('No file selected.')
 
 
@@ -119,5 +119,5 @@ def ask_directory(prompt: str = "Select Directory") -> Union[str, BciPyCoreExcep
         app.quit()
 
         return name
-    
+
     raise BciPyCoreException('No directory selected.')

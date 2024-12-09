@@ -12,7 +12,8 @@ from mockito import any, mock, when, verify, unstub
 
 from bcipy.exceptions import BciPyCoreException
 from bcipy.core.raw_data import (RawData, RawDataReader, RawDataWriter,
-                                 load, sample_data, settings, write)
+                                 load, sample_data, settings, write,
+                                 get_1020_channel_map, get_1020_channels)
 
 
 class TestRawData(unittest.TestCase):
@@ -375,6 +376,26 @@ class TestRawData(unittest.TestCase):
         self.assertEqual(expected_fs, fs)
         self.assertEqual(expected_channels, channels)
         verify(RawData, times=1).by_channel(transform)
+
+
+class Test1020(unittest.TestCase):
+    """Tests for 10-20 channel mapping functions."""
+
+    def test_get_1020_channels(self):
+        """Tests that the 10-20 channel map is correctly generated."""
+        channels = get_1020_channels()
+        self.assertEqual(19, len(channels))
+        self.assertTrue(isinstance(channels[0], str))
+
+    def test_get_1020_channel_map(self):
+        """Tests that the 10-20 channel map is correctly generated."""
+        # all but the last channel are valid 10-20 channels
+        channels = ['Fp1', 'Fp2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'invalid']
+        channel_map = get_1020_channel_map(channels)
+        self.assertEqual(10, len(channel_map))
+        self.assertEqual(0, channel_map[-1])
+        for i in range(len(channels) - 1):
+            self.assertEqual(1, channel_map[i])
 
 
 if __name__ == '__main__':

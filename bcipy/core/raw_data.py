@@ -406,7 +406,7 @@ def sample_data(rows: int = 1000,
 
 def get_1020_channels() -> List[str]:
     """Returns the standard 10-20 channel names.
-    
+
     Note: The 10-20 system is a standard for EEG electrode placement. The following is not a complete list of all
     possible channels, but the most common ones used in BCI research. This excludes the reference and ground channels.
 
@@ -422,7 +422,7 @@ def get_1020_channels() -> List[str]:
 
 def get_1020_channel_map(channels_name: List[str]) -> List[int]:
     """Returns a list of 1s and 0s indicating if the channel name is in the 10-20 system.
-    
+
     Parameters
     ----------
     channels_name : list of channel names
