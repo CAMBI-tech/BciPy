@@ -18,7 +18,8 @@ from bcipy.io.convert import (
     convert_to_mne,
     decompress,
     norm_to_tobii,
-    tobii_to_norm
+    tobii_to_norm,
+    convert_eyetracking_to_bids
 )
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData, sample_data, write
@@ -244,7 +245,7 @@ class TestMNEConvert(unittest.TestCase):
             'notch_filter_frequency': 60,
             'down_sampling_rate': 3
         }
-        self.channels = ['timestamp', 'O1', 'O2', 'Pz']
+        self.channels = ['timestamp', 'O1', 'O2', 'Pz', 'TRG', 'lsl_timestamp']
         self.raw_data = RawData('SampleDevice', self.sample_rate, self.channels)
         devices.register(devices.DeviceSpec('SampleDevice', channels=self.channels, sample_rate=self.sample_rate))
 
@@ -264,18 +265,38 @@ class TestMNEConvert(unittest.TestCase):
         data = convert_to_mne(self.raw_data)
 
         self.assertTrue(len(data) > 0)
-        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
 
     def test_convert_to_mne_with_channel_map(self):
         """Test the convert_to_mne function with channel mapping"""
         # here we know only three channels are generated, using the channel map let's only use the last one
-        channel_map = [0, 0, 1]
+        channel_map = [0, 0, 1, 0, 0]
         data = convert_to_mne(self.raw_data, channel_map=channel_map)
 
         self.assertTrue(len(data) > 0)
         self.assertTrue(len(data.ch_names) == 1)  # this is the main assertion!
         self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+    def test_convert_to_mne_with_remove_system_channels(self):
+        """Test the convert_to_mne function with system channels removed"""
+        data = convert_to_mne(self.raw_data, remove_system_channels=True)
+
+        self.assertTrue(len(data) > 0)
+        self.assertEqual(data.ch_names, self.channels[1:-2])
+        self.assertEqual(data.info['sfreq'], self.sample_rate)
+
+    def test_convert_to_mne_without_remove_system_channels_throws_error(self):
+        """Test the convert_to_mne function with system channels removed raises an error.
+        
+        This is due to MNE requiring the channels be EEG. The system channels are not EEG.
+        """
+        with self.assertRaises(ValueError):
+            data = convert_to_mne(self.raw_data, remove_system_channels=False)
+
+            self.assertTrue(len(data) > 0)
+            self.assertEqual(data.ch_names, self.channels[1:])
+            self.assertEqual(data.info['sfreq'], self.sample_rate)
 
     def test_convert_to_mne_with_channel_types(self):
         """Test the convert_to_mne function with channel types"""
@@ -283,7 +304,7 @@ class TestMNEConvert(unittest.TestCase):
         data = convert_to_mne(self.raw_data, channel_types=channel_types)
 
         self.assertTrue(len(data) > 0)
-        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
         self.assertTrue(data.get_channel_types()[2] == 'seeg')
 
@@ -297,7 +318,7 @@ class TestMNEConvert(unittest.TestCase):
         data = convert_to_mne(self.raw_data, transform=transform, volts=True)
 
         self.assertTrue(len(data) > 0)
-        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
 
         # apply the transform to the first data point and compare to data returned
@@ -309,7 +330,7 @@ class TestMNEConvert(unittest.TestCase):
         data = convert_to_mne(self.raw_data, volts=False)
 
         self.assertTrue(len(data) > 0)
-        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
 
         # apply the transform to the first data point and compare to data returned
@@ -325,7 +346,7 @@ class TestMNEConvert(unittest.TestCase):
         data = convert_to_mne(self.raw_data, montage=montage_type)
 
         self.assertTrue(len(data) > 0)
-        self.assertEqual(data.ch_names, self.channels[1:])
+        self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
 
 
@@ -443,6 +464,92 @@ class TestConvertTobii(unittest.TestCase):
         norm_data = (1, 1.1)
         with self.assertRaises(AssertionError):
             norm_to_tobii(norm_data)
+
+
+class TestConvertETBIDS(unittest.TestCase):
+
+    def setUp(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.trg_data, self.data, self.params = create_bcipy_session_artifacts(self.temp_dir, channels=3)
+        self.eyetracking_data = sample_data(ch_names=['timestamp', 'x', 'y', 'pupil'], daq_type='Gaze', sample_rate=60, rows=5000)
+        devices.register(devices.DeviceSpec('Gaze', channels=['timestamp', 'x', 'y', 'pupil'], sample_rate=60))
+
+        write(self.eyetracking_data, Path(self.temp_dir, f'eyetracker.csv'))
+
+    def tearDown(self):
+        shutil.rmtree(self.temp_dir)
+
+    def test_convert_eyetracking_to_bids_generates_bids_strucutre(self):
+        """Test the convert_eyetracking_to_bids function"""
+        response = convert_eyetracking_to_bids(
+            f"{self.temp_dir}/",
+            participant_id='01',
+            session_id='01',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        # Assert the session directory was created with et
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/"))
+        # Assert the et tsv file was created with the correct name
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-01_task-TestTask_run-01_eyetracking.tsv"))
+
+    def test_convert_eyetracking_to_bids_reflects_participant_id(self):
+        """Test the convert_eyetracking_to_bids function with a participant id"""
+        response = convert_eyetracking_to_bids(
+            f"{self.temp_dir}/",
+            participant_id='100',
+            session_id='01',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+       # Assert the et tsv file was created with the correct name
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-100_ses-01_task-TestTask_run-01_eyetracking.tsv"))
+
+    def test_convert_eyetracking_to_bids_reflects_session_id(self):
+        """Test the convert_eyetracking_to_bids function with a session id"""
+        response = convert_eyetracking_to_bids(
+            f"{self.temp_dir}/",
+            participant_id='01',
+            session_id='100',
+            run_id='01',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        # Assert the et tsv file was created with the correct name
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-100_task-TestTask_run-01_eyetracking.tsv"))
+
+    def test_convert_eyetracking_to_bids_reflects_run_id(self):
+        """Test the convert_eyetracking_to_bids function with a run id"""
+        response = convert_eyetracking_to_bids(
+            f"{self.temp_dir}/",
+            participant_id='01',
+            session_id='01',
+            run_id='100',
+            task_name='TestTask',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        # Assert the et tsv file was created with the correct name
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-01_task-TestTask_run-100_eyetracking.tsv"))
+    
+    def test_convert_eyetracking_to_bids_reflects_task_name(self):
+        """Test the convert_eyetracking_to_bids function with a task name"""
+        response = convert_eyetracking_to_bids(
+            f"{self.temp_dir}/",
+            participant_id='01',
+            session_id='01',
+            run_id='01',
+            task_name='TestTaskEtc',
+            output_dir=self.temp_dir,
+        )
+        self.assertTrue(os.path.exists(response))
+        # Assert the et tsv file was created with the correct name
+        self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-01_task-TestTaskEtc_run-01_eyetracking.tsv"))
 
 
 if __name__ == '__main__':

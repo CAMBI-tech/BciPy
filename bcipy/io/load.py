@@ -10,7 +10,6 @@ from typing import List, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
-                          DEFAULT_PARAMETERS_FILENAME,
                           EXPERIMENT_FILENAME, FIELD_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
@@ -542,6 +541,7 @@ class BciPyCollection:
                 date = task_path.parts[-4]
                 experiment_id = task_path.parts[-3]
                 date_time = task_path.parts[-2]
+                task_name = task.split(date)[0].strip('_')
                 self.session_task_data.append(
                     BciPySessionTaskData(
                         path=task_path,
@@ -550,7 +550,7 @@ class BciPyCollection:
                         date=date,
                         experiment_id=experiment_id,
                         run=run,
-                        task_name=task.split(date)[0].strip('_')
+                        task_name=task_name
                     )
                 )
                 run += 1

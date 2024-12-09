@@ -13,9 +13,9 @@ from mne_bids import BIDSPath, write_raw_bids
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.config import (DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+from bcipy.config import (RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
-from bcipy.io.load import load_json_parameters, load_raw_data
+from bcipy.io.load import load_raw_data
 from bcipy.core.raw_data import RawData, get_1020_channel_map
 from bcipy.core.triggers import trigger_decoder
 from bcipy.signal.process import Composition
@@ -213,7 +213,7 @@ def convert_eyetracking_to_bids(
     os.makedirs(et_dir, exist_ok=True)
 
     # write the dataframe as a tsv file to the output directory
-    output_filename = f'sub-{participant_id}_ses-{session_id}_task-{task_name}-run-{run_id}_eyetracking.tsv'
+    output_filename = f'sub-{participant_id}_ses-{session_id}_task-{task_name}_run-{run_id}_eyetracking.tsv'
     output_path = os.path.join(et_dir, output_filename)
     data.to_csv(output_path, sep='\t', index=False)
     logger.info(f"Eye tracking data saved to {output_path}")
@@ -371,7 +371,7 @@ def convert_to_mne(
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
         volts: bool = False,
-        remove_system_channels: bool = False) -> RawArray:
+        remove_system_channels: bool = True) -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names

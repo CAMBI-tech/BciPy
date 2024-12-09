@@ -8,14 +8,13 @@ from typing import Optional, List
 from pathlib import Path
 from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
 from bcipy.gui.file_dialog import ask_directory
-from bcipy.io.load import BciPySessionTaskData
+from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
-# Note: We can share the eye tracking data as-is but we need
-# sub1/eeg/.tsv sub1/eyetracker/.tsv
 
 
-def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTaskData]:
+def load_historical_bcipy_data(directory: str, experiment_id: str,
+                               task_name: str = 'MatrixCalibration') -> List[BciPySessionTaskData]:
     """Load the data from the given directory.
 
     The expected directory structure is:
@@ -44,7 +43,6 @@ def load_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTask
             if not task_run.is_dir():
                 continue
 
-            task_name = "MatrixCalibration"
             session_data = BciPySessionTaskData(
                 path=task_run,
                 user_id=user_id,
@@ -65,9 +63,13 @@ def convert_experiment_to_bids(
         include_eye_tracker: bool = False) -> None:
     """Converts the data in the study folder to BIDS format."""
 
-    experiment_data = load_bcipy_data(
-        directory,
-        experiment_id=experiment_id)
+    # Use for data pre-2.0rc4
+    # experiment_data = load_historical_bcipy_data(
+    #     directory,
+    #     experiment_id=experiment_id)
+
+    # Use for data post-2.0rc4
+    experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
 
     if not output_dir:
         output_dir = directory
@@ -89,14 +91,18 @@ def convert_experiment_to_bids(
                 # Convert the eye tracker data
                 # The eye tracker data is in the same folder as the EEG data, but should be saved in a different folder
                 bids_path = Path(bids_path).parent
-                convert_eyetracking_to_bids(
-                    raw_data_path=data.path,
-                    participant_id=data.user_id,
-                    session_id=data.session_id,
-                    run_id=data.run,
-                    output_dir=bids_path,
-                    task_name=data.task_name
-                )
+                try:
+                    convert_eyetracking_to_bids(
+                        raw_data_path=data.path,
+                        participant_id=data.user_id,
+                        session_id=data.session_id,
+                        run_id=data.run,
+                        output_dir=bids_path,
+                        task_name=data.task_name
+                    )
+                except Exception as e:
+                    print(f"Error converting eye tracker data for {data.path} - {e}")
+                    errors.append(f"Error converting eye tracker data for {data.path}")
 
         except Exception as e:
             print(f"Error converting {data.path} - {e}")
@@ -125,6 +131,13 @@ if __name__ == '__main__':
         help='Experiment ID to convert',
         default='Matrix Multimodal Experiment',
     )
+    parser.add_argument(
+        '-et',
+        '--eye_tracker',
+        help='Include eye tracker data',
+        default=False,
+        action='store_true',
+    )
 
     args = parser.parse_args()
 
@@ -133,4 +146,9 @@ if __name__ == '__main__':
         path = ask_directory("Select the directory with data to be converted")
 
     # convert a study to BIDS format
-    convert_experiment_to_bids(path, args.experiment, ConvertFormat.BV, output_dir=".", include_eye_tracker=True)
+    convert_experiment_to_bids(
+        path,
+        args.experiment,
+        ConvertFormat.BV,
+        output_dir=".",
+        include_eye_tracker=args.eye_tracker)
