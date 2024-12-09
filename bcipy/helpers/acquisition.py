@@ -13,6 +13,7 @@ from bcipy.acquisition.devices import (DeviceSpec, DeviceStatus,
                                        preconfigured_device, with_content_type)
 from bcipy.config import BCIPY_ROOT
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
+from bcipy.config import RAW_DATA_FILENAME, SESSION_LOG_FILENAME
 from bcipy.io.save import save_device_specs
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
