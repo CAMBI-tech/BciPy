@@ -288,7 +288,7 @@ class TestMNEConvert(unittest.TestCase):
 
     def test_convert_to_mne_without_remove_system_channels_throws_error(self):
         """Test the convert_to_mne function with system channels removed raises an error.
-        
+
         This is due to MNE requiring the channels be EEG. The system channels are not EEG.
         """
         with self.assertRaises(ValueError):
@@ -471,10 +471,18 @@ class TestConvertETBIDS(unittest.TestCase):
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
         self.trg_data, self.data, self.params = create_bcipy_session_artifacts(self.temp_dir, channels=3)
-        self.eyetracking_data = sample_data(ch_names=['timestamp', 'x', 'y', 'pupil'], daq_type='Gaze', sample_rate=60, rows=5000)
+        self.eyetracking_data = sample_data(
+            ch_names=[
+                'timestamp',
+                'x',
+                'y',
+                'pupil'],
+            daq_type='Gaze',
+            sample_rate=60,
+            rows=5000)
         devices.register(devices.DeviceSpec('Gaze', channels=['timestamp', 'x', 'y', 'pupil'], sample_rate=60))
 
-        write(self.eyetracking_data, Path(self.temp_dir, f'eyetracker.csv'))
+        write(self.eyetracking_data, Path(self.temp_dir, 'eyetracker.csv'))
 
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
@@ -506,7 +514,7 @@ class TestConvertETBIDS(unittest.TestCase):
             output_dir=self.temp_dir,
         )
         self.assertTrue(os.path.exists(response))
-       # Assert the et tsv file was created with the correct name
+        # Assert the et tsv file was created with the correct name
         self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-100_ses-01_task-TestTask_run-01_eyetracking.tsv"))
 
     def test_convert_eyetracking_to_bids_reflects_session_id(self):
@@ -536,7 +544,7 @@ class TestConvertETBIDS(unittest.TestCase):
         self.assertTrue(os.path.exists(response))
         # Assert the et tsv file was created with the correct name
         self.assertTrue(os.path.exists(f"{self.temp_dir}/et/sub-01_ses-01_task-TestTask_run-100_eyetracking.tsv"))
-    
+
     def test_convert_eyetracking_to_bids_reflects_task_name(self):
         """Test the convert_eyetracking_to_bids function with a task name"""
         response = convert_eyetracking_to_bids(
@@ -592,7 +600,7 @@ class TestConvertETBIDS(unittest.TestCase):
     def test_convert_et_raises_error_with_multiple_data_files(self):
         """Test the convert_eyetracking_to_bids function raises an error with multiple data files"""
         # create a second data file
-        write(self.eyetracking_data, Path(self.temp_dir, f'eyetracker_2.csv'))
+        write(self.eyetracking_data, Path(self.temp_dir, 'eyetracker_2.csv'))
         with self.assertRaises(ValueError):
             convert_eyetracking_to_bids(
                 f"{self.temp_dir}/",
