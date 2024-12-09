@@ -53,7 +53,8 @@ def convert_to_bids(
         task_name: Optional[str] = None,
         line_frequency: float = 60,
         format: ConvertFormat = ConvertFormat.BV,
-        label_duration: float = 0.5) -> str:
+        label_duration: float = 0.5,
+        full_labels: bool = True) -> str:
     """Convert to BIDS.
 
     Convert the raw data to the Brain Imaging Data Structure (BIDS) format.
@@ -73,6 +74,8 @@ def convert_to_bids(
     line_frequency - the line frequency of the data (50 or 60 Hz)
     format - the format to convert the data to (BrainVision, EDF, FIF, or EEGLAB)
     label_duration - the duration of the trigger labels in seconds. Default is 0.5 seconds.
+    full_labels - if True, include the full trigger labels in the BIDS data. Default is True. If False, only include
+        the targetness labels (target/non-target).
 
     Returns
     -------
@@ -117,12 +120,16 @@ def convert_to_bids(
         duration=[label_duration] * len(trigger_timing),
         description=trigger_targetness,
     )
-    label_annotations = mne.Annotations(
-        onset=trigger_timing,
-        duration=[label_duration] * len(trigger_timing),
-        description=trigger_labels,
-    )
-    mne_data.set_annotations(targetness_annotations + label_annotations)
+
+    if full_labels:
+        label_annotations = mne.Annotations(
+            onset=trigger_timing,
+            duration=[label_duration] * len(trigger_timing),
+            description=trigger_labels,
+        )
+        mne_data.set_annotations(targetness_annotations + label_annotations)
+    else:
+        mne_data.set_annotations(targetness_annotations)
     # add the line frequency to the MNE data
     mne_data.info["line_freq"] = line_frequency
 
@@ -180,10 +187,6 @@ def convert_eyetracking_to_bids(
     str
         Path to the BIDS formatted eye tracking data
     """
-    # use glob to find raw eye tracking data in the provided directory.
-    # It will be a csv file with eyetracker in the name.
-    # If there are multiple files, an error will be raised.
-
     # check that the raw data path exists
     if not os.path.exists(raw_data_path):
         raise FileNotFoundError(f"Raw eye tracking data path={raw_data_path} does not exist")
@@ -200,14 +203,14 @@ def convert_eyetracking_to_bids(
     eye_tracking_file = found_files[0]
     logger.info(f"Found raw eye tracking data file={eye_tracking_file}")
 
-    # make the et subdirectory
-    et_dir = os.path.join(output_dir, 'et')
-    os.makedirs(et_dir, exist_ok=True)
-
     # load the raw eye tracking data
     raw_data = load_raw_data(eye_tracking_file)
     # get the data as a pandas DataFrame
     data = raw_data.dataframe
+
+    # make the et subdirectory
+    et_dir = os.path.join(output_dir, 'et')
+    os.makedirs(et_dir, exist_ok=True)
 
     # write the dataframe as a tsv file to the output directory
     output_filename = f'sub-{participant_id}_ses-{session_id}_task-{task_name}-run-{run_id}_eyetracking.tsv'
