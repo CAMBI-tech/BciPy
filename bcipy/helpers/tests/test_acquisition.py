@@ -10,8 +10,7 @@ from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, StreamType,
                                        max_inquiry_duration, parse_stream_type,
                                        raw_data_filename, server_spec,
                                        stream_types)
-from bcipy.io.load import load_json_parameters
-from bcipy.io.save import init_save_data_structure
+from bcipy.core.parameters import Parameters
 
 
 class TestAcquisition(unittest.TestCase):
