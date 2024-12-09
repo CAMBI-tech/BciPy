@@ -1,12 +1,9 @@
 """Tests for acquisition helper."""
-import logging
-import shutil
 import unittest
-from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
-from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
 from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, StreamType,
                                        active_content_types, init_acquisition,
                                        init_device, is_stream_type_active,
@@ -18,45 +15,134 @@ from bcipy.io.save import init_save_data_structure
 
 
 class TestAcquisition(unittest.TestCase):
-    """Unit tests for acquisition helper"""
+    """Unit tests for acquisition helper main method"""
 
-    def setUp(self):
-        """set up the needed path for load functions."""
-        self.parameters_used = DEFAULT_PARAMETERS_PATH
-        self.parameters = load_json_parameters(self.parameters_used,
-                                               value_cast=True)
-        self.data_save_path = 'data/'
-        self.user_information = 'test_user_001'
-        self.task = 'RSVP Calibration'
-
-        self.save = init_save_data_structure(self.data_save_path,
-                                             self.user_information,
-                                             self.parameters_used, self.task)
-
-    def tearDown(self):
-        """Override; teardown test"""
-        shutil.rmtree(self.save)
-
-    def test_init_acquisition(self):
+    @patch('bcipy.helpers.acquisition.save_device_specs')
+    @patch('bcipy.helpers.acquisition.start_viewer')
+    @patch('bcipy.helpers.acquisition.init_lsl_client')
+    @patch('bcipy.helpers.acquisition.init_device')
+    @patch('bcipy.helpers.acquisition.await_start')
+    @patch('bcipy.helpers.acquisition.LslDataServer')
+    @patch('bcipy.helpers.acquisition.server_spec')
+    @patch('bcipy.helpers.acquisition.ClientManager')
+    def test_init_acquisition(self, make_client_manager, server_spec_mock,
+                              make_lsl_data_server, await_start_mock,
+                              init_device_mock, init_lsl_client_mock,
+                              start_viewer_mock, save_device_specs_mock):
         """Test init_acquisition with LSL client."""
+        # Function parameters
+        params = Parameters.from_cast_values(acq_mode='EEG:passive/DSI-24',
+                                             acq_show_viewer=False)
+        save_folder = "temp"
 
-        params = self.parameters
-        logger = Mock(spec=logging.Logger)
-        logger.info = lambda x: x
-        params['acq_mode'] = 'EEG:passive/DSI-24'
+        # Mock objects
+        manager = Mock()
+        server_device = Mock()
+        eeg_device = DeviceSpec(content_type='EEG',
+                                name='DSI-24',
+                                status=DeviceStatus.PASSIVE,
+                                channels=['ch1', 'ch2', 'ch3'],
+                                sample_rate=300.0)
+        server = Mock()
+        lsl_client = Mock()
 
-        client, servers = init_acquisition(params, self.save, server=True)
+        # Mock the functions/constructors
+        make_client_manager.return_value = manager
+        server_spec_mock.return_value = server_device
+        make_lsl_data_server.return_value = server
+        init_device_mock.return_value = eeg_device
+        init_lsl_client_mock.return_value = lsl_client
 
-        client.stop_acquisition()
-        client.cleanup()
-        for server in servers:
-            server.stop()
+        client_manager, servers = init_acquisition(params,
+                                                   save_folder=save_folder,
+                                                   server=True)
 
+        # Assertions
+        self.assertEqual(client_manager, manager)
         self.assertEqual(1, len(servers))
-        self.assertEqual(client.device_spec.name, 'DSI-24')
-        self.assertFalse(client.device_spec.is_active)
+        self.assertEqual(server, servers[0])
+        init_device_mock.assert_called_with('EEG', 'DSI-24',
+                                            DeviceStatus.PASSIVE)
+        await_start_mock.assert_called_once()
+        start_viewer_mock.assert_not_called()
+        manager.add_client.assert_called_with(lsl_client)
+        save_device_specs_mock.assert_called_with(manager.device_specs,
+                                                  save_folder, spec_name)
 
-        self.assertTrue(Path(self.save, 'devices.json').is_file())
+    @patch('bcipy.helpers.acquisition.save_device_specs')
+    @patch('bcipy.helpers.acquisition.start_viewer')
+    @patch('bcipy.helpers.acquisition.init_lsl_client')
+    @patch('bcipy.helpers.acquisition.init_device')
+    @patch('bcipy.helpers.acquisition.await_start')
+    @patch('bcipy.helpers.acquisition.LslDataServer')
+    @patch('bcipy.helpers.acquisition.server_spec')
+    @patch('bcipy.helpers.acquisition.ClientManager')
+    def test_init_acquisition_multiple_devices(
+            self, make_client_manager, server_spec_mock, make_lsl_data_server,
+            await_start_mock, init_device_mock, init_lsl_client_mock,
+            start_viewer_mock, save_device_specs_mock):
+        """Test init acquisition with multiple devices."""
+        # Function parameters
+        params = Parameters.from_cast_values(
+            acq_mode='EEG/DSI-24+Eyetracker:passive',
+            acq_show_viewer=True,
+            stim_screen=0,
+            parameter_location=".")
+        save_folder = "temp"
+
+        # Mock objects
+        manager = Mock()
+        # preconfigured devices
+        eeg_device = DeviceSpec(content_type='EEG',
+                                name='DSI-24',
+                                status=DeviceStatus.ACTIVE,
+                                channels=['ch1', 'ch2', 'ch3'],
+                                sample_rate=300.0)
+        gaze_device = DeviceSpec(content_type='Eyetracker',
+                                 name='Tobii Nano',
+                                 status=DeviceStatus.PASSIVE,
+                                 channels=['left_pos', 'right_pos'],
+                                 sample_rate=60)
+        eeg_server = Mock()
+        gaze_server = Mock()
+        eeg_client = Mock()
+        gaze_client = Mock()
+
+        # Mock the functions/constructors
+        make_client_manager.return_value = manager
+        server_spec_mock.side_effect = [eeg_device, gaze_device]
+        make_lsl_data_server.side_effect = [eeg_server, gaze_server]
+
+        # get preconfigured device from devices.json
+        init_device_mock.size_effect = [eeg_device, gaze_device]
+        init_lsl_client_mock.side_effect = [eeg_client, gaze_client]
+
+        client_manager, servers = init_acquisition(params,
+                                                   save_folder=save_folder,
+                                                   server=True)
+
+        # Assertions
+        self.assertEqual(client_manager, manager)
+        self.assertEqual(2, len(servers))
+        self.assertEqual(eeg_server, servers[0])
+        self.assertEqual(gaze_server, servers[1])
+
+        self.assertEqual(init_device_mock.call_args_list, [
+            call('EEG', 'DSI-24', None),
+            call('Eyetracker', None, DeviceStatus.PASSIVE)
+        ])
+        self.assertEqual(await_start_mock.call_count, 2)
+
+        start_viewer_mock.assert_called_once()
+        self.assertEqual(
+            manager.add_client.call_args_list,
+            [call(eeg_client), call(gaze_client)])
+        save_device_specs_mock.assert_called_with(manager.device_specs,
+                                                  save_folder, spec_name)
+
+
+class TestAcquisitionHelpers(unittest.TestCase):
+    """Unit tests for acquisition helper functions"""
 
     def test_max_inquiry_duration(self):
         """Test the max inquiry duration function"""
@@ -149,6 +235,49 @@ class TestAcquisition(unittest.TestCase):
         preconfigured_device_mock.assert_called_with('DSI-24', strict=True)
         self.assertEqual(device_spec, device_mock)
 
+    @patch('bcipy.helpers.acquisition.discover_device_spec')
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_init_device_with_status_override(self, preconfigured_device_mock,
+                                              discover_spec_mock):
+        """Test device initialization where the provided status is different than
+        the preconfigured status."""
+
+        preconf_device = DeviceSpec(content_type='EEG',
+                                    name='DSI-24',
+                                    status=DeviceStatus.ACTIVE,
+                                    channels=['ch1', 'ch2', 'ch3'],
+                                    sample_rate=300.0)
+
+        preconfigured_device_mock.return_value = preconf_device
+
+        device_spec = init_device('EEG', 'DSI-24', DeviceStatus.PASSIVE)
+
+        discover_spec_mock.assert_not_called()
+        preconfigured_device_mock.assert_called_with('DSI-24', strict=True)
+
+        self.assertEqual(device_spec.name, preconf_device.name)
+        self.assertEqual(device_spec.content_type, preconf_device.content_type)
+        self.assertEqual(device_spec.status, DeviceStatus.PASSIVE)
+
+    @patch('bcipy.helpers.acquisition.discover_device_spec')
+    @patch('bcipy.helpers.acquisition.preconfigured_device')
+    def test_init_device_with_active_status_override(self,
+                                                     preconfigured_device_mock,
+                                                     discover_spec_mock):
+        """Test device initialization where the provided active status is
+        different than the preconfigured status."""
+
+        preconf_device = DeviceSpec(content_type='EEG',
+                                    name='DSI-24',
+                                    status=DeviceStatus.PASSIVE,
+                                    channels=['ch1', 'ch2', 'ch3'],
+                                    sample_rate=300.0)
+        preconfigured_device_mock.return_value = preconf_device
+
+        device_spec = init_device('EEG', 'DSI-24', DeviceStatus.ACTIVE)
+        self.assertEqual(device_spec.status, DeviceStatus.ACTIVE)
+        discover_spec_mock.assert_not_called()
+
     def test_parse_stream_type(self):
         """Test function to split the stream type into content_type, name,
         and status"""
@@ -197,10 +326,6 @@ class TestAcquisition(unittest.TestCase):
                             content_type='EYETRACKER')
         self.assertEqual(raw_data_filename(device),
                          'eyetracker_data_tobii-p0.csv')
-
-
-class TestAcquisitionHelpers(unittest.TestCase):
-    """Unit tests for acquisition helper functions"""
 
     def test_stream_type_active_given_status(self):
         """Test function to test if a StreamType is active given the provided
