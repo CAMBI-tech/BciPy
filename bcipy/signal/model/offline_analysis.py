@@ -510,7 +510,9 @@ def offline_analysis(
     """
     assert parameters, "Parameters are required for offline analysis."
     if not data_folder:
-        data_folder = load_experimental_data()
+        data_folder = load_experimental_data(
+            message="Select the folder containing the data to be analyzed.",
+            strict=True)
 
     # Load default devices which are used for training the model with different channels, etc.
     devices_by_name = devices.load(
