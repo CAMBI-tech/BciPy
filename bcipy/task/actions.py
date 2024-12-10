@@ -12,16 +12,16 @@ from bcipy.gui.file_dialog import ask_directory
 from bcipy.gui.intertask_gui import IntertaskGUI
 from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
 from bcipy.task import Task, TaskMode, TaskData
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
+from bcipy.core.triggers import trigger_decoder, TriggerType
 
 from bcipy.acquisition import devices
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.parameters import Parameters
+from bcipy.core.parameters import Parameters
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.helpers.load import load_raw_data
-from bcipy.helpers.raw_data import RawData
+from bcipy.io.load import load_raw_data
+from bcipy.core.raw_data import RawData
 from bcipy.signal.process import get_default_transform
-from bcipy.helpers.report import SignalReportSection, SessionReportSection, Report, ReportSection
+from bcipy.core.report import SignalReportSection, SessionReportSection, Report, ReportSection
 from bcipy.config import SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.evaluate.artifact import ArtifactDetection
@@ -217,7 +217,8 @@ class BciPyCalibrationReportAction(Task):
 
         if not protocol_path:
             protocol_path = ask_directory(
-                prompt="Select BciPy protocol directory with calibration data...")
+                prompt="Select BciPy protocol directory with calibration data...",
+                strict=True)
         self.protocol_path = protocol_path
         self.last_task_dir = last_task_dir
         self.trial_window = (-0.2, 1.0)

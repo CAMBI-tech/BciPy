@@ -8,7 +8,7 @@ from bcipy.acquisition.exceptions import (InsufficientDataException,
                                           UnsupportedContentType)
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
-from bcipy.helpers.system_utils import AutoNumberEnum
+from bcipy.helpers.utils import AutoNumberEnum
 from bcipy.config import SESSION_LOG_FILENAME
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)

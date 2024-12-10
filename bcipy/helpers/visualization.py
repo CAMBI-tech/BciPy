@@ -13,7 +13,6 @@ import seaborn as sns
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from mne import Epochs
-from mne.io import read_raw_edf
 from scipy import linalg
 
 import bcipy.acquisition.devices as devices
@@ -22,12 +21,12 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME,
                           DEFAULT_PARAMETERS_PATH)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.convert import convert_to_mne
-from bcipy.helpers.load import choose_csv_file, load_raw_data, load_json_parameters
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.stimuli import mne_epochs
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.io.convert import convert_to_mne
+from bcipy.io.load import choose_csv_file, load_raw_data, load_json_parameters
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
+from bcipy.core.stimuli import mne_epochs
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 
@@ -616,23 +615,6 @@ def visualize_results_all_symbols(
         plt.close()
 
     return fig
-
-
-def plot_edf(edf_path: str, auto_scale: Optional[bool] = False):
-    """Plot data from the raw edf file. Note: this works from an iPython
-    session but seems to throw errors when provided in a script.
-
-    Parameters
-    ----------
-        edf_path - full path to the generated edf file
-        auto_scale - optional; if True will scale the EEG data; this is
-            useful for fake (random) data but makes real data hard to read.
-    """
-    edf = read_raw_edf(edf_path, preload=True)
-    if auto_scale:
-        edf.plot(scalings='auto')
-    else:
-        edf.plot()
 
 
 def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):

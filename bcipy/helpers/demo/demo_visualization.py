@@ -18,9 +18,9 @@ from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
-                                load_raw_data)
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.io.load import (load_experimental_data, load_json_parameters,
+                           load_raw_data)
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.process import get_default_transform
 
@@ -42,7 +42,10 @@ if __name__ == '__main__':
 
     path = args.path
     if not path:
-        path = load_experimental_data()
+        path = load_experimental_data(
+            message="Select the folder containing the raw_data.csv, parameters.json and triggers.txt",
+            strict=True
+        )
 
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETERS_FILENAME}',
                                       value_cast=True)

@@ -12,17 +12,17 @@ from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
 from bcipy.helpers.acquisition import init_acquisition, LslDataServer
 from bcipy.display import init_display_window, Display
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
-                                   TargetPositions,
-                                   generate_calibration_inquiries)
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.parameters import Parameters
+from bcipy.io.save import _save_session_related_data
+from bcipy.core.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
+                                TargetPositions,
+                                generate_calibration_inquiries)
+from bcipy.core.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers,
-                                    offset_label)
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
 from bcipy.task import Task, TaskData, TaskMode
 
 import logging

@@ -2,7 +2,7 @@ from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.display import init_display_window
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.load import load_json_parameters
+from bcipy.io.load import load_json_parameters
 
 # Load a parameters file
 parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)

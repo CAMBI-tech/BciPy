@@ -11,7 +11,7 @@ from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.system_utils import get_screen_info
+from bcipy.helpers.utils import get_screen_info
 
 root = logging.getLogger()
 root.setLevel(logging.DEBUG)

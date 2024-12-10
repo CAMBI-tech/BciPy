@@ -1,5 +1,5 @@
 from bcipy.language.model.unigram import UnigramLanguageModel
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.symbols import alphabet
 from bcipy.language.main import ResponseType
 
 

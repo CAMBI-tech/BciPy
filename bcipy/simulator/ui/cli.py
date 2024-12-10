@@ -15,7 +15,7 @@ from rich.tree import Tree
 
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.helpers.acquisition import active_content_types
-from bcipy.helpers.load import choose_model_paths
+from bcipy.io.load import choose_model_paths
 from bcipy.simulator.data.sampler import (InquirySampler, Sampler,
                                           TargetNontargetSampler)
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask

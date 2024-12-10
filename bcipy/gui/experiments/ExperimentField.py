@@ -31,8 +31,8 @@ from bcipy.gui.main import (
 )
 from bcipy.config import EXPERIMENT_DATA_FILENAME
 from bcipy.helpers.validate import validate_experiment, validate_field_data_written
-from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.save import save_experiment_field_data
+from bcipy.io.load import load_experiments, load_fields
+from bcipy.io.save import save_experiment_field_data
 
 
 class ExperimentFieldCollection(QWidget):

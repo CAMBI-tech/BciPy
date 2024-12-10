@@ -5,7 +5,7 @@ from typing import Optional, Type
 
 from bcipy.config import CUSTOM_TASK_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
 from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.load import load_experiments, load_json_parameters
+from bcipy.io.load import load_experiments, load_json_parameters
 from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.task import Task, TaskRegistry
 from bcipy.task.orchestrator import SessionOrchestrator

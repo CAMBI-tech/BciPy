@@ -16,10 +16,10 @@ from PyQt6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QGroupBox,
                              QSpinBox, QTreeWidget, QTreeWidgetItem,
                              QVBoxLayout, QWidget)
 
+from bcipy.core.parameters import Parameters
 from bcipy.gui.file_dialog import FileDialog
 from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
-from bcipy.helpers.parameters import Parameters
 from bcipy.preferences import preferences
 from bcipy.simulator.data.sampler import TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
