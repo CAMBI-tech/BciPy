@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     path = args.directory
     if not path:
-        path = ask_directory("Select the directory with data to be converted")
+        path = ask_directory("Select the directory with data to be converted", strict=True)
 
     # convert a study to BIDS format
     convert_experiment_to_bids(

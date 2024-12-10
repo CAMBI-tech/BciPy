@@ -566,7 +566,8 @@ if __name__ == "__main__":
     # if no path is provided, prompt for one using a GUI
     path = args.path
     if not path:
-        path = load_experimental_data()
+        path = load_experimental_data(
+            message='Select the directory with the sessions to analyze for artifacts', strict=True)
 
     positions = None
     for session in Path(path).iterdir():

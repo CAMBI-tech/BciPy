@@ -63,7 +63,8 @@ class FileDialog(QWidget):
 def ask_filename(
         file_types: str = DEFAULT_FILE_TYPES,
         directory: str = "",
-        prompt: str = "Select File") -> Union[str, BciPyCoreException]:
+        prompt: str = "Select File",
+        strict=False) -> Union[str, BciPyCoreException]:
     """Prompt for a file using a GUI.
 
     Parameters
@@ -71,6 +72,9 @@ def ask_filename(
     - file_types : optional file type filters; Examples: 'Text files (*.txt)'
     or 'Image files (*.jpg *.gif)' or '*.csv;;*.pkl'
     - directory : optional directory
+    - prompt : optional prompt message to display to users
+    - strict : optional flag to raise an exception if the user cancels the dialog. Default is False.
+        If False, an empty string is returned.
 
     Returns
     -------
@@ -90,16 +94,21 @@ def ask_filename(
         app.quit()
 
         return filename
+    
+    if strict:
+        raise BciPyCoreException('No file selected.')
+    
+    return ''
 
-    raise BciPyCoreException('No file selected.')
 
-
-def ask_directory(prompt: str = "Select Directory") -> Union[str, BciPyCoreException]:
+def ask_directory(prompt: str = "Select Directory", strict=False) -> Union[str, BciPyCoreException]:
     """Prompt for a directory using a GUI.
 
     Parameters
     ----------
     prompt : optional prompt message to display to users
+    strict : optional flag to raise an exception if the user cancels the dialog. Default is False.
+        If False, an empty string is returned.
 
     Returns
     -------
@@ -120,4 +129,7 @@ def ask_directory(prompt: str = "Select Directory") -> Union[str, BciPyCoreExcep
 
         return name
 
-    raise BciPyCoreException('No directory selected.')
+    if strict:
+        raise BciPyCoreException('No directory selected.')
+    
+    return ''
