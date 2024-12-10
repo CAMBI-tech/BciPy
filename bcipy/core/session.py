@@ -5,7 +5,6 @@ import itertools
 import json
 import os
 import sqlite3
-import subprocess
 from dataclasses import dataclass, fields
 from typing import Any, Dict, List, Optional
 
@@ -17,12 +16,10 @@ from openpyxl.styles.colors import COLOR_INDEX
 BLACK = COLOR_INDEX[0]
 WHITE = COLOR_INDEX[1]
 YELLOW = COLOR_INDEX[5]
-from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
-                          DEFAULT_PARAMETERS_FILENAME, EXPERIMENT_DATA_FILENAME,
+from bcipy.config import (DEFAULT_ENCODING,
+                          DEFAULT_PARAMETERS_FILENAME,
                           SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
-from bcipy.io.load import (load_experiment_fields, load_experiments,
-                           load_json_parameters)
-from bcipy.helpers.validate import validate_field_data_written
+from bcipy.io.load import load_json_parameters
 from bcipy.task.data import Session
 
 
@@ -44,21 +41,6 @@ def session_data(data_dir: str) -> Dict:
     data = session.as_dict(evidence_only=True)
     data['target_text'] = parameters['task_text']
     return data
-
-
-def collect_experiment_field_data(experiment_name: str,
-                                  save_path: str,
-                                  file_name: str = EXPERIMENT_DATA_FILENAME) -> None:
-    experiment = load_experiments()[experiment_name]
-    experiment_fields = load_experiment_fields(experiment)
-
-    if experiment_fields:
-        cmd = (f'python {BCIPY_ROOT}/gui/experiments/ExperimentField.py -e'
-               f' "{experiment_name}" -p "{save_path}" -f "{file_name}"')
-        subprocess.check_call(cmd, shell=True)
-        # verify data was written before moving on
-        if not validate_field_data_written(save_path, file_name):
-            raise Exception('Field data not collected!')
 
 
 @dataclass(frozen=True)

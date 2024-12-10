@@ -2,6 +2,7 @@
 
 
 [![BciPy](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml/badge.svg)](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/96e31da4b0554dae9db7a1356556b0d5)](https://app.codacy.com/gh/CAMBI-tech/BciPy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/CAMBI-tech/BciPy/fork)
 [![Follow on Twitter](https://img.shields.io/twitter/follow/cambi_tech?label=Follow&style=social)](https://twitter.com/cambi_tech)
 
@@ -18,7 +19,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
 
 ## Dependencies
 ---------------
-This project requires Python 3.8, 3.9 or 3.10. Please see notes below for additional OS specific dependencies before installation can be completed and reference our documentation/FAQs for more information: https://bcipy.github.io/hardware-os-config/
+This project requires Python 3.8, 3.9 or 3.10. Please see notes below for additional OS specific dependencies before installation. See our documentation/FAQs for more information [here](https://bcipy.github.io/hardware-os-config/).
 
 ### Linux
 
@@ -46,8 +47,8 @@ In order to run BciPy on your computer, after following the dependencies above, 
 To install for use locally and use of the GUI:
 1. Git clone https://github.com/BciPy/BciPy.git
 2. Change directory in your terminal to the repo directory.
-4. [Optional] Install the kenlm language model package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
-5. Install BciPy in development mode. `pip install -e .`
+3. [Optional] Install the kenlm language model package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+4. Install BciPy in development mode. `pip install -e .`
 
 
 If wanting the latest version from PyPi and to build using modules:
