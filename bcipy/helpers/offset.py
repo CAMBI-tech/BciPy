@@ -111,6 +111,7 @@ def calculate_latency(raw_data: RawData,
         if value < 1 and diode_enc:
             diode_enc = False
 
+    trigger_diodes_timestamps = []
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
         trigger_diodes_timestamps = [

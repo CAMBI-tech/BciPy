@@ -1,12 +1,13 @@
 # BciPy: Brain-Computer Interface Software in Python
 
 [![BciPy](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml/badge.svg)](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/96e31da4b0554dae9db7a1356556b0d5)](https://app.codacy.com/gh/CAMBI-tech/BciPy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/CAMBI-tech/BciPy/fork)
 [![Follow on Twitter](https://img.shields.io/twitter/follow/cambi_tech?label=Follow&style=social)](https://twitter.com/cambi_tech)
 
 BciPy is a library for conducting Brain-Computer Interface experiments in Python. It functions as a standalone application for experimental data collection or you can take the tools you need and start coding your own system. See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/).
 
-It will run on the latest windows (7, 10, 11), linux (ubuntu 22.04) and macos (Big Sur). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
+It will run on the latest windows (10, 11), linux (ubuntu 22.04) and macos (Sonoma). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see here: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml).
 
 *Please cite us when using!*
 
@@ -26,8 +27,6 @@ You will need to install the prerequisites defined in `scripts\shell\linux_requi
 
 If you are using a Windows machine, you will need to install the [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
-*python 3.9 only!*
-You will need to install pyWinhook manually. See [here](https://www.lfd.uci.edu/~gohlke/pythonlibs/#pywinhook) for the appropriate wheel file (`pyWinhook‑1.6.2‑cp39‑cp39‑win_amd64.whl`). Then run `pip install <path_to_wheel_file>`. We also include the 64-bit wheel file in the `.bcipy/downloads/` directory.
 
 ### Mac
 
@@ -45,9 +44,8 @@ To install for use locally and use of the GUI:
 
 1. Git clone <https://github.com/BciPy/BciPy.git>.
 2. Change directory in your terminal to the repo directory.
-3. Install the kenlm language model package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
-4. Install PsychoPy with no dependencies. `pip install psychopy==2023.2.1 --no-deps`.
-5. Install BciPy in development mode. `pip install -e .`.
+3. [Optional] Install the kenlm language model package. `pip install kenlm==0.1 --global-option="--max_order=12"`.
+4. Install BciPy in development mode. `pip install -e .`
 
 If wanting the latest version from PyPi and to build using modules:
 
