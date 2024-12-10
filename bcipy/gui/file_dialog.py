@@ -64,7 +64,7 @@ def ask_filename(
         file_types: str = DEFAULT_FILE_TYPES,
         directory: str = "",
         prompt: str = "Select File",
-        strict=False) -> Union[str, BciPyCoreException]:
+        strict: bool = False) -> Union[str, BciPyCoreException]:
     """Prompt for a file using a GUI.
 
     Parameters
@@ -94,14 +94,14 @@ def ask_filename(
         app.quit()
 
         return filename
-    
+
     if strict:
         raise BciPyCoreException('No file selected.')
-    
+
     return ''
 
 
-def ask_directory(prompt: str = "Select Directory", strict=False) -> Union[str, BciPyCoreException]:
+def ask_directory(prompt: str = "Select Directory", strict: bool = False) -> Union[str, BciPyCoreException]:
     """Prompt for a directory using a GUI.
 
     Parameters
@@ -131,5 +131,5 @@ def ask_directory(prompt: str = "Select Directory", strict=False) -> Union[str, 
 
     if strict:
         raise BciPyCoreException('No directory selected.')
-    
+
     return ''
