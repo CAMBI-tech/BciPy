@@ -24,6 +24,9 @@ coverage-report:
 	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage report
 
+coverage-xml:
+	coverage xml -o "cobertura.xml"
+
 coverage-html:
 	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage html
