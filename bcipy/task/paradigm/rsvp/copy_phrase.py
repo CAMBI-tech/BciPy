@@ -1,14 +1,24 @@
 # mypy: disable-error-code="arg-type"
 import logging
-from typing import Any, List, NamedTuple, Optional, Tuple
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
+import numpy as np
 from psychopy import core, visual
 from psychopy.visual import Window
 
 from bcipy.acquisition import ClientManager
+from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
                           SESSION_LOG_FILENAME, SESSION_SUMMARY_FILENAME,
                           TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.core.list import destutter
+from bcipy.core.parameters import Parameters
+from bcipy.core.session import session_excel
+from bcipy.core.stimuli import InquirySchedule, StimuliOrder
+from bcipy.core.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
 from bcipy.display import (InformationProperties, StimuliProperties,
                            init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
@@ -21,21 +31,13 @@ from bcipy.helpers.acquisition import (LslDataServer, active_content_types,
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.language_model import init_language_model
-from bcipy.core.list import destutter
-from bcipy.io.load import choose_signal_models
-from bcipy.core.parameters import Parameters
-from bcipy.io.save import _save_session_related_data
-from bcipy.core.session import session_excel
-from bcipy.core.stimuli import InquirySchedule, StimuliOrder
-from bcipy.core.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
                                 trial_complete_message)
-from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                 TriggerType, convert_timing_triggers,
-                                 offset_label)
+from bcipy.io.load import choose_signal_models
+from bcipy.io.save import _save_session_related_data
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -748,22 +750,31 @@ class RSVPCopyPhraseTask(Task):
             triggers, labels
         )
 
-        evidences = []
-        for evidence_evaluator in self.evidence_evaluators:
-            probs = evidence_evaluator.evaluate(
-                raw_data=device_data[evidence_evaluator.consumes],
-                symbols=letters,
-                times=times,
-                target_info=filtered_labels,
-                window_length=window_length,
-            )
-            evidences.append((evidence_evaluator.produces, probs))
+        evidences = [
+            self.evaluate(evaluator, device_data, letters, times,
+                          filtered_labels, window_length)
+            for evaluator in self.evidence_evaluators
+        ]
 
         return evidences
 
+    def evaluate(self, evaluator: EvidenceEvaluator,
+                 device_data: Dict[ContentType, np.ndarray],
+                 symbols: List[str], times: List[float], labels: List[str],
+                 window_length: float) -> Tuple[EvidenceType, List[float]]:
+        """Evaluate evidence for a single device."""
+        probs = evaluator.evaluate(
+            raw_data=device_data[evaluator.consumes],
+            symbols=symbols,
+            times=times,
+            target_info=labels,
+            window_length=window_length,
+        )
+        return (evaluator.produces, probs)
+
     def stims_for_decision(
-        self, stim_times: List[Tuple[str, float]]
-    ) -> List[Tuple[str, float]]:
+            self, stim_times: List[Tuple[str,
+                                         float]]) -> List[Tuple[str, float]]:
         """The stim_timings from the display may include non-letter stimuli
         such as calibration and inquiry_preview timings. This method extracts
         only the letter data used to process the data for a decision.
