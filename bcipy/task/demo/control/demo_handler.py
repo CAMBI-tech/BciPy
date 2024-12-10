@@ -39,8 +39,6 @@ def _demo_decision_maker():
 
     conjugator = EvidenceFusion(evidence_names, len_dist=len_alp)
     decision_maker = DecisionMaker(
-        min_num_inq=1,
-        max_num_inq=10,
         state='',
         alphabet=alp)
 
