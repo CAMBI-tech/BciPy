@@ -31,7 +31,10 @@ if __name__ == "__main__":
     # if no path is provided, prompt for one using a GUI
     path = args.path
     if not path:
-        path = load_experimental_data()
+        path = load_experimental_data(
+            message="Select the folder containing the raw_data.csv, parameters.json and triggers.txt",
+            strict=True
+        )
 
     trial_window = (0, 1.0)
 

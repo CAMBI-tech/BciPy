@@ -10,7 +10,6 @@ from typing import List, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
-                          DEFAULT_PARAMETERS_FILENAME,
                           EXPERIMENT_FILENAME, FIELD_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
 from bcipy.gui.file_dialog import ask_directory, ask_filename
@@ -156,8 +155,8 @@ def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
     return Parameters(source=path, cast_values=value_cast)
 
 
-def load_experimental_data() -> str:
-    filename = ask_directory()  # show dialog box and return the path
+def load_experimental_data(message='', strict=False) -> str:
+    filename = ask_directory(prompt=message, strict=strict)  # show dialog box and return the path
     log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
@@ -307,10 +306,10 @@ def fast_scandir(directory_name: str, return_path: bool = True) -> List[str]:
 class BciPySessionTaskData:
     """Session Task Data.
 
-    This class is used to represent a single task data session. It is used to store the
+    This class is used to represent a single task session. It is used to store the
     path to the task data, as well as the parameters and other information about the task.
 
-    /<local_path>/<user_id>/<date>/<experiment_id>/<date_time>/
+    /<path>/
         protocol.json
         <task_date_time>/
             parameters.json
@@ -322,38 +321,31 @@ class BciPySessionTaskData:
             self,
             path: str,
             user_id: str,
-            date: str,
             experiment_id: str,
-            date_time: str,
-            task: str,
+            date_time: Optional[str] = None,
+            date: Optional[str] = None,
+            task_name: Optional[str] = None,
+            session_id: int = 1,
             run: int = 1) -> None:
 
         self.user_id = user_id
-        self.date = date
         self.experiment_id = experiment_id.replace('_', '')
-        self.date_time = date_time.replace("_", "").replace("-", "")
-        self.session_id = f'{self.experiment_id}{self.date_time}'
+        self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
         self.date_time = date_time
-        self.task = task
-        self.run = str(run)
+        self.date = date
+        self.run = f'0{str(run)}' if run < 10 else str(run)
         self.path = path
-        self.parameters = self.get_parameters()
-        self.task_name = self.parameters.get('task', 'unknown').replace(' ', '')
+        self.task_name = task_name
         self.info = {
-            'user_id': user_id,
-            'date': date,
+            'user_id': self.user_id,
             'experiment_id': self.experiment_id,
-            'date_time': self.date_time,
-            'task': task,
             'task_name': self.task_name,
-            'run': run,
-            'path': path
+            'session_id': self.session_id,
+            'run': self.run,
+            'date': self.date,
+            'date_time': self.date_time,
+            'path': self.path
         }
-
-    def get_parameters(self) -> Parameters:
-        return load_json_parameters(
-            f'{self.path}/{DEFAULT_PARAMETERS_FILENAME}',
-            value_cast=True)
 
     def __str__(self):
         return f'BciPySessionTaskData: {self.info=}'
@@ -549,15 +541,16 @@ class BciPyCollection:
                 date = task_path.parts[-4]
                 experiment_id = task_path.parts[-3]
                 date_time = task_path.parts[-2]
+                task_name = task.split(date)[0].strip('_')
                 self.session_task_data.append(
                     BciPySessionTaskData(
                         path=task_path,
                         user_id=user_id,
+                        date_time=date_time,
                         date=date,
                         experiment_id=experiment_id,
-                        date_time=date_time,
                         run=run,
-                        task=task
+                        task_name=task_name
                     )
                 )
                 run += 1
@@ -578,7 +571,7 @@ def load_bcipy_data(
     Walks a data directory and returns a list of data paths for the given experiment id, user id, and date.
 
     The BciPy data directory is structured as follows:
-    data_directory/
+    data/
         user_ids/
             dates/
                 experiment_ids/

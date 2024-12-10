@@ -217,7 +217,8 @@ class BciPyCalibrationReportAction(Task):
 
         if not protocol_path:
             protocol_path = ask_directory(
-                prompt="Select BciPy protocol directory with calibration data...")
+                prompt="Select BciPy protocol directory with calibration data...",
+                strict=True)
         self.protocol_path = protocol_path
         self.last_task_dir = last_task_dir
         self.trial_window = (-0.2, 1.0)

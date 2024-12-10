@@ -187,7 +187,7 @@ This a list of the major modules and their functionality. Each module will conta
 - `feedback`: feedback mechanisms for sound and visual stimuli.
 - `gui`: end-user interface into registered bci tasks and parameter editing. See BCInterface.py.
 - `helpers`: helpful functions needed for interactions between modules and general utility.
-- `io`: load, save, and convert data files. Ex. BrainVision, EDF, MNE, CSV, JSON, etc.
+- `io`: load, save, and convert data files. Ex. BIDS, BrainVision, EDF, MNE, CSV, JSON, etc.
 - `language`: gives probabilities of next symbols during typing.
 - `main`: executor of experiments. Main entry point into the application
 - `parameters`: location of json parameters. This includes parameters.json (main experiment / app configuration) and device.json (device registry and configuration).
