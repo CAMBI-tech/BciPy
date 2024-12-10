@@ -112,7 +112,6 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: update pip & install custom dependencies
       run: |
-        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
         python -m pip install --upgrade pip
@@ -135,4 +134,5 @@ jobs:
         make build
     - name: codacy
       run: |
+        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
         bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "cobertura.xml"
