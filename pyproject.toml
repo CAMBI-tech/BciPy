@@ -120,7 +120,7 @@ omit = [
     "*exceptions.py",
     "*visualization.py",
     "*/gui/*",
-    "*/simulator/ui/*
+    "*/simulator/ui/*"
 ]
 source = ["bcipy"]
 branch = true
