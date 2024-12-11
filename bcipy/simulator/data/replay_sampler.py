@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from bcipy.config import SESSION_DATA_FILENAME
-from bcipy.helpers.session import read_session
+from bcipy.core.session import read_session
 from bcipy.simulator.data.data_engine import QueryFilter, RawDataEngine, Trial
 from bcipy.simulator.data.sampler import Sampler, format_samples
 from bcipy.simulator.util.state import SimState
