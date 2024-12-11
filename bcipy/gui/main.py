@@ -224,7 +224,7 @@ class FormInput(QWidget):
                  value: str,
                  help_tip: Optional[str] = None,
                  options: Optional[List[str]] = None,
-                 editable: bool = True,
+                 editable: Optional[bool] = True,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
@@ -273,8 +273,10 @@ class FormInput(QWidget):
         # Default is a text input
         return QLineEdit(value)
 
-    def init_editable(self, value: bool) -> QWidget:
+    def init_editable(self, value: Optional[bool]) -> Optional[QWidget]:
         "Override. Another checkbox is needed for editable"
+        if value is None:
+            return None
         editable_checkbox = QCheckBox("Editable")
         editable_checkbox.setChecked(value)
         editable_checkbox.setFont(font(size=12))
@@ -366,6 +368,7 @@ class IntegerInput(FormInput):
         spin_box = QSpinBox()
         spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         if value:
             spin_box.setValue(int(value))
         return spin_box
@@ -424,6 +427,7 @@ class FloatInput(FormInput):
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(float(value))
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         return spin_box
 
     def cast_value(self) -> float:
@@ -656,6 +660,7 @@ class RangeWidget(QWidget):
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(value)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         return spin_box
 
     def int_input(self, value: int) -> QWidget:
@@ -666,6 +671,7 @@ class RangeWidget(QWidget):
             -100000 if self.input_min is None else self.input_min)
         spin_box.setMaximum(
             100000 if self.input_max is None else self.input_max)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         if value:
             spin_box.setValue(value)
         return spin_box

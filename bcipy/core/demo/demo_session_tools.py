@@ -39,7 +39,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     path = args.path
     if not path:
-        path = ask_directory()
+        path = ask_directory(strict=True)
 
     if args.db or args.csv or args.charts:
         session = read_session(Path(path, SESSION_DATA_FILENAME))

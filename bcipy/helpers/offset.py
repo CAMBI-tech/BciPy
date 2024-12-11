@@ -111,6 +111,7 @@ def calculate_latency(raw_data: RawData,
         if value < 1 and diode_enc:
             diode_enc = False
 
+    trigger_diodes_timestamps = []
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
         trigger_diodes_timestamps = [
@@ -340,7 +341,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_path = args.data_path
     if not data_path:
-        data_path = ask_directory()
+        data_path = ask_directory(prompt="Please select a BciPy time test directory..", strict=True)
 
     # grab the stim length from the data directory parameters
     stim_length = load_json_parameters(f'{data_path}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)['stim_length']
