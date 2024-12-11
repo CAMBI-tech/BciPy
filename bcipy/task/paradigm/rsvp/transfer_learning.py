@@ -17,7 +17,7 @@ class UpdateData(NamedTuple):
 
     TODO: should data be raw_data, or reshaped?
     """
-    raw_data: np.ndarray  # for a single inquiry
+    preprocessed_data: np.ndarray  # for a single inquiry; transformed and reshaped.
     symbols: List[str]
     times: List[float]
     target_info: List[str]
@@ -64,8 +64,8 @@ class TransferLearningCopyPhraseTask(RSVPCopyPhraseTask):
                  window_length: float) -> Tuple[EvidenceType, List[float]]:
         """Evaluate evidence for a single device."""
         content_type = evaluator.consumes
-        # TODO: store the preprocessed, filtered data
-        data = UpdateData(raw_data=device_data[content_type],
+        data = evaluator.preprocess(device_data[content_type], times, labels, window_length)
+        data = UpdateData(preprocessed_data=data,
                           symbols=symbols,
                           times=times,
                           target_info=labels,
