@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+from enum import Enum
 
 from bcipy.helpers.stimuli import GazeReshaper
 from bcipy.signal.model import SignalModel
@@ -12,13 +13,35 @@ import warnings
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 
+class GazeModelResolver:
+    """Factory class for gaze models
+
+    This class is responsible for loading gaze models via type resolution.
+    """
+
+    @staticmethod
+    def resolve(model_type: str, *args, **kwargs) -> SignalModel:
+        """Load a gaze model from the provided path."""
+        if model_type == "GaussianProcess":
+            model = GaussianProcess(*args, **kwargs)
+        elif model_type == "GMIndividual":
+            model = GMIndividual(*args, **kwargs)
+        elif model_type == "GMCentralized":
+            model = GMCentralized( *args, **kwargs)
+        else:
+            raise ValueError(f"Model type {model_type} not recognized.")
+
+        return model
+
+
 class GaussianProcess(SignalModel):
 
     name = "GaussianProcessGazeModel"
     reshaper = GazeReshaper()
 
-    def __init__(self):
+    def __init__(self,  *args, **kwargs):
         self.ready_to_predict = False
+        self.acc = None
 
     def fit(self, training_data: np.ndarray):
         ...
@@ -75,9 +98,10 @@ class GMIndividual(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_individual"
 
-    def __init__(self, num_components=4, random_state=0):
+    def __init__(self, num_components=4, random_state=0, *args, **kwargs):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
+        self.acc = None
         self.means = None
         self.covs = None
 
@@ -108,7 +132,7 @@ class GMIndividual(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-
+        self.acc = accuracy_per_symbol
         return accuracy_per_symbol
 
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
@@ -188,9 +212,10 @@ class GMCentralized(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_combined"
 
-    def __init__(self, num_components=4, random_state=0):
+    def __init__(self, num_components=4, random_state=0,  *args, **kwargs):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
+        self.acc = None
         self.means = None
         self.covs = None
 
@@ -220,9 +245,8 @@ class GMCentralized(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-
+        self.acc = accuracy_per_symbol
         return accuracy_per_symbol
-        ...
 
     def predict(self, test_data: np.ndarray) -> np.ndarray:
         '''

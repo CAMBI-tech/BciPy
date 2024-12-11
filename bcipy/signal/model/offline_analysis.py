@@ -11,9 +11,11 @@ from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
+from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
+                          STIMULI_POSITIONS_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.helpers.load import (load_experimental_data, load_json_parameters,
                                 load_raw_data)
@@ -24,10 +26,10 @@ from bcipy.helpers.stimuli import update_inquiry_timing
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.system_utils import report_execution_time
 from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.raw_data import RawData
 from bcipy.preferences import preferences
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GMIndividual, GMCentralized,
-                                                 GaussianProcess)
+from bcipy.signal.model.gaussian_mixture import (GazeModelResolver)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
@@ -71,8 +73,14 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 
-def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc: bool,
-                save_figures=False, show_figures=False):
+def analyze_erp(
+        erp_data: RawData,
+        parameters: Parameters,
+        device_spec: DeviceSpec,
+        data_folder: str,
+        estimate_balanced_acc: bool,
+        save_figures: bool=False,
+        show_figures: bool=False) -> SignalModel:
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
     Extract timing information from trigger file.
@@ -204,7 +212,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
     except Exception as e:
         log.error(f"Error calculating balanced accuracy: {e}")
 
-    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
+    save_model(model, Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
 
     if save_figures or show_figures:
@@ -221,14 +229,12 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
 
 
 def analyze_gaze(
-        gaze_data,
-        parameters,
-        device_spec,
-        data_folder,
-        save_figures=None,
-        show_figures=False,
-        plot_points=False,
-        model_type="Individual_GM"):
+        gaze_data: RawData,
+        parameters: Parameters,
+        device_spec: DeviceSpec,
+        data_folder: str,
+        model_type: str="GaussianProcess",
+        symbol_set: List[str] = alphabet()) -> SignalModel:
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
     Extract timing information from trigger file.
@@ -244,10 +250,7 @@ def analyze_gaze(
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
-        save_figures (bool): If true, saves ERP figures after training to the data folder.
-        show_figures (bool): If true, shows ERP figures after training.
-        plot_points (bool): If true, plots the gaze points on the matrix image.
-        model_type (str): Type of gaze model to be used. Options are: "Individual_GM", "Centralized_GM",
+        model_type (str): Type of gaze model to be used. Options are: "GMIndividual", "GMCentralized",
         or "GaussianProcess".
     """
     channels = gaze_data.channels
@@ -266,15 +269,10 @@ def analyze_gaze(
 
     data, _fs = gaze_data.by_channel()
 
-    if model_type == "Individual_GM":
-        model = GMIndividual()
-    elif model_type == "Centralized_GM":
-        model = GMCentralized()
-    elif model_type == "GP":
-        model = GaussianProcess()
+    model = GazeModelResolver.resolve(model_type)
 
     # Extract all Triggers info
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+    _trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         remove_pre_fixation=False,
         exclusion=[
@@ -288,13 +286,10 @@ def analyze_gaze(
     )
     ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
-    # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
-    symbol_set = alphabet()
-
-    target_symbols = trigger_symbols[0::11]  # target symbols are the PROMPT triggers
+    target_symbols = trigger_symbols[0::stim_size + 1]  # target symbols are the PROMPT triggers
     # Use trigger_timing to generate time windows for each letter flashing
     # Take every 10th trigger as the start point of timing.
-    inq_start = trigger_timing[1::11]  # start of each inquiry (here we jump over prompts)
+    inq_start = trigger_timing[1::stim_size + 1]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     inquiries_dict, inquiries_list, _ = model.reshaper(
@@ -303,8 +298,8 @@ def analyze_gaze(
         gaze_data=data,
         sample_rate=sample_rate,
         stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=10,
-        symbol_set=alphabet()
+        num_stimuli_per_inquiry=stim_size,
+        symbol_set=symbol_set,
     )
 
     # Apply preprocessing:
@@ -342,7 +337,7 @@ def analyze_gaze(
             continue
 
         # Fit the model based on model type.
-        if model_type == "Individual_GM":
+        if model_type == "GMIndividual":
             # Model 1: Fit Gaussian mixture on each symbol separately
             reshaped_data = preprocessed_data[sym].reshape(
                 (preprocessed_data[sym].shape[0] *
@@ -350,17 +345,17 @@ def analyze_gaze(
                  preprocessed_data[sym].shape[1]))
             model.fit(reshaped_data)
 
-        if model_type == "Centralized_GM":
+        if model_type == "GMCentralized":
             # Centralize the data using symbol positions and fit a single Gaussian.
             # Load json file.
-            with open(f"{data_folder}/stimuli_positions.json", 'r') as params_file:
+            with open(f"{data_folder}/{STIMULI_POSITIONS_FILENAME}", 'r') as params_file:
                 symbol_positions = json.load(params_file)
 
             # Subtract the symbol positions from the data:
             for j in range(len(preprocessed_data[sym])):
                 centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
 
-        if model_type == "GP":
+        if model_type == "GaussianProcess":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
                 temp = np.mean(preprocessed_data[sym][j], axis=1)
@@ -372,7 +367,7 @@ def analyze_gaze(
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
 
-    if model_type == "GP":
+    if model_type == "GaussianProcess":
         # Split the data into train and test sets & fit the model:
         centralized_gaze_data = np.zeros_like(preprocessed_array)
         for i, (_, sym) in enumerate(zip(preprocessed_array, target_symbols)):
@@ -394,8 +389,9 @@ def analyze_gaze(
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
         # Save model parameters which are mean and covariance matrix
+        model.fit(reshaped_mean)
 
-    if model_type == "Centralized_GM":
+    if model_type == "GMCentralized":
         # Fit the model parameters using the centralized data:
         # flatten the dict to a np array:
         cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
@@ -406,11 +402,12 @@ def analyze_gaze(
         model.fit(cent_data)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=None)
+                                         transform=None,
+                                         acc=model.acc)
     log.info("Training complete for Eyetracker model. Saving data...")
     save_model(
         model,
-        Path(data_folder, f"model_{device_spec.content_type}_{model_type}.pkl"))
+        Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.acc}.pkl"))
     return model
 
 
@@ -418,7 +415,7 @@ def analyze_gaze(
 def offline_analysis(
     data_folder: str = None,
     parameters: Parameters = None,
-    alert_finished: bool = True,
+    alert: bool = True,
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
@@ -445,7 +442,7 @@ def offline_analysis(
         data_folder(str): folder of the data
             save all information and load all from this folder
         parameter(dict): parameters for running offline analysis
-        alert_finished(bool): whether or not to alert the user offline analysis complete
+        alert(bool): whether or not to alert the user offline analysis steps and completion
         estimate_balanced_acc(bool): if true, uses another model copy on an 80/20 split to
             estimate balanced accuracy
         show_figures(bool): if true, shows ERP figures after training
@@ -477,22 +474,24 @@ def offline_analysis(
         f"Offline analysis requires at least one data file and at most two data files. Found: {num_devices}"
     )
 
+    symbol_set = alphabet()
     fusion = False
     if num_devices == 2:
         # Ensure there is an EEG and Eyetracker device
-        if confirm("Would you like to proceed with fusion analysis? \n"
-                   f"It will run for {n_iterations} iterations. Hit cancel to train models separately."):
-            fusion = True
-            # Note that the models trained here are not saved/used for the online system.
-            log.info("Multiple Devices Found. Starting fusion analysis...")
+        fusion = True
+        log.info("Fusion analysis enabled.")
 
+        if alert:
+            if not confirm("Starting fusion analysis... Hit cancel to train models individually."):
+                fusion = False
+
+        if fusion:
             eeg_data = load_raw_data(data_file_paths[0])
             device_spec_eeg = devices_by_name.get(eeg_data.daq_type)
             assert device_spec_eeg.content_type == "EEG", "First device must be EEG"
             gaze_data = load_raw_data(data_file_paths[1])
             device_spec_gaze = devices_by_name.get(gaze_data.daq_type)
             assert device_spec_gaze.content_type == "Eyetracker", "Second device must be Eyetracker"
-            symbol_set = alphabet()
             eeg_acc, gaze_acc, fusion_acc = calculate_eeg_gaze_fusion_acc(
                 eeg_data,
                 gaze_data,
@@ -515,28 +514,26 @@ def offline_analysis(
         # extract relevant information from raw data object eeg
 
         if device_spec.content_type == "EEG" and device_spec.is_active:
-            if not fusion or confirm("Would you like to proceed with ERP model training?"):
-                erp_model = analyze_erp(
-                    raw_data,
-                    parameters,
-                    device_spec,
-                    data_folder,
-                    estimate_balanced_acc,
-                    save_figures,
-                    show_figures)
-                models.append(erp_model)
-            else:
-                log.info("User opted out of ERP model training.")
+            erp_model = analyze_erp(
+                raw_data,
+                parameters,
+                device_spec,
+                data_folder,
+                estimate_balanced_acc,
+                save_figures,
+                show_figures)
+            models.append(erp_model)
 
         if device_spec.content_type == "Eyetracker" and device_spec.is_active:
-            if fusion or confirm("Would you like to proceed with Gaze model training?"):
-                et_model = analyze_gaze(
-                    raw_data, parameters, device_spec, data_folder, save_figures, show_figures, model_type="GP")
-                models.append(et_model)
-            else:
-                log.info("User opted out of Eyetracker model training.")
+            et_model = analyze_gaze(
+                raw_data,
+                parameters,
+                device_spec,
+                data_folder,
+                symbol_set=symbol_set)
+            models.append(et_model)
 
-    if alert_finished:
+    if alert:
         log.info("Alerting Offline Analysis Complete")
         results = [f"{model.name}: {model.auc}" for model in models]
         confirm(f"Offline analysis complete! \n Results={results}")
@@ -596,7 +593,7 @@ def main():
     offline_analysis(
         args.data_folder,
         parameters,
-        alert_finished=args.alert,
+        alert=args.alert,
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
         show_figures=args.show_figures,

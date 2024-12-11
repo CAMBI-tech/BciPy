@@ -64,7 +64,7 @@ def calculate_eeg_gaze_fusion_acc(
     buffer = int(parameters.get("task_buffer_length") / 2)
 
     # Get signal filtering information
-    transform_params = parameters.instantiate(ERPTransformParams)
+    transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
     static_offset = device_spec_eeg.static_offset
 
@@ -124,8 +124,8 @@ def calculate_eeg_gaze_fusion_acc(
     # update the trigger timing list to account for the initial trial window
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    erp_data, fs_eeg = eeg_data.by_channel()
-    trajectory_data, fs_eye = gaze_data.by_channel()
+    erp_data, _fs_eeg = eeg_data.by_channel()
+    trajectory_data, _fs_eye = gaze_data.by_channel()
 
     # Reshaping EEG data:
     eeg_inquiries, eeg_inquiry_labels, eeg_inquiry_timing = eeg_model.reshaper(
@@ -253,7 +253,7 @@ def calculate_eeg_gaze_fusion_acc(
 
         # extract train and test indices for gaze data:
         centralized_gaze_data_train = centralized_gaze_data[train_indices]
-        gaze_train_labels = np.array([target_symbols[i] for i in train_indices])
+        # gaze_train_labels = np.array([target_symbols[i] for i in train_indices])
         gaze_data_test = preprocessed_gaze_data[test_indices]         # test set is NOT centralized
         gaze_test_labels = np.array([target_symbols[i] for i in test_indices])
         # generate a tuple that matches the index of the symbol with the symbol itself:
