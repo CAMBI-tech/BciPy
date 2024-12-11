@@ -99,7 +99,7 @@ bcipy-train = "bcipy.signal.model.offline_analysis:main"
 # https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
 platforms = ["Linux", "Windows", "Mac OS-X"]
 include-package-data = true
-zip-safe = true 
+zip-safe = true
 
 # Python modules and packages that are included in the
 # distribution package (and therefore become importable)
@@ -120,6 +120,7 @@ omit = [
     "*exceptions.py",
     "*visualization.py",
     "*/gui/*",
+    "*/simulator/ui/*
 ]
 source = ["bcipy"]
 branch = true

@@ -196,6 +196,7 @@ class InquirySampler(Sampler):
             inquiry_target_position = inquiry_df.index.tolist().index(
                 inquiry_target_index)
 
+        new_target_position = float(target_position)
         if inquiry_target_position == target_position:
             # target already in the correct location, no need to adjust
             new_target_position = inquiry_target_position + 0.0

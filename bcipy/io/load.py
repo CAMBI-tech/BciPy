@@ -11,12 +11,11 @@ from typing import List, Optional, Union
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME,
-                          SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
-from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.exceptions import (BciPyCoreException,
-                              InvalidExperimentException)
+                          SESSION_LOG_FILENAME, SIGNAL_MODEL_FILE_SUFFIX)
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
+from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 
@@ -198,6 +197,16 @@ def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
     """
     return [
         model for model in map(choose_signal_model, set(device_types)) if model
+    ]
+
+
+def choose_model_paths(device_types: List[str]) -> List[Path]:
+    """Select a model for each device and return a list of paths."""
+    return [
+        ask_filename(file_types=f"*{SIGNAL_MODEL_FILE_SUFFIX}",
+                     directory=preferences.signal_model_directory,
+                     prompt=f"Select the {device_type} signal model")
+        for device_type in device_types
     ]
 
 
