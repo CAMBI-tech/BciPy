@@ -11,6 +11,7 @@ mypy-html.css
 index.html
 htmlcov/
 html/
+*.xml
 
 # Virtualenv
 venv/

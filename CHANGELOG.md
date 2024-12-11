@@ -3,7 +3,7 @@
 ## Contributions
 
 - BIDS
-  - Bundling support and refactor of `convert` module. See `demo_convert.py` #362
+  - Bundling support and refactor of `convert` module. See `demo_convert.py` #362 Add support for 1020 channels and eye tracker data #369
 - Library Refactor
   - Refactor `helpers` into `io` and `core` #362
 - Dependencies

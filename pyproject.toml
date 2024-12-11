@@ -1,0 +1,185 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools>=61.0", "wheel>=0.37.1"]
+
+[project]
+name = "bcipy"
+version = "2.0.0"
+authors = [
+    {name="CAMBI", email="cambi_support@googlegroups.com"},
+]
+description = "Python Software for Brain-Computer Interface Development."
+readme = "README.md"
+requires-python = ">3.7,<3.11"
+classifiers = [
+    'License :: Other/Proprietary License',
+    'Topic :: Scientific/Engineering :: Human Machine Interfaces',
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: End Users/Desktop',
+    'Intended Audience :: Developers',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+]
+
+dependencies = [
+    "attrdict3==2.0.2",
+    "EDFlib-Python==1.0.8",
+    "transformers==4.36.0",
+    "torch==2.2.0",
+    "construct==2.8.14",
+    "mne==1.6.1",
+    "mne-bids==0.14.0",
+    "pybv==0.7.5",
+    "pyo==1.0.5",
+    "pyglet<=1.5.27,>=1.4",
+    "PsychoPy==2024.2.1",
+    "openpyxl==3.1.2",
+    "numpy==1.24.4",
+    "sounddevice==0.4.4",
+    "SoundFile==0.12.1",
+    "scipy==1.10.1",
+    "scikit-learn==1.2.2",
+    "seaborn==0.13.2",
+    "matplotlib==3.7.5",
+    "pylsl==1.16.2",
+    "pandas==2.0.3",
+    "psutil==5.7.2",
+    "Pillow==10.2.0",
+    "py-cpuinfo==9.0.0",
+    "pyopengl==3.1.7",
+    "PyQt6==6.7.1",
+    "PyQt6-sip==13.8",
+    "pywavelets==1.4.1",
+    "tqdm==4.62.2",
+    "rich==13.9.4",
+    "reportlab==4.2.0",
+    "tables==3.7.0",
+    "kenlm==0.1",
+    "pyWinhook==1.6.2;python_version=='3.9' and platform_system=='Windows'",
+    "WxPython==4.2.1;platform_system!='Linux'",
+]
+
+[project.license]
+file = "LICENSE.md"
+
+[project.optional-dependencies]
+dev = [
+    "autopep8==1.5.7",
+    "coverage>=7.0",
+    "flake8==5.0.4",
+    "Flake8-pyproject==1.2.3",
+    "mypy==1.13",
+    "lxml",
+    "mock",
+    "mockito",
+    "pylint",
+    "pytest",
+    "pytest-mpl",
+]
+release = [
+    "twine==3.2.0",
+    "build==1.2.2.post1",
+    "wheel==0.43.0",
+]
+
+[project.scripts]
+bcipy = "bcipy.main:bcipy_main"
+bcipy-erp-viz = "bcipy.helpers.visualization:erp"
+bcipy-sim = "bcipy.simulator:main"
+bcipy-train = "bcipy.signal.model.offline_analysis:main"
+
+[project.urls]
+"Homepage" = "https://www.cambi.tech/"
+"Documentation" = "https://bcipy.github.io/"
+"Source" = "https://github.com/CAMBI-tech/BciPy"
+
+[tool.setuptools]
+# https://setuptools.pypa.io/en/latest/userguide/pyproject_config.html
+platforms = ["Linux", "Windows", "Mac OS-X"]
+include-package-data = true
+zip-safe = true
+
+# Python modules and packages that are included in the
+# distribution package (and therefore become importable)
+[tool.setuptools.packages.find]
+exclude = ["tests", "demo", "data"]
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[tool.coverage.run]
+omit = [
+    "*__init__*",
+    "*__main__*",
+    "*usr/local/lib*",
+    "*tests*",
+    "*test*",
+    "*demo*",
+    "*exceptions.py",
+    "*visualization.py",
+    "*/gui/*",
+    "*/simulator/ui/*"
+]
+source = ["bcipy"]
+branch = true
+
+[tool.coverage.report]
+exclude_also = [
+    "pragma: no cover",
+    "def __repr__",
+    "def __str__",
+    "raise NotImplementedError",
+    "@abstract",
+   "if __name__ == .__main__.:",
+    "logging.getLogger(__name__)",
+    "raise AssertionError",
+    "@(abc\\.)?abstractmethod",
+    "pass",
+]
+
+
+[tool.flake8]
+
+max_complexity = 10
+max_line_length = 120
+application_import_names = "bcipy"
+
+ignore = [
+    "D205",
+    "D400",
+    "F841",
+    "F821",
+    "E402",
+    "E501",
+    "C901",
+    "W503",
+    "W504",
+]
+
+[tool.pytest.ini]
+markers = "slow"
+
+[tool.mypy]
+
+warn_return_any = false
+warn_unused_configs = false
+ignore_missing_imports = true
+follow_imports = "skip"
+strict_optional = true
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+exclude = [
+    "tests",
+    "demo",
+    "gui",
+    "scripts",
+    "acquisition",
+    "display.paradigm",
+    "language",
+    "signal.model",
+    "task.control",
+    "core.parameters",
+]

@@ -79,10 +79,6 @@ jobs:
     - name: update pip & install custom dependencies
       run: |
         python -m pip install --upgrade pip
-    - name: install manually downloaded pyWinhook wheel for Python 3.9
-      if: matrix.python-version == 3.9
-      run: |
-        pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl
     - name: install dependencies
       run: |
         make dev-install
@@ -96,6 +92,9 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: build
+      run: |
+        make build
 
   build-macos:
 
@@ -123,11 +122,17 @@ jobs:
       if: always()
       run: |
         make coverage-report
+        make coverage-xml
     - name: type-check
       run: |
         make type
     - name: lint
       run: |
         make lint
-
-    
+    - name: build
+      run: |
+        make build
+    - name: codacy
+      run: |
+        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "cobertura.xml"

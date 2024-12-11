@@ -4,6 +4,7 @@ import logging
 import os
 import tarfile
 from typing import List, Optional, Tuple
+import glob
 
 import mne
 from enum import Enum
@@ -12,13 +13,12 @@ from mne_bids import BIDSPath, write_raw_bids
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.config import (DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+from bcipy.config import (RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
-from bcipy.io.load import load_json_parameters, load_raw_data
-from bcipy.core.raw_data import RawData
+from bcipy.io.load import load_raw_data
+from bcipy.core.raw_data import RawData, get_1020_channel_map
 from bcipy.core.triggers import trigger_decoder
 from bcipy.signal.process import Composition
-# from bcipy.signal.process import get_default_transform
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -52,7 +52,9 @@ def convert_to_bids(
         output_dir: str,
         task_name: Optional[str] = None,
         line_frequency: float = 60,
-        format: ConvertFormat = ConvertFormat.BV) -> str:
+        format: ConvertFormat = ConvertFormat.BV,
+        label_duration: float = 0.5,
+        full_labels: bool = True) -> str:
     """Convert to BIDS.
 
     Convert the raw data to the Brain Imaging Data Structure (BIDS) format.
@@ -65,13 +67,21 @@ def convert_to_bids(
     ----------
     data_dir - path to the directory containing the raw data, triggers, and parameters
     participant_id - the participant ID
+    session_id - the session ID
+    run_id - the run ID
     output_dir - the directory to save the BIDS formatted data
+    task_name - the name of the task
+    line_frequency - the line frequency of the data (50 or 60 Hz)
+    format - the format to convert the data to (BrainVision, EDF, FIF, or EEGLAB)
+    label_duration - the duration of the trigger labels in seconds. Default is 0.5 seconds.
+    full_labels - if True, include the full trigger labels in the BIDS data. Default is True. If False, only include
+        the targetness labels (target/non-target).
 
     Returns
     -------
     The path to the BIDS formatted data
     """
-    # validate the inputs
+    # validate the inputs before proceeding
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory={data_dir} does not exist")
     if not os.path.exists(output_dir):
@@ -87,23 +97,12 @@ def convert_to_bids(
     # create file paths for raw data, triggers, and parameters
     raw_data_file = os.path.join(data_dir, f'{RAW_DATA_FILENAME}.csv')
     trigger_file = os.path.join(data_dir, TRIGGER_FILENAME)
-    parameters_file = os.path.join(data_dir, DEFAULT_PARAMETERS_FILENAME)
 
-    # load the raw data
+    # load the raw data and specifications for the device used to collect the data
     raw_data = load_raw_data(raw_data_file)
+    channel_map = get_1020_channel_map(raw_data.channels)
     device_spec = preconfigured_device(raw_data.daq_type)
     volts = True if device_spec.channel_specs[0].units == 'volts' else False
-
-    # load the parameters
-    parameters = load_json_parameters(parameters_file, value_cast=True)
-    trial_window = parameters.get("trial_window", (0.0, 0.5))
-
-    if task_name is None:
-        task_name = parameters.get("task")
-        if task_name is None:
-            raise ValueError("Task name must be provided or specified in the parameters")
-
-    window_length = trial_window[1] - trial_window[0]
 
     # load the triggers without removing any triggers other than system triggers (default)
     trigger_targetness, trigger_timing, trigger_labels = trigger_decoder(
@@ -113,19 +112,28 @@ def convert_to_bids(
     )
 
     # convert the raw data to MNE format
-    mne_data = convert_to_mne(raw_data, volts=volts, remove_system_channels=True)
+    mne_data = convert_to_mne(raw_data, volts=volts, channel_map=channel_map)
+
+    # add the trigger annotations to the MNE data
     targetness_annotations = mne.Annotations(
         onset=trigger_timing,
-        duration=[window_length] * len(trigger_timing),
+        duration=[label_duration] * len(trigger_timing),
         description=trigger_targetness,
     )
-    label_annotations = mne.Annotations(
-        onset=trigger_timing,
-        duration=[window_length] * len(trigger_timing),
-        description=trigger_labels,
-    )
-    mne_data.set_annotations(targetness_annotations + label_annotations)
-    mne_data.info["line_freq"] = line_frequency  # set the line frequency to 60 Hz
+
+    if full_labels:
+        label_annotations = mne.Annotations(
+            onset=trigger_timing,
+            duration=[label_duration] * len(trigger_timing),
+            description=trigger_labels,
+        )
+        mne_data.set_annotations(targetness_annotations + label_annotations)
+    else:
+        mne_data.set_annotations(targetness_annotations)
+    # add the line frequency to the MNE data
+    mne_data.info["line_freq"] = line_frequency
+
+    # create the BIDS path for the data
     bids_path = BIDSPath(
         subject=participant_id,
         session=session_id,
@@ -143,7 +151,73 @@ def convert_to_bids(
         allow_preload=True,
         overwrite=True)
 
-    return bids_path.root
+    return bids_path.directory
+
+
+def convert_eyetracking_to_bids(
+        raw_data_path,
+        output_dir,
+        participant_id,
+        session_id,
+        run_id,
+        task_name) -> str:
+    """Converts the raw eye tracking data to BIDS format.
+
+    There is currently no standard for eye tracking data in BIDS. This function will write the raw eye tracking data
+    to a tsv file in a BIDS-style format.
+
+    Parameters
+    ----------
+    raw_data_path : str
+        Path to the raw eye tracking data
+    output_dir : str
+        Path to the output directory.
+        This should be where other BIDS formatted data is stored for the participant, session, and run.
+    participant_id : str
+        Participant ID, e.g. 'S01'
+    session_id : str
+        Session ID, e.g. '01'
+    run_id : str
+        Run ID, e.g. '01'
+    task_name : str
+        Task name. Example: 'RSVPCalibration'
+
+    Returns
+    -------
+    str
+        Path to the BIDS formatted eye tracking data
+    """
+    # check that the raw data path exists
+    if not os.path.exists(raw_data_path):
+        raise FileNotFoundError(f"Raw eye tracking data path={raw_data_path} does not exist")
+
+    if not os.path.exists(output_dir):
+        raise FileNotFoundError(f"Output directory={output_dir} does not exist")
+
+    found_files = glob.glob(f"{raw_data_path}/eyetracker*.csv")
+    if len(found_files) == 0:
+        raise FileNotFoundError(f"No raw eye tracking data found in directory={raw_data_path}")
+    if len(found_files) > 1:
+        raise ValueError(f"Multiple raw eye tracking data files found in directory={raw_data_path}")
+
+    eye_tracking_file = found_files[0]
+    logger.info(f"Found raw eye tracking data file={eye_tracking_file}")
+
+    # load the raw eye tracking data
+    raw_data = load_raw_data(eye_tracking_file)
+    # get the data as a pandas DataFrame
+    data = raw_data.dataframe
+
+    # make the et subdirectory
+    et_dir = os.path.join(output_dir, 'et')
+    os.makedirs(et_dir, exist_ok=True)
+
+    # write the dataframe as a tsv file to the output directory
+    output_filename = f'sub-{participant_id}_ses-{session_id}_task-{task_name}_run-{run_id}_eyetracking.tsv'
+    output_path = os.path.join(et_dir, output_filename)
+    data.to_csv(output_path, sep='\t', index=False)
+    logger.info(f"Eye tracking data saved to {output_path}")
+    return output_path
 
 
 def compress(tar_file_name: str, members: List[str]) -> None:
@@ -297,7 +371,7 @@ def convert_to_mne(
         transform: Optional[Composition] = None,
         montage: str = 'standard_1020',
         volts: bool = False,
-        remove_system_channels: bool = False) -> RawArray:
+        remove_system_channels: bool = True) -> RawArray:
     """Convert to MNE.
 
     Returns BciPy RawData as an MNE RawArray. This assumes all channel names
@@ -338,6 +412,7 @@ def convert_to_mne(
 
     # if no channel types provided, assume all channels are eeg
     if not channel_types:
+        logger.warning("No channel types provided. Assuming all channels are EEG.")
         channel_types = ['eeg'] * len(channels)
 
     # check that number of channel types matches number of channels in the case custom channel types are provided

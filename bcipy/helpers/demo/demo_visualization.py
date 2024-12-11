@@ -42,7 +42,10 @@ if __name__ == '__main__':
 
     path = args.path
     if not path:
-        path = load_experimental_data()
+        path = load_experimental_data(
+            message="Select the folder containing the raw_data.csv, parameters.json and triggers.txt",
+            strict=True
+        )
 
     parameters = load_json_parameters(f'{path}/{DEFAULT_PARAMETERS_FILENAME}',
                                       value_cast=True)
