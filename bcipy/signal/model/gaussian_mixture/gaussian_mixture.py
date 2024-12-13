@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import List
+from enum import Enum
 
 from bcipy.helpers.stimuli import GazeReshaper
 from bcipy.signal.model import SignalModel
@@ -12,43 +13,62 @@ import warnings
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 
-class KernelGP(SignalModel):
-    def __init__(self):
-        reshaper = GazeReshaper()
+class GazeModelType(Enum):
+    """Enum for gaze model types"""
+    GAUSSIAN_PROCESS = "GaussianProcess"
+    GM_INDIVIDUAL = "GMIndividual"
+    GM_CENTRALIZED = "GMCentralized"
 
-    def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
-        training_data = np.asarray(training_data)
+    def __str__(self):
+        return self.value
 
-    def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
-        ...
+    def __repr__(self):
+        return self.value
 
-    def predict(self, test_data: np.ndarray, inquiry, symbol_set) -> np.ndarray:
-        ...
+    @staticmethod
+    def from_str(label: str):
+        if label == "GaussianProcess":
+            return GazeModelType.GAUSSIAN_PROCESS
+        elif label == "GMIndividual":
+            return GazeModelType.GM_INDIVIDUAL
+        elif label == "GMCentralized":
+            return GazeModelType.GM_CENTRALIZED
+        else:
+            raise ValueError(f"Model type {label} not recognized.")
 
-    def predict_proba(self, test_data: np.ndarray) -> np.ndarray:
-        ...
 
-    def save(self, path: Path):
-        ...
+class GazeModelResolver:
+    """Factory class for gaze models
 
-    def load(self, path: Path):
-        ...
+    This class is responsible for loading gaze models via type resolution.
+    """
+
+    @staticmethod
+    def resolve(model_type: str, *args, **kwargs) -> SignalModel:
+        """Load a gaze model from the provided path."""
+        model_type = GazeModelType.from_str(model_type)
+        if model_type == GazeModelType.GAUSSIAN_PROCESS:
+            return GaussianProcess(*args, **kwargs)
+        elif model_type == GazeModelType.GM_INDIVIDUAL:
+            return GMIndividual(*args, **kwargs)
+        elif model_type == GazeModelType.GM_CENTRALIZED:
+            return GMCentralized(*args, **kwargs)
+        else:
+            raise ValueError(
+                f"Model type {model_type} not able to resolve. Not registered in GazeModelResolver.")
 
 
-class KernelGPSampleAverage(SignalModel):
+class GaussianProcess(SignalModel):
+
+    name = "GaussianProcessGazeModel"
     reshaper = GazeReshaper()
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self.ready_to_predict = False
+        self.acc = None
 
     def fit(self, training_data: np.ndarray):
-        training_data = np.array(training_data)
-        # Training data shape = inquiry x features x samples
-        # reshape training data to inquiry x (features x samples)
-        reshaped_data = training_data.reshape((len(training_data), -1))
-        cov_matrix = np.cov(reshaped_data, rowvar=False)
-        # cov_matrix_shape = (features x samples) x (features x samples)
-        reshaped_mean = np.mean(reshaped_data, axis=0)
+        ...
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
@@ -81,7 +101,7 @@ class KernelGPSampleAverage(SignalModel):
 
         return new_data
 
-    def substract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
+    def subtract_mean(self, data: np.ndarray, time_avg: np.ndarray) -> np.ndarray:
         """ Using the symbol locations in matrix, centralize all data (in Tobii units).
         This data will only be used in certain model types.
         Args:
@@ -102,9 +122,10 @@ class GMIndividual(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_individual"
 
-    def __init__(self, num_components=4, random_state=0):
+    def __init__(self, num_components=4, random_state=0, *args, **kwargs):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
+        self.acc = None
         self.means = None
         self.covs = None
 
@@ -135,7 +156,7 @@ class GMIndividual(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-
+        self.acc = accuracy_per_symbol
         return accuracy_per_symbol
 
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
@@ -215,9 +236,10 @@ class GMCentralized(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_combined"
 
-    def __init__(self, num_components=4, random_state=0):
+    def __init__(self, num_components=4, random_state=0, *args, **kwargs):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
+        self.acc = None
         self.means = None
         self.covs = None
 
@@ -247,9 +269,8 @@ class GMCentralized(SignalModel):
         accuracy_per_symbol: accuracy per symbol
         '''
         accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
-
+        self.acc = accuracy_per_symbol
         return accuracy_per_symbol
-        ...
 
     def predict(self, test_data: np.ndarray) -> np.ndarray:
         '''

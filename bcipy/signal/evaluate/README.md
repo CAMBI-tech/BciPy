@@ -17,7 +17,7 @@ steps:
 4. If the signal exceeds the thresholds, it is labeled as an artifact. All artifacts are annotated in the
    data file with the prefix `BAD_`.
 
-### Usage
+### Artifact Detection Usage
 
 The `ArtifactDetection` class is used to detect artifacts in the data. The class takes in a `RawData` object, a `DeviceSpec` object, and a `Parameters` object. The `RawData` object contains the data to be analyzed, the `DeviceSpec` object contains the specifications of the device used to collect the data, and the `Parameters` object contains the parameters used to detect the artifacts. The `ArtifactDetection` class has a method called `detect_artifacts` that returns a list of the detected artifacts.
 
@@ -41,7 +41,7 @@ artifact_detector = ArtifactDetection(raw_data, parameters, device_spec, session
 detected_artifacts = artifact_detector.detect_artifacts()
 ```
 
-This can be used in conjunction with the `ArtifactDetection` semiautomatic mode to determine artifacts that overlap with triggers of interest and correct any labels before removal. To use the semiautomatic mode, the user must provide a list of triggers of interest. The `ArtifactDetection` class can be inititalized with `semi_automatic`. 
+This can be used in conjunction with the `ArtifactDetection` semiautomatic mode to determine artifacts that overlap with triggers of interest and correct any labels before removal. To use the semiautomatic mode, the user must provide a list of triggers of interest. The `ArtifactDetection` class can be inititalized with `semi_automatic`. The `semi_automatic` parameter is a boolean that determines if the user wants to manually correct or add to the detected artifacts.
 
 ```python
 
@@ -79,7 +79,7 @@ write_mne_annotations(
     'artifact_annotations.txt')
 ```
 
-## Artifact Correction
+### Artifact Correction
 
 Artifact correction is the process of removing unwanted signals from the data. After detection is complete, the user may use the MNE epoching tool to remove the unwanted epochs and channels.
 
@@ -98,4 +98,26 @@ trial_length = 0.5 # seconds
 epochs = mne_epochs(mne_data, trial_length, preload=True, reject_by_annotation=True)
 
 # This will return the epochs object with the bad epochs removed. A drop log can be accessed to see which and how many epochs were removed.
+```
+
+## Fusion Accuracy
+
+The `calculate_eeg_gaze_fusion_acc` function is used to evaluate the performance of the BCI system. The function takes in a list of EEG and gaze data, and returns the accuracy of the fusion of the two signals. The function uses the following steps to calculate the accuracy:
+
+1. The data is loaded into the system and preprocessed.
+2. The data is passed through the EEG and gaze models to generate predictions.
+3. The predictions are fused together to generate a final prediction.
+4. The final prediction is compared to the actual data to calculate the accuracy.
+5. The accuracy is returned to the user.
+
+### Fusion Usage
+
+The `calculate_eeg_gaze_fusion_acc` function is used to evaluate the performance of the BCI system. The function takes in a list of EEG and gaze data, and returns the accuracy of the fusion of the two signals.
+
+```python
+from bcipy.signal.evaluate.fusion import calculate_eeg_gaze_fusion_acc
+
+# Assuming BciPy raw data objects, device specs and parameters object are already defined.
+
+result = calculate_eeg_gaze_fusion_acc(eeg_data, gaze_data, eeg_spec, gaze_spec, symbol_set, parameters, data_folder)
 ```

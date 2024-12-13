@@ -366,6 +366,7 @@ class IntegerInput(FormInput):
         spin_box = QSpinBox()
         spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         if value:
             spin_box.setValue(int(value))
         return spin_box
@@ -424,6 +425,7 @@ class FloatInput(FormInput):
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(float(value))
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         return spin_box
 
     def cast_value(self) -> float:
@@ -656,6 +658,7 @@ class RangeWidget(QWidget):
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(value)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         return spin_box
 
     def int_input(self, value: int) -> QWidget:
@@ -666,6 +669,7 @@ class RangeWidget(QWidget):
             -100000 if self.input_min is None else self.input_min)
         spin_box.setMaximum(
             100000 if self.input_max is None else self.input_max)
+        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
         if value:
             spin_box.setValue(value)
         return spin_box

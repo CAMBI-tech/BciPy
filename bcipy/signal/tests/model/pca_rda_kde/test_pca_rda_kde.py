@@ -197,7 +197,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         filename="test_inference.expected.png",
         remove_text=True,
     )
-    def test_fit_predict(self):
+    def test_fit_compute_likelihood_ratio(self):
         """Fit and then predict"""
         alp = alphabet()
 
@@ -211,7 +211,7 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
 
         letters = alp[10: 10 + num_x_p + num_x_n]  # Target letter is K
 
-        lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alp)
+        lik_r = self.model.compute_likelihood_ratio(data=x_test, inquiry=letters, symbol_set=alp)
         fig, ax = plt.subplots()
         ax.plot(np.arange(len(alp)), lik_r, "ro")
         ax.set_xticks(np.arange(len(alp)))

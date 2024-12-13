@@ -17,7 +17,16 @@ class SignalModelMetadata(NamedTuple):
     transform: Composition  # data preprocessing steps
     evidence_type: str = None  # optional; type of evidence produced
     auc: float = None  # optional; area under the curve
+    acc: float = None  # optional; accuracy
     balanced_accuracy: float = None  # optional; balanced accuracy
+
+    def __repr__(self):
+        return f"SignalModelMetadata(device_spec={self.device_spec}, transform={self.transform}, " \
+               f"evidence_type={self.evidence_type}, auc={self.auc}, accuracy={self.acc}, " \
+               f"balanced_accuracy={self.balanced_accuracy})"
+
+    def __str__(self):
+        return self.__repr__()
 
 
 class SignalModel(ABC):

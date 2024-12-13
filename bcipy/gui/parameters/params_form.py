@@ -1,5 +1,6 @@
 """GUI form for editing a Parameters file."""
 # pylint: disable=E0611
+import argparse
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -9,7 +10,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
-from bcipy.config import BCIPY_ROOT
+from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH
 from bcipy.gui.main import (BoolInput, DirectoryInput, FileInput, FloatInput,
                             FormInput, IntegerInput, RangeInput, SearchInput,
                             SelectionInput, TextInput, static_text_control)
@@ -423,7 +424,7 @@ class MainPanel(QWidget):
                 self.repaint()
 
 
-def main(json_file, title='BCI Parameters', size=(750, 800)) -> str:
+def init(json_file, title='BCI Parameters', size=(750, 800)) -> str:
     """Set up the GUI components and start the main loop."""
     app = QApplication(sys.argv)
     panel = MainPanel(json_file, title, size)
@@ -433,12 +434,8 @@ def main(json_file, title='BCI Parameters', size=(750, 800)) -> str:
     return json_file
 
 
-if __name__ == '__main__':
-
-    import argparse
-
-    from bcipy.config import DEFAULT_PARAMETERS_PATH
-
+def main():
+    """Process command line arguments and initialize the GUI."""
     parser = argparse.ArgumentParser()
 
     # Command line utility for adding arguments/ paths via command line
@@ -449,4 +446,8 @@ if __name__ == '__main__':
     args = parser.parse_args()
     # Note that this write to stdout is important for the interaction with
     # the BCInterface main GUI.
-    print(main(args.parameters), file=sys.stdout)
+    print(init(args.parameters), file=sys.stdout)
+
+
+if __name__ == '__main__':
+    main()
