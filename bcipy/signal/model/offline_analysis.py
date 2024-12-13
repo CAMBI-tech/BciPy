@@ -33,7 +33,7 @@ from bcipy.signal.model.gaussian_mixture import (GazeModelResolver)
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
-from bcipy.signal.model.evaluate.fusion import calculate_eeg_gaze_fusion_acc
+from bcipy.signal.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
