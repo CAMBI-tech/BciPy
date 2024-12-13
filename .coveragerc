@@ -11,6 +11,8 @@ omit =
         */gui/experiments/*
         */gui/viewer/*
         */gui/BCInterface.py
+        */signal/model/offline_analysis.py
+        */signal/evaluate/fusion.py
 
 [report]
 exclude_lines =

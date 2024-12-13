@@ -1,3 +1,11 @@
+# 2.0.1-rc.4
+
+Patch on final release candidate
+
+## Contributions
+
+- Fusion model analysis and performance metrics support. Bugfixes in gaze model #366
+
 # 2.0.0-rc.4
 
 Our final release candidate before the official 2.0 release!

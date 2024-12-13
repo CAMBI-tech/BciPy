@@ -207,10 +207,6 @@ class PcaRdaKdeModel(SignalModel):
         if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.predict_proba()")
 
-        # Model originally produces p(eeg | label). We want p(label | eeg):
-        #
-        # p(l=1 | e) = p(e | l=1) p(l=1) / p(e)
-        # log(p(l=1 | e)) = log(p(e | l=1)) + log(p(l=1)) - log(p(e))
         return self.compute_class_probabilities(data)
 
     def save(self, path: Path) -> None:
