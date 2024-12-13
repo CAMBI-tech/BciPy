@@ -24,7 +24,7 @@ class SignalModelMetadata(NamedTuple):
         return f"SignalModelMetadata(device_spec={self.device_spec}, transform={self.transform}, " \
                f"evidence_type={self.evidence_type}, auc={self.auc}, accuracy={self.acc}, " \
                f"balanced_accuracy={self.balanced_accuracy})"
-    
+
     def __str__(self):
         return self.__repr__()
 

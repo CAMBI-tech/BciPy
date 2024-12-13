@@ -13,6 +13,30 @@ import warnings
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 
+class GazeModelType(Enum):
+    """Enum for gaze model types"""
+    GAUSSIAN_PROCESS = "GaussianProcess"
+    GM_INDIVIDUAL = "GMIndividual"
+    GM_CENTRALIZED = "GMCentralized"
+
+    def __str__(self):
+        return self.value
+
+    def __repr__(self):
+        return self.value
+
+    @staticmethod
+    def from_str(label: str):
+        if label == "GaussianProcess":
+            return GazeModelType.GAUSSIAN_PROCESS
+        elif label == "GMIndividual":
+            return GazeModelType.GM_INDIVIDUAL
+        elif label == "GMCentralized":
+            return GazeModelType.GM_CENTRALIZED
+        else:
+            raise ValueError(f"Model type {label} not recognized.")
+
+
 class GazeModelResolver:
     """Factory class for gaze models
 
@@ -22,16 +46,16 @@ class GazeModelResolver:
     @staticmethod
     def resolve(model_type: str, *args, **kwargs) -> SignalModel:
         """Load a gaze model from the provided path."""
-        if model_type == "GaussianProcess":
-            model = GaussianProcess(*args, **kwargs)
-        elif model_type == "GMIndividual":
-            model = GMIndividual(*args, **kwargs)
-        elif model_type == "GMCentralized":
-            model = GMCentralized( *args, **kwargs)
+        model_type = GazeModelType.from_str(model_type)
+        if model_type == GazeModelType.GAUSSIAN_PROCESS:
+            return GaussianProcess(*args, **kwargs)
+        elif model_type == GazeModelType.GM_INDIVIDUAL:
+            return GMIndividual(*args, **kwargs)
+        elif model_type == GazeModelType.GM_CENTRALIZED:
+            return GMCentralized(*args, **kwargs)
         else:
-            raise ValueError(f"Model type {model_type} not recognized.")
-
-        return model
+            raise ValueError(
+                f"Model type {model_type} not able to resolve. Not registered in GazeModelResolver.")
 
 
 class GaussianProcess(SignalModel):
@@ -39,7 +63,7 @@ class GaussianProcess(SignalModel):
     name = "GaussianProcessGazeModel"
     reshaper = GazeReshaper()
 
-    def __init__(self,  *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.ready_to_predict = False
         self.acc = None
 
@@ -212,7 +236,7 @@ class GMCentralized(SignalModel):
     reshaper = GazeReshaper()
     name = "gaze_model_combined"
 
-    def __init__(self, num_components=4, random_state=0,  *args, **kwargs):
+    def __init__(self, num_components=4, random_state=0, *args, **kwargs):
         self.num_components = num_components   # number of gaussians to fit
         self.random_state = random_state
         self.acc = None

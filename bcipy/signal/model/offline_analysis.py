@@ -79,8 +79,8 @@ def analyze_erp(
         device_spec: DeviceSpec,
         data_folder: str,
         estimate_balanced_acc: bool,
-        save_figures: bool=False,
-        show_figures: bool=False) -> SignalModel:
+        save_figures: bool = False,
+        show_figures: bool = False) -> SignalModel:
     """Analyze ERP data and return/save the ERP model.
     Extract relevant information from raw data object.
     Extract timing information from trigger file.
@@ -233,7 +233,7 @@ def analyze_gaze(
         parameters: Parameters,
         device_spec: DeviceSpec,
         data_folder: str,
-        model_type: str="GaussianProcess",
+        model_type: str = "GaussianProcess",
         symbol_set: List[str] = alphabet()) -> SignalModel:
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.

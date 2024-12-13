@@ -1,13 +1,17 @@
 import numpy as np
-from typing import List, NamedTuple
+from typing import List
 
 
-def truncate_float(num: float, precision: float) -> float:
+def truncate_float(num: float, precision: int) -> float:
     """Truncate a float to a given precision."""
     return float(str(num)[:precision])
 
 
-def gen_random_data(low, high, channel_count, precision=8) -> List[float]:
+def gen_random_data(
+        low: float,
+        high: float,
+        channel_count: int,
+        precision: int = 8) -> List[float]:
     """Generate random data.
 
     This function generates random data for testing purposes within a given range. The data is

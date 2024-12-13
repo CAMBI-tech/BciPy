@@ -1,3 +1,4 @@
+# mypy: disable-error-code="assignment,var-annotated"
 import numpy as np
 from sklearn.utils import resample
 from typing import List, Tuple
@@ -33,7 +34,7 @@ def calculate_eeg_gaze_fusion_acc(
         data_folder: str,
         n_iterations: int = 10,
         eeg_model: SignalModel = PcaRdaKdeModel,
-        gaze_model: SignalModel = GaussianProcess) -> Tuple[float, float, float]:
+        gaze_model: SignalModel = GaussianProcess) -> Tuple[List[float], List[float], List[float]]:
     """
     Preprocess the EEG and gaze data. Calculate the accuracy of the fusion of EEG and Gaze models.
     Args:
