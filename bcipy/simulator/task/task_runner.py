@@ -5,6 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
+import bcipy.simulator.metrics as metrics
 # pylint: disable=unused-import
 # flake8: noqa
 from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
@@ -108,7 +109,7 @@ def main():
                         type=Path,
                         required=False,
                         default=DEFAULT_SAVE_LOCATION,
-                        help="Number of times to run the simulation")
+                        help="Sim output path")
     args = parser.parse_args()
     sim_args = vars(args)
 
@@ -134,6 +135,7 @@ def main():
                             task_factory=task_factory,
                             runs=runs)
         runner.run()
+        metrics.report(sim_dir)
 
 
 if __name__ == '__main__':
