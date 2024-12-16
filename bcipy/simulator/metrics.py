@@ -4,7 +4,7 @@ import logging
 from collections import Counter
 from json import load
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -18,7 +18,7 @@ SUMMARY_DATA_FILE_NAME = "summary_data.json"
 TASK_SUMMARY_PREFIX = "task_summary__"
 
 
-def add_item(container: Dict[str, List], key: str, value: float):
+def add_item(container: Dict[str, List], key: str, value: Any):
     """Add or append value"""
     if key in container:
         container[key].append(value)
@@ -63,12 +63,11 @@ def session_paths(sim_dir: str) -> List[Path]:
     ]
 
 
-def summarize(sim_dir: str) -> Dict:
+def summarize(sim_dir: str) -> Dict[str, List[Any]]:
     """Summarize all session runs."""
-    combined_metrics = {}
+    combined_metrics: Dict[str, List[Any]] = {}
     for session_path in session_paths(sim_dir):
         with open(session_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
-            print("Loading: " + session_path)
             session_dict = load(json_file)
             add_items(combined_metrics, session_dict)
     return combined_metrics
