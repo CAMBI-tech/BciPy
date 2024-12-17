@@ -30,14 +30,14 @@ def configure_logger(log_path: str,
     """
 
     log = logging.getLogger(logger_name)  # configuring root logger
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     # Create handlers for logging to the standard output and a file
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     file_handler = logging.FileHandler(f"{log_path}/{file_name}")
 
     # Set the log levels on the handlers
     stdout_handler.setLevel(logging.INFO)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.INFO)
 
     fmt = '[%(asctime)s][%(name)s][%(levelname)s]: %(message)s'
     fmt_file = logging.Formatter(fmt)
