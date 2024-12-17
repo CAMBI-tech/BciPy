@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from bcipy.config import DEFAULT_ENCODING
+from bcipy.helpers.acquisition import max_inquiry_duration
+from bcipy.io.load import load_json_parameters
 from bcipy.io.save import save_json_data
 from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 
@@ -41,7 +43,13 @@ def get_final_typed(session_dict: Dict) -> str:
     return ''
 
 
-def add_items(combined_metrics: Dict, session_dict: Dict):
+def calculate_duration(inquiry_count: int, inquiry_seconds: float) -> float:
+    """Compute the total number of seconds."""
+    return inquiry_count * inquiry_seconds
+
+
+def add_items(combined_metrics: Dict, session_dict: Dict,
+              inquiry_seconds: float):
     """Add all items of interest from the session data."""
     keys = [
         'total_number_series', 'total_inquiries', 'total_selections',
@@ -54,7 +62,11 @@ def add_items(combined_metrics: Dict, session_dict: Dict):
         if 'switch' not in key and 'rate' not in key:
             add_item(combined_metrics, f"{TASK_SUMMARY_PREFIX}{key}",
                      session_dict['task_summary'][key])
+
     add_item(combined_metrics, 'typed', get_final_typed(session_dict))
+    add_item(
+        combined_metrics, 'total_seconds',
+        calculate_duration(session_dict['total_inquiries'], inquiry_seconds))
 
 
 def session_paths(sim_dir: str) -> List[Path]:
@@ -65,13 +77,19 @@ def session_paths(sim_dir: str) -> List[Path]:
     ]
 
 
+def sim_parameters(sim_dir: str) -> Dict[str, Any]:
+    """Simulation parameters"""
+    return load_json_parameters(str(Path(sim_dir, "parameters.json")), True)
+
+
 def summarize(sim_dir: str) -> Dict[str, List[Any]]:
     """Summarize all session runs."""
+    inquiry_seconds = max_inquiry_duration(sim_parameters(sim_dir))
     combined_metrics: Dict[str, List[Any]] = {}
     for session_path in session_paths(sim_dir):
         with open(session_path, 'r', encoding=DEFAULT_ENCODING) as json_file:
             session_dict = load(json_file)
-            add_items(combined_metrics, session_dict)
+            add_items(combined_metrics, session_dict, inquiry_seconds)
     return combined_metrics
 
 
@@ -111,17 +129,18 @@ def plot_results(df: pd.DataFrame,
                  save_path: Optional[str] = None,
                  show: bool = True) -> None:
     """Plot the dataframe"""
-    df.boxplot(column=[
-        'total_number_series', 'total_inquiries', 'inquiries_per_selection', 'selections_correct',
-        'selections_incorrect'
-    ], figsize=(11, 8.5))
+    cols = [
+        'total_selections', 'total_inquiries', 'inquiries_per_selection',
+        'selections_correct', 'selections_incorrect'
+    ]
+    df.boxplot(column=cols, figsize=(11, 8.5))
     if save_path:
         plt.savefig(save_path)
     if show:
         plt.show()
 
 
-def report(sim_dir: str) -> None:
+def report(sim_dir: str, show_plots: bool = False) -> None:
     """Summarize the data, write as a JSON file, and output a summary to
     the top level log file."""
     summary = summarize(sim_dir)
@@ -132,7 +151,9 @@ def report(sim_dir: str) -> None:
 
     logger.info("Typed:")
     logger.info(Counter(summary['typed']))
-    plot_results(df, save_path=plot_save_path(sim_dir))
+    ave_minutes = round((df['total_seconds'] / 60).mean(), 2)
+    logger.info(f"Average duration: {ave_minutes} minutes")
+    plot_results(df, save_path=plot_save_path(sim_dir), show=show_plots)
 
 
 if __name__ == '__main__':
