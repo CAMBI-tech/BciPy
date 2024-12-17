@@ -144,13 +144,13 @@ def report(sim_dir: str, show_plots: bool = False) -> None:
     """Summarize the data, write as a JSON file, and output a summary to
     the top level log file."""
     summary = summarize(sim_dir)
-    save_json_data(summarize(sim_dir), sim_dir, SUMMARY_DATA_FILE_NAME)
+    save_json_data(summary, sim_dir, SUMMARY_DATA_FILE_NAME)
 
     df = pd.DataFrame(summary)
     log_descriptive_stats(df)
 
     logger.info("Typed:")
-    logger.info(Counter(summary['typed']))
+    logger.info(Counter(summary.get('typed')))
     ave_minutes = round((df['total_seconds'] / 60).mean(), 2)
     logger.info(f"Average duration: {ave_minutes} minutes")
     plot_results(df, save_path=plot_save_path(sim_dir), show=show_plots)

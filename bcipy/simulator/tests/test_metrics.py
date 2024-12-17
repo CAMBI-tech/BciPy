@@ -1,10 +1,12 @@
 """Test simulator metrics"""
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
-from bcipy.simulator.metrics import (add_item, add_items, calculate_duration,
-                                     get_final_typed, plot_save_path,
-                                     rename_df_column, summarize)
+from bcipy.simulator.metrics import (SUMMARY_DATA_FILE_NAME, add_item,
+                                     add_items, calculate_duration,
+                                     get_final_typed, log_descriptive_stats,
+                                     plot_results, plot_save_path,
+                                     rename_df_column, report, summarize)
 
 SAMPLE_SERIES_DATA = {
     "1": {
@@ -62,6 +64,19 @@ SAMPLE_SESSION2 = {
         "correct_rate": 0,
         "copy_rate": 0
     }
+}
+
+SUMMARY = {
+    "total_number_series": [11, 19],
+    "total_inquiries": [54, 90],
+    "total_selections": [11, 19],
+    "inquiries_per_selection": [5, 4],
+    "task_summary__selections_correct": [11, 15],
+    "task_summary__selections_incorrect": [0, 4],
+    "task_summary__selections_correct_symbols": [11, 11],
+    "task_summary__typing_accuracy": [1.0, 0.7894736842105263],
+    "typed": ["HELLO_WORLD", "HELLO_WORLD"],
+    "total_seconds": [405.0, 675.0]
 }
 
 
@@ -141,6 +156,56 @@ class TestSimMetrics(unittest.TestCase):
         """Test the calculation of the overall session duration"""
         self.assertEqual(
             250, calculate_duration(inquiry_count=100, inquiry_seconds=2.5))
+
+    @patch("bcipy.simulator.metrics.plt.show")
+    @patch("bcipy.simulator.metrics.plt.savefig")
+    def test_plot_results_no_save(self, savefig_mock, show_mock):
+        """Test plotting without saving"""
+        mock_df = Mock()
+        plot_results(mock_df)
+        savefig_mock.assert_not_called()
+        show_mock.assert_called_once()
+
+    @patch("bcipy.simulator.metrics.plt.show")
+    @patch("bcipy.simulator.metrics.plt.savefig")
+    def test_plot_results_no_show(self, savefig_mock, show_mock):
+        """Test plotting without saving"""
+        mock_df = Mock()
+        plot_results(mock_df, show=False)
+        savefig_mock.assert_not_called()
+        show_mock.assert_not_called()
+
+    @patch("bcipy.simulator.metrics.plt.show")
+    @patch("bcipy.simulator.metrics.plt.savefig")
+    def test_plot_results_with_save(self, savefig_mock, show_mock):
+        """Test plotting without saving"""
+        mock_df = Mock()
+        plot_results(mock_df, save_path=".")
+        savefig_mock.assert_called_once()
+        show_mock.assert_called_once()
+
+    def test_log_descriptive_stats(self):
+        """Test logging stats"""
+        mock_df = Mock()
+        log_descriptive_stats(mock_df)
+        mock_df.rename.assert_called_once()
+        mock_df.describe.assert_called_once()
+
+    @patch("bcipy.simulator.metrics.plot_results")
+    @patch("bcipy.simulator.metrics.log_descriptive_stats")
+    @patch("bcipy.simulator.metrics.save_json_data")
+    @patch("bcipy.simulator.metrics.summarize")
+    def test_report(self, summarize_mock, save_json_data_mock, log_stats_mock,
+                    plot_results_mock):
+        """Test reporting"""
+        summarize_mock.return_value = SUMMARY
+        report("test_dir")
+
+        summarize_mock.assert_called_once()
+        save_json_data_mock.assert_called_with(SUMMARY, "test_dir",
+                                               SUMMARY_DATA_FILE_NAME)
+        log_stats_mock.assert_called_once()
+        plot_results_mock.assert_called_once()
 
 
 if __name__ == '__main__':
