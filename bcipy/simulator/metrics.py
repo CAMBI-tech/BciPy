@@ -1,11 +1,13 @@
 """Summarize metrics across simulator runs."""
 
 import logging
+import sys
 from collections import Counter
 from json import load
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 from bcipy.config import DEFAULT_ENCODING
@@ -100,6 +102,25 @@ def log_descriptive_stats(df: pd.DataFrame) -> None:
     pd.reset_option('display.max_colwidth')
 
 
+def plot_save_path(sim_dir: str) -> str:
+    """Save path for plots."""
+    return f"{sim_dir}/metrics.png"
+
+
+def plot_results(df: pd.DataFrame,
+                 save_path: Optional[str] = None,
+                 show: bool = True) -> None:
+    """Plot the dataframe"""
+    df.boxplot(column=[
+        'total_number_series', 'total_inquiries', 'inquiries_per_selection', 'selections_correct',
+        'selections_incorrect'
+    ], figsize=(11, 8.5))
+    if save_path:
+        plt.savefig(save_path)
+    if show:
+        plt.show()
+
+
 def report(sim_dir: str) -> None:
     """Summarize the data, write as a JSON file, and output a summary to
     the top level log file."""
@@ -111,3 +132,8 @@ def report(sim_dir: str) -> None:
 
     logger.info("Typed:")
     logger.info(Counter(summary['typed']))
+    plot_results(df, save_path=plot_save_path(sim_dir))
+
+
+if __name__ == '__main__':
+    report(sim_dir=sys.argv[1])
