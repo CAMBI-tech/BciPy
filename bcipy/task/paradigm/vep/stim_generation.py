@@ -25,7 +25,7 @@ def generate_vep_calibration_inquiries(alp: List[str],
     Parameters
     ----------
         alp(list[str]): stimuli
-        timing(list[float]): Task specific timing for generator.
+        timing(list[float]): Task specific timing for generatoar.
             [target, fixation, stimuli]
         color(list[str]): Task specific color for generator
             [target, fixation, stimuli]
@@ -87,17 +87,7 @@ def generate_vep_inquiries(symbols: List[str],
             break
         #check if the target can still be placed in the inquiry
         if target_usage_count[target] < max_target_uses:
-            #find valid boxes where the target has been used less than 12 times
-            valid_boxes_for_target = [
-                idx for idx in range(num_boxes) if box_target_usage_count[idx] < max_box_target_uses
-            ]
-
-            #if no valid boxes left then stop
-            if not valid_boxes_for_target:
-                raise ValueError("No more valid boxes available to place the target.")
-
-            target_pos = random.choice(valid_boxes_for_target)
-
+            target_pos = 0
             inquiry = [target, fixation] + generate_vep_inquiry(
                 alphabet=symbols,
                 num_boxes=num_boxes,
