@@ -38,6 +38,7 @@ class TaskType(AutoNumberEnum):
     MATRIX_TIMING_VERIFICATION_CALIBRATION = 'Matrix Time Test Calibration'
     MATRIX_COPY_PHRASE = 'Matrix Copy Phrase'
     VEP_CALIBRATION = 'VEP Calibration'
+    VEP_COPY_PHRASE = 'VEP Copy Phrase'
 
     def __init__(self, label):
         self.label = label
@@ -54,8 +55,10 @@ class TaskType(AutoNumberEnum):
     @classmethod
     def calibration_tasks(cls) -> List['TaskType']:
         return [
-            task for task in cls if task.name.endswith('CALIBRATION') and
-            'COPY_PHRASE' not in task.name
+            task for task in cls if (
+                task.name.endswith('CALIBRATION') and 'COPY_PHRASE' not in task.name
+                or task.name == 'VEP_COPY_PHRASE'
+            )
         ]
 
     @classmethod

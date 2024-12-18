@@ -15,6 +15,7 @@ from bcipy.task.paradigm.rsvp.calibration.timing_verification import \
     RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 from bcipy.task.paradigm.vep.calibration import VEPCalibrationTask
+from bcipy.task.paradigm.vep.copy_phrase import VEPCopyPhraseTask
 from bcipy.task.task_registry import TaskType
 
 from bcipy.acquisition import ClientManager
@@ -77,6 +78,9 @@ def make_task(
 
     if task is TaskType.VEP_CALIBRATION:
         return VEPCalibrationTask(display_window, daq, parameters, file_save)
+    
+    if task is TaskType.VEP_COPY_PHRASE:
+        return VEPCopyPhraseTask(display_window, daq, parameters, file_save)
 
     raise TaskRegistryException(
         'The provided experiment type is not registered.')

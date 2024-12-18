@@ -417,10 +417,10 @@ class VEPDisplay(Display):
         """Reset the position of each symbol to its starting position"""
         #box layout
         layout = [
-            ['A', 'B', 'C', 'D', 'E', 'F'],
-            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
-            ['N', 'O', 'P', 'Q', 'R', 'S'],
-            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+            ['A', 'B', 'C', 'D', 'E'],
+            ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R'],
+            ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
         ]
 
         position_index = 0
@@ -514,13 +514,13 @@ class VEPDisplay(Display):
         """
         #box layout
         layout = [
-            ['A', 'B', 'C', 'D', 'E', 'F'],
-            ['G', 'H', 'I', 'J', 'K', 'L', 'M'],
-            ['N', 'O', 'P', 'Q', 'R', 'S'],
-            ['T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
+            ['A', 'B', 'C', 'D', 'E'],
+            ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
+            ['N', 'O', 'P', 'Q', 'R'],
+            ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
             ['MODE   ', 'SWITCH'],
-            [],
-            [],
+            ['HER'],
+            ['MAN'],
             [BACKSPACE_CHAR]
         ]
     
