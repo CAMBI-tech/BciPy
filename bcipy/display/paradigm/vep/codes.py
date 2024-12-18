@@ -42,15 +42,28 @@ def mseq(seed, taps):
     return sequence.tolist()
 
 
-def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0, 1], taps=[1, 3, 5], shift_by: int = 5) -> List[List[int]]:
+def create_vep_codes(length: int =63, 
+                     count: int =8, 
+                     seed: List =[1, 0, 0, 1, 1, 0, 1], 
+                     taps: List =[1, 3, 5], 
+                     shift_by: int = 4) -> List[List[int]]:
     """Create a list of VEP codes using m-sequence (LFSR sequence).
 
-    length - how many bits in each code. This should be greater than or equal to the refresh rate
+    Parameters:
+    -----------
+
+    length (int): how many bits in each code. This should be greater than or equal to the refresh rate
         if using these to flicker. For example, if the refresh rate is 60Hz, then the length should
         be at least 60.
-    count - how many codes to generate, each will be unique.
-    seed - Initial state of the LFSR.
-    taps - Tap positions in the LFSR to generate feedback.
+    count (int): how many codes to generate, each will be unique.
+    seed (List): Initial state of the LFSR.
+    taps (List): Tap positions in the LFSR to generate feedback.
+
+    Returns:
+    --------
+
+    List[List[int]]: List of M-sequences. 
+
     """
     #generates the original
     original_mseq = mseq(seed, taps)
@@ -63,7 +76,7 @@ def create_vep_codes(length=63, count=8, seed=[1, 0, 0, 1, 1, 0, 1], taps=[1, 3,
         shifted_sequence = original_mseq[shift:] + original_mseq[:shift]  #apply the cyclical shift
         codes.append(shifted_sequence[:length])  #truncate to the required length if necessary
     
-    print(len(codes))
+    print(f"Number of of M-sequence codes: {len(codes)}")
     return codes
 
 

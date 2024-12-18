@@ -52,7 +52,7 @@ class VEPDisplay(Display):
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
                  frame_rate: Optional[float] = None,
-                 mseq_length: Optional[int] = 127):
+                 mseq_length: Optional[int] =127):
         assert len(
             flicker_rates
         ) <= box_config.num_boxes, 'Not enough flicker rates provided'
@@ -124,9 +124,8 @@ class VEPDisplay(Display):
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
-        # codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
-        codes = ssvep_to_code(refresh_rate = self.refresh_rate, flicker_rates = self.flicker_rates)
-        print(f"Number of codes: {len(codes)}")
+        codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
+        # codes = ssvep_to_code(refresh_rate = self.refresh_rate, flicker_rates = self.flicker_rates)
         print(f"Length of each code: {len(codes[0])}")
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
@@ -334,22 +333,43 @@ class VEPDisplay(Display):
         It assumes that the VEP stimuli are already constructed. These boxes
         are drawn in the order they are in the list as defined in self.vep.
         """
-        self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
+        self.window.callOnFlip(self.add_timing, 'VEP_INQ_START')
         self.static_clock.reset()
-        while self.static_clock.getTime() < self.timing_stimuli:
-            for frame in range(self.refresh_rate * 2):
+        for _ in range(15):
+            self.add_timing('VEP_MSEQ_START')
+            for frame in range(self.mseq_length):
                 self.draw_boxes()
                 for stim in self.vep:
                     stim.render_frame(frame)
-
-                # self.draw_static()
                 self.window.flip()
+            self.add_timing('VEP_MSEQ_END')
+        self.add_timing('VEP_INQ_END')
         ended_at = self.static_clock.getTime()
         self.logger.info(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
         self.logger.debug(
             f"Average frame duration: {ended_at/self.timing_stimuli}")
+
+        # self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
+        # self.static_clock.reset()
+        # print(f"Timing Stimuli: {self.timing_stimuli}")
+        # while self.static_clock.getTime() < self.timing_stimuli:
+        #     for _ in range(15):
+        #         for frame in range(self.mseq_length):
+        #             self.draw_boxes()
+        #             for stim in self.vep:
+        #                 stim.render_frame(frame)
+
+        #             # self.draw_static()
+        #             self.window.flip()
+        # self.add_timing('VEP_STIMULATE_END')
+        # ended_at = self.static_clock.getTime()
+        # self.logger.info(
+        #     f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
+        # )
+        # self.logger.debug(
+        #     f"Average frame duration: {ended_at/self.timing_stimuli}")
 
     def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
