@@ -109,32 +109,6 @@
         "static_offset": 0.1
     },
     {
-        "name": "Cyton",
-        "content_type": "EEG",
-        "channels": [
-            { "name": "Ch1", "label": "Ch1", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch2", "label": "Ch2", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch3", "label": "Ch3", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch4", "label": "Ch4", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch5", "label": "Ch5", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch6", "label": "Ch6", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch7", "label": "Ch7", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch8", "label": "Ch8", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch9", "label": "Ch9", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch10", "label": "Ch10", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch11", "label": "Ch11", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch12", "label": "Ch12", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch13", "label": "Ch13", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch14", "label": "Ch14", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch15", "label": "Ch15", "units": "microvolts", "type": "EEG" },
-            { "name": "Ch16", "label": "Ch16", "units": "microvolts", "type": "EEG" }
-        ],
-        "sample_rate": 125,
-        "description": "OpenBCI's Cyton board with 8/16 channels",
-        "status": "active",
-        "static_offset": 0.1
-    },
-    {
         "name": "Tobii Nano",
         "content_type": "Eyetracker",
         "channels": [
