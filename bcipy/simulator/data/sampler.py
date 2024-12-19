@@ -8,7 +8,8 @@ from typing import Callable, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 
-from bcipy.simulator.data.data_engine import QueryFilter, RawDataEngine, Trial
+from bcipy.simulator.data.data_engine import QueryFilter, RawDataEngine
+from bcipy.simulator.data.trial import Trial
 from bcipy.simulator.util.state import SimState
 
 log = logging.getLogger(__name__)
