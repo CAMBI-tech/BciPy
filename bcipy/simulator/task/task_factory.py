@@ -56,14 +56,14 @@ class TaskFactory():
         self.signal_models = [
             load_signal_model(path) for path in signal_model_paths
         ]
-        logger.debug(self.signal_models)
+        logger.info(self.signal_models)
 
         logger.info("Initializing language model")
         self.language_model = init_language_model(self.parameters)
-        logger.debug(self.language_model)
+        logger.info(self.language_model)
 
         self.samplers = self.init_samplers(self.signal_models)
-        logger.debug(self.samplers)
+        logger.info(self.samplers)
 
     def init_samplers(
             self,

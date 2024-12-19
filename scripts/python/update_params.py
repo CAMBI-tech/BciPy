@@ -5,7 +5,7 @@ import json
 import shutil
 from pathlib import Path
 
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 
 
 def update(params_path: str) -> None:

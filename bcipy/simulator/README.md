@@ -9,20 +9,24 @@ This Simulator module aims to automate experimentation by sampling EEG data from
 `main.py` is the entry point for program. After following `BciPy` readme steps for setup, run the module from terminal:
 
 ```
-(venv) $ python bcipy/simulator -h
-usage: simulator [-h] -d DATA_FOLDER [-g GLOB_PATTERN] -m MODEL_PATH -p PARAMETERS [-n N]
+(venv) $ bcipy-sim -h
+usage: bcipy-sim [-h] [-i] [--gui] [-d DATA_FOLDER] [-m MODEL_PATH] [-p PARAMETERS] [-n N] [-s SAMPLER] [-o OUTPUT]
 
 optional arguments:
   -h, --help            show this help message and exit
+  -i, --interactive     Use interactive command line for selecting simulator inputs
+  --gui                 Use interactive GUI for selecting simulator inputs
   -d DATA_FOLDER, --data_folder DATA_FOLDER
-                        Raw data folders to be processed.
-  -g GLOB_PATTERN, --glob_pattern GLOB_PATTERN
-                        glob pattern to select a subset of data folders Ex. "*RSVP_Copy_Phrase*"
+                        Raw data folders to be processed. Multiple values can be provided, or a single parent folder.
   -m MODEL_PATH, --model_path MODEL_PATH
-                        Signal models to be used
+                        Signal models to be used. Multiple models can be provided.
   -p PARAMETERS, --parameters PARAMETERS
                         Parameter File to be used
   -n N                  Number of times to run the simulation
+  -s SAMPLER, --sampler SAMPLER
+                        Sampling strategy
+  -o OUTPUT, --output OUTPUT
+                        Sim output path
 ```
 
 For example,
@@ -30,21 +34,24 @@ For example,
 
 #### Program Args
 
-- `d` : the data wrapper folder argument is necessary. This folder is expected to contain 1 or more session folders. Each session folder should contain
+- `i` : Interactive command line interface. Provide this flag by itself to be prompted for each parameter.
+- `gui`: A graphical user interface for configuring a simulation. This mode will output the command line arguments which can be used to repeat the simulation.
+- `d` : Raw data folders to be processed. One ore more values can be provided. Each session data folder should contain
   _raw_data.csv_, _triggers.txt_, _parameters.json_. These files will be used to construct a data pool from which simulator will sample EEG and other device responses. The parameters file in each data folder will be used to check compatibility with the simulation/model parameters.
-- `g` : optional glob filter that can be used to select a subset of data within the wrapper directory.
-  - Ex. `"*Matrix_Copy*Jan_2024*"` will select all data for all Matrix Copy Phrase sessions recorded in January of 2024 (assuming the BciPy folder naming convention).
-  - Glob patterns can also include nested directories (ex. `"*/*Matrix_Copy*"`).
 - `p` : path to the parameters.json file used to run the simulation. These parameters will be applied to
   all raw_data files when loading. This file can specify various aspects of the simulation, including the language model to be used, the text to be spelled, etc. Timing-related parameters should generally match the parameters file used for training the signal model(s).
-- `m`: all pickle (.pkl) files in this directory will be loaded as signal models.
+- `m`: Path to a pickled (.pkl) signal model. One or more models can be provided.
+- `n`: Number of simulation runs
+- `o`: Output directory for all simulation artifacts.
 
 #### Sim Output Details
 
-Output folders are generally located in the `simulator/generated` directory. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time.
+Output folders are generally located in the `data/simulator` directory, but can be configured per simulation. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time.
 
 - `parameters.json` captures params used for the simulation.
-- `sim.log` is a log file for the simulation
+- `sim.log` is a log file for the simulation; metrics will be output here.
+- `summary_data.json` summarizes session data from each of the runs into a single data structure.
+- `metrics.png` boxplots for several metrics summarizing all simulation runs.
 
 A directory is created for each simulation run. The directory contents are similar to the session output in a normal bcipy task. Each run directory contains:
 

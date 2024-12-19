@@ -13,6 +13,7 @@ from bcipy.config import ROOT
 TOP_LEVEL_LOGGER_NAME = 'sim_logger'
 DEFAULT_LOGFILE_NAME = 'sim.log'
 DEFAULT_SAVE_LOCATION = f"{ROOT}/data/simulator"
+RUN_PREFIX = "run_"
 
 
 def configure_logger(log_path: str,
@@ -30,14 +31,14 @@ def configure_logger(log_path: str,
     """
 
     log = logging.getLogger(logger_name)  # configuring root logger
-    log.setLevel(logging.DEBUG)
+    log.setLevel(logging.INFO)
     # Create handlers for logging to the standard output and a file
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     file_handler = logging.FileHandler(f"{log_path}/{file_name}")
 
     # Set the log levels on the handlers
     stdout_handler.setLevel(logging.INFO)
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(logging.INFO)
 
     fmt = '[%(asctime)s][%(name)s][%(levelname)s]: %(message)s'
     fmt_file = logging.Formatter(fmt)
@@ -78,7 +79,7 @@ def configure_run_directory(sim_dir: str, run: int) -> str:
     """Create the necessary directories and configure the logger.
     Returns the run directory.
     """
-    run_name = f"run_{run}"
+    run_name = f"{RUN_PREFIX}{run}"
     path = f"{sim_dir}/{run_name}"
     os.mkdir(path)
     configure_logger(log_path=path,
