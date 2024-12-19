@@ -1,6 +1,7 @@
 """Tests for list processing utilities"""
 import unittest
-from bcipy.core.list import destutter, grouper
+
+from bcipy.core.list import destutter, expanded, find_index, grouper, swapped
 
 
 class TestListUtilities(unittest.TestCase):
@@ -48,13 +49,46 @@ class TestListUtilities(unittest.TestCase):
         for resp, exp in zip(response, expected):
             self.assertEqual(resp, exp)
 
-    def test_grouper_incomplete_value_error_unsupported_incompelte_mode_defined(self):
+    def test_grouper_incomplete_value_error_unsupported_incompelte_mode_defined(
+            self):
         iterable = 'ABCDEFG'
         chunk_size = 2
         incomplete = 'not_defined'
 
         with self.assertRaises(ValueError):
             grouper(iterable, chunk_size, incomplete=incomplete)
+
+    def test_find_index(self):
+        """Test find index of item"""
+        self.assertEqual(2, find_index([1, 2, 3, 4], 3))
+
+    def test_find_index_using_key(self):
+        """Find index using the key arg"""
+        item1 = dict(a=1, b=1)
+        item2 = dict(a=1, b=2)
+        item3 = dict(a=2, b=1)
+        item4 = dict(a=2, b=2)
+        self.assertEqual(
+            1,
+            find_index([item1, item2, item3, item4],
+                       match_item=2,
+                       key=lambda item: item['b']))
+
+    def test_find_index_matching_predicate(self):
+        """Find the index of the first item matching a predicate"""
+        values = [5, 7, 9, 12]
+        self.assertEqual(1, find_index(values, match_item=lambda val: val > 6))
+
+    def test_swapped(self):
+        """Test swapped function."""
+        self.assertEqual([1, 2, 3, 4, 5], swapped([1, 2, 3, 4, 5], 0, 0))
+        self.assertEqual([1, 4, 3, 2, 5], swapped([1, 2, 3, 4, 5], 1, 3))
+        self.assertEqual([1, 2, 3, 4, 5], swapped([1, 2, 3, 4, 5], 4, 4))
+        self.assertEqual([1, 2, 3, 4, 5], swapped([5, 2, 3, 4, 1], 0, 4))
+
+    def test_expanded(self):
+        """Test expanded function."""
+        self.assertEqual([1, 2, 3, 3, 3], expanded([1, 2, 3], length=5))
 
 
 if __name__ == '__main__':
