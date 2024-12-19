@@ -537,10 +537,10 @@ class SimConfigForm(QWidget):
 
         args = []
         if self.outdir():
-            args.append(f"-o {self.outdir()}")
-        args.append(f"-p {self.parameters_path}")
-        args.extend([f"-m {path}" for path in self.model_paths])
-        args.extend([f"-d {source}" for source in self.data_paths])
+            args.append(f"-o '{self.outdir()}'")
+        args.append(f"-p '{self.parameters_path}'")
+        args.extend([f"-m '{path}'" for path in self.model_paths])
+        args.extend([f"-d '{source}'" for source in self.data_paths])
 
         args.append(f"-n {self.runs()}")
 

@@ -10,11 +10,13 @@ from typing import Any, Dict, List, Optional
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from bcipy.config import DEFAULT_ENCODING
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
+                          SESSION_DATA_FILENAME)
+from bcipy.core.parameters import Parameters
 from bcipy.helpers.acquisition import max_inquiry_duration
 from bcipy.io.load import load_json_parameters
 from bcipy.io.save import save_json_data
-from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
+from bcipy.simulator.util.artifact import RUN_PREFIX, TOP_LEVEL_LOGGER_NAME
 
 logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
@@ -31,7 +33,17 @@ def add_item(container: Dict[str, List], key: str, value: Any):
 
 
 def get_final_typed(session_dict: Dict) -> str:
-    """Get the final typed word"""
+    """Get the final typed word
+
+    Parameters
+    ----------
+        session_dict - Session data from a single run.
+            Equivalent to reading the Session and calling as_dict().
+
+    Returns
+    -------
+        the final spelled text (from the last inquiry)
+    """
     all_series = session_dict['series']
     if all_series.keys():
         last_series_key = str(max(map(int, all_series.keys())))
@@ -58,6 +70,9 @@ def add_items(combined_metrics: Dict, session_dict: Dict,
     for key in keys:
         add_item(combined_metrics, key, session_dict[key])
 
+    # Summarize task_summary data. Task summaries may be different depending on
+    # task. Note that switch presses and typing rates are not accurately reflected
+    # in simulation so are removed from metrics.
     for key in session_dict['task_summary'].keys():
         if 'switch' not in key and 'rate' not in key:
             add_item(combined_metrics, f"{TASK_SUMMARY_PREFIX}{key}",
@@ -72,18 +87,30 @@ def add_items(combined_metrics: Dict, session_dict: Dict,
 def session_paths(sim_dir: str) -> List[Path]:
     """List of paths to the session.json files"""
     return [
-        Path(run_dir, "session.json")
-        for run_dir in sorted(Path(sim_dir).glob("run*/"))
+        Path(run_dir, SESSION_DATA_FILENAME)
+        for run_dir in sorted(Path(sim_dir).glob(f"{RUN_PREFIX}*/"))
     ]
 
 
-def sim_parameters(sim_dir: str) -> Dict[str, Any]:
+def sim_parameters(sim_dir: str) -> Parameters:
     """Simulation parameters"""
-    return load_json_parameters(str(Path(sim_dir, "parameters.json")), True)
+    return load_json_parameters(
+        str(Path(sim_dir, DEFAULT_PARAMETERS_FILENAME)), True)
 
 
 def summarize(sim_dir: str) -> Dict[str, List[Any]]:
-    """Summarize all session runs."""
+    """Summarize all session runs.
+
+    Parameters
+    ----------
+        sim_dir - path to the simulation directory with 1 or more runs.
+
+    Returns
+    -------
+        a dict with a key for each metric of interest and a value which
+            is a list accumulating the value of that metric from each run.
+            ex. {'total_number_series': [14, 22, 12], ...}
+    """
     inquiry_seconds = max_inquiry_duration(sim_parameters(sim_dir))
     combined_metrics: Dict[str, List[Any]] = {}
     for session_path in session_paths(sim_dir):
