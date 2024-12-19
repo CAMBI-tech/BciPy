@@ -4,48 +4,17 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any, List, NamedTuple, Union
 
-import numpy as np
 import pandas as pd
 
-from bcipy.exceptions import TaskConfigurationException
 from bcipy.core.parameters import Parameters
+from bcipy.exceptions import TaskConfigurationException
 from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,
                                                RawDataProcessor)
+from bcipy.simulator.data.trial import Trial, convert_trials
 from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 
 log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
-
-
-class Trial(NamedTuple):
-    """Data for a given trial (a symbol within an Inquiry).
-
-    Attrs
-    -----
-        source - directory of the data source
-        inquiry_n - starts at 0; does not reset at each series
-        inquiry_pos  - starts at 1; position in which the symbol was presented
-        symbol - alphabet symbol that was presented
-        target - 1 or 0 indicating a boolean of whether this was a target symbol
-        eeg - EEG data associated with this trial
-    """
-    source: str
-    inquiry_n: int
-    inquiry_pos: int
-    symbol: str
-    target: int
-    eeg: np.ndarray  # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
-
-    def __str__(self):
-        fields = [
-            f"source='{self.source}'", f"inquiry_n={self.inquiry_n}",
-            f"inquiry_pos={self.inquiry_pos}", f"symbol='{self.symbol}'",
-            f"target={self.target}", f"eeg={self.eeg.shape}"
-        ]
-        return f"Trial({', '.join(fields)})"
-
-    def __repr__(self):
-        return str(self)
 
 
 class QueryFilter(NamedTuple):
@@ -83,31 +52,6 @@ class DataEngine(ABC):
               filters: List[QueryFilter],
               samples: int = 1) -> List[Trial]:
         """Query the data."""
-
-
-def convert_trials(data_source: ExtractedExperimentData) -> List[Trial]:
-    """Convert extracted data from a single data source to a list of Trials."""
-    trials = []
-    symbols_by_inquiry = data_source.symbols_by_inquiry
-    labels_by_inquiry = data_source.labels_by_inquiry
-
-    for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
-        # iterate through each inquiry
-        inquiry_symbols = symbols_by_inquiry[i]
-        inquiry_labels = labels_by_inquiry[i]
-
-        for sym_i, symbol in enumerate(inquiry_symbols):
-            # iterate through each symbol in the inquiry
-            eeg_samples = [channel[sym_i]
-                           for channel in inquiry_eeg]  # (channel_n, sample_n)
-            trials.append(
-                Trial(source=data_source.source_dir,
-                      inquiry_n=i,
-                      inquiry_pos=sym_i + 1,
-                      symbol=symbol,
-                      target=inquiry_labels[sym_i],
-                      eeg=np.array(eeg_samples)))
-    return trials
 
 
 class RawDataEngine(DataEngine):
