@@ -5,7 +5,7 @@ import logging
 import sys
 from pathlib import Path
 
-import bcipy.simulator.metrics as metrics
+import bcipy.simulator.util.metrics as metrics
 # pylint: disable=unused-import
 # flake8: noqa
 from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
