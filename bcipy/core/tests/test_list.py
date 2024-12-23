@@ -64,14 +64,14 @@ class TestListUtilities(unittest.TestCase):
 
     def test_find_index_using_key(self):
         """Find index using the key arg"""
-        item1 = dict(a=1, b=1)
-        item2 = dict(a=1, b=2)
-        item3 = dict(a=2, b=1)
-        item4 = dict(a=2, b=2)
+        item1 = dict(a=10, b=10)
+        item2 = dict(a=10, b=20)
+        item3 = dict(a=20, b=10)
+        item4 = dict(a=20, b=20)
         self.assertEqual(
             1,
             find_index([item1, item2, item3, item4],
-                       match_item=2,
+                       match_item=20,
                        key=lambda item: item['b']))
 
     def test_find_index_matching_predicate(self):
