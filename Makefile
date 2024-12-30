@@ -7,6 +7,10 @@ dev-install:
 	pip install kenlm==0.1 --global-option="--max_order=12"
 	make install
 
+build:
+	pip install -e ".[release]"
+	python -m build --sdist --wheel
+
 test-all:
 	make coverage-report
 	make type
