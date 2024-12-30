@@ -42,7 +42,7 @@ jobs:
     - build
     runs-on: ubuntu-latest
     environment:
-      name: pypi
+      name: prodpypi
       url: https://pypi.org/p/bcipy
     permissions:
       id-token: write  # IMPORTANT: mandatory for trusted publishing
