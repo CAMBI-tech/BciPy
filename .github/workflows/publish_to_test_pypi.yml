@@ -103,14 +103,14 @@ jobs:
     name: Publish Python 🐍 distribution 📦 to TestPyPI
     needs:
     - build
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
 
     environment:
       name: testpypi
       url: https://test.pypi.org/p/bcipy
 
     permissions:
-      id-token: write  # IMPORTANT: mandatory for trusted publishing
+      id-token: write
 
     steps:
     - name: Download all the dists
