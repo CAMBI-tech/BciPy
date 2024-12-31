@@ -131,6 +131,9 @@ class VEPDisplay(Display):
         self.box_border_width = 4
         self.text_boxes = self._build_text_boxes(box_config)
 
+        #To display prviously chosen boxes
+        self.chosen_boxes = []
+
     @property
     def box_colors(self) -> List[str]:
         """Get the colors used for boxes"""
@@ -221,6 +224,11 @@ class VEPDisplay(Display):
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
         if target_box_index is not None:
+            #update the chosen number to be displayed in the middle
+            #TODO: when box 6 or 7 is chosen, display contents at the top and clear chosen_boxes array
+            #TODO: if backspace (box 8) selected then delete last element in chosen_boxes.
+            #      if chosen_boxes = empty then delete the last word
+            self.update_chosen_boxes(target_box_index)
             self.highlight_target_box(target_box_index)
 
         self.draw_static()
@@ -311,8 +319,26 @@ class VEPDisplay(Display):
             f"{counter} animation frames rendered in {self.timing_animation} seconds"
         )
 
+    def update_chosen_boxes(self, chosen_box_index: int) -> None:
+        """Update the list of chosen boxes."""
+        self.chosen_boxes.append(str(chosen_box_index + 1))
+
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
+        chosen_numbers = ''.join(self.chosen_boxes)
+        #Only draw if there is something too
+        if chosen_numbers:
+            chosen_message = visual.TextStim(
+                win=self.window,
+                text=chosen_numbers,
+                font=self.stimuli_font,
+                pos=(0, 0),
+                height=0.2,
+                color='white',
+                colorSpace='rgb',
+                opacity=1.0,
+            )
+            chosen_message.draw()
         for i, box in enumerate(self.text_boxes):
             if i == self.current_highlighted_box_index:
                 box.borderColor = 'green'
@@ -390,7 +416,7 @@ class VEPDisplay(Display):
         """Reset the position of each symbol to its starting position"""
         #box layout
         layout = [
-            ['B', 'C', 'D', 'E'],
+            ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
@@ -487,7 +513,7 @@ class VEPDisplay(Display):
         """
         #box layout
         layout = [
-            ['B', 'C', 'D', 'E'],
+            ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
