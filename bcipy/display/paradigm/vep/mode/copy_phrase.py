@@ -1,8 +1,8 @@
-from bcipy.display.paradigm.vep.display import VEPDisplay
+from bcipy.display.paradigm.vep.copy_phrase_display import VEPDisplay
 from bcipy.helpers.symbols import SPACE_CHAR
 
 
-class CalibrationDisplayVEP(VEPDisplay):
+class CopyPhraseDisplayVEP(VEPDisplay):
     """Calibration Display."""
 
     def __init__(

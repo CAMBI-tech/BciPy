@@ -8,7 +8,7 @@ from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
-from bcipy.display.paradigm.vep.display import VEPDisplay
+from bcipy.display.paradigm.vep.copy_phrase_display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
@@ -19,7 +19,7 @@ from bcipy.task.paradigm.vep.stim_generation import \
 
 
 class VEPCopyPhraseTask(BaseCalibrationTask):
-    """VEP Copy Phrase Task.
+    """VEP Calibration Task.
 
     A task begins setting up variables --> initializing eeg -->
         awaiting user input to start -->
