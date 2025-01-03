@@ -3,6 +3,7 @@ import shutil
 import zipfile
 from pathlib import Path
 import tempfile
+import pytest
 
 from matplotlib import pyplot as plt
 
@@ -24,6 +25,7 @@ pwd = Path(__file__).absolute().parent
 input_folder = pwd / "resources/mock_offset/time_test_data/"
 
 
+@pytest.mark.slow
 class TestOffset(unittest.TestCase):
 
     def setUp(self) -> None:

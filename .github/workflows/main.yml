@@ -37,6 +37,7 @@ jobs:
         sudo apt-get install xvfb
         python -m pip install --upgrade pip
         pip install attrdict3
+        conda install -c conda-forge liblsl
     - name: Install dependencies
       run: |
         make dev-install
@@ -96,6 +97,9 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: integration-test
+      run: |
+        make integration-test
 
   build-macos:
 
@@ -129,5 +133,8 @@ jobs:
     - name: lint
       run: |
         make lint
+    - name: integration-test
+      run: |
+        make integration-test
 
     

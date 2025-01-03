@@ -3,14 +3,18 @@ install:
 
 dev-install:
 	pip install -r dev_requirements.txt
-	pip install psychopy==2024.2.1 --no-deps
 	pip install kenlm==0.1 --global-option="--max_order=12"
 	make install
+
+build:
+	make dev-install
+	python setup.py sdist bdist_wheel
 
 test-all:
 	make coverage-report
 	make type
 	make lint
+	make integration-test
 
 unit-test:
 	pytest --mpl -k "not slow"
