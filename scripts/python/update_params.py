@@ -55,11 +55,16 @@ def update(params_path: str) -> None:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p",
-                        "--parameters",
-                        type=Path,
-                        required=False,
-                        help="Parameter File to be used")
-    args = parser.parse_args()
-    update(args.parameters)
+    from bcipy.io.load import load_experimental_data
+    from pathlib import Path
+    # load experimental directory. This will have users/run/data
+    data_dir = Path(load_experimental_data())
+
+    # loop over all the users
+    for user in data_dir.iterdir():
+        if user.is_dir():
+            for run in user.iterdir():
+                if run.is_dir():
+                    for file in run.iterdir():
+                        if file.name == "parameters.json":
+                            update(str(file))

@@ -38,7 +38,8 @@ class TaskFactory():
             source_dirs: List[str],
             signal_model_paths: List[str],
             sampling_strategy: Type[Sampler] = TargetNontargetSampler,
-            task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask):
+            task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask,
+            parameters: Parameters = None) -> None:
 
         self.params_path = params_path
         self.signal_model_paths = signal_model_paths
@@ -48,8 +49,12 @@ class TaskFactory():
         self.simulation_task = task
 
         logger.info("Loading parameters")
-        self.parameters = load_json_parameters(self.params_path,
-                                               value_cast=True)
+        if parameters is None:
+            self.parameters = load_json_parameters(self.params_path,
+                                                value_cast=True)
+        else:
+            self.parameters = parameters
+
         update_latest_params(self.parameters)
 
         logger.info("Loading signal models")

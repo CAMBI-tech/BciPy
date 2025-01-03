@@ -61,22 +61,20 @@ def configure_logger(log_path: str,
 
 
 def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
-                        logfile_name: str = DEFAULT_LOGFILE_NAME) -> str:
+                        logfile_name: str = DEFAULT_LOGFILE_NAME,
+                        prefix: str = '') -> str:
     """Setup the folder structure and logging for a simulation.
 
     Parameters
     ----------
         save_location - optional path in which new simulation directory will be created.
         logfile_name - optional name of the top level logfile within that directory.
+        prefix - optional prefix for the simulation directory.
 
     Returns the path of the simulation directory.
     """
-    save_dir = f"{save_location}/{directory_name()}"
+    save_dir = f"{save_location}/{prefix}{directory_name()}"
     os.makedirs(save_dir)
-    configure_logger(save_dir,
-                     logfile_name,
-                     logger_name=TOP_LEVEL_LOGGER_NAME,
-                     use_stdout=True)
     return save_dir
 
 
