@@ -104,7 +104,7 @@ zip-safe = true
 # Python modules and packages that are included in the
 # distribution package (and therefore become importable)
 [tool.setuptools.packages.find]
-exclude = ["tests", "demo", "data"]
+exclude = ["tests", "demo", "scripts"]
 
 [tool.distutils.bdist_wheel]
 universal = true

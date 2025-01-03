@@ -237,6 +237,16 @@ def choose_signal_model(device_type: str) -> Optional[SignalModel]:
     return None
 
 
+def choose_model_paths(device_types: List[str]) -> List[Path]:
+    """Select a model for each device and return a list of paths."""
+    return [
+        ask_filename(file_types=f"*{SIGNAL_MODEL_FILE_SUFFIX}",
+                     directory=preferences.signal_model_directory,
+                     prompt=f"Select the {device_type} signal model")
+        for device_type in device_types
+    ]
+
+
 def choose_csv_file(filename: Optional[str] = None) -> Optional[str]:
     """GUI prompt to select a csv file from the file system.
 

@@ -24,6 +24,7 @@ from bcipy.core.parameters import Parameters
 from bcipy.io.save import save_model
 from bcipy.core.stimuli import update_inquiry_timing
 from bcipy.core.symbols import alphabet
+from bcipy.core.raw_data import RawData
 from bcipy.helpers.utils import report_execution_time
 from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.preferences import preferences
