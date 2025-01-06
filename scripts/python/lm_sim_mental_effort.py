@@ -108,7 +108,7 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
                                signal_model_paths=[str(model_path)],
                                parameters=parameters)
     # create the simulation directory
-    sim_dir = init_simulation_dir(save_location=Path(OUTPUT_DIR), prefix=f"{user}/{phrase}/{language_model}/{user}_{phrase}_{language_model}_")
+    sim_dir = init_simulation_dir(save_location=Path(OUTPUT_DIR), prefix=f"{user}/{language_model}/{phrase}/{user}_{phrase}_{language_model}_")
     # create the task runner
     runner = TaskRunner(save_dir=sim_dir,
                         task_factory=task_factory,
@@ -122,12 +122,21 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
 if __name__ == "__main__":
     from bcipy.io.load import load_experimental_data
     from pathlib import Path
+    from tqdm import tqdm
     # load experimental directory. This will have users/run/data
     data_dir = Path(load_experimental_data())
 
+    progress_bar = tqdm(
+        Path(data_dir).iterdir(),
+        total=len(list(Path(data_dir).iterdir())),
+        bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n",
+        colour='MAGENTA')
     # loop over all the users
-    for user in data_dir.iterdir():
+    for user in progress_bar:
         if user.is_dir():
+            progress_bar.set_description(f"Processing {user.name}")
             for phrase, starting_index in PHRASES:
                 for language_model in LANGUAGE_MODELS:
                     run_simulation(user, user.name, phrase, starting_index, language_model)
+
+    progress_bar.close()

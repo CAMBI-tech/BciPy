@@ -84,17 +84,17 @@ def extract_sim_output(output_dir: Path) -> None:
     for user in output_dir.iterdir():
         if user.is_dir():
             output_data[user.name] = {}
-            for phrase in user.iterdir():
-                if phrase.is_dir():
-                    output_data[user.name][phrase.name] = {}
-                    for language_model in phrase.iterdir():
-                        if language_model.is_dir():
-                            output_data[user.name][phrase.name][language_model.name] = {}
-                            for sim_output in language_model.iterdir():
-                                if sim_output.is_file() and sim_output.name == SUMMARY_FILE_NAME:
-                                    summary_data = summary_stats_for_sim_output(sim_output)
-                                    # output_data[sim_output.name] = summary_data
-                                    output_data[user.name][phrase.name][language_model.name] = summary_data
+            for language_model in user.iterdir():
+                if language_model.is_dir():
+                    output_data[user.name][language_model.name] = {}
+                    for phrase in language_model.iterdir():
+                        if phrase.is_dir():
+                            output_data[user.name][language_model.name][phrase.name] = {}
+                            for sim_run in phrase.iterdir():
+                                if sim_run.is_dir():
+                                    summary_data_path = sim_run / SUMMARY_FILE_NAME
+                                    summary_data = summary_stats_for_sim_output(summary_data_path)
+                                    output_data[user.name][language_model.name][phrase.name]= summary_data
     return output_data
                                     
 
@@ -128,19 +128,19 @@ def save_results(data: dict, output_dir: Path) -> None:
     ```python
     {
         "user1": {
-            "phrase1": {
-                "language_model1": {
+            "language_model1": {
+                "phrase1": {
                     "N_SERIES_AVG": 10,
                     "N_SERIES_STD": 2,
                     "N_INQUIRIES_AVG": 5,
                     "N_INQUIRIES_STD": 1,
                     ...
                 },
-                "language_model2": {
+                "phrase2": {
                     ...
                 }
             },
-            "phrase2": {
+            "language_model2": {
                 ...
             }
         },
@@ -162,16 +162,15 @@ def process_sim_output(data: dict) -> dict:
     ```python
     {
         "user1": {
-            "phrase1": {
-                "language_model1": {
+            "language_model1": {
+                "phrase1": {
                     "user1_phrase1_language_model1": {
                         "N_SERIES_AVG": [10, 12, 8, ...],
                         "N_SERIES_STD": [5, 6, 4, ...],
                         ...
                     },
-                    "user1_phrase1_language_model1: {
-                        ...
-                    }
+                "phrase2": {
+                    ...
                 },
                 "language_model2": {
                     ...
@@ -207,31 +206,24 @@ def process_sim_output(data: dict) -> dict:
     """
     # Loop over the phrases for each language model and calculate the average and standard deviation for each metric
     processed_data = {}
-    for user, phrases in data.items():
+    for user, language_model in data.items():
         processed_data[user] = {}
-        for phrase, language_models in phrases.items():
-            for language_model, summary_data in language_models.items():
-                if language_model not in processed_data[user]:
-                    processed_data[user][language_model] = {}
-                for key, value in summary_data.items():
-                    if key.endswith("_AVG"):
+        for language_model, phrases in language_model.items():
+            processed_data[user][language_model] = {}
+            for phrase, summary_data in phrases.items():
+                for key in summary_data.keys():
+                    if key.endswith("AVG"):
                         metric = key.split("_")[0]
                         if metric not in processed_data[user][language_model]:
                             processed_data[user][language_model][metric] = []
-                        processed_data[user][language_model][metric].append(value)
-                processed_data[user][language_model][metric] = sum(processed_data[user][language_model][metric]) / len(processed_data[user][language_model][metric])
+                        processed_data[user][language_model][metric].append(summary_data[key])
     return processed_data
     
-
-
-
-
-
 
 if __name__ == "__main__":
     path = load_experimental_data(message="Select the directory containing the simulation output")
     data = extract_sim_output(Path(path))
-    data = process_sim_output(data)
+    data = process_sim_output(data) #WIP
 
     # TODO: process the data - for each language model, calculate the average and standard deviation for each language model
     save_results(data, Path(path))
