@@ -33,6 +33,7 @@ The summary data at the simulation run level (summary_data.json) will be the the
 
 TODO: 
 - fix logging during simulation
+- configure output of xlsx (not needed for the analysis / running out of disk space)
 - fix metrics visualization when running multiple simulations (currently overwriting the same file?)
 - get phrases from LM team, set in the phrase.json or via the PHRASES variable below
 - set and verify LM parameters
@@ -48,11 +49,14 @@ import bcipy.simulator.util.metrics as metrics
 PHRASES = [
     ("WELCOME_HOME", 0), 
     ("HELLO_WORLD", 6),
+    ("BCI_IS_COOL", 0),
+    ("DANIEL_IS_AWESOME", 0),
+    ("SIMULATIONS_ARE_HARD", 12),
 ]
 LANGUAGE_MODELS = ["UNIFORM", "KENLM"]
 MODE = "RSVP"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
-RUN_COUNT = 10
+RUN_COUNT = 25
 OUTPUT_DIR = "/Users/scitab/Desktop/sim_output"
 
 
