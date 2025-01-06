@@ -2,7 +2,7 @@
   "kenlm": {
     "model_file": {
       "description": "Name of the pretrained model file",
-      "value": "lm_dec19_char_tiny_12gram.kenlm",
+      "value": "lm_dec19_char_large_12gram.kenlm",
       "type": "filepath"
     }
   },

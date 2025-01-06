@@ -16,3 +16,6 @@ class NullDisplay(Display):
 
     def update_task_bar(self, *args, **kwargs) -> None:
         """Do nothing"""
+    
+    def close(self) -> None:
+        """Do nothing"""

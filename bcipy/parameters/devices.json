@@ -55,7 +55,7 @@
         "description": "Wearable Sensing DSI-VR300",
         "excluded_from_analysis": ["TRG", "F7"],
         "status": "active",
-        "static_offset": 0.1
+        "static_offset": 0.09
     },
     {
         "name": "DSI-Flex",

@@ -32,15 +32,11 @@ output_dir/
 The summary data at the simulation run level (summary_data.json) will be the the data used to compare across users and phrases.
 
 TODO: 
-- fix logging during simulation
-- configure output of xlsx (not needed for the analysis / running out of disk space)
-- fix metrics visualization when running multiple simulations (currently overwriting the same file?)
+- Integrate LLM model and add to the analysis
 - get phrases from LM team, set in the phrase.json or via the PHRASES variable below
-- set and verify LM parameters
-- write a top level processing / compare script for the outputs. ttest / visualizations
 """
 from pathlib import Path
-from bcipy.io.load import load_json_parameters, load_signal_model
+from bcipy.io.load import load_json_parameters
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.task.task_runner import TaskRunner, init_simulation_dir
 import bcipy.simulator.util.metrics as metrics
@@ -48,15 +44,16 @@ import bcipy.simulator.util.metrics as metrics
 
 PHRASES = [
     ("WELCOME_HOME", 0), 
-    ("HELLO_WORLD", 6),
+    ("HELLO_WORLD", 0),
+    ("GOOD_MORNING", 0),
     ("BCI_IS_COOL", 0),
     ("DANIEL_IS_AWESOME", 0),
     ("SIMULATIONS_ARE_HARD", 12),
 ]
-LANGUAGE_MODELS = ["UNIFORM", "KENLM"]
+LANGUAGE_MODELS = ["UNIFORM", "KENLM"] # Add LLM to this list
 MODE = "RSVP"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
-RUN_COUNT = 25
+RUN_COUNT = 2
 OUTPUT_DIR = "/Users/scitab/Desktop/sim_output"
 
 
@@ -83,9 +80,20 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
     parameters = load_json_parameters(params_path, value_cast=True)
 
     # update the parameters with the new phrase, starting index, and language model
+    phrase_length = len(phrase) - starting_index
     parameters["task_text"] = phrase
     parameters["spelled_letters_count"] = starting_index
     parameters["lang_model_type"] = language_model
+
+    parameters["max_inq_len"] = phrase_length * 8 
+    parameters["max_selections"] = phrase_length * 2 # This should be 2 * the length of the phrase to type
+    parameters["min_inq_per_series"] = 1
+    parameters["max_inq_per_series"] = 8
+    parameters["backspace_always_shown"] = True
+    parameters["lm_backspace_prob"] = 0.03571
+    parameters["max_minutes"] = 120 # This is not used in the simulation. But we set it high to avoid any issues.
+    parameters["max_incorrect"] = int(phrase_length / 2) # This should be half the length of the phrase to type
+
 
     # get the correct list of source directories from the data directory
     source_dirs = [str(file) for file in data_dir.iterdir() if file.is_dir() and DATA_PATTERN in file.name]
