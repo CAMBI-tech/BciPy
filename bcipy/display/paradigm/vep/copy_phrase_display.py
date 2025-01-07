@@ -224,13 +224,35 @@ class VEPDisplay(Display):
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
         if target_box_index is not None:
-            #update the chosen number to be displayed in the middle
-            #TODO: when box 6 or 7 is chosen, display contents at the top and clear chosen_boxes array
-            #TODO: if backspace (box 8) selected then delete last element in chosen_boxes.
-            #      if chosen_boxes = empty then delete the last word
-            self.update_chosen_boxes(target_box_index)
-            self.highlight_target_box(target_box_index)
+            
+            #Handles backspace
+            if target_box_index == 7:
+                if self.chosen_boxes:
+                    last_box = int(self.chosen_boxes.pop())
+                    #Remove last word if last number is being popped
+                    if last_box == 6 or last_box == 7:
+                        if hasattr(self, "top_display_text") and self.top_display_text:
+                            self.top_display_text.pop()
 
+            #if box 6 or 7 is chosen, append the content to the top display text
+            elif target_box_index == 5:
+                self.chosen_boxes.clear()
+                if not hasattr(self, "top_display_text"):
+                    self.top_display_text = []
+                #TODO: replace with actually box content not fixed
+                self.top_display_text.append("HER")
+            elif target_box_index == 6:
+                self.chosen_boxes.clear()
+                if not hasattr(self, "top_display_text"):
+                    self.top_display_text = []
+                #TODO: replace with actually box content not fixed
+                self.top_display_text.append("MAN")
+
+            #otherwise update box selection list
+            else:
+                self.update_chosen_boxes(target_box_index)
+            #No need to highlight target box in copy phrase
+            self.highlight_target_box(target_box_index)
         self.draw_static()
 
         self.window.flip()
@@ -243,14 +265,13 @@ class VEPDisplay(Display):
     def highlight_target_box(self, target_box_index: int) -> None:
         """Emphasize the box at the given index"""
         self.current_highlighted_box_index = target_box_index
-        for i, box in enumerate(self.text_boxes):
-            if i == target_box_index:
-                box.borderColor = 'green'
-                box.borderWidth = self.box_border_width + 15
-                box.setOpacity(1)
-            else:
-                box.borderWidth = self.box_border_width - 2
-                box.setOpacity(0.8)
+        #for i, box in enumerate(self.text_boxes):
+        #    if i == target_box_index:
+        #        box.borderWidth = self.box_border_width + 15
+        #        box.setOpacity(1)
+        #    else:
+        #        box.borderWidth = self.box_border_width - 2
+        #        box.setOpacity(0.8)
 
     def do_fixation(self, fixation: StimProps) -> None:
         """Show all symbols before animating."""
@@ -325,8 +346,24 @@ class VEPDisplay(Display):
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
+
+        #sentence display
+        if hasattr(self, "top_display_text") and self.top_display_text:
+            top_message = visual.TextStim(
+                win=self.window,
+                #join the words with a space
+                text=' '.join(self.top_display_text),
+                font=self.stimuli_font,
+                pos=(0, 0.9),
+                height=0.1,
+                color='white',
+                colorSpace='rgb',
+                opacity=1.0,
+            )
+            top_message.draw()
+        
+        #selected box display
         chosen_numbers = ''.join(self.chosen_boxes)
-        #Only draw if there is something too
         if chosen_numbers:
             chosen_message = visual.TextStim(
                 win=self.window,
@@ -339,10 +376,10 @@ class VEPDisplay(Display):
                 opacity=1.0,
             )
             chosen_message.draw()
+        
         for i, box in enumerate(self.text_boxes):
-            if i == self.current_highlighted_box_index:
-                box.borderColor = 'green'
-                box.borderWidth = self.box_border_width + 10
+            #if i == self.current_highlighted_box_index:
+            #    box.borderWidth = self.box_border_width + 10
             box.draw()
 
     def stimulate(self) -> None:
