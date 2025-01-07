@@ -53,7 +53,8 @@ class CausalLanguageModel(LanguageModel):
         self.vocab_size = 0
         self.valid_vocab = []
         self.vocab = defaultdict(list)
-        # Since subword token ids are integers, use a list instead of a dictionary
+        # Since subword token ids are integers, use a list instead of a
+        # dictionary
         self.index_to_word = []
         self.index_to_word_lower = []
         self.symbol_set_lower = None
@@ -65,9 +66,11 @@ class CausalLanguageModel(LanguageModel):
         self.max_completed = max_completed
 
         if not max_completed and not beam_width:
-            print(f"WARNING: using causal language model without any pruning, this can be slow!")
+            print(
+                f"WARNING: using causal language model without any pruning, this can be slow!")
         else:
-            print(f"Causal language model, beam_width {beam_width}, max_completed {max_completed}")
+            print(f"Causal language model, beam_width {
+                  beam_width}, max_completed {max_completed}")
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
@@ -76,24 +79,25 @@ class CausalLanguageModel(LanguageModel):
         self.model_name = lang_model_name or causal_params['model_name']['value']
 
         local_model_path = lm_path or causal_params['model_path']['value']
-        self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        self.model_dir = f"{
+            LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
         # Parameters for the search
         self.beam_width = beam_width
 
         # Simple heuristic to correct case in the LM context
         self.simple_upper_words = {"i": "I",
-                                    "i'll": "I'll",
-                                    "i've": "I've",
-                                    "i'd": "I'd",
-                                    "i'm": "I'm"}
+                                   "i'll": "I'll",
+                                   "i've": "I've",
+                                   "i'd": "I'd",
+                                   "i'm": "I'm"}
 
         # Track how much time spent in different parts of the predict function
         self.predict_total_ns = 0
         self.predict_inference_ns = 0
 
-
-        # Are we a model that automatically inserts a start token that we need to get rid of
+        # Are we a model that automatically inserts a start token that we need
+        # to get rid of
         self.drop_first_token = False
 
         self.load()
@@ -108,16 +112,19 @@ class CausalLanguageModel(LanguageModel):
 
         # Loop over all the subword tokens in the LLM
         for i in range(self.vocab_size):
-            # Create a map from the subword token integer ID to the mixed and lowercase string versions
+            # Create a map from the subword token integer ID to the mixed and
+            # lowercase string versions
             word = self.tokenizer.decode([i])
             word_lower = word.lower()
             self.index_to_word += word,
             self.index_to_word_lower += word_lower,
 
-            # Check if all the characters in the subword token are in our valid symbol set
+            # Check if all the characters in the subword token are in our valid
+            # symbol set
             valid = True
             for ch in word_lower:
-                # The space char is only valid once we convert spaces to the space char
+                # The space char is only valid once we convert spaces to the
+                # space char
                 if ch == SPACE_CHAR:
                     valid = False
                     break
@@ -127,7 +134,8 @@ class CausalLanguageModel(LanguageModel):
                     valid = False
                     break
 
-            # If the subword token symbols are all valid, then add it to the list of valid token IDs
+            # If the subword token symbols are all valid, then add it to the
+            # list of valid token IDs
             if valid:
                 self.valid_vocab += i,
                 # Add this token ID to all lists for its valid text prefixes
@@ -140,7 +148,8 @@ class CausalLanguageModel(LanguageModel):
         # self.index_to_word[self.vocab["cyclo"][0]] = cyclop
         # self.index_to_word[self.vocab["cyclo"][1]] = cyclopedia
 
-        (self.model_name.startswith("facebook/opt") or "Llama-3.1" in self.model_name)
+        (self.model_name.startswith("facebook/opt")
+         or "Llama-3.1" in self.model_name)
 
         # Get the index we use for the start or end pseudo-word
         if self.left_context == "":
@@ -148,7 +157,8 @@ class CausalLanguageModel(LanguageModel):
                 self.left_context = "<|endoftext|>"
             elif "Llama-3.1" in self.model_name:
                 self.left_context = "<|begin_of_text|>"
-            # Seems to have both sentence start and end tokens: https://docs.mistral.ai/guides/tokenization/
+            # Seems to have both sentence start and end tokens:
+            # https://docs.mistral.ai/guides/tokenization/
             elif "Mistral" in self.model_name:
                 self.left_context = "<s>"
             else:
@@ -156,16 +166,20 @@ class CausalLanguageModel(LanguageModel):
 
         # OPT, Llama and Mistral all insert start token
         self.drop_first_token = (self.model_name.startswith("facebook/opt") or
-                                    "Llama-3.1" in self.model_name or
-                                    "Mistral" in self.model_name)
+                                 "Llama-3.1" in self.model_name or
+                                 "Mistral" in self.model_name)
 
         # Get token id(s) for the left context we condition all sentences on
         self.left_context_tokens = self._encode(self.left_context)
-        print(f"Causal: left_context = '{self.left_context}', left_context_tokens = {self.left_context_tokens}")
+        print(
+            f"Causal: left_context = '{
+                self.left_context}', left_context_tokens = {
+                self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
-        # Both OPT and Llama automatically insert a start token which we want to control ourselves
+        # Both OPT and Llama automatically insert a start token which we want
+        # to control ourselves
         if len(tokens) > 1 and self.drop_first_token:
             tokens = tokens[1:]
 
@@ -229,13 +243,15 @@ class CausalLanguageModel(LanguageModel):
 
         context_lower = context.lower()
 
-        # Index in the hypothesis string that is the next character after our context
+        # Index in the hypothesis string that is the next character after our
+        # context
         target_pos = len(context_lower)
 
         # For stats purposes track length of the prefix we are extending from space to match
         # prefix_len = target_pos
 
-        # Look for the last space in the context, or -1 if no begin_text in context yet
+        # Look for the last space in the context, or -1 if no begin_text in
+        # context yet
         pos = context_lower.rfind(" ")
         tokens = []
         tokens.extend(self.left_context_tokens)
@@ -246,9 +262,9 @@ class CausalLanguageModel(LanguageModel):
             else:
                 truncated_context = context_lower[0:pos]
             tokens.extend(self._encode(truncated_context))
-            #prefix_len -= pos
+            # prefix_len -= pos
 
-        #print(f"DEBUG, {context_lower} pos {pos}, prefix_len {prefix_len}")
+        # print(f"DEBUG, {context_lower} pos {pos}, prefix_len {prefix_len}")
 
         # Constant indexes for use with the hypotheses tuples
         LOGP: Final[int] = 0
@@ -265,10 +281,12 @@ class CausalLanguageModel(LanguageModel):
 
         # We use a priority queue to track the top hypotheses during the beam search.
         # For a beam of 8, empirical testing showed this was about the same amount
-        # of time as a simpler list that used a linear search to replace when full.
+        # of time as a simpler list that used a linear search to replace when
+        # full.
         heapq.heapify(current_hypos)
 
-        # Create a hash mapping each valid following character to a list of log probabilities
+        # Create a hash mapping each valid following character to a list of log
+        # probabilities
         char_to_log_probs = defaultdict(list)
 
         # Add new extended hypotheses to this heap
@@ -287,28 +305,37 @@ class CausalLanguageModel(LanguageModel):
         while len(current_hypos) > 0 and not done:
             # We'll explore hypothesis in order from most probable to least.
             # This has little impact on how long it takes since this is only sorting a small number of things.
-            # But it is important with max_completed pruning since we want to bias for completing high probability things.
+            # But it is important with max_completed pruning since we want to
+            # bias for completing high probability things.
             current_hypos.sort(reverse=True)
 
             # Work on the hypotheses from the last round of extension.
-            # Create the torch tensor for the inference with a row for each hypothesis.
-            tokens_tensor = torch.tensor([x[SEQ] for x in current_hypos]).reshape(len(current_hypos), -1).to(self.device)
+            # Create the torch tensor for the inference with a row for each
+            # hypothesis.
+            tokens_tensor = torch.tensor([x[SEQ] for x in current_hypos]).reshape(
+                len(current_hypos), -1).to(self.device)
 
             before_inference_ns = time.time_ns()
-            # Ask the LLM to predict tokens that come after our current set of hypotheses
+            # Ask the LLM to predict tokens that come after our current set of
+            # hypotheses
             with torch.no_grad():
                 # Compute the probabilities from the logits
-                log_probs = torch.log_softmax(self.model(tokens_tensor).logits[:, -1, :], dim=1)
+                log_probs = torch.log_softmax(self.model(
+                    tokens_tensor).logits[:, -1, :], dim=1)
 
                 # Create a big 2D tensor where each row is that hypothesis' current likelihood.
                 # First create a list of just the hypotheses' likelihoods.
                 # Then reshape to be a column vector.
-                # Then duplicate the column based on the number of subword tokens in the LLM.
-                add_tensor = torch.tensor([x[LOGP] for x in current_hypos]).reshape((log_probs.size()[0], 1)).repeat(1, log_probs.size()[1]).to(self.device)
+                # Then duplicate the column based on the number of subword
+                # tokens in the LLM.
+                add_tensor = torch.tensor([x[LOGP] for x in current_hypos]).reshape(
+                    (log_probs.size()[0], 1)).repeat(1, log_probs.size()[1]).to(self.device)
 
                 # Add the current likelihoods with each subtoken's probability.
-                # Move it back to the CPU and convert to numpy since this makes it a lot faster to access for some reason.
-                new_log_probs = torch.add(log_probs, add_tensor).detach().cpu().numpy()
+                # Move it back to the CPU and convert to numpy since this makes
+                # it a lot faster to access for some reason.
+                new_log_probs = torch.add(
+                    log_probs, add_tensor).detach().cpu().numpy()
             self.predict_inference_ns += time.time_ns() - before_inference_ns
 
             for current_index, current in enumerate(current_hypos):
@@ -318,19 +345,24 @@ class CausalLanguageModel(LanguageModel):
                 remaining_context = converted_context_lower[current[LEN]:]
                 if len(remaining_context) == 0:
                     # There is no remaining context thus all subword tokens that are valid under our symbol set
-                    # should be considered when computing the probability of the next character.
+                    # should be considered when computing the probability of
+                    # the next character.
                     vocab = self.valid_vocab
                 else:
                     if remaining_context in self.vocab:
                         # We have a list of subword tokens that match the remaining text.
-                        # They could be the same length as the remaining text or longer and have the remaining text as a prefix.
+                        # They could be the same length as the remaining text
+                        # or longer and have the remaining text as a prefix.
                         vocab = self.vocab[remaining_context]
 
                     # We may need to use a subword token that doesn't completely consume the remaining text.
-                    # Find these by tokenizing all possible lengths of text starting from the current position.
+                    # Find these by tokenizing all possible lengths of text
+                    # starting from the current position.
                     for i in range(1, len(remaining_context)):
-                        tokenization = self._encode(context_lower[current[LEN]:current[LEN] + i])
-                        # Ignore tokenizations involving multiple tokens since they involve an ID we would have already added.
+                        tokenization = self._encode(
+                            context_lower[current[LEN]:current[LEN] + i])
+                        # Ignore tokenizations involving multiple tokens since
+                        # they involve an ID we would have already added.
                         if len(tokenization) == 1:
                             extra_vocab += tokenization[0],
 
@@ -354,17 +386,22 @@ class CausalLanguageModel(LanguageModel):
                 #  - Stop part way through the below for loop over (vocab, extra_vocab). But this seems weird since the token IDs are in
                 #    no particular order, we'd be just stopping early on the last hypothesis being explored by the enclosing loop.
                 #  - Sort the rows in the log prob results on the GPU. Use these to limit which token IDs we explore in the below
-                #    for loop. Is it possible to do this without introducing too much extra work to limit to the high probability ones?
+                # for loop. Is it possible to do this without introducing too
+                # much extra work to limit to the high probability ones?
 
                 # Create a list of token indexes that are a prefix of the target text.
-                # We go over all the integer IDs in the vocab and extra_vocab lists.
+                # We go over all the integer IDs in the vocab and extra_vocab
+                # lists.
                 for token_id in itertools.chain(vocab, extra_vocab):
-                    # For a hypothesis to finish it must extend beyond the existing typed context
+                    # For a hypothesis to finish it must extend beyond the
+                    # existing typed context
                     subword_len = len(self.index_to_word_lower[token_id])
                     if (current[LEN] + subword_len) > len(context):
                         # Add this likelihood to the list for the character at the prediction position.
-                        # Tracking the list and doing logsumpexp later was faster than doing it for each add.
-                        char_to_log_probs[self.index_to_word_lower[token_id][target_pos - current[LEN]]] += new_log_probs[current_index][token_id],
+                        # Tracking the list and doing logsumpexp later was
+                        # faster than doing it for each add.
+                        char_to_log_probs[self.index_to_word_lower[token_id][target_pos -
+                                                                             current[LEN]]] += new_log_probs[current_index][token_id],
                         completed += 1
                     elif not self.beam_width or len(next_hypos) < self.beam_width:
                         # If we are under the beam limit then just add it
@@ -379,7 +416,8 @@ class CausalLanguageModel(LanguageModel):
                                            current[SEQ] + [token_id],
                                            current[LEN] + subword_len))
 
-                # Break out of the for loop over hypotheses and while loop if we reach our max completed goal
+                # Break out of the for loop over hypotheses and while loop if
+                # we reach our max completed goal
                 if self.max_completed and completed >= self.max_completed:
                     done = True
                     break
@@ -417,7 +455,8 @@ class CausalLanguageModel(LanguageModel):
         end_ns = time.time_ns()
         self.predict_total_ns += end_ns - start_ns
 
-        return list(sorted(next_char_pred.items(), key=lambda item: item[1], reverse=True))
+        return list(sorted(next_char_pred.items(),
+                    key=lambda item: item[1], reverse=True))
 
     def dump_predict_times(self) -> None:
         """Print some stats about the prediction timing"""
@@ -434,16 +473,19 @@ class CausalLanguageModel(LanguageModel):
             Load the language model and tokenizer, initialize class variables
         """
         try:
-            self.tokenizer = AutoTokenizer.from_pretrained(self.model_name, use_fast=False)
+            self.tokenizer = AutoTokenizer.from_pretrained(
+                self.model_name, use_fast=False)
         except BaseException:
-            raise InvalidLanguageModelException(f"{self.model_name} is not a valid model identifier on HuggingFace.")
+            raise InvalidLanguageModelException(
+                f"{self.model_name} is not a valid model identifier on HuggingFace.")
         self.vocab_size = self.tokenizer.vocab_size
         try:
             self.model = AutoModelForCausalLM.from_pretrained(self.model_dir)
             if self.fp16 and self.device == "cuda":
                 self.model = self.model.half()
-        except:
-            raise InvalidLanguageModelException(f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
+        except BaseException:
+            raise InvalidLanguageModelException(
+                f"{self.model_dir} is not a valid local folder or model identifier on HuggingFace.")
 
         self.model.eval()
 
@@ -482,4 +524,3 @@ class CausalLanguageModel(LanguageModel):
         next_char_pred = self.predict(evidence)
 
         return next_char_pred
-    
