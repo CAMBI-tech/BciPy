@@ -5,8 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from bcipy.simulator.util.artifact import (RUN_PREFIX, configure_logger,
-                                           remove_file_logger, remove_handlers)
+from bcipy.simulator.util.artifact import configure_logger, remove_handlers
 
 
 class TestSimArtifact(unittest.TestCase):
@@ -65,18 +64,6 @@ class TestSimArtifact(unittest.TestCase):
         log = logging.getLogger()
         self.assertEqual(1, len(log.handlers))
         self.assertTrue(isinstance(log.handlers[0], logging.FileHandler))
-        remove_handlers(log)
-
-    def test_remove_file_logger(self):
-        """Test removal of file handler from root logger"""
-        configure_logger(self.temp_dir,
-                         file_name=f"{RUN_PREFIX}99.log",
-                         logger_name=None,
-                         use_stdout=False)
-        log = logging.getLogger()
-        self.assertEqual(1, len(log.handlers))
-        remove_file_logger(self.temp_dir, run=99)
-        self.assertEqual(0, len(log.handlers))
         remove_handlers(log)
 
 

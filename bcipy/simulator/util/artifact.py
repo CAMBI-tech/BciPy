@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from bcipy.config import ROOT
 
@@ -80,18 +80,19 @@ def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
     return save_dir
 
 
-def configure_run_directory(sim_dir: str, run: int) -> str:
+def configure_run_directory(sim_dir: str,
+                            run: int) -> Tuple[str, logging.Logger]:
     """Create the necessary directories and configure the logger.
     Returns the run directory.
     """
     run_name = f"{RUN_PREFIX}{run}"
     path = f"{sim_dir}/{run_name}"
     os.mkdir(path)
-    configure_logger(log_path=path,
-                     file_name=f"{run_name}.log",
-                     logger_name=None,
-                     use_stdout=False)
-    return path
+    log = configure_logger(log_path=path,
+                           file_name=f"{run_name}.log",
+                           logger_name=None,
+                           use_stdout=False)
+    return path, log
 
 
 def remove_file_logger(sim_dir: str, run: int) -> None:
