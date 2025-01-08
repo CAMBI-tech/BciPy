@@ -27,9 +27,9 @@ class CausalLanguageModel(LanguageModel):
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
                  beam_width: int = None,
-                 fp16: bool = False,
-                 mixed_case_context: bool = False,
-                 case_simple: bool = False,
+                 fp16: bool = True,
+                 mixed_case_context: bool = True,
+                 case_simple: bool = True,
                  max_completed: int = None,
                  ):
         """
@@ -60,10 +60,11 @@ class CausalLanguageModel(LanguageModel):
         self.symbol_set_lower = None
         self.device = lm_device
         self.left_context = lm_left_context
+        self.beam_width = beam_width or causal_params['beam_width']['value']
         self.fp16 = fp16
         self.mixed_case_context = mixed_case_context
         self.case_simple = case_simple
-        self.max_completed = max_completed
+        self.max_completed = max_completed or causal_params['max_completed']['value']
 
         if not max_completed and not beam_width:
             print("WARNING: using causal language model without any pruning, this can be slow!")
@@ -80,7 +81,6 @@ class CausalLanguageModel(LanguageModel):
         self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
         # Parameters for the search
-        self.beam_width = beam_width
 
         # Simple heuristic to correct case in the LM context
         self.simple_upper_words = {"i": "I",
