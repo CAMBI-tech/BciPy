@@ -72,9 +72,27 @@ A directory is created for each simulation run. The directory contents are simil
 
 The simulator is structured to support evidence from multiple devices (multimodal). However, it currently only includes processing for EEG device data. To provide support for models trained on data from other devices (ex. Gaze), a `RawDataProcessor` must be added for that device. The Processor pre-processes data collected from that device and prepares it for sampling. A `RawDataProcessor` is matched up to a given signal model using that model's metadata (metadata.device_spec.content_type). See the `data_process` module for more details.
 
+## Parameters
+
+The parameters file is used to configure various aspects of the of the simulation. Timing-related parameters should generally match the parameters file used for training the signal model(s). Following are some specific parameters that you may want to modify, depending on the goals of a particular simulation:
+
+* `task_text` - the text to spell.
+* `lang_model_type` - language model to use in the simulation.
+* `summarize_session` - if set to true a session.xlsx summary will be generated for each simulation run.
+
+### Stoppage Criteria
+
+Parameters which define task stoppage criteria are important to ensure that the simulation runs to completion without getting stuck in an infinite loop. The values for these parameters may also affect analysis of results.
+
+* `min_inq_len` - Specifies the minimum number of inquiries to present before making a decision in copy/spelling tasks.
+* `max_inq_len` - maximum number of inquiries to display before stopping the task.
+* `max_selections` - The maximum number of selections for copy/spelling tasks. The task will end if this number is reached.
+* `max_incorrect` - The maximum number of consecutive incorrect selections for copy/spelling tasks. The task will end if this number is reached.
+* `max_inq_per_series` - Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks
+
+
 ## Current Limitations
 
 * Only provides EEG support
 * Only one sampler maybe provided for all devices. Ideally we should support a different sampling strategy for each device.
 * Only Copy Phrase is currently supported.
-* Metrics are collected per run, but not summarized across all runs.

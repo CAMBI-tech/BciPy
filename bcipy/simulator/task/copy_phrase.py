@@ -3,10 +3,10 @@
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 
-from bcipy.display.main import Display
-from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import InquirySchedule
+from bcipy.display.main import Display
+from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
@@ -140,6 +140,9 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             evidence_type = get_evidence_type(model)
             evidences.append((evidence_type, evidence))
         return evidences
+
+    def cleanup(self):
+        self.save_session_data()
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""

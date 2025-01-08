@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from bcipy.config import ROOT
 
@@ -16,10 +16,20 @@ DEFAULT_SAVE_LOCATION = f"{ROOT}/data/simulator"
 RUN_PREFIX = "run_"
 
 
+def remove_handlers(log: logging.Logger) -> None:
+    """Remove any file handlers from the provided logger."""
+    handlers = log.handlers[:]  # make copy
+    for handler in handlers:
+        # call the method, which handles locking.
+        log.removeHandler(handler)
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+
+
 def configure_logger(log_path: str,
                      file_name: str,
                      logger_name: Optional[str] = None,
-                     use_stdout: bool = True):
+                     use_stdout: bool = True) -> logging.Logger:
     """Configures logger for standard out and file output.
 
     Parameters
@@ -31,28 +41,23 @@ def configure_logger(log_path: str,
     """
 
     log = logging.getLogger(logger_name)  # configuring root logger
+
+    remove_handlers(log)
+
     log.setLevel(logging.INFO)
-    # Create handlers for logging to the standard output and a file
-    stdout_handler = logging.StreamHandler(stream=sys.stdout)
-    file_handler = logging.FileHandler(f"{log_path}/{file_name}")
-
-    # Set the log levels on the handlers
-    stdout_handler.setLevel(logging.INFO)
-    file_handler.setLevel(logging.INFO)
-
     fmt = '[%(asctime)s][%(name)s][%(levelname)s]: %(message)s'
-    fmt_file = logging.Formatter(fmt)
-    fmt_stdout = logging.Formatter("%(message)s")
 
-    # Set the log format on each handler
-    stdout_handler.setFormatter(fmt_stdout)
-    file_handler.setFormatter(fmt_file)
-
-    # Add each handler to the Logger object
-    if use_stdout and stdout_handler not in log.handlers:
+    if use_stdout:
+        stdout_handler = logging.StreamHandler(stream=sys.stdout)
+        stdout_handler.setLevel(logging.INFO)
+        stdout_handler.setFormatter(logging.Formatter("%(message)s"))
         log.addHandler(stdout_handler)
 
+    file_handler = logging.FileHandler(f"{log_path}/{file_name}")
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(logging.Formatter(fmt))
     log.addHandler(file_handler)
+    return log
 
 
 def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
@@ -75,17 +80,32 @@ def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
     return save_dir
 
 
-def configure_run_directory(sim_dir: str, run: int) -> str:
+def configure_run_directory(sim_dir: str,
+                            run: int) -> Tuple[str, logging.Logger]:
     """Create the necessary directories and configure the logger.
     Returns the run directory.
     """
     run_name = f"{RUN_PREFIX}{run}"
     path = f"{sim_dir}/{run_name}"
     os.mkdir(path)
-    configure_logger(log_path=path,
-                     file_name=f"{run_name}.log",
-                     use_stdout=False)
-    return path
+    log = configure_logger(log_path=path,
+                           file_name=f"{run_name}.log",
+                           logger_name=None,
+                           use_stdout=False)
+    return path, log
+
+
+def remove_file_logger(sim_dir: str, run: int) -> None:
+    """Disable any configured file handler for the root logger."""
+    path = f"{sim_dir}/{RUN_PREFIX}{run}"
+
+    log = logging.getLogger()
+    handlers = log.handlers[:]
+    for handler in handlers:
+        if isinstance(handler,
+                      logging.FileHandler) and path in handler.baseFilename:
+            log.removeHandler(handler)
+            handler.close()
 
 
 def directory_name() -> str:
