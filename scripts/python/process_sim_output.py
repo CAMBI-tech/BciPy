@@ -5,8 +5,8 @@ This script processes the output of the simulation and generates a summary of th
 ```text
 output_dir/
     user1/
-        phrase1/
-            language_model1/
+        language_model1/
+            phrase1/
                 user1_phrase1_language_model1_SIM_datetime/
                     run_1/
                         run_1.log
@@ -17,45 +17,20 @@ output_dir/
                         ...
                     summary_data.json
                     metrics.png
-        phrase2/
-            language_model1/
-                user1_phrase2_language_model1_SIM_datetime/
+            phrase2/
+                ...
+        language_model2/
+            phrase1/
+                user1_phrase1_language_model2_SIM_datetime/
                     ...
     user2/
         ...
 ```
 
-Questions:
-- Hypothesis testing: t-test for comparing the performance of different language models.
-    - What is the null hypothesis?
-        - The null hypothesis is that there is no difference in performance between the different language models.
-    - What is the alternative hypothesis?
-        - The alternative hypothesis is that there is a difference in performance between the different language models.
+The data will be processed and averages extracted for each language model across phrases. The results will be saved in a CSV file in the output directory.
 
-    - Average performance across all users and phrases for each language model or for each phrase-language model pair?
-        - Ex. WELCOME_HOME and HELLO_WORLD; language models: UNIFORM and KENLM
-            - WH-UNIFORM, WH-KENLM, HW-UNIFORM, HW-KENLM
-            - Uniform-avg, Kenlm-avg
-    - Output st.dev. and mean for each user and phrase-language model pair?
-    - Which metric to use for comparison? Available metrics: 
-        - Total Number of Series
-        - Total Number of Inquiries
-        - Total Selections == Total Number of Series?
-        - Inquiries per Series (or selection)
-        - Selections Correct (including backspaces)
-        - Selections Incorrect (including backspaces)
-        - Selections Correct Symbols (excluding backspaces)
-        - Typing Accuracy
-        - Total Seconds - how is this calculated?
-        - Custom Derived Metric?
-
-    - Review the parameters.json file to ensure all other thresholds are appropriate for the analysis.
-        - Max and Min Inquiries
-        - Max and Min Selections
-        - Max Minutes
-        - Decision Threshold
-        - Backspace (on/off, min)
-
+TODO: review with Dylan. 
+- Determine best way to estimate characters per minute per phrase
 """
 import json
 from pathlib import Path
@@ -70,11 +45,12 @@ SUMMARY_KEY_MAP = [
     ("INQUIRIES_PER_SERIES", "inquiries_per_selection"),
     ("SELECTIONS_CORRECT", "task_summary__selections_correct"),
     ("SELECTIONS_INCORRECT", "task_summary__selections_incorrect"),
-    ("SELECTIONS_CORRECT_SYMBOLS", "selections_correct_symbols"),
+    ("SELECTIONS_CORRECT_SYMBOLS", "task_summary__selections_correct_symbols"),
     ("TYPING_ACCURACY", "task_summary__typing_accuracy"),
     ("TOTAL_SECONDS", "total_seconds")
 ]
 SUMMARY_FILE_NAME = "summary_data.json"
+LANGUAGE_MODELS = ["UNIFORM", "KENLM"] 
 
 
 def extract_sim_output(output_dir: Path) -> None:
@@ -119,6 +95,7 @@ def summary_stats_for_sim_output(summary_data_path: Path) -> dict:
 
         summary_stats[f"{value}_AVG"] = average
         summary_stats[f"{value}_STD"] = std_dev
+    return summary_stats
 
 def save_results(data: dict, output_dir: Path) -> None:
     """Save the results to the output directory as a CSV file.
@@ -150,7 +127,7 @@ def save_results(data: dict, output_dir: Path) -> None:
     }
     """
     df = pd.DataFrame(data)
-    # df = df.transpose()
+    df = df.transpose()
     df.to_csv(output_dir / "group_results.csv")
 
 
@@ -205,25 +182,31 @@ def process_sim_output(data: dict) -> dict:
     }
     """
     # Loop over the phrases for each language model and calculate the average and standard deviation for each metric
-    processed_data = {}
+    final_data = {}
     for user, language_model in data.items():
-        processed_data[user] = {}
+        final_data[user] = {}
         for language_model, phrases in language_model.items():
-            processed_data[user][language_model] = {}
-            for phrase, summary_data in phrases.items():
-                for key in summary_data.keys():
-                    if key.endswith("AVG"):
-                        metric = key.split("_")[0]
-                        if metric not in processed_data[user][language_model]:
-                            processed_data[user][language_model][metric] = []
-                        processed_data[user][language_model][metric].append(summary_data[key])
-    return processed_data
-    
+            if language_model in LANGUAGE_MODELS:
+                phrase_data = {}
+                for phrase, summary_data in phrases.items():
+                    for key, value in summary_data.items():
+                        if key not in phrase_data:
+                            phrase_data[key] = []
+                        phrase_data[key].append(value)
+                # Calculate the average and standard deviation for each metric
+                for key, value in phrase_data.items():
+                    average = sum(value) / len(value)
+                    std_dev = sum((x - average) ** 2 for x in value) / len(value)
+                    final_data[user][f'{language_model}_{key}'] = average
+                    final_data[user][f'{language_model}_{key}_STD']  = std_dev
+            else:
+                print(f"Skipping language model {language_model} as it is not in the list of valid language models")
+    return final_data    
 
 if __name__ == "__main__":
     path = load_experimental_data(message="Select the directory containing the simulation output")
     data = extract_sim_output(Path(path))
-    data = process_sim_output(data) #WIP
-
+    final_data = process_sim_output(data) #WIP
+    breakpoint()
     # TODO: process the data - for each language model, calculate the average and standard deviation for each language model
-    save_results(data, Path(path))
+    save_results(final_data, Path(path))
