@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from bcipy.simulator.util.artifact import (RUN_PREFIX, configure_logger,
-                                           remove_file_logger)
+                                           remove_file_logger, remove_handlers)
 
 
 class TestSimArtifact(unittest.TestCase):
@@ -41,6 +41,7 @@ class TestSimArtifact(unittest.TestCase):
         log.info("testing 4 5 6")
         self.assertTrue(Path(self.temp_dir, "test_1b.log").exists())
         self.assertEqual(2, len(log.handlers))
+        remove_handlers(log)
 
     def test_configure_named_logger_without_stdout(self):
         """Test the named logger without logging to stdout."""
@@ -53,6 +54,7 @@ class TestSimArtifact(unittest.TestCase):
         log = logging.getLogger('TEST_LOGGER')
         self.assertEqual(1, len(log.handlers))
         self.assertTrue(isinstance(log.handlers[0], logging.FileHandler))
+        remove_handlers(log)
 
     def test_configure_root_logger(self):
         """Test configure root logger"""
@@ -63,6 +65,7 @@ class TestSimArtifact(unittest.TestCase):
         log = logging.getLogger()
         self.assertEqual(1, len(log.handlers))
         self.assertTrue(isinstance(log.handlers[0], logging.FileHandler))
+        remove_handlers(log)
 
     def test_remove_file_logger(self):
         """Test removal of file handler from root logger"""
@@ -74,6 +77,7 @@ class TestSimArtifact(unittest.TestCase):
         self.assertEqual(1, len(log.handlers))
         remove_file_logger(self.temp_dir, run=99)
         self.assertEqual(0, len(log.handlers))
+        remove_handlers(log)
 
 
 if __name__ == '__main__':

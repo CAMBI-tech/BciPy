@@ -16,10 +16,20 @@ DEFAULT_SAVE_LOCATION = f"{ROOT}/data/simulator"
 RUN_PREFIX = "run_"
 
 
+def remove_handlers(log: logging.Logger) -> None:
+    """Remove any file handlers from the provided logger."""
+    handlers = log.handlers[:]  # make copy
+    for handler in handlers:
+        # call the method, which handles locking.
+        log.removeHandler(handler)
+        if isinstance(handler, logging.FileHandler):
+            handler.close()
+
+
 def configure_logger(log_path: str,
                      file_name: str,
                      logger_name: Optional[str] = None,
-                     use_stdout: bool = True):
+                     use_stdout: bool = True) -> logging.Logger:
     """Configures logger for standard out and file output.
 
     Parameters
@@ -32,13 +42,7 @@ def configure_logger(log_path: str,
 
     log = logging.getLogger(logger_name)  # configuring root logger
 
-    # clear existing handlers
-    handlers = log.handlers[:]  # make copy
-    for handler in handlers:
-        # call the method, which handles locking.
-        log.removeHandler(handler)
-        if isinstance(handler, logging.FileHandler):
-            handler.close()
+    remove_handlers(log)
 
     log.setLevel(logging.INFO)
     fmt = '[%(asctime)s][%(name)s][%(levelname)s]: %(message)s'
@@ -49,10 +53,11 @@ def configure_logger(log_path: str,
         stdout_handler.setFormatter(logging.Formatter("%(message)s"))
         log.addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler(f"{log_path}/{file_name}", delay=True)
+    file_handler = logging.FileHandler(f"{log_path}/{file_name}")
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter(fmt))
     log.addHandler(file_handler)
+    return log
 
 
 def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
