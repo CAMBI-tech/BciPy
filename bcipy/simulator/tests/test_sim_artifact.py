@@ -67,7 +67,7 @@ class TestSimArtifact(unittest.TestCase):
     def test_remove_file_logger(self):
         """Test removal of file handler from root logger"""
         configure_logger(self.temp_dir,
-                         file_name=f"{RUN_PREFIX}99",
+                         file_name=f"{RUN_PREFIX}99.log",
                          logger_name=None,
                          use_stdout=False)
         log = logging.getLogger()

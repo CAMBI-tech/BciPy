@@ -49,7 +49,7 @@ def configure_logger(log_path: str,
         stdout_handler.setFormatter(logging.Formatter("%(message)s"))
         log.addHandler(stdout_handler)
 
-    file_handler = logging.FileHandler(f"{log_path}/{file_name}")
+    file_handler = logging.FileHandler(f"{log_path}/{file_name}", delay=True)
     file_handler.setLevel(logging.INFO)
     file_handler.setFormatter(logging.Formatter(fmt))
     log.addHandler(file_handler)
