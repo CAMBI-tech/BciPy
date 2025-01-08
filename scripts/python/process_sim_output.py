@@ -37,6 +37,9 @@ from pathlib import Path
 import pandas as pd
 from typing import List
 from bcipy.io.load import load_experimental_data
+from scipy.stats import ttest_ind as t_test
+
+from matplotlib import pyplot as plt
 
 SUMMARY_KEY_MAP = [
     ("N_SERIES", "total_number_series"),
@@ -97,7 +100,7 @@ def summary_stats_for_sim_output(summary_data_path: Path) -> dict:
         summary_stats[f"{value}_STD"] = std_dev
     return summary_stats
 
-def save_results(data: dict, output_dir: Path) -> None:
+def save_results(data: dict, output_dir: Path) -> pd.DataFrame:
     """Save the results to the output directory as a CSV file.
     
     Data should be a dictionary with the following structure:
@@ -129,6 +132,7 @@ def save_results(data: dict, output_dir: Path) -> None:
     df = pd.DataFrame(data)
     df = df.transpose()
     df.to_csv(output_dir / "group_results.csv")
+    return df
 
 
 def process_sim_output(data: dict) -> dict:
@@ -201,12 +205,83 @@ def process_sim_output(data: dict) -> dict:
                     final_data[user][f'{language_model}_{key}_STD']  = std_dev
             else:
                 print(f"Skipping language model {language_model} as it is not in the list of valid language models")
-    return final_data    
+    return final_data
+
+def grab_data_keys(metrics: List[str], models: List[str]) -> List[str]:
+    data_keys = []
+    for model in models:
+        for metric in metrics:
+            key = f"{model}_{metric}"
+            data_keys.append(key)
+    return data_keys
+
+def plot_results(
+        data: pd.DataFrame,
+        metric: str,
+        data_keys: List[str],
+        output_dir: Path,
+        show=True,
+        save=True) -> None:
+    """Plot the results for each language model."""
+    # pull the data from the dataframe
+    plot = data[data_keys].plot(kind="bar", figsize=(10, 6))
+    plt.xticks(rotation=45)
+    plt.ylabel(metric)
+    plt.xlabel("User")
+    plt.title(f"{metric} by Language Model")
+
+    if show:
+        plt.show()
+    
+    if save:
+        fig = plot.get_figure()
+        fig.savefig(f"{output_dir}/{metric}_bar.png")
+
+
+    # plot a boxplot of the data
+    boxplot = data.boxplot(column=data_keys, figsize=(10, 6))
+    plt.ylabel(metric)
+    # The x-axis is the language model 
+    label_text = [key.split("_")[0] for key in data_keys]
+    plt.xticks(range(1, len(data_keys) + 1), label_text)
+    plt.title(f"{metric} by Language Model")
+
+    if show:
+        plt.show()
+
+    if save:
+        fig = boxplot.get_figure()
+        fig.savefig(f"{output_dir}/{metric}_box.png")
+
+def run_stats(
+        data: pd.DataFrame,
+        data_keys: List[str],
+        permutations=1000) -> None:
+    """Run statistical tests on the results.
+    
+    This function should run a series of statistical tests to determine if there is a significant difference between the language models.
+    """
+    assert len(data_keys) == 2, "This function only supports two language models at a time"
+    dist_1 = data[data_keys[0]].tolist()
+    dist_2 = data[data_keys[1]].tolist()
+
+    # Run a t-test
+    t_stat, p_value = t_test(dist_1, dist_2, permutations=permutations, alternative="two-sided")
+    print(f"t-statistic: {t_stat}, p-value: {p_value}")
+    return t_stat, p_value
 
 if __name__ == "__main__":
     path = load_experimental_data(message="Select the directory containing the simulation output")
     data = extract_sim_output(Path(path))
-    final_data = process_sim_output(data) #WIP
-    breakpoint()
-    # TODO: process the data - for each language model, calculate the average and standard deviation for each language model
-    save_results(final_data, Path(path))
+    final_data = process_sim_output(data)
+    df = save_results(final_data, Path(path))
+
+    # for plotting and statistical analysis
+    processing_metrics = ["TOTAL_SECONDS_AVG"]
+    processing_models = LANGUAGE_MODELS
+    data_keys = grab_data_keys(processing_metrics, processing_models)
+    plot_df = df.copy()
+    plot_results(plot_df, processing_metrics[0], data_keys, Path(path))
+    stats_df = df.copy()
+    run_stats(stats_df, data_keys)
+    # breakpoint()

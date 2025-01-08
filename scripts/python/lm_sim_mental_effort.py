@@ -32,8 +32,7 @@ output_dir/
 The summary data at the simulation run level (summary_data.json) will be the the data used to compare across users and phrases.
 
 TODO: 
-- Integrate LLM model and add to the analysis
-- get phrases from LM team, set in the phrase.json or via the PHRASES variable below
+- Integrate LLM model and add to the analysis. Waiting for push from DG 01/08/2025. Then I will integrate the branch into BANFF.
 """
 from pathlib import Path
 from bcipy.io.load import load_json_parameters
@@ -68,7 +67,7 @@ PHRASES = [
     ("DOING_HW", 0),
 
 ]
-LANGUAGE_MODELS = ["UNIFORM", "KENLM"] # Add LLM to this list
+LANGUAGE_MODELS = ["UNIFORM", "KENLM", "CAUSAL"] # Add LLM to this list
 MODE = "RSVP"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
 RUN_COUNT = 2
