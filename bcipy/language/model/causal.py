@@ -149,6 +149,7 @@ class CausalLanguageModel(LanguageModel):
         # self.index_to_word[self.vocab["cyclo"][1]] = cyclopedia
 
         (self.model_name.startswith("facebook/opt")
+         or self.model_name.startswith("figmtu/opt")
          or "Llama-3.1" in self.model_name)
 
         # Get the index we use for the start or end pseudo-word
@@ -166,6 +167,7 @@ class CausalLanguageModel(LanguageModel):
 
         # OPT, Llama and Mistral all insert start token
         self.drop_first_token = (self.model_name.startswith("facebook/opt") or
+                                 self.model_name.startswith("figmtu/opt") or
                                  "Llama-3.1" in self.model_name or
                                  "Mistral" in self.model_name)
 
