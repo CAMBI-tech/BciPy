@@ -43,12 +43,30 @@ import bcipy.simulator.util.metrics as metrics
 
 
 PHRASES = [
-    ("WELCOME_HOME", 0), 
-    ("HELLO_WORLD", 0),
-    ("GOOD_MORNING", 0),
-    ("BCI_IS_COOL", 0),
-    ("DANIEL_IS_AWESOME", 0),
-    ("SIMULATIONS_ARE_HARD", 12),
+    # EASY PHRASES
+    ("I_LOVE_YOU", 0), 
+    ("SEE_YOU_LATER", 0),
+    ("I_NEED_SOME_HELP", 0),
+    ("MY_DOG_IS_GOOD", 0),
+    ("HOW_ARE_YOU", 0),
+    ("SHOW_ME_PLEASE", 0),
+    ("THIS_IS_GREAT", 0),
+    ("I_LIKE_BLUE_CAKE", 0),
+    ("GIVE_IT_BACK", 0),
+    ("BE_HOME_SOON", 0),
+
+    # HARD PHRASES
+    ("CAN_WE_GO_WED", 0),
+    ("WHERE_IN_CANCUN", 0),
+    ("IDC_WHAT_YOU_GET", 0),
+    ("HOW_R_U_TODAY", 0),
+    ("IDK_WHEN", 0),
+    ("GOT_COOL_NEW_TECH", 0),
+    ("HOW_IS_HE_DOC", 0),
+    ("I_LIKE_REO_SPEEDWAGON", 0),
+    ("GONNA_BE_LIT_FAM", 0),
+    ("DOING_HW", 0),
+
 ]
 LANGUAGE_MODELS = ["UNIFORM", "KENLM"] # Add LLM to this list
 MODE = "RSVP"
