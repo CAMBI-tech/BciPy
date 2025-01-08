@@ -15,7 +15,8 @@ from bcipy.simulator.ui import cli, gui
 from bcipy.simulator.util.artifact import (DEFAULT_SAVE_LOCATION,
                                            TOP_LEVEL_LOGGER_NAME,
                                            configure_run_directory,
-                                           init_simulation_dir)
+                                           init_simulation_dir,
+                                           remove_file_logger)
 
 logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
@@ -41,16 +42,17 @@ class TaskRunner():
         """Run one or more simulations"""
         self.task_factory.parameters.save(self.sim_dir, 'parameters.json')
         for i in range(self.runs):
-            logger.info(f"Executing task {i+1}")
             self.do_run(i + 1)
-            logger.info("Task complete")
 
     def do_run(self, run: int):
         """Execute a simulation run."""
+        logger.info(f"Executing task {run}")
         run_dir = configure_run_directory(self.sim_dir, run)
         logger.info(run_dir)
         task = self.task_factory.make_task(run_dir)
         task.execute()
+        logger.info("Task complete")
+        remove_file_logger(self.sim_dir, run)
 
 
 def main():
