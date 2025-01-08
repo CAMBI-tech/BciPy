@@ -48,6 +48,9 @@ class CausalLanguageModel(LanguageModel):
             max_completed      - stop search once we reach this many completed hypotheses, None=don't prune
         """
         super().__init__(response_type=response_type, symbol_set=symbol_set)
+
+        causal_params = self.parameters['causal']
+        
         self.model = None
         self.tokenizer = None
         self.vocab_size = 0
@@ -74,7 +77,6 @@ class CausalLanguageModel(LanguageModel):
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
 
-        causal_params = self.parameters['causal']
         self.model_name = lang_model_name or causal_params['model_name']['value']
 
         local_model_path = lm_path or causal_params['model_path']['value']
