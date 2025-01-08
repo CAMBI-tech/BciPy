@@ -66,11 +66,9 @@ class CausalLanguageModel(LanguageModel):
         self.max_completed = max_completed
 
         if not max_completed and not beam_width:
-            print(
-                f"WARNING: using causal language model without any pruning, this can be slow!")
+            print("WARNING: using causal language model without any pruning, this can be slow!")
         else:
-            print(f"Causal language model, beam_width {
-                  beam_width}, max_completed {max_completed}")
+            print(f"Causal language model, beam_width {beam_width}, max_completed {max_completed}")
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
@@ -79,8 +77,7 @@ class CausalLanguageModel(LanguageModel):
         self.model_name = lang_model_name or causal_params['model_name']['value']
 
         local_model_path = lm_path or causal_params['model_path']['value']
-        self.model_dir = f"{
-            LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
+        self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
         # Parameters for the search
         self.beam_width = beam_width
@@ -173,10 +170,7 @@ class CausalLanguageModel(LanguageModel):
 
         # Get token id(s) for the left context we condition all sentences on
         self.left_context_tokens = self._encode(self.left_context)
-        print(
-            f"Causal: left_context = '{
-                self.left_context}', left_context_tokens = {
-                self.left_context_tokens}")
+        print(f"Causal: left_context = '{self.left_context}', left_context_tokens = {self.left_context_tokens}")
 
     def _encode(self, text: str) -> List[int]:
         tokens = self.tokenizer.encode(text)
