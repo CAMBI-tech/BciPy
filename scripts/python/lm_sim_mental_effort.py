@@ -45,32 +45,32 @@ PHRASES = [
     # EASY PHRASES
     ("I_LOVE_YOU", 0), 
     ("SEE_YOU_LATER", 0),
-    ("I_NEED_SOME_HELP", 0),
-    ("MY_DOG_IS_GOOD", 0),
-    ("HOW_ARE_YOU", 0),
-    ("SHOW_ME_PLEASE", 0),
-    ("THIS_IS_GREAT", 0),
-    ("I_LIKE_BLUE_CAKE", 0),
-    ("GIVE_IT_BACK", 0),
-    ("BE_HOME_SOON", 0),
+    # ("I_NEED_SOME_HELP", 0),
+    # ("MY_DOG_IS_GOOD", 0),
+    # ("HOW_ARE_YOU", 0),
+    # ("SHOW_ME_PLEASE", 0),
+    # ("THIS_IS_GREAT", 0),
+    # ("I_LIKE_BLUE_CAKE", 0),
+    # ("GIVE_IT_BACK", 0),
+    # ("BE_HOME_SOON", 0),
 
     # HARD PHRASES
     ("CAN_WE_GO_WED", 0),
     ("WHERE_IN_CANCUN", 0),
-    ("IDC_WHAT_YOU_GET", 0),
-    ("HOW_R_U_TODAY", 0),
-    ("IDK_WHEN", 0),
-    ("GOT_COOL_NEW_TECH", 0),
-    ("HOW_IS_HE_DOC", 0),
-    ("I_LIKE_REO_SPEEDWAGON", 0),
-    ("GONNA_BE_LIT_FAM", 0),
-    ("DOING_HW", 0),
+    # ("IDC_WHAT_YOU_GET", 0),
+    # ("HOW_R_U_TODAY", 0),
+    # ("IDK_WHEN", 0),
+    # ("GOT_COOL_NEW_TECH", 0),
+    # ("HOW_IS_HE_DOC", 0),
+    # ("I_LIKE_REO_SPEEDWAGON", 0),
+    # ("GONNA_BE_LIT_FAM", 0),
+    # ("DOING_HW", 0),
 
 ]
 LANGUAGE_MODELS = ["UNIFORM", "KENLM", "CAUSAL"] # Add LLM to this list
 MODE = "RSVP"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
-RUN_COUNT = 2
+RUN_COUNT = 5
 OUTPUT_DIR = "/Users/scitab/Desktop/sim_output"
 
 
@@ -98,11 +98,12 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
 
     # update the parameters with the new phrase, starting index, and language model
     phrase_length = len(phrase) - starting_index
+    print(f"Processing {user}:{phrase}:{language_model} of phrase length: {phrase_length}")
     parameters["task_text"] = phrase
     parameters["spelled_letters_count"] = starting_index
     parameters["lang_model_type"] = language_model
 
-    parameters["max_inq_len"] = phrase_length * 8 
+    parameters["max_inq_len"] = phrase_length * 8
     parameters["max_selections"] = phrase_length * 2 # This should be 2 * the length of the phrase to type
     parameters["min_inq_per_series"] = 1
     parameters["max_inq_per_series"] = 8
@@ -110,7 +111,6 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
     parameters["lm_backspace_prob"] = 0.03571
     parameters["max_minutes"] = 120 # This is not used in the simulation. But we set it high to avoid any issues.
     parameters["max_incorrect"] = int(phrase_length / 2) # This should be half the length of the phrase to type
-
 
     # get the correct list of source directories from the data directory
     source_dirs = [str(file) for file in data_dir.iterdir() if file.is_dir() and DATA_PATTERN in file.name]
@@ -125,7 +125,10 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
                                signal_model_paths=[str(model_path)],
                                parameters=parameters)
     # create the simulation directory
-    sim_dir = init_simulation_dir(save_location=Path(OUTPUT_DIR), prefix=f"{user}/{language_model}/{phrase}/{user}_{phrase}_{language_model}_")
+    # model_auc = model_path.stem.split("_")[-1]
+    sim_dir = init_simulation_dir(
+        save_location=Path(OUTPUT_DIR),
+        prefix=f"{user}/{language_model}/{phrase}/{user}_{phrase}_{language_model}_")
     # create the task runner
     runner = TaskRunner(save_dir=sim_dir,
                         task_factory=task_factory,
