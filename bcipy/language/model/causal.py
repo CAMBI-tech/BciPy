@@ -69,10 +69,10 @@ class CausalLanguageModel(LanguageModel):
         self.case_simple = case_simple
         self.max_completed = max_completed or causal_params['max_completed']['value']
 
-        if not max_completed and not beam_width:
+        if not self.max_completed and not self.beam_width:
             print("WARNING: using causal language model without any pruning, this can be slow!")
         else:
-            print(f"Causal language model, beam_width {beam_width}, max_completed {max_completed}")
+            print(f"Causal language model, beam_width {self.beam_width}, max_completed {self.max_completed}")
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model
