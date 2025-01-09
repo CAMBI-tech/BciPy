@@ -27,7 +27,7 @@ def language_models_by_name() -> Dict[str, LanguageModel]:
     return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
 
-def init_language_model(parameters: dict) -> LanguageModel:
+def init_language_model(parameters: dict, retries: int = 10) -> LanguageModel:
     """
     Init Language Model configured in the parameters.
 
@@ -49,9 +49,16 @@ def init_language_model(parameters: dict) -> LanguageModel:
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
-    return model(response_type=ResponseType.SYMBOL,
-                 symbol_set=alphabet(parameters),
-                 **params)
+
+    try:
+        return model(response_type=ResponseType.SYMBOL,
+                    symbol_set=alphabet(parameters),
+                    **params)
+    except Exception as e:
+        print(f"Error initializing language model: {e}")
+        if retries > 0:
+            print(f"Retrying {retries} more times.")
+            return init_language_model(parameters, retries - 1)
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:

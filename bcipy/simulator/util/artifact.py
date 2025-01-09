@@ -88,7 +88,7 @@ def configure_run_directory(sim_dir: str,
     os.mkdir(path)
     log = configure_logger(log_path=path,
                            file_name=f"{run_name}.log",
-                           logger_name=TOP_LEVEL_LOGGER_NAME,
+                           logger_name=None,
                            use_stdout=False)
     return path, log
 

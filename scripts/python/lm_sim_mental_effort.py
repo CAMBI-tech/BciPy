@@ -31,8 +31,6 @@ output_dir/
 
 The summary data at the simulation run level (summary_data.json) will be the the data used to compare across users and phrases.
 
-TODO: 
-- Integrate LLM model and add to the analysis. Waiting for push from DG 01/08/2025. Then I will integrate the branch into BANFF.
 """
 from pathlib import Path
 from bcipy.io.load import load_json_parameters
@@ -45,32 +43,31 @@ PHRASES = [
     # EASY PHRASES
     ("I_LOVE_YOU", 0), 
     ("SEE_YOU_LATER", 0),
-    # ("I_NEED_SOME_HELP", 0),
-    # ("MY_DOG_IS_GOOD", 0),
-    # ("HOW_ARE_YOU", 0),
-    # ("SHOW_ME_PLEASE", 0),
-    # ("THIS_IS_GREAT", 0),
-    # ("I_LIKE_BLUE_CAKE", 0),
-    # ("GIVE_IT_BACK", 0),
-    # ("BE_HOME_SOON", 0),
+    ("I_NEED_SOME_HELP", 0),
+    ("MY_DOG_IS_GOOD", 0),
+    ("HOW_ARE_YOU", 0),
+    ("SHOW_ME_PLEASE", 0),
+    ("THIS_IS_GREAT", 0),
+    ("I_LIKE_BLUE_CAKE", 0),
+    ("GIVE_IT_BACK", 0),
+    ("BE_HOME_SOON", 0),
 
     # HARD PHRASES
     ("CAN_WE_GO_WED", 0),
     ("WHERE_IN_CANCUN", 0),
-    # ("IDC_WHAT_YOU_GET", 0),
-    # ("HOW_R_U_TODAY", 0),
-    # ("IDK_WHEN", 0),
-    # ("GOT_COOL_NEW_TECH", 0),
-    # ("HOW_IS_HE_DOC", 0),
-    # ("I_LIKE_REO_SPEEDWAGON", 0),
-    # ("GONNA_BE_LIT_FAM", 0),
-    # ("DOING_HW", 0),
-
+    ("IDC_WHAT_YOU_GET", 0),
+    ("HOW_R_U_TODAY", 0),
+    ("IDK_WHEN", 0),
+    ("GOT_COOL_NEW_TECH", 0),
+    ("HOW_IS_HE_DOC", 0),
+    ("I_LIKE_REO_SPEEDWAGON", 0),
+    ("GONNA_BE_LIT_FAM", 0),
+    ("DOING_HW", 0),
 ]
 LANGUAGE_MODELS = ["UNIFORM", "KENLM", "CAUSAL"] # Add LLM to this list
 MODE = "RSVP"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
-RUN_COUNT = 5
+RUN_COUNT = 25
 OUTPUT_DIR = "/Users/scitab/Desktop/sim_output"
 
 
@@ -108,6 +105,7 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
     parameters["min_inq_per_series"] = 1
     parameters["max_inq_per_series"] = 8
     parameters["backspace_always_shown"] = True
+    parameters["summarize_session"] = False
     parameters["lm_backspace_prob"] = 0.03571
     parameters["max_minutes"] = 120 # This is not used in the simulation. But we set it high to avoid any issues.
     parameters["max_incorrect"] = int(phrase_length / 2) # This should be half the length of the phrase to type
@@ -134,9 +132,12 @@ def run_simulation(data_dir: Path, user: str, phrase: str, starting_index: int, 
                         task_factory=task_factory,
                         runs=RUN_COUNT)
     # run the simulation
-    runner.run()
-    metrics.report(sim_dir)
-
+    try:
+        runner.run()
+        metrics.report(sim_dir)
+    except Exception as e:
+        print(f"Error running simulation for {user} with phrase {phrase} and language model {language_model}")
+        print(e)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@
 import logging
 from typing import Dict, List, Type
 
+from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.language_model import init_language_model
 from bcipy.io.load import load_json_parameters, load_signal_model
 from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
