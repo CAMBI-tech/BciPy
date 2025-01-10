@@ -43,6 +43,7 @@ For example,
 - `m`: Path to a pickled (.pkl) signal model. One or more models can be provided.
 - `n`: Number of simulation runs
 - `o`: Output directory for all simulation artifacts.
+- `s`: Sampling strategy to use; by default the TargetNonTargetSampler is used. The value provided should be the class name of a Sampler.
 
 #### Sim Output Details
 

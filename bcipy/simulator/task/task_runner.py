@@ -6,9 +6,9 @@ import sys
 from pathlib import Path
 
 import bcipy.simulator.util.metrics as metrics
-# pylint: disable=unused-import
+# pylint: disable=wildcard-import,unused-wildcard-import
 # flake8: noqa
-from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
+from bcipy.simulator.data.sampler import *
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.ui import cli, gui
