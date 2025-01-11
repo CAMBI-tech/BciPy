@@ -1,6 +1,6 @@
 """Setup and run the task"""
-
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
@@ -106,6 +106,11 @@ def main():
                         required=False,
                         default='TargetNontargetSampler',
                         help="Sampling strategy")
+    parser.add_argument("--sampler_args",
+                        type=str,
+                        required=False,
+                        default="{}",
+                        help="Sampler args structured as a JSON string.")
     parser.add_argument("-o",
                         "--output",
                         type=Path,
@@ -126,12 +131,15 @@ def main():
         task_factory = TaskFactory(params_path=sim_args['parameters'],
                                    source_dirs=sim_args['data_folder'],
                                    signal_model_paths=sim_args['model_path'],
-                                   sampling_strategy=classify(sim_args['sampler']),
-                                   task=SimulatorCopyPhraseTask)
+                                   sampling_strategy=classify(
+                                       sim_args['sampler']),
+                                   task=SimulatorCopyPhraseTask,
+                                   sampler_args=json.loads(sim_args['sampler_args']))
 
     if task_factory:
         sim_dir = init_simulation_dir(save_location=outdir)
         logger.info(sim_dir)
+        task_factory.log_state()
 
         runner = TaskRunner(save_dir=sim_dir,
                             task_factory=task_factory,

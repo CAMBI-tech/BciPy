@@ -25,6 +25,8 @@ optional arguments:
   -n N                  Number of times to run the simulation
   -s SAMPLER, --sampler SAMPLER
                         Sampling strategy
+  --sampler_args SAMPLER_ARGS
+                        Sampler args structured as a JSON string.
   -o OUTPUT, --output OUTPUT
                         Sim output path
 ```
@@ -44,6 +46,7 @@ For example,
 - `n`: Number of simulation runs
 - `o`: Output directory for all simulation artifacts.
 - `s`: Sampling strategy to use; by default the TargetNonTargetSampler is used. The value provided should be the class name of a Sampler.
+- `sampler_args`: Arguments to pass in to the selected Sampler. Some samplers can be customized with further parameters. These should be structured as a JSON dictionary mapping keys to values. For example: `--sampler_args='{"inquiry_end": 4}'`
 
 #### Sim Output Details
 
@@ -91,6 +94,13 @@ Parameters which define task stoppage criteria are important to ensure that the 
 * `max_incorrect` - The maximum number of consecutive incorrect selections for copy/spelling tasks. The task will end if this number is reached.
 * `max_inq_per_series` - Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks
 
+## GUI
+
+A simulation can be started using a graphical user interface.
+
+`$ bcipy-sim --gui`
+
+This provides a way to explore the file system when providing the parameters.json file, simulation model, and input data sources. After all required inputs have been provided the user can initiate the simulation from the GUI interface. The command line used to run the simulation are output to the console prior to the run making it easier to start subsequent simulations with the same set of arguments.
 
 ## Current Limitations
 
