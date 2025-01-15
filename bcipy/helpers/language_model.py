@@ -27,7 +27,7 @@ def language_models_by_name() -> Dict[str, LanguageModel]:
     return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
 
-def init_language_model(parameters: dict, retries: int = 10) -> LanguageModel:
+def init_language_model(parameters: dict, retries: int = 1) -> LanguageModel:
     """
     Init Language Model configured in the parameters.
 

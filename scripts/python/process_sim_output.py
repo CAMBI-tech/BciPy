@@ -231,13 +231,14 @@ def plot_results(
         fig = plot.get_figure()
         fig.savefig(f"{output_dir}/{metric}_bar.png")
 
+    colors = dict(boxes="#c5cbca", whiskers="#0f0f0f", medians="#046565", caps="#0f0f0f")
     # BOXPLOT
-    boxplot = data.boxplot(column=data_keys, figsize=(10, 6))
+    boxplot = data.boxplot(column=data_keys, figsize=(10, 6), grid=False, fontsize=15, color=colors, patch_artist=True, notch=True)
     plt.ylabel(metric)
     # The x-axis is the language model 
     label_text = [key.split("_")[0] for key in data_keys]
     plt.xticks(range(1, len(data_keys) + 1), label_text)
-    plt.title(f"{metric} by Language Model")
+    # plt.title(f"{metric} by Language Model")
 
     if show:
         plt.show()
@@ -245,6 +246,8 @@ def plot_results(
     if save:
         fig = boxplot.get_figure()
         fig.savefig(f"{output_dir}/{metric}_box.png")
+    
+
 
 def run_stats(
         data: pd.DataFrame,
@@ -284,8 +287,13 @@ if __name__ == "__main__":
         "TOTAL_SECONDS_STD_STD",
         "CHAR_PER_MIN_AVG",
         "CHAR_PER_MIN_STD_STD",
+        "N_INQUIRIES_AVG",
+        "N_INQUIRIES_STD_STD",
         "TYPING_ACCURACY_AVG",
-        "TYPING_ACCURACY_STD_STD"]
+        "TYPING_ACCURACY_STD_STD",
+        "SELECTIONS_INCORRECT_AVG",
+        "SELECTIONS_INCORRECT_STD_STD",
+        ]
     # processing_metrics = ["TYPING_ACCURACY_AVG"]
     # processing_metrics = ["N_SERIES_AVG"]
     processing_models = LANGUAGE_MODELS
