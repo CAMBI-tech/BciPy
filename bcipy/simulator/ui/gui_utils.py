@@ -1,10 +1,14 @@
 """Helper functions for the GUI code"""
 import inspect
-from typing import (Any, List, NamedTuple, Optional, Tuple, Type, Union,
+from typing import (Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union,
                     get_args, get_origin)
 
-from bcipy.simulator.data.sampler.base_sampler import Sampler
+# pylint: disable=wildcard-import,unused-wildcard-import
+# flake8: noqa: F403
+from bcipy.simulator.data.sampler import *
+from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
 
+# This can be expanded as needed (ex. Path support).
 SUPPORTED_INPUT_TYPES = ['int', 'str', 'float']
 
 
@@ -54,14 +58,14 @@ def get_input_type(param: inspect.Parameter) -> Tuple[str, bool]:
     return input_type, required
 
 
-def get_inputs(sampler_type: Type[Sampler]) -> List[InputField]:
-    """Given a sampler, determine the input parameters for GUI prompts.
-    Only outputs parameters with a type annotation where that type can be
+def get_inputs(input_class: Type[Any]) -> List[InputField]:
+    """Given the class, determine the input parameters for GUI prompts.
+    Only outputs parameters with a type annotation for basic types that can be
     input through a GUI (int, float, str).
     """
 
     # introspect the model arguments to determine what parameters to pass.
-    params = inspect.signature(sampler_type).parameters
+    params = inspect.signature(input_class).parameters
 
     inputs = []
     for key in params.keys():
@@ -76,3 +80,36 @@ def get_inputs(sampler_type: Type[Sampler]) -> List[InputField]:
                                value=get_param_value(param),
                                required=required))
     return inputs
+
+
+def all_subclasses(parent_cls: Type[Any]):
+    """Get all subclasses of the given class. Note that a class can only see
+    a subclass if the module with the sub has been loaded.
+    See: https://stackoverflow.com/questions/3862310/how-to-find-all-the-subclasses-of-a-class-given-its-name"""
+    return set(parent_cls.__subclasses__()).union([
+        sub for cls in parent_cls.__subclasses__()
+        for sub in all_subclasses(cls)
+    ])
+
+
+def sampler_options(
+    default: Type[Sampler] = TargetNontargetSampler
+) -> Dict[str, Type[Sampler]]:
+    """Returns available samplers as a name -> class dict.
+    Orders with the default item first, then sorted alphabetically."""
+
+    subclasses = all_subclasses(Sampler)
+    if default in subclasses:
+        subclasses.remove(default)
+        subclasses = [
+            default, *sorted(subclasses, key=lambda cls: cls.__name__)
+        ]
+    else:
+        subclasses = sorted(subclasses, key=lambda cls: cls.__name__)
+    return {cls.__name__: cls for cls in subclasses}
+
+
+def sampler_inputs(sampler_class: Type[Sampler]) -> List[InputField]:
+    """Returns the list of inputs needed to initialize instances of the given
+    sampler class."""
+    return get_inputs(sampler_class)

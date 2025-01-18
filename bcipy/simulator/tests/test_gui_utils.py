@@ -3,7 +3,9 @@ import unittest
 from typing import Optional
 
 from bcipy.simulator.data.sampler.base_sampler import Sampler
-from bcipy.simulator.ui.gui_utils import InputField, get_inputs
+from bcipy.simulator.data.sampler.inquiry_sampler import InquirySampler
+from bcipy.simulator.ui.gui_utils import (InputField, get_inputs,
+                                          sampler_options)
 
 
 class TestSampler(Sampler):
@@ -25,8 +27,8 @@ class TestSampler(Sampler):
 class GuiUtilsTest(unittest.TestCase):
     """Tests for GUI utility functions."""
 
-    def test_sampler_params(self):
-        """Test that introspecting a Sampler object produces the correct input
+    def test_input_params(self):
+        """Test that introspecting an object produces the correct input
         parameters."""
 
         inputs = get_inputs(TestSampler)
@@ -43,6 +45,15 @@ class GuiUtilsTest(unittest.TestCase):
         self.assertTrue(
             InputField(name="d", input_type="str", value=None, required=False)
             in inputs, "param d should be an optional str")
+
+    def test_sampler_options(self):
+        """Test sampler options puts the default value first"""
+        opts = sampler_options()
+        self.assertEqual("TargetNontargetSampler", list(opts.keys())[0])
+
+        opts = sampler_options(default=InquirySampler)
+        self.assertEqual("InquirySampler", list(opts.keys())[0])
+        self.assertTrue("TargetNontargetSampler" in opts.keys())
 
 
 if __name__ == '__main__':
