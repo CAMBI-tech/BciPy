@@ -1,3 +1,18 @@
+"""
+TODO
+- add a leave one out feature that can be used instead of the train_test_split
+- EEGNet into BciPy SignalModel
+- A way to save the model during adaptive copy phrase
+- Online evaluation of signal model 
+- Get data to Basak 
+
+Decisions:
+- The model will handle it's updating and state tracking
+
+Timeline:
+- 2 weeks meet (29th) to discuss the model and the data
+"""
+
 import os
 import sys
 import glob
@@ -41,7 +56,7 @@ from sklearn.model_selection import train_test_split
 devices_by_name = devices.load(
         Path(DEFAULT_DEVICES_PATH, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-GROUP_MODEL_NAME = "EEGNet_RSVP_ME_group_model"
+GROUP_MODEL_NAME = "PCA_RSVP_ME_group_model_2"
 
 class DirectoryFinder(QMainWindow):
     def __init__(
@@ -391,7 +406,7 @@ def train_model(
         labels: List[int],
         device_spec: dict = None,
         default_transform: dict = None,
-        model_type: str = "EEGNet") -> SignalModel:
+        model_type: str = "PcaRdaKdeModel") -> SignalModel:
     """
     Train a model using the given trials and labels.
 
@@ -417,7 +432,7 @@ def train_model(
         save_model(model, f"{GROUP_MODEL_NAME}_{model.auc:0.4f}.pkl")
     
     if model_type == "EEGNet":
-        # Split the data into training, testing, and validation sets (60/20/20)
+        # Split the data into training, testing, and validation sets (80/10/10)
         chans, samples, kernels = trials.shape[1], trials.shape[2], 1
         print(f"Channels: {chans}, Samples: {samples}, Kernels: {kernels}")
         X_train, X_test, Y_train, Y_test = train_test_split(trials, labels, test_size=0.2, random_state=42)
@@ -433,7 +448,7 @@ def train_model(
         Y_train      = Y_train.reshape(Y_train.shape[0], 1)
         Y_validate   = Y_validate.reshape(Y_validate.shape[0], 1)
         Y_test       = Y_test.reshape(Y_test.shape[0], 1)
-                # Insert model training code here
+  
         model = EEGNet(nb_classes=2, Chans=chans, Samples=samples)
         model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
         # count number of parameters in the model
@@ -484,7 +499,7 @@ if __name__ == "__main__":
     trials, labels, device_spec, transform = load_group_trials(
         selected_dirs,
         parameters,
-        external_model=True)
+        external_model=False)
     print(
         f"Loaded {trials.shape} and {len(labels)} labels. Accrued from {len(selected_dirs)} directories.")
 
