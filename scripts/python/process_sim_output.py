@@ -233,7 +233,7 @@ def plot_results(
 
     colors = dict(boxes="#c5cbca", whiskers="#0f0f0f", medians="#046565", caps="#0f0f0f")
     # BOXPLOT
-    boxplot = data.boxplot(column=data_keys, figsize=(10, 6), grid=False, fontsize=15, color=colors, patch_artist=True, notch=True)
+    boxplot = data.boxplot(column=data_keys, figsize=(10, 6), fontsize=15, color=colors, patch_artist=True, notch=True)
     plt.ylabel(metric)
     # The x-axis is the language model 
     label_text = [key.split("_")[0] for key in data_keys]
