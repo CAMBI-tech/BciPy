@@ -134,7 +134,7 @@ def write_summary_measures(measures: dict, output: str):
         df = pd.DataFrame(measures, index=[0])
         df.to_csv(csv_output, mode='a', header=False, index=False)
 
-def calculate_summary_measures(data: dict, experiment_id: str, date_time: str) -> dict:
+def calculate_summary_measures(data: dict, experiment_id: str, date_time: str, parameters: dict) -> dict:
     """Calculate the summary measures for the given data.
     
     Data is expected to be in the following format:
@@ -147,6 +147,7 @@ def calculate_summary_measures(data: dict, experiment_id: str, date_time: str) -
         data (dict): The data to calculate the summary measures from.
         experiment_id (str): The experiment id.
         date_time (str): The date time.
+        parameters (dict): The parameters for the experiment.
     """
     # Calculate the summary measures using an average across all the sessions
     calculated_measures = {}
@@ -170,7 +171,18 @@ def calculate_summary_measures(data: dict, experiment_id: str, date_time: str) -
         calculated_measures['Selections_Incorrect_Avg'].append(int(session['task_summary']['selections_incorrect']))
         calculated_measures['Selections_Correct_Letters_Avg'].append(int(session['task_summary']['selections_correct_symbols']))
         calculated_measures['Session_Length_Avg'].append(float(session['total_time_spent']))
-        calculated_measures['Session_Minutes_Avg'].append(float(session['total_minutes']))
+        # estimate the about of time based on the number of inquiries and parameters for stimuli display
+        total_inquiries = int(session['total_inquiries'])
+        stim_length = parameters['stim_length']
+        stim_rate = parameters['time_flash']
+        inter_inquiry_interval = parameters['task_buffer_length']
+        time_fixation = parameters['time_fixation']
+        isi_estimation = 0.1 # SHOULD WE DO THIS?
+        inquiry_time = (stim_length * stim_rate) + (stim_length * isi_estimation) + inter_inquiry_interval + time_fixation + isi_estimation
+
+        total_minutes = float((inquiry_time * total_inquiries / 60 ))
+
+        calculated_measures['Session_Minutes_Avg'].append(total_minutes)
         switch_response_time = session['task_summary']['switch_response_time']
         if switch_response_time:
             calculated_measures['Switch_per_selection_Avg'].append(float(session['task_summary']['switch_per_selection']))
@@ -226,7 +238,7 @@ def calculate_summary_measures(data: dict, experiment_id: str, date_time: str) -
 
             # calculate the copy accuracy and copy rate
             copy_accuracy = correct_copy / len(target_phrase)
-            copy_rate = correct_copy / float(session['total_minutes'])
+            copy_rate = correct_copy / total_minutes
         
         calculated_measures['DV_Accuracy_Avg'].append(copy_accuracy)
         calculated_measures['DV_Copy_Rate_Avg'].append(copy_rate)
@@ -299,7 +311,7 @@ def iterate_experiment_data(user_data_path: str, experiment: str, output: str):
                         f"{copy_phrase_data}/{DEFAULT_PARAMETERS_FILENAME}",
                         value_cast=True)
                     # calculate the summary measures
-                    summary_measures = calculate_summary_measures(session_data, experiment_id, date_time)
+                    summary_measures = calculate_summary_measures(session_data, experiment_id, date_time, parameters)
                     summary_measures['User_ID'] = user_id
                     summary_measures['Date'] = date
                     summary_measures['Date_Time'] = date_time
