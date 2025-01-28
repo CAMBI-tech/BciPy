@@ -250,10 +250,16 @@ class AmbiguousLanguageModel(LanguageModel):
 
         group_pattern = r'[1-4]*$'
         assert re.match(group_pattern, groups_str) is not None, "invalid group provided!"
+
+        ending_space = False
         
-        converted_context = "".join(evidence)
-        converted_context_lower = converted_context.lower()
-        context = converted_context.replace(SPACE_CHAR, ' ')
+        context = "".join(evidence)
+        context = context.replace(SPACE_CHAR, ' ')
+
+        # Gobble trailing space, but set flag so we know tokens should start with a space
+        if len(context) and context[-1] == " ":
+            context = context[:-1]
+            ending_space = True
 
         # If using the simple case feature, we need to go through the actual
         # left context and capitalize the first letter in the sentence as
@@ -269,9 +275,6 @@ class AmbiguousLanguageModel(LanguageModel):
                         word = self.simple_upper_words[word]
                     cased_context += " "
                 cased_context += word
-            # Handle ending space in the context
-            if context[-1] == ' ':
-                cased_context += " "
             context = cased_context
 
         context_lower = context.lower()
@@ -309,7 +312,7 @@ class AmbiguousLanguageModel(LanguageModel):
         word_to_log_probs = defaultdict(list)
 
         # How many hypotheses have we finished?
-        completed = 0
+        # completed = 0
 
         # Used to signal to while loop to stop the search
         done = False
@@ -349,8 +352,8 @@ class AmbiguousLanguageModel(LanguageModel):
             self.predict_inference_ns += time.time_ns() - before_inference_ns
 
             for current_index, current in enumerate(current_hypos):
+                # Create a list of token indexes that are a prefix of the target text.
                 vocab = []
-                extra_vocab = []
                 # Extending this hypothesis must match the remaining input groups
                 remaining_groups = groups_str[current[LEN]:]
                 if len(remaining_groups) == 0:
@@ -358,32 +361,100 @@ class AmbiguousLanguageModel(LanguageModel):
                         # There is no remaining context thus all subword tokens that are valid under our symbol set
                         # should be considered when computing the probability of the next character.
                         vocab = self.valid_vocab
+                        print("Full valid vocab")
                     else:
                         # This prediction is done, should not be in this list
                         print("ERROR: This prediction should have been completed and removed from hypotheses")
                         continue
                 else:
-                    if self.completions:
-                        print("TODO")
-                    else:
+                    for i in range(1, len(remaining_groups)):
+                        group_prefix = remaining_groups[:i]
+                        print(f"remaining groups {remaining_groups}, group prefix {group_prefix}")
                         # We may need to use a subword token that doesn't completely consume the remaining text.
                         # Add tokens that are an exact group match for the prefix of reamining input groups
-                        # up to and including the remainder of input groups
-                        for i in range(1, len(remaining_groups) + 1):
-                            group_prefix = remaining_groups[:i]
+                        # e.g. "te" for 4,1,4,4
+                        # Do not include full group sequence in this, only proper prefixes
+                        if current[LEN] == 0 and ending_space:
+                            if group_prefix in self.vocab_exact_space:
+                                vocab += self.vocab_exact_space[group_prefix]
+                                toks = self.vocab_exact_space[group_prefix]
+                                for tok in toks:
+                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                        else:
+                            if group_prefix in self.vocab_exact:
+                                vocab += self.vocab_exact[group_prefix]
+                                toks = self.vocab_exact[group_prefix]
+                                for tok in toks:
+                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
 
-                            if current[LEN] == 0 and len(evidence):
-                                if group_prefix in self.vocab_exact_space:
-                                    vocab += self.vocab_exact_space[group_prefix]
-                            else:
-                                if group_prefix in self.vocab_exact:
-                                    vocab += self.vocab_exact[group_prefix]
-
-                # Create a list of token indexes that are a prefix of the target text.
-                # We go over all the integer IDs in the vocab and extra_vocab lists.
-                for token_id in itertools.chain(vocab, extra_vocab):
+                    # If completions are allowed, consider tokens that start with the remaining group sequence
+                    # This includes exact match
                     if self.completions:
-                        print("TODO")
+                        if current[LEN] == 0 and ending_space:
+                            vocab += self.vocab_prefix_space[remaining_groups]
+                            toks = self.vocab_prefix_space[remaining_groups]
+                            for tok in toks:
+                                print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                        else:
+                            vocab += self.vocab_prefix[remaining_groups]
+                            toks = self.vocab_prefix[remaining_groups]
+                            for tok in toks:
+                                print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                    # Otherwise, only consider exact match
+                    else:
+                        if current[LEN] == 0 and ending_space:
+                            if remaining_groups in self.vocab_exact_space:
+                                vocab += self.vocab_exact_space[remaining_groups]
+                                toks = self.vocab_exact_space[remaining_groups]
+                                for tok in toks:
+                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                        else:
+                            if remaining_groups in self.vocab_exact:
+                                vocab += self.vocab_exact[remaining_groups]
+                                toks = self.vocab_exact[remaining_groups]
+                                for tok in toks:
+                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+
+                # If we are doing completions, we'll need this 
+                word = self.tokenizer.decode(current[SEQ][len(tokens):]).lower()
+
+                # We go over all the integer IDs in the vocab list.
+                for token_id in vocab:
+                    if self.completions:
+                        # A hypothesis finishes if EXISTING hypo meets or exceeds group count
+                        # Probability of hypo is summed over all next tokens starting with space
+                        token_len = len(self.index_to_word_lower[token_id].replace(" ", ""))
+                        if (current[LEN]) >= len(groups):
+                            if self.index_to_word_lower[token_id][0] == " ":
+                                # Add this likelihood to the list of completed predictions 
+                                word_to_log_probs[word] += new_log_probs[current_index][token_id],
+                            # print(f'Prediction completed: {word}, {new_log_probs[current_index][token_id]}')
+                            elif not self.beam_width or len(next_hypos) < self.beam_width:
+                                # If we are under the beam limit then just add it
+                                heapq.heappush(next_hypos,
+                                            (new_log_probs[current_index][token_id],
+                                                current[SEQ] + [token_id],
+                                                current[LEN] + token_len))
+                                
+                            elif new_log_probs[current_index][token_id] > next_hypos[0][LOGP]:
+                                # Or replace the worst hypotheses with the new one
+                                heapq.heappushpop(next_hypos,
+                                                (new_log_probs[current_index][token_id],
+                                                current[SEQ] + [token_id],
+                                                current[LEN] + token_len))
+                        elif not self.beam_width or len(next_hypos) < self.beam_width:
+                            # If we are under the beam limit then just add it
+                            heapq.heappush(next_hypos,
+                                           (new_log_probs[current_index][token_id],
+                                            current[SEQ] + [token_id],
+                                            current[LEN] + token_len))
+                            
+                        elif new_log_probs[current_index][token_id] > next_hypos[0][LOGP]:
+                            # Or replace the worst hypotheses with the new one
+                            heapq.heappushpop(next_hypos,
+                                              (new_log_probs[current_index][token_id],
+                                               current[SEQ] + [token_id],
+                                               current[LEN] + token_len))
                     else:
                         # For a hypothesis to finish it must exactly match the input groups length
                         token_len = len(self.index_to_word_lower[token_id].replace(" ", ""))
@@ -391,7 +462,6 @@ class AmbiguousLanguageModel(LanguageModel):
                             # Add this likelihood to the list of completed predictions 
                             word = self.tokenizer.decode(current[SEQ][len(tokens):]).lower() + self.index_to_word_lower[token_id]
                             word_to_log_probs[word] += new_log_probs[current_index][token_id],
-                            completed += 1
                             # print(f'Prediction completed: {word}, {new_log_probs[current_index][token_id]}')
                         elif not self.beam_width or len(next_hypos) < self.beam_width:
                             # If we are under the beam limit then just add it
@@ -408,7 +478,7 @@ class AmbiguousLanguageModel(LanguageModel):
                                                current[LEN] + token_len))
 
                 # Break out of the for loop over hypotheses and while loop if we reach our max completed goal
-                if self.max_completed and completed >= self.max_completed:
+                if self.max_completed and len(word_to_log_probs.items()) >= self.max_completed:
                     done = True
                     break
 
