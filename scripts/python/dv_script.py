@@ -175,12 +175,15 @@ def calculate_summary_measures(data: dict, experiment_id: str, date_time: str, p
         total_inquiries = int(session['total_inquiries'])
         stim_length = parameters['stim_length']
         stim_rate = parameters['time_flash']
-        inter_inquiry_interval = parameters['task_buffer_length']
+        inter_inquiry_interval = parameters['task_buffer_length'] + 1 # added 1 to account for the time between inquiries observed on video
         time_fixation = parameters['time_fixation']
-        isi_estimation = 0.1 # SHOULD WE DO THIS?
-        inquiry_time = (stim_length * stim_rate) + (stim_length * isi_estimation) + inter_inquiry_interval + time_fixation + isi_estimation
+        isi_estimation =  (0.05 * (stim_length * stim_rate)) / 60
+        buffer_estimation = 0.25
+        feedback_time = (int(session['total_selections']) * float(parameters['feedback_duration'])) + inter_inquiry_interval 
+        inquiry_time = (stim_length * stim_rate) + inter_inquiry_interval + time_fixation
 
-        total_minutes = float((inquiry_time * total_inquiries / 60 ))
+        total_minutes = float(( (inquiry_time * total_inquiries) / 60 ) + (feedback_time / 60) + buffer_estimation + isi_estimation)
+        print(f"Total minutes: {total_minutes}")
 
         calculated_measures['Session_Minutes_Avg'].append(total_minutes)
         switch_response_time = session['task_summary']['switch_response_time']
