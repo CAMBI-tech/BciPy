@@ -24,7 +24,7 @@ class AmbiguousLanguageModel(LanguageModel):
                  lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
-                 beam_width: int = None,
+                 beam_width: int = 16,
                  fp16: bool = True,
                  mixed_case_context: bool = True,
                  case_simple: bool = True,
