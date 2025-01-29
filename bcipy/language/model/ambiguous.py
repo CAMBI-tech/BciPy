@@ -361,7 +361,7 @@ class AmbiguousLanguageModel(LanguageModel):
                         # There is no remaining context thus all subword tokens that are valid under our symbol set
                         # should be considered when computing the probability of the next character.
                         vocab = self.valid_vocab
-                        print("Full valid vocab")
+                        # print("Full valid vocab")
                     else:
                         # This prediction is done, should not be in this list
                         print("ERROR: This prediction should have been completed and removed from hypotheses")
@@ -369,7 +369,7 @@ class AmbiguousLanguageModel(LanguageModel):
                 else:
                     for i in range(1, len(remaining_groups)):
                         group_prefix = remaining_groups[:i]
-                        print(f"remaining groups {remaining_groups}, group prefix {group_prefix}")
+                        # print(f"remaining groups {remaining_groups}, group prefix {group_prefix}")
                         # We may need to use a subword token that doesn't completely consume the remaining text.
                         # Add tokens that are an exact group match for the prefix of reamining input groups
                         # e.g. "te" for 4,1,4,4
@@ -377,46 +377,46 @@ class AmbiguousLanguageModel(LanguageModel):
                         if current[LEN] == 0 and ending_space:
                             if group_prefix in self.vocab_exact_space:
                                 vocab += self.vocab_exact_space[group_prefix]
-                                toks = self.vocab_exact_space[group_prefix]
-                                for tok in toks:
-                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                                # toks = self.vocab_exact_space[group_prefix]
+                                # for tok in toks:
+                                #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
                         else:
                             if group_prefix in self.vocab_exact:
                                 vocab += self.vocab_exact[group_prefix]
-                                toks = self.vocab_exact[group_prefix]
-                                for tok in toks:
-                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                                # toks = self.vocab_exact[group_prefix]
+                                # for tok in toks:
+                                #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
 
                     # If completions are allowed, consider tokens that start with the remaining group sequence
                     # This includes exact match
                     if self.completions:
                         if current[LEN] == 0 and ending_space:
                             vocab += self.vocab_prefix_space[remaining_groups]
-                            toks = self.vocab_prefix_space[remaining_groups]
-                            for tok in toks:
-                                print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                            # toks = self.vocab_prefix_space[remaining_groups]
+                            # for tok in toks:
+                            #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
                         else:
                             vocab += self.vocab_prefix[remaining_groups]
-                            toks = self.vocab_prefix[remaining_groups]
-                            for tok in toks:
-                                print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                            # toks = self.vocab_prefix[remaining_groups]
+                            # for tok in toks:
+                            #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
                     # Otherwise, only consider exact match
                     else:
                         if current[LEN] == 0 and ending_space:
                             if remaining_groups in self.vocab_exact_space:
                                 vocab += self.vocab_exact_space[remaining_groups]
-                                toks = self.vocab_exact_space[remaining_groups]
-                                for tok in toks:
-                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                                # toks = self.vocab_exact_space[remaining_groups]
+                                # for tok in toks:
+                                #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
                         else:
                             if remaining_groups in self.vocab_exact:
                                 vocab += self.vocab_exact[remaining_groups]
-                                toks = self.vocab_exact[remaining_groups]
-                                for tok in toks:
-                                    print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
+                                # toks = self.vocab_exact[remaining_groups]
+                                # for tok in toks:
+                                #     print(f"Adding token {tok}, \"{self.index_to_word[tok]}\"")
 
                 # If we are doing completions, we'll need this 
-                word = self.tokenizer.decode(current[SEQ][len(tokens):]).lower()
+                word = self.tokenizer.decode(current[SEQ][len(tokens):]).lower().strip()
 
                 # We go over all the integer IDs in the vocab list.
                 for token_id in vocab:
@@ -461,6 +461,7 @@ class AmbiguousLanguageModel(LanguageModel):
                         if (current[LEN] + token_len) == len(groups):
                             # Add this likelihood to the list of completed predictions 
                             word = self.tokenizer.decode(current[SEQ][len(tokens):]).lower() + self.index_to_word_lower[token_id]
+                            word = word.strip()
                             word_to_log_probs[word] += new_log_probs[current_index][token_id],
                             # print(f'Prediction completed: {word}, {new_log_probs[current_index][token_id]}')
                         elif not self.beam_width or len(next_hypos) < self.beam_width:
