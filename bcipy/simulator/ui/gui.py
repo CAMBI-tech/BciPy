@@ -23,6 +23,7 @@ from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
 from bcipy.preferences import preferences
 from bcipy.simulator.data.sampler import TargetNontargetSampler
+from bcipy.simulator.data.sampler.base_sampler import Sampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.ui.cli import excluded
@@ -72,29 +73,29 @@ class DirectoryTree(QWidget):
     def __init__(self,
                  parent: Optional[QWidget] = None,
                  parent_directory: Optional[str] = None,
-                 selected_subdirectories: Optional[List[str]] = None):
+                 selected_subdirectories: Optional[List[Path]] = None):
         super().__init__(parent=parent)
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
         self.label = "Selected Directories"
         self.tree = self.make_tree()
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(
+        self.box_layout = QVBoxLayout()
+        self.box_layout.addWidget(
             LabeledWidget(self.label, self.tree, label_size=12))
-        self.layout.addWidget(self.tree)
-        self.setLayout(self.layout)
+        self.box_layout.addWidget(self.tree)
+        self.setLayout(self.box_layout)
 
-    def update(self, parent_directory: str,
-               selected_subdirectories: List[str]) -> None:
+    def update_tree(self, parent_directory: Optional[str],
+                    selected_subdirectories: Optional[List[Path]]) -> None:
         """Update the widget."""
         self.parent_directory = parent_directory
         self.paths = selected_subdirectories or []
 
-        clear_layout(self.layout)
+        clear_layout(self.box_layout)
         if self.parent_directory:
             self.tree = self.make_tree()
-            self.layout.addWidget(
+            self.box_layout.addWidget(
                 LabeledWidget(self.label, self.tree, label_size=12))
 
     def make_tree(self) -> QTreeWidget:
@@ -223,7 +224,7 @@ class DirectoryFilters(QWidget):
                  **kwargs):
         super().__init__(parent=parent, **kwargs)
         self.change_event = change_event
-        self.layout = QVBoxLayout()
+        self.box_layout = QVBoxLayout()
 
         self.nested_filter_control = QCheckBox("Include nested directories")
         self.nested_filter_control.setChecked(True)
@@ -232,14 +233,14 @@ class DirectoryFilters(QWidget):
         # self.name_filter_control_label = QLabel("Name contains")
         self.name_filter_control = QLineEdit("")
         self.name_filter_control.textChanged.connect(self.change)
-        self.layout.addWidget(self.nested_filter_control)
+        self.box_layout.addWidget(self.nested_filter_control)
 
         form = QFormLayout()
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft)
         form.addRow("Name contains", self.name_filter_control)
 
-        self.layout.addLayout(form)
-        self.setLayout(self.layout)
+        self.box_layout.addLayout(form)
+        self.setLayout(self.box_layout)
 
     def change(self):
         """Called when a filter field is modified."""
@@ -269,8 +270,12 @@ class DataDirectorySelect(QWidget):
             change_event=self.update_directory_tree)
         self.directory_tree = DirectoryTree()
 
-        self.parent_directory_control.layout().setContentsMargins(0, 0, 0, 0)
-        self.directory_filter_control.layout.setContentsMargins(0, 0, 0, 0)
+        parent_layout = self.parent_directory_control.layout()
+        filter_layout = self.directory_filter_control.layout()
+        if parent_layout:
+            parent_layout.setContentsMargins(0, 0, 0, 0)
+        if filter_layout:
+            filter_layout.setContentsMargins(0, 0, 0, 0)
         self.directory_filter_control.setEnabled(self.filters_enabled)
         self.directory_tree.setEnabled(self.filters_enabled)
 
@@ -290,6 +295,7 @@ class DataDirectorySelect(QWidget):
         parent = self.parent_directory_control.value()
         if parent:
             return parent.strip()
+        return None
 
     def match_pattern(self) -> str:
         """Pattern used to match a directory with fnmatch."""
@@ -332,8 +338,8 @@ class DataDirectorySelect(QWidget):
                 self.filters_enabled = True
                 self.directory_filter_control.setEnabled(True)
                 self.directory_tree.setEnabled(True)
-            self.directory_tree.update(self.parent_directory(),
-                                       self.data_directories())
+            self.directory_tree.update_tree(self.parent_directory(),
+                                            self.data_directories())
         else:
             self.filters_enabled = False
             self.directory_filter_control.setEnabled(False)
@@ -368,15 +374,15 @@ class ModelInputs(QWidget):
                  change_event: Optional[Callable] = None):
         super().__init__(parent=parent)
         self.change_event = change_event
-        self.layout = QFormLayout()
-        self.layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft
-                                     | Qt.AlignmentFlag.AlignVCenter)
-        self.layout.setFieldGrowthPolicy(
+        self.form_layout = QFormLayout()
+        self.form_layout.setFormAlignment(Qt.AlignmentFlag.AlignLeft
+                                          | Qt.AlignmentFlag.AlignVCenter)
+        self.form_layout.setFieldGrowthPolicy(
             QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
         self.content_types = content_types or ['EEG']
         self.controls = self._create_inputs()
         self._add_controls()
-        self.setLayout(self.layout)
+        self.setLayout(self.form_layout)
 
     def value(self) -> List[str]:
         """Model paths"""
@@ -413,9 +419,9 @@ class ModelInputs(QWidget):
 
     def _add_controls(self) -> None:
         """Add each model input to the layout."""
-        clear_layout(self.layout)
+        clear_layout(self.form_layout)
         for (label, control) in self.controls:
-            self.layout.addRow(label, control)
+            self.form_layout.addRow(label, control)
 
     def change(self):
         """Called when a model path changes"""
@@ -429,12 +435,13 @@ class SelectionList(QWidget):
     def __init__(self,
                  parent: Optional[QWidget] = None,
                  change_event: Optional[Callable] = None,
-                 items: List[str] = None):
+                 items: Optional[List[str]] = None):
         super().__init__(parent=parent)
         self.change_event = change_event
-        self.layout = QFormLayout()
+        self.form_layout = QFormLayout()
         self.control = QComboBox()
-        self.control.addItems(items)
+        if items:
+            self.control.addItems(items)
         self.control.currentTextChanged.connect(self.change)
 
         hbox = QHBoxLayout()
@@ -478,7 +485,8 @@ def sim_runs_control(value: int = 1) -> QWidget:
     spin_box = QSpinBox()
     spin_box.setMinimum(1)
     spin_box.setMaximum(1000)
-    spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+    # disable scroll wheel
+    spin_box.wheelEvent = lambda event: None  # type: ignore
     spin_box.setValue(value)
     return spin_box
 
@@ -501,11 +509,11 @@ class SimConfigForm(QWidget):
         self.setFixedWidth(width)
 
         self.change_event = change_event
-        self.parameters_path = None
-        self.model_paths = []
-        self.data_paths = []
+        self.parameters_path: Optional[str] = None
+        self.model_paths: List[str] = []
+        self.data_paths: Optional[List[Path]] = []
 
-        self.sampler = TargetNontargetSampler
+        self.sampler: Optional[Sampler] = TargetNontargetSampler
         self.sampler_options = sampler_options(default=self.sampler)
         self.sampler_args = '{}'
 
@@ -520,10 +528,9 @@ class SimConfigForm(QWidget):
         self.model_input_control = ModelInputs(change_event=self.update_models)
         self.sampler_input_control = SelectionList(
             change_event=self.update_sampler,
-            items=self.sampler_options.keys())
+            items=list(self.sampler_options.keys()))
         self.sampler_args_control = ObjectArgInputs(
-            change_event=self.update_sampler_args,
-            object_type=self.sampler)
+            change_event=self.update_sampler_args, object_type=self.sampler)
 
         form = QFormLayout()
         form.setFormAlignment(Qt.AlignmentFlag.AlignLeft
@@ -573,7 +580,7 @@ class SimConfigForm(QWidget):
         """Number of runs"""
         return int(self.runs_control.text())
 
-    def outdir(self) -> str:
+    def outdir(self) -> Optional[str]:
         """Output directory"""
         return self.output_control.value()
 
@@ -585,7 +592,7 @@ class SimConfigForm(QWidget):
     def command(self) -> str:
         """Command equivalent to to the result of the interactive selection of
         simulator inputs."""
-        if not self.command_valid:
+        if not self.command_valid():
             return ''
 
         args = []
@@ -593,10 +600,12 @@ class SimConfigForm(QWidget):
             args.append(f"-o '{self.outdir()}'")
         args.append(f"-p '{self.parameters_path}'")
         args.extend([f"-m '{path}'" for path in self.model_paths])
-        args.extend([f"-d '{source}'" for source in self.data_paths])
+        if self.data_paths:
+            args.extend([f"-d '{source}'" for source in self.data_paths])
 
         args.append(f"-n {self.runs()}")
-        args.append(f"-s {self.sampler.__name__}")
+        if self.sampler is not None:
+            args.append(f"-s {self.sampler.__name__}")
         args.append(f"--sampler_args='{self.sampler_args}'")
 
         return f"bcipy-sim {' '.join(args)}"
@@ -669,11 +678,11 @@ class MainPanel(QWidget):
     def __init__(self, title: str, size: Tuple[int, int]):
         super().__init__()
         self.title = title
-        self.size = size
+        self.w_size = size
 
         self.command = ''
 
-        self.form = SimConfigForm(width=self.size[0],
+        self.form = SimConfigForm(width=self.w_size[0],
                                   change_event=self.on_params_change)
         self.flash_msg = ''
         self.init_ui()
@@ -710,7 +719,7 @@ class MainPanel(QWidget):
                                                color='darkgray')
         vbox.addWidget(self.command_msg)
         self.setLayout(vbox)
-        self.setFixedHeight(self.size[1])
+        self.setFixedHeight(self.w_size[1])
         self.setWindowTitle(self.title)
         self.show()
 
@@ -752,7 +761,7 @@ def init(title='BCI Simulator', size=(900, 600)) -> str:
 def configure(
     title='BCI Simulator',
     size=(600, 900)
-) -> Tuple[int, str, Optional[TaskFactory]]:
+) -> Tuple[int, Optional[str], Optional[TaskFactory]]:
     """Main function"""
     app = QApplication(sys.argv)
     panel = MainPanel(title, size)

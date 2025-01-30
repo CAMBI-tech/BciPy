@@ -33,7 +33,7 @@ def is_annotated(param: inspect.Parameter) -> bool:
     return param.annotation != inspect.Parameter.empty
 
 
-def get_input_type(param: inspect.Parameter) -> Tuple[str, bool]:
+def get_input_type(param: inspect.Parameter) -> Tuple[Optional[str], bool]:
     """For a given constructor parameter, determine the GUI input type. For
     subscriptable types such as Optional, the first type is returned (except None).
 

@@ -31,7 +31,7 @@ class ObjectArgInputs(QWidget):
         self._add_controls()
         self.setLayout(self.form_layout)
 
-    def set_object_type(self, object_type: Type[Any]) -> None:
+    def set_object_type(self, object_type: Optional[Type[Any]]) -> None:
         """Set the class for which we should provide inputs."""
         self.object_type = object_type
         self.input_fields = self._init_input_fields()
