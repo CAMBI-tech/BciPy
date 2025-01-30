@@ -1,14 +1,15 @@
 """Setup and run the task"""
-
 import argparse
+import json
 import logging
 import sys
 from pathlib import Path
+from typing import Any, Dict
 
 import bcipy.simulator.util.metrics as metrics
-# pylint: disable=unused-import
+# pylint: disable=wildcard-import,unused-wildcard-import
 # flake8: noqa
-from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
+from bcipy.simulator.data.sampler import *
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.ui import cli, gui
@@ -24,6 +25,17 @@ logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 def classify(classname):
     """Convert the given class name to a class."""
     return getattr(sys.modules[__name__], classname)
+
+
+def parse_args(args: str) -> Dict[str, Any]:
+    """Converts sampler command line args to a dictionary of parameters to be
+    passed to the constructor.
+
+    Parameters
+    ----------
+        args - str formatted as a valid JSON object.
+    """
+    return json.loads(args)
 
 
 class TaskRunner():
@@ -106,6 +118,11 @@ def main():
                         required=False,
                         default='TargetNontargetSampler',
                         help="Sampling strategy")
+    parser.add_argument("--sampler_args",
+                        type=str,
+                        required=False,
+                        default="{}",
+                        help="Sampler args structured as a JSON string.")
     parser.add_argument("-o",
                         "--output",
                         type=Path,
@@ -123,15 +140,18 @@ def main():
     elif args.interactive:
         task_factory = cli.main(sim_args)
     else:
-        task_factory = TaskFactory(params_path=sim_args['parameters'],
-                                   source_dirs=sim_args['data_folder'],
-                                   signal_model_paths=sim_args['model_path'],
-                                   sampling_strategy=classify(sim_args['sampler']),
-                                   task=SimulatorCopyPhraseTask)
+        task_factory = TaskFactory(
+            params_path=sim_args['parameters'],
+            source_dirs=sim_args['data_folder'],
+            signal_model_paths=sim_args['model_path'],
+            sampling_strategy=classify(sim_args['sampler']),
+            task=SimulatorCopyPhraseTask,
+            sampler_args=parse_args(sim_args['sampler_args']))
 
     if task_factory:
         sim_dir = init_simulation_dir(save_location=outdir)
         logger.info(sim_dir)
+        task_factory.log_state()
 
         runner = TaskRunner(save_dir=sim_dir,
                             task_factory=task_factory,
