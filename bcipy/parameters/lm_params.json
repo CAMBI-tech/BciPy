@@ -18,6 +18,18 @@
       "type": "directorypath"
     }
   },  
+  "ambiguous": {
+    "model_name": {
+      "description": "Name of the HuggingFace model to load. Required for the Ambiguous model.",
+      "value": "figmtu/opt-350m-aac",
+      "type": "str"
+    },
+    "model_path": {
+      "description": "Pretrained model path, relative to causal.py directory. Blank if using HuggingFace model",
+      "value": "",
+      "type": "directorypath"
+    }
+  },  
   "mixture": {
     "model_types": {
       "description": "Defines the types of models to be used by the mixture model.",
