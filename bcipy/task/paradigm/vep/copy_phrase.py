@@ -6,7 +6,7 @@ from psychopy import visual  # type: ignore
 from bcipy.acquisition.multimodal import ClientManager
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
-from bcipy.display.components.task_bar import CalibrationTaskBar
+from bcipy.display.components.task_bar import CopyPhraseTaskBar
 from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.copy_phrase_display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
@@ -148,12 +148,12 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
         stim_length=1,
         animation_seconds=parameters['time_vep_animation'])
 
-    task_bar = CalibrationTaskBar(window,
-                                  inquiry_count=parameters['stim_number'],
-                                  current_index=0,
+    task_bar = CopyPhraseTaskBar(window,
+                                  task_text="HELLO WORLD",
+                                  spelled_text="HELLO",
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
-                                  height=parameters['task_height'])
+                                  height=parameters['task_height']+ 0.01)
 
     # issue #186641183 ; determine a better configuration strategy for flicker
 

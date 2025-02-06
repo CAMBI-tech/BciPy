@@ -240,13 +240,13 @@ class VEPDisplay(Display):
                 if not hasattr(self, "top_display_text"):
                     self.top_display_text = []
                 #TODO: replace with actually box content not fixed
-                self.top_display_text.append("HER")
+                self.top_display_text.append("WORLD")
             elif target_box_index == 6:
                 self.chosen_boxes.clear()
                 if not hasattr(self, "top_display_text"):
                     self.top_display_text = []
                 #TODO: replace with actually box content not fixed
-                self.top_display_text.append("MAN")
+                self.top_display_text.append("SONIA")
 
             #otherwise update box selection list
             else:
@@ -297,7 +297,7 @@ class VEPDisplay(Display):
         self._set_inquiry(stimuli)
 
         self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
-        # Display the inquiry with symbols in their final positions
+        
         self.draw_boxes()
         self.draw_static()
         self.window.flip()
@@ -360,7 +360,6 @@ class VEPDisplay(Display):
                 colorSpace='rgb',
                 opacity=1.0,
             )
-            top_message.draw()
         
         #selected box display
         chosen_numbers = ''.join(self.chosen_boxes)
@@ -369,14 +368,34 @@ class VEPDisplay(Display):
                 win=self.window,
                 text=chosen_numbers,
                 font=self.stimuli_font,
-                pos=(0, 0),
+                pos=(0, -0.055),
                 height=0.2,
                 color='white',
                 colorSpace='rgb',
                 opacity=1.0,
             )
             chosen_message.draw()
-        
+            
+        #Array of numbers to be displayed
+        box_numbers = ['1', '2', '3', '4']
+        #Draws numbers in the upper-left corner of top four boxes
+        for i in range(4):
+            box = self.text_boxes[i]
+            number_position = (
+                box.pos[0] - box.size[0] / 2 + 0.025,
+                box.pos[1] + box.size[1] / 2 - 0.05
+            )
+            number_text = visual.TextStim(
+                win=self.window,
+                text=box_numbers[i],
+                font=self.stimuli_font,
+                pos=number_position,
+                height=0.05,  # Small font size
+                color='white',
+                colorSpace='rgb',
+                opacity=1.0,
+            )
+            number_text.draw()
         for i, box in enumerate(self.text_boxes):
             #if i == self.current_highlighted_box_index:
             #    box.borderWidth = self.box_border_width + 10
@@ -554,10 +573,10 @@ class VEPDisplay(Display):
             ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-            ['MODE   ', 'SWITCH'],
-            ['HER'],
-            ['MAN'],
-            [BACKSPACE_CHAR]
+            ['Mode   ', 'Switch'],
+            ['"WORLD"'],
+            ['"SONIA"'],
+            ['Backspace']
         ]
     
         for box_index, symbols in enumerate(layout):

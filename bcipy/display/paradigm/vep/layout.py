@@ -159,7 +159,7 @@ class BoxConfiguration():
         width, height = self._box_size(validate=False)
 
         layout = self.layout
-        top = below(layout.top, (height / 2))
+        top = below(layout.top, (height / 2) + 0.2)
         bottom = above(layout.bottom, (height / 2))
 
         left = right_of(layout.left, width / 2)

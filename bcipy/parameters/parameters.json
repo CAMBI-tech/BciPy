@@ -507,7 +507,7 @@
     "type": "str"
   },
   "task_height": {
-    "value": "0.1",
+    "value": "0.075",
     "section": "bci_config",
     "readableName": "Task Text Size",
     "helpTip": "Specifies the height of task-specific text, e.g. #/100 in calibration and target phrase in copy/spelling. See https://www.psychopy.org/general/units.html. Default: 0.1",

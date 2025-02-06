@@ -33,8 +33,8 @@ class TaskBar:
         self.win = win
         self.colors = colors or ['white']
         self.font = font
-        self.height = height
-        self.padding = (height / 2) if padding is None else padding
+        self.height = height + 0.025
+        self.padding = (height / 3) if padding is None else padding
         self.text = text
         self.layout = layout.at_top(win, self.compute_height())
         self.stim = self.init_stim()
@@ -161,15 +161,14 @@ class CopyPhraseTaskBar(TaskBar):
 
     def compute_height(self):
         """Computes the component height using the provided config."""
-        # height is doubled to account for task_text and spelled_text being on
-        # separate lines.
-        return (self.height * 2) + self.padding
+        # height is doubled to account for task_text and spelled_text being on separate lines.
+        return (self.height * 3) + self.padding
 
     def init_stim(self) -> Dict[str, BaseVisualStim]:
         """Initialize the stimuli elements."""
 
         task = self.text_stim(text=self.task_text,
-                              pos=self.layout.center,
+                              pos=(self.layout.center[0] + 0.065, self.layout.center[1]),
                               anchorVert='bottom')
 
         spelled = self.text_stim(text=self.displayed_text(),
@@ -185,8 +184,6 @@ class CopyPhraseTaskBar(TaskBar):
 
     def update(self, text: str = ''):
         """Update the task bar to display the given text."""
-        self.spelled_text = text
-        self.stim['spelled_text'].text = self.displayed_text()
 
     def displayed_text(self):
         """Spelled text padded for alignment."""
