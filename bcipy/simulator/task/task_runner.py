@@ -6,6 +6,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict
 
+from rich.progress import track
+
 import bcipy.simulator.util.metrics as metrics
 # pylint: disable=wildcard-import,unused-wildcard-import
 # flake8: noqa
@@ -17,7 +19,7 @@ from bcipy.simulator.util.artifact import (DEFAULT_SAVE_LOCATION,
                                            TOP_LEVEL_LOGGER_NAME,
                                            configure_run_directory,
                                            init_simulation_dir,
-                                           remove_handlers)
+                                           remove_handlers, set_verbose)
 
 logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 
@@ -44,26 +46,28 @@ class TaskRunner():
     def __init__(self,
                  save_dir: str,
                  task_factory: TaskFactory,
-                 runs: int = 1):
+                 runs: int = 1,
+                 verbose: bool = True):
 
         self.task_factory = task_factory
         self.sim_dir = save_dir
         self.runs = runs
+        self.verbose = verbose
 
     def run(self) -> None:
         """Run one or more simulations"""
         self.task_factory.parameters.save(self.sim_dir, 'parameters.json')
-        for i in range(self.runs):
+        for i in track(range(self.runs), description="Processing..."):
             self.do_run(i + 1)
 
     def do_run(self, run: int):
         """Execute a simulation run."""
-        logger.info(f"Executing task {run}")
+        logger.debug(f"Executing task {run}")
         run_dir, run_log = configure_run_directory(self.sim_dir, run)
-        logger.info(run_dir)
+        logger.debug(run_dir)
         task = self.task_factory.make_task(run_dir)
         task.execute()
-        logger.info("Task complete")
+        logger.debug("Task complete")
         remove_handlers(run_log)
 
 
@@ -129,6 +133,10 @@ def main():
                         required=False,
                         default=DEFAULT_SAVE_LOCATION,
                         help="Sim output path")
+    parser.add_argument("-v",
+                        "--verbose",
+                        action='store_true',
+                        help="Verbose mode for more detailed logging.")
     args = parser.parse_args()
     sim_args = vars(args)
 
@@ -148,6 +156,8 @@ def main():
             task=SimulatorCopyPhraseTask,
             sampler_args=parse_args(sim_args['sampler_args']))
 
+    if sim_args['verbose']:
+        set_verbose(True)
     if task_factory:
         sim_dir = init_simulation_dir(save_location=outdir)
         logger.info(sim_dir)

@@ -124,8 +124,8 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
 
         current_state = self.get_sim_state()
-        self.logger.info("Computing evidence with sim_state:")
-        self.logger.info(current_state)
+        self.logger.debug("Computing evidence with sim_state:")
+        self.logger.debug(current_state)
 
         evidences = []
 
