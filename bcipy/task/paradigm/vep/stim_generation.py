@@ -67,11 +67,11 @@ def generate_vep_inquiries(symbols: List[str],
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
     target_usage_count = {symbol: 0 for symbol in symbols}
-    max_target_uses = 1
+    max_target_uses = 10
 
     #counter for each box to ensure <= 12 target placements per box
     box_target_usage_count = {box: 0 for box in range(num_boxes)}
-    max_box_target_uses = 1
+    max_box_target_uses = 10
     max_inquiries_per_box = num_boxes * max_box_target_uses
 
     # repeat the symbols as necessary to ensure an adequate size for sampling
@@ -82,12 +82,31 @@ def generate_vep_inquiries(symbols: List[str],
     inquiries = []
 
     for target in targets:
-        #stop if every box has already been used 12 times
+        #stop if every box has already been used max times
         if sum(box_target_usage_count.values()) >= max_inquiries_per_box:
             break
         #check if the target can still be placed in the inquiry
         if target_usage_count[target] < max_target_uses:
-            target_pos = 0
+            
+            # For first box forced target
+            # target_pos = 0
+
+
+            # For random target selection
+            #find valid boxes where the target has been used less than max times
+            valid_boxes_for_target = [
+                idx for idx in range(num_boxes) if box_target_usage_count[idx] < max_box_target_uses
+            ]
+
+            #if no valid boxes left then stop
+            if not valid_boxes_for_target:
+                raise ValueError("No more valid boxes available to place the target.")
+
+            target_pos = random.choice(valid_boxes_for_target)
+
+
+            
+
             inquiry = [target, fixation] + generate_vep_inquiry(
                 alphabet=symbols,
                 num_boxes=num_boxes,
