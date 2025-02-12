@@ -16,3 +16,7 @@ class IncompatibleDeviceSpec(IncompatibleData):
 class IncompatibleParameters(IncompatibleData):
     """Thrown when the timing parameters used for data collection are
     incompatible with the timing parameters of the simulation."""
+
+
+class IncompatibleSampler(Exception):
+    """Thrown when the provided sampler is incompatible with a given task."""
