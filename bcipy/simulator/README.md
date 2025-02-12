@@ -102,6 +102,28 @@ A simulation can be started using a graphical user interface.
 
 This provides a way to explore the file system when providing the parameters.json file, simulation model, and input data sources. After all required inputs have been provided the user can initiate the simulation from the GUI interface. The command line used to run the simulation are output to the console prior to the run making it easier to start subsequent simulations with the same set of arguments.
 
+## Replay Session
+
+The simulator also includes a Task for replaying a recorded session using a different signal model. This is used for testing if changes to a model result in more easily differentiated signals.
+
+This functionality currently has a different entry point.
+
+```
+(venv) $ python bcipy/simulator/task/replay_session.py -h
+usage: replay_session.py [-h] [-d DATA_FOLDER] -m MODEL_PATH [-p PARAMETERS] [-o OUTPUT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DATA_FOLDER, --data_folder DATA_FOLDER
+                        Raw data folders to be processed. Multiple values can be provided, or a single parent folder.
+  -m MODEL_PATH, --model_path MODEL_PATH
+                        Signal model to be used.
+  -p PARAMETERS, --parameters PARAMETERS
+                        Parameter File to be used
+  -o OUTPUT, --output OUTPUT
+                        Sim output path
+```
+
 ## Current Limitations
 
 * Only provides EEG support
