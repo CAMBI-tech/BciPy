@@ -23,6 +23,8 @@ from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.symbols import BACKSPACE_CHAR
 
+from bcipy.language.model.ambiguous import AmbiguousLanguageModel
+
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
     symbol: str
@@ -240,13 +242,13 @@ class VEPDisplay(Display):
                 if not hasattr(self, "top_display_text"):
                     self.top_display_text = []
                 #TODO: replace with actually box content not fixed
-                self.top_display_text.append("WORLD")
+                self.top_display_text.append(" ")
             elif target_box_index == 6:
                 self.chosen_boxes.clear()
                 if not hasattr(self, "top_display_text"):
                     self.top_display_text = []
                 #TODO: replace with actually box content not fixed
-                self.top_display_text.append("SONIA")
+                self.top_display_text.append(" ")
 
             #otherwise update box selection list
             else:
@@ -574,8 +576,8 @@ class VEPDisplay(Display):
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
             ['Mode   ', 'Switch'],
-            ['"WORLD"'],
-            ['"SONIA"'],
+            ['" "'],
+            ['" "'],
             ['Backspace']
         ]
     
@@ -611,7 +613,7 @@ class VEPDisplay(Display):
         try:
             wait_logo = visual.ImageStim(self.window,
                                          image=BCIPY_LOGO_PATH,
-                                         pos=(0, .25),
+                                         pos=(0, 0.1),
                                          mask=None,
                                          ori=0.0)
             wait_logo.size = resize_image(BCIPY_LOGO_PATH, self.window.size, 1)

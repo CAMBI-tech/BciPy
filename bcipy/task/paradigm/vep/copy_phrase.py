@@ -149,8 +149,8 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
         animation_seconds=parameters['time_vep_animation'])
 
     task_bar = CopyPhraseTaskBar(window,
-                                  task_text="HELLO WORLD",
-                                  spelled_text="HELLO",
+                                  task_text="",
+                                  spelled_text="",
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
                                   height=parameters['task_height']+ 0.01)
