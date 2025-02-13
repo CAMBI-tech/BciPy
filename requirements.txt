@@ -26,3 +26,4 @@ pywavelets==1.4.1
 tqdm==4.62.2
 reportlab==4.2.0
 tables==3.7.0
+safetensors==0.5.2
