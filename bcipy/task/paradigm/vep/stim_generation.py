@@ -67,18 +67,18 @@ def generate_vep_inquiries(symbols: List[str],
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
     target_usage_count = {symbol: 0 for symbol in symbols}
-    max_target_uses = 1
+    max_target_uses = 10
 
     #counter for each box to ensure <= 12 target placements per box
     box_target_usage_count = {box: 0 for box in range(num_boxes)}
-    max_box_target_uses = 1
+    max_box_target_uses = 10
     max_inquiries_per_box = num_boxes * max_box_target_uses
 
     # repeat the symbols as necessary to ensure an adequate size for sampling
     # without replacement.
     population = symbols * math.ceil(inquiry_count / len(symbols))
     targets = random.sample(population, inquiry_count)
-
+    # print(f"Targets: {targets}")
     inquiries = []
 
     for target in targets:
@@ -87,7 +87,18 @@ def generate_vep_inquiries(symbols: List[str],
             break
         #check if the target can still be placed in the inquiry
         if target_usage_count[target] < max_target_uses:
-            target_pos = 0
+            # target_pos = 0
+
+            #find valid boxes where the target has been used less than 12 times
+            valid_boxes_for_target = [
+                idx for idx in range(num_boxes) if box_target_usage_count[idx] < max_box_target_uses
+            ]
+            # print(f"Valid boxes for target: {valid_boxes_for_target}")
+            #if no valid boxes left then stop
+            if not valid_boxes_for_target:
+                raise ValueError("No more valid boxes available to place the target.")
+            target_pos = random.choice(valid_boxes_for_target)
+
             inquiry = [target, fixation] + generate_vep_inquiry(
                 alphabet=symbols,
                 num_boxes=num_boxes,
@@ -99,7 +110,6 @@ def generate_vep_inquiries(symbols: List[str],
             #update counter for the target and the box used
             target_usage_count[target] += 1
             box_target_usage_count[target_pos] += 1 
-
     random.shuffle(inquiries)
     
     return inquiries
