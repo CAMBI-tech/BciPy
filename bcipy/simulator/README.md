@@ -110,8 +110,8 @@ The simulator also includes a Task for replaying a recorded session using a diff
 This functionality currently has a different entry point.
 
 ```
-(venv) $ python bcipy/simulator/task/replay_session.py -h
-usage: replay_session.py [-h] [-d DATA_FOLDER] -m MODEL_PATH [-p PARAMETERS] [-o OUTPUT]
+(venv) $ bcipy-replay -h
+usage: bcipy-replay [-h] [-d DATA_FOLDER] -m MODEL_PATH [-p PARAMETERS] [-o OUTPUT]
 
 optional arguments:
   -h, --help            show this help message and exit

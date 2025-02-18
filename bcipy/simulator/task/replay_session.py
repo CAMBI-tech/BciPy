@@ -19,9 +19,8 @@ logger = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
 def main():
     """Run the task"""
     parser = argparse.ArgumentParser()
-    data_help = (
-        'Raw data folders to be processed.'
-        ' Multiple values can be provided, or a single parent folder.')
+    data_help = ('Raw data folders to be processed.'
+                 ' Multiple values can be provided.')
     parser.add_argument("-d",
                         "--data_folder",
                         type=Path,
