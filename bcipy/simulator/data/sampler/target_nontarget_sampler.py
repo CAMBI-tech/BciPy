@@ -20,7 +20,7 @@ class TargetNontargetSampler(Sampler):
             filtered_data = self.data_engine.query(filters, samples=1)
             sample_rows.append(filtered_data[0])
 
-        log.info(f"Samples:\n{format_samples(sample_rows)}")
+        log.debug(f"Samples:\n{format_samples(sample_rows)}")
         return sample_rows
 
     def query_filters(self, symbol: str, is_target: bool) -> List[QueryFilter]:

@@ -47,6 +47,7 @@ For example,
 - `o`: Output directory for all simulation artifacts.
 - `s`: Sampling strategy to use; by default the TargetNonTargetSampler is used. The value provided should be the class name of a Sampler.
 - `sampler_args`: Arguments to pass in to the selected Sampler. Some samplers can be customized with further parameters. These should be structured as a JSON dictionary mapping keys to values. For example: `--sampler_args='{"inquiry_end": 4}'`
+- `-v` or `--verbose`: Execute the simulation in verbose mode for more detailed logging. Useful for debugging.
 
 #### Sim Output Details
 
