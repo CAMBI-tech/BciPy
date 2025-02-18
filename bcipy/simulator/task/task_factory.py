@@ -66,10 +66,10 @@ class TaskFactory():
         """Log configured objects of interest. This should be done after the
         sim directory has been created and TOP_LEVEL_LOGGER has been configured,
         which may happen some time after object construction."""
-        logger.info("Language model:")
-        logger.info(f"\t{repr(self.language_model)}")
-        logger.info("Models -> Samplers:")
-        logger.info(f"\t{self.samplers}")
+        logger.debug("Language model:")
+        logger.debug(f"\t{repr(self.language_model)}")
+        logger.debug("Models -> Samplers:")
+        logger.debug(f"\t{self.samplers}")
 
     def init_samplers(
             self,
