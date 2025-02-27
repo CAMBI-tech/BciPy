@@ -27,9 +27,10 @@ def language_models_by_name() -> Dict[str, LanguageModel]:
     return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
 
-def init_language_model(parameters: dict, retries: int = 1) -> LanguageModel:
+def init_language_model(parameters: dict) -> LanguageModel:
     """
-    Init Language Model configured in the parameters.
+    Init Language Model configured in the parameters. If no language model is
+    specified, a uniform language model is returned.
 
     Parameters
     ----------
@@ -50,16 +51,11 @@ def init_language_model(parameters: dict, retries: int = 1) -> LanguageModel:
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
 
-    try:
-        return model(response_type=ResponseType.SYMBOL,
-                    symbol_set=alphabet(parameters),
-                    **params)
-    except Exception as e:
-        print(f"Error initializing language model: {e}")
-        if retries > 0:
-            print(f"Retrying {retries} more times.")
-            return init_language_model(parameters, retries - 1)
 
+    return model(
+        response_type=ResponseType.SYMBOL,
+        symbol_set=alphabet(parameters),
+        **params)
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     """Convert a list of (symbol, likelihood) values from negative log
