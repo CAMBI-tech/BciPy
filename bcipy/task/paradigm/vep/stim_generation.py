@@ -78,7 +78,7 @@ def generate_vep_inquiries(symbols: List[str],
     # without replacement.
     population = symbols * math.ceil(inquiry_count / len(symbols))
     targets = random.sample(population, inquiry_count)
-
+    # print(f"Targets: {targets}")
     inquiries = []
 
     for target in targets:
@@ -91,7 +91,6 @@ def generate_vep_inquiries(symbols: List[str],
             # For first box forced target
             # target_pos = 0
 
-
             # For random target selection
             #find valid boxes where the target has been used less than max times
             valid_boxes_for_target = [
@@ -103,10 +102,7 @@ def generate_vep_inquiries(symbols: List[str],
                 raise ValueError("No more valid boxes available to place the target.")
 
             target_pos = random.choice(valid_boxes_for_target)
-
-
             
-
             inquiry = [target, fixation] + generate_vep_inquiry(
                 alphabet=symbols,
                 num_boxes=num_boxes,
@@ -118,7 +114,6 @@ def generate_vep_inquiries(symbols: List[str],
             #update counter for the target and the box used
             target_usage_count[target] += 1
             box_target_usage_count[target_pos] += 1 
-
     random.shuffle(inquiries)
     
     return inquiries
