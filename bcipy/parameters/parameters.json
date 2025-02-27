@@ -559,7 +559,7 @@
     "type": "str"
   },
   "task_text": {
-    "value": "GOOD_NIGHT",
+    "value": "HELLO_WORLD",
     "section": "online_config",
     "name": "Target Phrase",
     "helpTip": "Specifies the target phrase displayed at the top of the screen during text-stimuli copy/spelling tasks. If copy_phrases_location is provided, this parameter will be ignored and overwritten in parameter saving.",
@@ -775,7 +775,7 @@
     "type": "int"
   },
   "lang_model_type": {
-    "value": "CAUSAL",
+    "value": "UNIFORM",
     "section": "lang_model_config",
     "name": "Language Model Type",
     "helpTip": "Specifies which language model to use. Default: UNIFORM",
@@ -793,7 +793,7 @@
     "value": "0.035",
     "section": "lang_model_config",
     "name": "Backspace Probability",
-    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
+    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.035",
     "recommended": "0.05",
     "editable": false,
     "type": "float"
