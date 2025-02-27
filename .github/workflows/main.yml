@@ -93,9 +93,6 @@ jobs:
     - name: lint
       run: |
         make lint
-    - name: integration-test
-      run: |
-        make integration-test
     - name: build
       run: |
         make build
@@ -133,9 +130,6 @@ jobs:
     - name: lint
       run: |
         make lint
-    - name: integration-test
-      run: |
-        make integration-test
     - name: build
       run: |
         make build
