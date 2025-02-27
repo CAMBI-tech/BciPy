@@ -1,6 +1,5 @@
 """Update parameters files to latest."""
 
-import argparse
 import json
 import shutil
 from pathlib import Path
