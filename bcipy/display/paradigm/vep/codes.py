@@ -9,7 +9,7 @@ from bcipy.helpers.exceptions import BciPyCoreException
 log = logging.getLogger(__name__)
 
 # These rates work for a 60hz display
-DEFAULT_FLICKER_RATES = [4, 5, 6, 10, 12, 15, 20, 30]
+DEFAULT_FLICKER_RATES = [6, 6, 10, 10, 15, 15, 30, 30]
 
 
 def mseq(seed, taps):
@@ -131,13 +131,13 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rates: List[int] = DEFAULT_FLI
         if flicker_rate <= 1:
             raise BciPyCoreException('flicker rate must be greater than 1')
 
-        # get the number of frames per flicker
-        length_flicker = refresh_rate / flicker_rate
+        # get the number of frames per on/off
+        length_flicker = refresh_rate / flicker_rate / 2
 
         if length_flicker.is_integer():
             length_flicker = int(length_flicker)
         else:
-            err_message = f'flicker rate={flicker_rate} is not an integer multiple of refresh rate={refresh_rate}'
+            err_message = f'flicker rate={flicker_rate} cannot be evenly produced with refresh rate={refresh_rate}'
             log.exception(err_message)
             raise BciPyCoreException(err_message)
 
