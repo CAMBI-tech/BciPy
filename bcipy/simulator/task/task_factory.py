@@ -1,11 +1,10 @@
 """Classes and functions for building a simulation."""
 import logging
-from typing import Dict, List, Type
+from typing import Any, Dict, List, Optional, Type
 
 from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.helpers.language_model import init_language_model
 from bcipy.io.load import load_json_parameters, load_signal_model
-from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
 from bcipy.simulator.data.data_process import init_data_processor
@@ -40,13 +39,15 @@ class TaskFactory():
             signal_model_paths: List[str],
             sampling_strategy: Type[Sampler] = TargetNontargetSampler,
             task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask,
-            parameters: Parameters = None) -> None:
+            parameters: Optional[Parameters] = None,
+            sampler_args: Optional[Dict[str, Any]] = None):
 
         self.params_path = params_path
         self.signal_model_paths = signal_model_paths
 
         self.source_dirs = source_dirs
         self.sampling_strategy = sampling_strategy
+        self.sampler_args = sampler_args if sampler_args else {}
         self.simulation_task = task
 
         logger.info("Loading parameters")
@@ -62,14 +63,19 @@ class TaskFactory():
         self.signal_models = [
             load_signal_model(path) for path in signal_model_paths
         ]
-        logger.info(self.signal_models)
 
         logger.info("Initializing language model")
         self.language_model = init_language_model(self.parameters)
-        logger.info(self.language_model)
-
         self.samplers = self.init_samplers(self.signal_models)
-        logger.info(self.samplers)
+
+    def log_state(self):
+        """Log configured objects of interest. This should be done after the
+        sim directory has been created and TOP_LEVEL_LOGGER has been configured,
+        which may happen some time after object construction."""
+        logger.debug("Language model:")
+        logger.debug(f"\t{repr(self.language_model)}")
+        logger.debug("Models -> Samplers:")
+        logger.debug(f"\t{self.samplers}")
 
     def init_samplers(
             self,
@@ -87,7 +93,7 @@ class TaskFactory():
             engine = RawDataEngine(list(map(str, self.source_dirs)),
                                    self.parameters,
                                    data_processor=processor)
-            sampler = self.sampling_strategy(engine)
+            sampler = self.sampling_strategy(engine, **self.sampler_args)
             samplers[model] = sampler
         return samplers
 

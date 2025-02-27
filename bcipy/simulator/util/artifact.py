@@ -15,6 +15,15 @@ DEFAULT_LOGFILE_NAME = 'sim.log'
 DEFAULT_SAVE_LOCATION = f"{ROOT}/data/simulator"
 RUN_PREFIX = "run_"
 
+DEFAULT_VERBOSE = False
+
+
+def set_verbose(value: bool) -> None:
+    """Set default verbose mode"""
+    # pylint: disable=global-statement
+    global DEFAULT_VERBOSE
+    DEFAULT_VERBOSE = value
+
 
 def remove_handlers(log: logging.Logger) -> None:
     """Remove any file handlers from the provided logger."""
@@ -29,7 +38,8 @@ def remove_handlers(log: logging.Logger) -> None:
 def configure_logger(log_path: str,
                      file_name: str,
                      logger_name: Optional[str] = None,
-                     use_stdout: bool = True) -> logging.Logger:
+                     use_stdout: bool = True,
+                     verbose: Optional[bool] = None) -> logging.Logger:
     """Configures logger for standard out and file output.
 
     Parameters
@@ -38,13 +48,17 @@ def configure_logger(log_path: str,
         file_name - name of the log file
         logger_name - None configures the root logger; otherwise configures a named logger.
         use_stdout - if True, INFO messages will be output to stdout.
+        verbose - determines the log level; set True to log as DEBUG
     """
 
     log = logging.getLogger(logger_name)  # configuring root logger
 
     remove_handlers(log)
 
-    log.setLevel(logging.INFO)
+    if verbose is None:
+        verbose = DEFAULT_VERBOSE
+    level = logging.DEBUG if verbose else logging.INFO
+    log.setLevel(level)
     fmt = '[%(asctime)s][%(name)s][%(levelname)s]: %(message)s'
 
     if use_stdout:
@@ -54,7 +68,7 @@ def configure_logger(log_path: str,
         log.addHandler(stdout_handler)
 
     file_handler = logging.FileHandler(f"{log_path}/{file_name}")
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(level)
     file_handler.setFormatter(logging.Formatter(fmt))
     log.addHandler(file_handler)
     return log
@@ -62,6 +76,7 @@ def configure_logger(log_path: str,
 
 def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
                         logfile_name: str = DEFAULT_LOGFILE_NAME,
+                        verbose: Optional[bool] = None,
                         prefix: str = '') -> str:
     """Setup the folder structure and logging for a simulation.
 
@@ -69,17 +84,25 @@ def init_simulation_dir(save_location: str = DEFAULT_SAVE_LOCATION,
     ----------
         save_location - optional path in which new simulation directory will be created.
         logfile_name - optional name of the top level logfile within that directory.
+        verbose - optional flag to set the log level to DEBUG.
         prefix - optional prefix for the simulation directory.
 
     Returns the path of the simulation directory.
     """
     save_dir = f"{save_location}/{prefix}{directory_name()}"
     os.makedirs(save_dir)
+    configure_logger(save_dir,
+                     logfile_name,
+                     logger_name=TOP_LEVEL_LOGGER_NAME,
+                     use_stdout=True,
+                     verbose=verbose)
     return save_dir
 
 
-def configure_run_directory(sim_dir: str,
-                            run: int) -> Tuple[str, logging.Logger]:
+def configure_run_directory(
+        sim_dir: str,
+        run: int,
+        verbose: Optional[bool] = None) -> Tuple[str, logging.Logger]:
     """Create the necessary directories and configure the logger.
     Returns the run directory.
     """
@@ -89,7 +112,8 @@ def configure_run_directory(sim_dir: str,
     log = configure_logger(log_path=path,
                            file_name=f"{run_name}.log",
                            logger_name=None,
-                           use_stdout=False)
+                           use_stdout=False,
+                           verbose=verbose)
     return path, log
 
 

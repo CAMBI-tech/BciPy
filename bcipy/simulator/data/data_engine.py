@@ -2,7 +2,7 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, NamedTuple, Union
+from typing import Any, List, NamedTuple, Union, get_args, get_origin
 
 import pandas as pd
 
@@ -26,8 +26,17 @@ class QueryFilter(NamedTuple):
     def is_valid(self) -> bool:
         """Check if the filter is valid."""
         # pylint: disable=no-member
-        return self.field in Trial._fields and self.operator in self.valid_operators and isinstance(
-            self.value, Trial.__annotations__[self.field])
+        field_type = Trial.__annotations__[self.field]
+
+        # can't check isinstance of a subscriptable type, such as Optional.
+        origin = get_origin(field_type)
+        if origin:
+            options = get_args(field_type)
+            is_correct_type = any(isinstance(self.value, ftype) for ftype in options)
+        else:
+            is_correct_type = isinstance(self.value, field_type)
+
+        return self.field in Trial._fields and self.operator in self.valid_operators and is_correct_type
 
     @property
     def valid_operators(self) -> List[str]:

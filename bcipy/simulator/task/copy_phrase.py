@@ -1,6 +1,7 @@
 # mypy: disable-error-code="union-attr"
 """Simulates the Copy Phrase task"""
 import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 from bcipy.core.parameters import Parameters
@@ -130,8 +131,8 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
 
         current_state = self.get_sim_state()
-        self.logger.info("Computing evidence with sim_state:")
-        self.logger.info(current_state)
+        self.logger.debug("Computing evidence with sim_state:")
+        self.logger.debug(current_state)
 
         evidences = []
 
@@ -150,6 +151,12 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def cleanup(self):
         self.save_session_data()
+        trigger_path = Path(self.trigger_handler.file_path)
+        self.trigger_handler.close()
+
+        # delete empty triggers.txt file
+        if trigger_path.exists() and trigger_path.is_file():
+            trigger_path.unlink(missing_ok=True)
 
     def exit_display(self) -> None:
         """Close the UI and cleanup."""

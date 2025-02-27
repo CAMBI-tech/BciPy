@@ -25,6 +25,8 @@ optional arguments:
   -n N                  Number of times to run the simulation
   -s SAMPLER, --sampler SAMPLER
                         Sampling strategy
+  --sampler_args SAMPLER_ARGS
+                        Sampler args structured as a JSON string.
   -o OUTPUT, --output OUTPUT
                         Sim output path
 ```
@@ -43,6 +45,9 @@ For example,
 - `m`: Path to a pickled (.pkl) signal model. One or more models can be provided.
 - `n`: Number of simulation runs
 - `o`: Output directory for all simulation artifacts.
+- `s`: Sampling strategy to use; by default the TargetNonTargetSampler is used. The value provided should be the class name of a Sampler.
+- `sampler_args`: Arguments to pass in to the selected Sampler. Some samplers can be customized with further parameters. These should be structured as a JSON dictionary mapping keys to values. For example: `--sampler_args='{"inquiry_end": 4}'`
+- `-v` or `--verbose`: Execute the simulation in verbose mode for more detailed logging. Useful for debugging.
 
 #### Sim Output Details
 
@@ -90,6 +95,35 @@ Parameters which define task stoppage criteria are important to ensure that the 
 * `max_incorrect` - The maximum number of consecutive incorrect selections for copy/spelling tasks. The task will end if this number is reached.
 * `max_inq_per_series` - Specifies the maximum number of inquiries to present before making a decision in copy/spelling tasks
 
+## GUI
+
+A simulation can be started using a graphical user interface.
+
+`$ bcipy-sim --gui`
+
+This provides a way to explore the file system when providing the parameters.json file, simulation model, and input data sources. After all required inputs have been provided the user can initiate the simulation from the GUI interface. The command line used to run the simulation are output to the console prior to the run making it easier to start subsequent simulations with the same set of arguments.
+
+## Replay Session
+
+The simulator also includes a Task for replaying a recorded session using a different signal model. This is used for testing if changes to a model result in more easily differentiated signals.
+
+This functionality currently has a different entry point.
+
+```
+(venv) $ bcipy-replay -h
+usage: bcipy-replay [-h] [-d DATA_FOLDER] -m MODEL_PATH [-p PARAMETERS] [-o OUTPUT]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d DATA_FOLDER, --data_folder DATA_FOLDER
+                        Raw data folders to be processed. Multiple values can be provided, or a single parent folder.
+  -m MODEL_PATH, --model_path MODEL_PATH
+                        Signal model to be used.
+  -p PARAMETERS, --parameters PARAMETERS
+                        Parameter File to be used
+  -o OUTPUT, --output OUTPUT
+                        Sim output path
+```
 
 ## Current Limitations
 
