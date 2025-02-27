@@ -50,7 +50,7 @@ class CausalLanguageModel(LanguageModel):
         super().__init__(response_type=response_type, symbol_set=symbol_set)
 
         causal_params = self.parameters['causal']
-        
+
         self.model = None
         self.tokenizer = None
         self.vocab_size = 0

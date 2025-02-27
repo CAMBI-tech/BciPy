@@ -53,7 +53,7 @@ class TaskFactory():
         logger.info("Loading parameters")
         if parameters is None:
             self.parameters = load_json_parameters(self.params_path,
-                                                value_cast=True)
+                                                   value_cast=True)
         else:
             self.parameters = parameters
 

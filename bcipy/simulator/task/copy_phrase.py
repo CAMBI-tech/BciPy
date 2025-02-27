@@ -97,7 +97,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def init_display(self) -> Display:
         return NullDisplay()
-    
+
     def init_acquisition(self) -> ClientManager:
         """Override to do nothing"""
         return NullDAQ()

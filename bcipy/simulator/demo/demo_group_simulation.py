@@ -43,7 +43,7 @@ import bcipy.simulator.util.metrics as metrics
 
 # Add phrases and starting indeces to this list
 PHRASES = [
-    ("I_LOVE_YOU", 0), 
+    ("I_LOVE_YOU", 0),
     ("SEE_YOU_LATER", 4),
     ("I_NEED_SOME_HELP", 7),
 ]
@@ -51,7 +51,7 @@ PHRASES = [
 LANGUAGE_MODELS = ["UNIFORM"]
 
 # Number of runs for each simulation
-RUN_COUNT = 25
+RUN_COUNT = 2
 
 # add a custom output path for simulation output
 OUTPUT_DIR = "./"
@@ -70,9 +70,9 @@ def run_simulation(
         signal_model_path: Optional[str] = None) -> None:
     """Run a simulation for a user, phrase, and language model.
 
-    Optionally, a signal model path can be provided to use a specific signal model for the simulation. 
+    Optionally, a signal model path can be provided to use a specific signal model for the simulation.
     If not provided, the script will search for a signal model in the mode calibration directory for the user.
-    
+
     Parameters
     ----------
     data_dir : Path
@@ -86,9 +86,9 @@ def run_simulation(
     language_model : str
         The language model to use.
     signal_model_path : Optional[str], optional
-        The path to the signal model to use for the simulation, by default None. 
+        The path to the signal model to use for the simulation, by default None.
         If not provided, the script will search for a signal model in the mode calibration directory.
-        Note*: The output structure in `init_simulation_dir` below should be updated to reflect the 
+        Note*: The output structure in `init_simulation_dir` below should be updated to reflect the
             signal model used if varying signal models.
 
     Raises
@@ -109,7 +109,7 @@ def run_simulation(
     # load the parameters and model for the simulation from the mode calibration directory
 
     if not signal_model_path:
-        
+
         for file in data_dir.iterdir():
             if file.is_dir() and MODE in file.name and "Calibration" in file.name:
                 mode_calibration_dir = file
@@ -124,7 +124,7 @@ def run_simulation(
         model_path = signal_model_path
 
     print(f"Using signal model: {model_path}")
-    
+
     # load the parameters
     params_path = mode_calibration_dir / "parameters.json"
     parameters = load_json_parameters(params_path, value_cast=True)
@@ -137,9 +137,9 @@ def run_simulation(
     parameters["lang_model_type"] = language_model
 
     # Below are task constraints that impact typing speed and letter selection. Here we use criteria based on phrase length
-    #  and some sensible defaults. 
+    #  and some sensible defaults.
     parameters["max_inq_len"] = phrase_length * 8
-    parameters["max_selections"] = phrase_length * 2 # This should be 2 * the length of the phrase to type
+    parameters["max_selections"] = phrase_length * 2  # This should be 2 * the length of the phrase to type
     parameters["min_inq_per_series"] = 1
     parameters["max_inq_per_series"] = 8
     parameters["backspace_always_shown"] = True
@@ -147,8 +147,8 @@ def run_simulation(
     parameters["lm_backspace_prob"] = 0.03571
     # signal model decision threshold for letter selection
     parameters["decision_threshold"] = 0.8
-    parameters["max_minutes"] = 120 # This is not used in the simulation. But we set it high to avoid any issues.
-    parameters["max_incorrect"] = int(phrase_length / 2) # This should be half the length of the phrase to type
+    parameters["max_minutes"] = 120  # This is not used in the simulation. But we set it high to avoid any issues.
+    parameters["max_incorrect"] = int(phrase_length / 2)  # This should be half the length of the phrase to type
 
     # get the correct list of source directories from the data directory
     source_dirs = [str(file) for file in data_dir.iterdir() if file.is_dir() and DATA_PATTERN in file.name]
@@ -188,10 +188,11 @@ if __name__ == "__main__":
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n",
         colour='MAGENTA')
 
-    # Loop over all the users, phrases and language models defined. 
+    # Loop over all the users, phrases and language models defined.
     # Optionally, a signal model could be provided using the signal_model_path parameter.
     #   This is available in case the trained model is not in the mode calibration directory. It could be used to evaluate different signal models.
-    #   We recommend changing the init_simulation_dir with some model name indicator to help with organizing the output for analysis.
+    # We recommend changing the init_simulation_dir with some model name
+    # indicator to help with organizing the output for analysis.
     for user in progress_bar:
         if user.is_dir():
             progress_bar.set_description(f"Processing {user.name}")

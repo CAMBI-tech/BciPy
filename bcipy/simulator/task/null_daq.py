@@ -1,12 +1,9 @@
-"""Display that doesn't do anything"""
-from typing import List, Tuple
-
+"""DAQ that doesn't do anything"""
 from bcipy.acquisition.multimodal import ClientManager
 
 
 class NullDAQ(ClientManager):
-    """Display that doesn't show anything to the user. Useful in simulated tasks
-    that do not have a display component."""
+    """DAQ that doesn't do anything."""
 
     def start_acquisition(self) -> None:
         """Do nothing"""
@@ -14,7 +11,7 @@ class NullDAQ(ClientManager):
     def stop_acquisition(self) -> None:
         """Do nothing"""
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """Do nothing"""
 
     def get_data_by_device(self, *args, **kwargs) -> None:

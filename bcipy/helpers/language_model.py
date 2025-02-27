@@ -51,11 +51,11 @@ def init_language_model(parameters: dict) -> LanguageModel:
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
 
-
     return model(
         response_type=ResponseType.SYMBOL,
         symbol_set=alphabet(parameters),
         **params)
+
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     """Convert a list of (symbol, likelihood) values from negative log
