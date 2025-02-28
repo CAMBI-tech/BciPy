@@ -267,7 +267,7 @@ class VEPDisplay(Display):
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
 
-        self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
+        # self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
