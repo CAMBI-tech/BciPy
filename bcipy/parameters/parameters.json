@@ -178,7 +178,7 @@
     "type": "bool"
   },
   "parameter_location": {
-    "value": "bcipy/parameters/parameters.json",
+    "value": "C:/Users/Public/BciPy/Bcipy/bcipy/parameters/parameters.json",
     "section": "bci_config",
     "readableName": "Parameter File",
     "helpTip": "Specifies the file containing the current system parameters. Default: bcipy/parameters/parameters.json",
@@ -206,15 +206,15 @@
     "type": "bool"
   },
   "window_height": {
-    "value": "1000",
+    "value": "700",
     "section": "bci_config",
     "readableName": "Task Window Height",
     "helpTip": "Specifies the height (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",
     "recommended_values": "",
     "type": "int"
   },
-  "window_width": {
-    "value": "2000",
+  "window_width": { 
+    "value": "1100",
     "section": "bci_config",
     "readableName": "Task Window Width",
     "helpTip": "Specifies the width (in norm units) of the task window when not in full screen mode (Full Screen Mode On/Off must be set to ‘false’). See https://www.psychopy.org/general/units.html. Default: 500",

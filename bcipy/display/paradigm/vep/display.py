@@ -13,7 +13,8 @@ from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
                                               round_refresh_rate,
-                                              create_vep_codes)
+                                              create_vep_codes,
+                                              ssvep_to_code)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
@@ -50,7 +51,8 @@ class VEPDisplay(Display):
                  symbol_set: Optional[List[str]] = None,
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
-                 frame_rate: Optional[float] = None):
+                 frame_rate: Optional[float] = None,
+                 mseq_length: Optional[int] = 127):
         assert len(
             flicker_rates
         ) <= box_config.num_boxes, 'Not enough flicker rates provided'
@@ -60,12 +62,14 @@ class VEPDisplay(Display):
             assert frame_rate, 'An accurate window frame rate could not be established'
 
         #check if frame_rate is within a 10 hz buffer for either 60 or 120 hz
-        assert (55 <= frame_rate <= 65) or (115 <= frame_rate <= 125), \
+        assert (55 <= frame_rate <= 65) or (115 <= frame_rate <= 125) or (28 <= frame_rate <= 32), \
             f"The current refresh rate is {frame_rate} hz and must be either 60 or 120 hz"
 
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)
+
+        self.mseq_length = mseq_length
 
         # number of VEP text areas
         self.vep_type: int = box_config.num_boxes
@@ -120,7 +124,11 @@ class VEPDisplay(Display):
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
-        codes = create_vep_codes(length=63, count=len(flicker_rates))
+        codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
+        # print("Going into SSVEP code generation")
+        # codes = ssvep_to_code(refresh_rate = self.refresh_rate, flicker_rates = self.flicker_rates)
+        print(f"Number of codes: {len(codes)}")
+        print(f"Length of each code: {len(codes[0])}")
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
@@ -327,18 +335,18 @@ class VEPDisplay(Display):
         It assumes that the VEP stimuli are already constructed. These boxes
         are drawn in the order they are in the list as defined in self.vep.
         """
-        self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
         self.static_clock.reset()
-        while self.static_clock.getTime() < self.timing_stimuli:
-            for frame in range(self.refresh_rate):
+        for _ in range(1):
+            self.add_timing('VEP_MSEQ_START')
+            for frame in range(self.mseq_length):
                 self.draw_boxes()
                 for stim in self.vep:
                     stim.render_frame(frame)
-
                 # self.draw_static()
                 self.window.flip()
+            self.add_timing('VEP_MSEQ_END')
         ended_at = self.static_clock.getTime()
-        self.logger.debug(
+        self.logger.info(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
         self.logger.debug(
