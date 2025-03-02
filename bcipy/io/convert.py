@@ -3,13 +3,14 @@
 import logging
 import os
 import tarfile
+from pathlib import Path
 from typing import List, Optional, Tuple
 import glob
 
 import mne
 from enum import Enum
 from mne.io import RawArray
-from mne_bids import BIDSPath, write_raw_bids
+from mne_bids import BIDSPath, write_raw_bids, make_dataset_description
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
@@ -54,7 +55,7 @@ def convert_to_bids(
         line_frequency: float = 60,
         format: ConvertFormat = ConvertFormat.BV,
         label_duration: float = 0.5,
-        full_labels: bool = True) -> str:
+        full_labels: bool = True) -> Path:
     """Convert to BIDS.
 
     Convert the raw data to the Brain Imaging Data Structure (BIDS) format.

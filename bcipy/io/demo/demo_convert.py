@@ -4,11 +4,13 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-from typing import Optional, List
+from typing import Optional, List, OrderedDict
 from pathlib import Path
 from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
+import mne_bids as biddy
+import argparse
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
@@ -39,7 +41,7 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
         # pull out the user id. This is the name of the folder
         user_id = participant.name
 
-        for task_run in participant.iterdir():
+        for i, task_run in enumerate(participant.iterdir()):
             if not task_run.is_dir():
                 continue
 
@@ -47,7 +49,7 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
-                session_id=1,
+                session_id=i,
                 run=1,
                 task_name=task_name
             )
@@ -60,16 +62,17 @@ def convert_experiment_to_bids(
         experiment_id: str,
         format: ConvertFormat = ConvertFormat.BV,
         output_dir: Optional[str] = None,
-        include_eye_tracker: bool = False) -> None:
+        include_eye_tracker: bool = False
+) -> Path:
     """Converts the data in the study folder to BIDS format."""
 
     # Use for data pre-2.0rc4
-    # experiment_data = load_historical_bcipy_data(
-    #     directory,
-    #     experiment_id=experiment_id)
+    experiment_data = load_historical_bcipy_data(
+        directory,
+        experiment_id="")
 
     # Use for data post-2.0rc4
-    experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
+    # experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
 
     if not output_dir:
         output_dir = directory
@@ -84,7 +87,7 @@ def convert_experiment_to_bids(
                 run_id=data.run,
                 task_name=data.task_name,
                 output_dir=f'{output_dir}/bids_{experiment_id}/',
-                format=format
+                format=format,
             )
 
             if include_eye_tracker:
@@ -105,20 +108,20 @@ def convert_experiment_to_bids(
                     errors.append(f"Error converting eye tracker data for {data.path}")
 
         except Exception as e:
-            print(f"Error converting {data.path} - {e}")
+            print(f"\nError converting {data.path} : \n{e}\n")
             errors.append(str(data.path))
 
     print("--------------------")
     if errors:
-        print(f"Errors converting the following data: {errors}")
+        print(f"{len(errors)} Errors converting ==> {errors}")
 
-    print(f"\nData converted to BIDS format in {output_dir}/bids_{experiment_id}/")
+    bids_output = Path(f'{output_dir}/bids_{experiment_id}/')
+    print(f"\nData converted to BIDS format in {bids_output}/")
     print("--------------------")
+    return bids_output
 
 
 if __name__ == '__main__':
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-d',
@@ -146,9 +149,26 @@ if __name__ == '__main__':
         path = ask_directory("Select the directory with data to be converted", strict=True)
 
     # convert a study to BIDS format
-    convert_experiment_to_bids(
+    bids_path_root = convert_experiment_to_bids(
         path,
         args.experiment,
-        ConvertFormat.BV,
-        output_dir=".",
-        include_eye_tracker=args.eye_tracker)
+        ConvertFormat.EDF,
+        output_dir="/Users/srikarananthoju/cambi/BciPy",
+        include_eye_tracker=args.eye_tracker
+    )
+
+    # --- Post Processing --- #
+
+    # Updating dataset description file
+    description_params = {
+        "path": bids_path_root,
+        "name": "CAMBI_MultiModal_Experiment",
+        "dataset_type": "raw",
+        "data_license": None,
+        "authors": None,
+        "how_to_acknowledge": None,
+        "funding": None,
+        "references_and_links": None,
+        "overwrite": True
+    }
+    biddy.make_dataset_description(**description_params)
