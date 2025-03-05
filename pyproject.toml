@@ -24,7 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
-    "aactextpredict==0.1.0",
+    "aactextpredict==0.1.1",
     "attrdict3==2.0.2",
     "EDFlib-Python==1.0.8",
     "torch==2.2.0",

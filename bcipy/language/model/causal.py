@@ -58,7 +58,7 @@ class CausalLanguageModelAdapter(LanguageModelAdapter):
         self.symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
         self.symbol_set.remove(BACKSPACE_CHAR)
 
-        self.model = CausalLanguageModel(self.model_name, symbol_set=self.symbol_set, lm_path=self.model_dir, 
+        self.model = CausalLanguageModel(symbol_set=self.symbol_set, lang_model_name=self.model_name, lm_path=self.model_dir, 
                                          lm_device=lm_device, lm_left_context=lm_left_context, 
                                          beam_width=self.beam_width, fp16=fp16, mixed_case_context=mixed_case_context,
                                          case_simple=case_simple, max_completed=self.max_completed)
