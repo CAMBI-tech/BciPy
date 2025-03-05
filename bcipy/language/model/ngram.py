@@ -13,9 +13,9 @@ class NGramLanguageModelAdapter(LanguageModelAdapter):
                  lm_path: Optional[str] = None):
 
         super().__init__(response_type=response_type)
-        kenlm_params = self.parameters['kenlm']
-        kenlm_model = kenlm_params['model_file']['value']
-        self.lm_path = lm_path or f"{LM_PATH}/{kenlm_model}"
+        ngram_params = self.parameters['ngram']
+        ngram_model = ngram_params['model_file']['value']
+        self.lm_path = lm_path or f"{LM_PATH}/{ngram_model}"
 
         # LM doesn't care about backspace, needs literal space
         self.symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]

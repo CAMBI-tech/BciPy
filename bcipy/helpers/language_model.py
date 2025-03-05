@@ -15,7 +15,7 @@ from bcipy.language.main import LanguageModelAdapter, ResponseType
 # flake8: noqa
 from bcipy.exceptions import InvalidLanguageModelException
 from bcipy.language.model.causal import CausalLanguageModelAdapter
-from bcipy.language.model.ngram import KenLMLanguageModelAdapter
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModelAdapter
