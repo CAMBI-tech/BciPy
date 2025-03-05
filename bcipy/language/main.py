@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple
 import json
 
 from bcipy.exceptions import UnsupportedResponseType
-from bcipy.core.symbols import DEFAULT_SYMBOL_SET
+from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR
 from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 
 
@@ -18,24 +18,22 @@ class ResponseType(Enum):
         return self.value
 
 
-class LanguageModel(ABC):
-    """Parent class for Language Models."""
+class LanguageModelAdapter(ABC):
+    """Parent class for Language Model Adapters."""
 
     _response_type: ResponseType = None
     symbol_set: List[str] = None
 
     def __init__(self,
-                 response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = None):
+                 response_type: Optional[ResponseType] = None):
         self.response_type = response_type or ResponseType.SYMBOL
-        self.symbol_set = symbol_set or DEFAULT_SYMBOL_SET
         with open(DEFAULT_LM_PARAMETERS_PATH, 'r') as params_file:
             self.parameters = json.load(params_file)
 
     @classmethod
     def name(cls) -> str:
         """Model name used for configuration"""
-        suffix = 'LanguageModel'
+        suffix = 'LanguageModelAdapter'
         if cls.__name__.endswith(suffix):
             return cls.__name__[0:-len(suffix)].upper()
         return cls.__name__.upper()
@@ -57,7 +55,6 @@ class LanguageModel(ABC):
                 f"{value} responses are not supported by this model")
         self._response_type = value
 
-    @abstractmethod
     def predict(self, evidence: List[str]) -> List[Tuple]:
         """
         Using the provided data, compute log likelihoods over the entire symbol set.
@@ -67,21 +64,21 @@ class LanguageModel(ABC):
         Response:
             probability - dependant on response type, a list of words or symbols with probability
         """
-        ...
+        assert self.model is not None, "language model does not exist!"
 
-    @abstractmethod
-    def update(self) -> None:
-        """Update the model state"""
-        ...
+        context = "".join(evidence)
+        converted_context = context.replace(SPACE_CHAR, ' ')
 
-    @abstractmethod
-    def load(self) -> None:
-        """Restore model state from the provided checkpoint"""
-        ...
+        next_char_pred = dict(self.model.predict(list(converted_context)))
 
-    def reset(self) -> None:
-        """Reset language model state"""
-        ...
+        # Replace space with special space
+        if ' ' in next_char_pred:
+            next_char_pred[SPACE_CHAR] = next_char_pred[' ']
+            del next_char_pred[' ']
 
-    def state_update(self, evidence: List[str]) -> List[Tuple]:
-        """Update state by predicting and updating"""
+        # Add backspace, but return prob 0 from the lm
+        next_char_pred[BACKSPACE_CHAR] = 0.0
+
+        return list(sorted(next_char_pred.items(),
+                    key=lambda item: item[1], reverse=True))
+
