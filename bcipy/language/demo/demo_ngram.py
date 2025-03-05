@@ -1,6 +1,6 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
-from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.core.symbols import alphabet
 from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
@@ -82,7 +82,7 @@ if __name__ == "__main__":
 
     symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = KenLMLanguageModel(response_type, symbol_set, lm_path)
+    lm = NGramLanguageModelAdapter(response_type, symbol_set, lm_path)
 
     next_char_pred = lm.state_update(list("i_like_z"))
     print(next_char_pred)
