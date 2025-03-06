@@ -12,7 +12,7 @@ from aactextpredict.uniform import equally_probable
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 TARGET_BUMP_MIN = 0.0
-TARGET_BUMP_MAX = 0.95
+TARGET_BUMP_MAX = 1.0
 
 
 class OracleLanguageModelAdapter(LanguageModelAdapter):
