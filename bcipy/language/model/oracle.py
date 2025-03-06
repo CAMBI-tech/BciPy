@@ -5,9 +5,9 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.core.symbols import BACKSPACE_CHAR
-from bcipy.language.main import LanguageModel, ResponseType
-from bcipy.language.model.uniform import equally_probable
+from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.language.main import LanguageModelAdapter, ResponseType
+from aactextpredict.uniform import equally_probable
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -15,7 +15,7 @@ TARGET_BUMP_MIN = 0.0
 TARGET_BUMP_MAX = 0.95
 
 
-class OracleLanguageModel(LanguageModel):
+class OracleLanguageModelAdapter(LanguageModelAdapter):
     """Language model which knows the target phrase the user is attempting to
     spell.
 
@@ -37,14 +37,18 @@ class OracleLanguageModel(LanguageModel):
 
     def __init__(self,
                  response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = None,
+                 symbol_set: Optional[List[str]] = DEFAULT_SYMBOL_SET,
                  task_text: str = None,
                  target_bump: float = 0.1):
-        super().__init__(response_type=response_type, symbol_set=symbol_set)
+        super().__init__(response_type=response_type)
+
         self.task_text = task_text
         self.target_bump = target_bump
+
+        self.symbol_set = symbol_set
+
         logger.debug(
-            f"Initialized OracleLanguageModel(task_text='{task_text}', target_bump={target_bump})"
+            f"Initialized OracleLanguageModelAdapter(task_text='{task_text}', target_bump={target_bump})"
         )
 
     @property
@@ -87,24 +91,24 @@ class OracleLanguageModel(LanguageModel):
             list of (symbol, probability) tuples
         """
         spelled_text = ''.join(evidence)
-        probs = equally_probable(self.symbol_set)
-        symbol_probs = list(zip(self.symbol_set, probs))
         target = self._next_target(spelled_text)
 
+        symbol_probs = {}
+
         if target:
-            sym = (target, probs[0] + self.target_bump)
-            updated_symbol_probs = with_min_prob(symbol_probs, sym)
+            # non-target prob = x = (1-b)/n where n is len(symbol_set) and b is target_bump
+            # target prob = x + b
+            non_target_prob = (1 - self.target_bump) / len(self.symbol_set)
+            for ch in self.symbol_set:
+                if ch == target:
+                    symbol_probs[ch] = non_target_prob + self.target_bump
+                else:
+                    symbol_probs[ch] = non_target_prob
         else:
-            updated_symbol_probs = symbol_probs
+            symbol_probs = dict(zip(self.symbol_set, equally_probable(self.symbol_set)))
 
-        return sorted(updated_symbol_probs,
-                      key=lambda pair: self.symbol_set.index(pair[0]))
-
-    def update(self) -> None:
-        """Update the model state"""
-
-    def load(self) -> None:
-        """Restore model state from the provided checkpoint"""
+        return sorted(symbol_probs.items(),
+                      key=lambda item: item[1], reverse=True)
 
     def _next_target(self, spelled_text: str) -> Optional[str]:
         """Computes the next target letter based on the currently spelled_text.
