@@ -17,11 +17,12 @@ class NGramLanguageModelAdapter(LanguageModelAdapter):
         ngram_model = ngram_params['model_file']['value']
         self.lm_path = lm_path or f"{LM_PATH}/{ngram_model}"
 
+        self.symbol_set = symbol_set
         # LM doesn't care about backspace, needs literal space
-        self.symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
-        self.symbol_set.remove(BACKSPACE_CHAR)
+        self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
+        self.model_symbol_set.remove(BACKSPACE_CHAR)
 
-        self.model = NGramLanguageModel(symbol_set=self.symbol_set, lm_path=self.lm_path)
+        self.model = NGramLanguageModel(symbol_set=self.model_symbol_set, lm_path=self.lm_path)
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]

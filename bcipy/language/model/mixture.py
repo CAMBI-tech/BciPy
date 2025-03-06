@@ -34,9 +34,10 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter):
 
         super().__init__(response_type=response_type)
 
+        self.symbol_set = symbol_set
         # LM doesn't care about backspace, needs literal space
-        self.symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
-        self.symbol_set.remove(BACKSPACE_CHAR)
+        self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
+        self.model_symbol_set.remove(BACKSPACE_CHAR)
 
         mixture_params = self.parameters['mixture']
         self.lm_types = lm_types or mixture_params['model_types']['value']
@@ -49,7 +50,7 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter):
 
         MixtureLanguageModel.validate_parameters(self.lm_types, self.lm_weights, self.lm_params)
 
-        self.model = MixtureLanguageModel(self.symbol_set, self.lm_types, self.lm_weights, self.lm_params)
+        self.model = MixtureLanguageModel(self.model_symbol_set, self.lm_types, self.lm_weights, self.lm_params)
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]
