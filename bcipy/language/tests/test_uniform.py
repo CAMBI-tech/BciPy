@@ -2,8 +2,11 @@
 
 import unittest
 
-from bcipy.language.model.uniform import (ResponseType, UniformLanguageModel,
-                                          equally_probable)
+from bcipy.language.model.uniform import UniformLanguageModelAdapter
+from bcipy.language.main import ResponseType
+from bcipy.core.symbols import BACKSPACE_CHAR
+
+from aactextpredict.uniform import equally_probable
 
 
 class TestUniformLanguageModel(unittest.TestCase):
@@ -11,16 +14,22 @@ class TestUniformLanguageModel(unittest.TestCase):
 
     def test_init(self):
         """Test default parameters"""
-        lmodel = UniformLanguageModel()
+        lmodel = UniformLanguageModelAdapter()
         self.assertEqual(lmodel.response_type, ResponseType.SYMBOL)
         self.assertEqual(
             len(lmodel.symbol_set), 28,
             "Should be the alphabet plus the backspace and space chars")
 
+    def test_name(self):
+        """Test model name."""
+        self.assertEqual("UNIFORM", UniformLanguageModelAdapter.name())
+
     def test_predict(self):
         """Test the predict method"""
-        symbol_probs = UniformLanguageModel().predict(evidence=[])
-        probs = [prob for sym, prob in symbol_probs]
+        symbol_probs = UniformLanguageModelAdapter().predict(evidence=[])
+        
+        # Backspace can be 0
+        probs = [prob for sym, prob in symbol_probs if sym != BACKSPACE_CHAR]
 
         self.assertEqual(len(set(probs)), 1, "All values should be the same")
         self.assertTrue(0 < probs[0] < 1)

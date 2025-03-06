@@ -4,66 +4,65 @@ import pytest
 import unittest
 from operator import itemgetter
 
-from bcipy.exceptions import UnsupportedResponseType, InvalidLanguageModelException
-from bcipy.core.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
-from bcipy.language.model.causal import CausalLanguageModel
+from bcipy.exceptions import UnsupportedResponseType
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.model.causal import CausalLanguageModelAdapter
 from bcipy.language.main import ResponseType
 
+from aactextpredict.exceptions import InvalidLanguageModelException
 
 @pytest.mark.slow
 class TestCausalLanguageModel(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):
-        cls.gpt2_model = CausalLanguageModel(response_type=ResponseType.SYMBOL,
-                                             symbol_set=alphabet(), lang_model_name="gpt2")
-        cls.opt_model = CausalLanguageModel(response_type=ResponseType.SYMBOL,
-                                            symbol_set=alphabet(), lang_model_name="facebook/opt-125m")
+        cls.gpt2_model = CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL, lang_model_name="gpt2")
+        cls.opt_model = CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL, lang_model_name="facebook/opt-125m")
 
     @pytest.mark.slow
     def test_default_load(self):
         """Test loading model with parameters from json
         This test requires a valid lm_params.json file and all requisite models"""
-        lm = CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+        lm = CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL)
 
     def test_gpt2_init(self):
         """Test default parameters for GPT-2 model"""
         self.assertEqual(self.gpt2_model.response_type, ResponseType.SYMBOL)
-        self.assertEqual(self.gpt2_model.symbol_set, alphabet())
+        self.assertEqual(self.gpt2_model.symbol_set, DEFAULT_SYMBOL_SET)
         self.assertTrue(
             ResponseType.SYMBOL in self.gpt2_model.supported_response_types())
-        self.assertEqual(self.gpt2_model.left_context, "<|endoftext|>")
-        self.assertEqual(self.gpt2_model.device, "cpu")
+        self.assertEqual(self.gpt2_model.model.left_context, "<|endoftext|>")
+        self.assertEqual(self.gpt2_model.model.device, "cpu")
 
     def test_opt_init(self):
         """Test default parameters for Facebook OPT model"""
         self.assertEqual(self.opt_model.response_type, ResponseType.SYMBOL)
-        self.assertEqual(self.opt_model.symbol_set, alphabet())
+        self.assertEqual(self.opt_model.symbol_set, DEFAULT_SYMBOL_SET)
         self.assertTrue(
             ResponseType.SYMBOL in self.opt_model.supported_response_types())
-        self.assertEqual(self.opt_model.left_context, "</s>")
-        self.assertEqual(self.opt_model.device, "cpu")
+        self.assertEqual(self.opt_model.model.left_context, "</s>")
+        self.assertEqual(self.opt_model.model.device, "cpu")
 
     def test_name(self):
         """Test model name."""
-        self.assertEqual("CAUSAL", CausalLanguageModel.name())
+        self.assertEqual("CAUSAL", CausalLanguageModelAdapter.name())
 
     def test_unsupported_response_type(self):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
-            CausalLanguageModel(response_type=ResponseType.WORD,
-                                symbol_set=alphabet(), lang_model_name="gpt2")
+            CausalLanguageModelAdapter(response_type=ResponseType.WORD,
+                                lang_model_name="gpt2")
 
     def test_invalid_model_name(self):
         """Test that the proper exception is thrown if given an invalid lang_model_name"""
         with self.assertRaises(InvalidLanguageModelException):
-            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+            CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL,
                                 lang_model_name="phonymodel")
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
-            CausalLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+            CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL,
                                 lang_model_name="gpt2", lm_path="./phonypath/")
 
     def test_non_mutable_evidence(self):
