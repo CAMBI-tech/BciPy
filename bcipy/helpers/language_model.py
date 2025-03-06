@@ -13,7 +13,6 @@ from bcipy.language.main import LanguageModelAdapter, ResponseType
 
 """Only imported models will be included in language_models_by_name"""
 # flake8: noqa
-from bcipy.exceptions import InvalidLanguageModelException
 from bcipy.language.model.causal import CausalLanguageModelAdapter
 from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
