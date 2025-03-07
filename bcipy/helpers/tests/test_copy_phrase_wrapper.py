@@ -1,8 +1,8 @@
 import unittest
 
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
-from bcipy.core.symbols import alphabet
-from bcipy.language.model.uniform import UniformLanguageModel
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET
+from bcipy.language.model.uniform import UniformLanguageModelAdapter
 from bcipy.task.data import EvidenceType
 
 
@@ -10,12 +10,11 @@ class TestCopyPhraseWrapper(unittest.TestCase):
     """Test CopyPhraseWrapper"""
 
     def test_valid_letters(self):
-        alp = alphabet()
         cp = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
             lmodel=None,
-            alp=alp,
+            alp=DEFAULT_SYMBOL_SET,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
@@ -104,13 +103,12 @@ class TestCopyPhraseWrapper(unittest.TestCase):
                            ["nontarget", "nontarget"])
 
     def test_init_series(self):
-        alp = alphabet()
 
         copy_phrase_task = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
-            lmodel=UniformLanguageModel(symbol_set=alp),
-            alp=alp,
+            lmodel=UniformLanguageModelAdapter(symbol_set=DEFAULT_SYMBOL_SET),
+            alp=DEFAULT_SYMBOL_SET,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,
             evidence_names=[EvidenceType.LM, EvidenceType.ERP],
