@@ -11,7 +11,6 @@ from bcipy.exceptions import InvalidLanguageModelException
 """All supported models must be imported"""
 from bcipy.language.model.causal import CausalLanguageModel
 from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 class MixtureLanguageModel(LanguageModel):
@@ -19,7 +18,7 @@ class MixtureLanguageModel(LanguageModel):
         Character language model that mixes any combination of other models
     """
 
-    supported_lm_types = ["CAUSAL", "UNIGRAM", "KENLM"]
+    supported_lm_types = ["CAUSAL", "KENLM"]
 
     @staticmethod
     def language_models_by_name() -> Dict[str, LanguageModel]:
