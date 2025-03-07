@@ -1,6 +1,6 @@
-from .main import LanguageModel, ResponseType
+from .main import LanguageModelAdapter, ResponseType
 
 __all__ = [
-    "LanguageModel",
+    "LanguageModelAdapter",
     "ResponseType",
 ]

@@ -1,7 +1,7 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
-from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.core.symbols import alphabet
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET
 from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
 from bcipy.exceptions import KenLMInstallationException
@@ -15,6 +15,8 @@ except BaseException:
 
 if __name__ == "__main__":
     lm_path = f"{LM_PATH}/lm_dec19_char_12gram_1e-5_kenlm_probing.bin"
+
+    # Using KenLM directly
 
     # Load a really pruned n-gram language model
     model = kenlm.LanguageModel(lm_path)
@@ -80,27 +82,39 @@ if __name__ == "__main__":
         prev = token
     print(f"sum logprob = {accum:.4f}")
 
-    symbol_set = alphabet()
-    response_type = ResponseType.SYMBOL
-    lm = KenLMLanguageModel(response_type, symbol_set, lm_path)
 
-    next_char_pred = lm.state_update(list("i_like_z"))
-    print(next_char_pred)
+    # Using the adapter and aactextpredict toolkit
+    response_type = ResponseType.SYMBOL
+    lm = NGramLanguageModelAdapter(response_type, DEFAULT_SYMBOL_SET, lm_path)
+
+    print("Target sentence: i_like_zebras\n")
+
+    next_char_pred = lm.predict(list("i_like_z"))
+    print("Context: i_like_z")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("i_lik"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list("i_lik"))
+    print("Context: i_lik")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("i_like_zebras"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list("i_like_zebras"))
+    print("Context: i_like_zebras")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list(""))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list(""))
+    print("Context: ")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("i_like_zebra"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list("i_like_zebra"))
+    print("Context: i_like_zebra")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
-    print(correct_char_rank)
+    print(f"Correct character rank: {correct_char_rank}\n")

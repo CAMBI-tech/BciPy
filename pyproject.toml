@@ -24,9 +24,9 @@ classifiers = [
 ]
 
 dependencies = [
+    "aactextpredict==0.1.2",
     "attrdict3==2.0.2",
     "EDFlib-Python==1.0.8",
-    "transformers==4.36.0",
     "torch==2.2.0",
     "construct==2.8.14",
     "mne==1.6.1",
@@ -56,7 +56,6 @@ dependencies = [
     "rich==13.9.4",
     "reportlab==4.2.0",
     "tables==3.7.0",
-    "kenlm==0.1",
     "pyWinhook==1.6.2;python_version=='3.9' and platform_system=='Windows'",
     "WxPython==4.2.1;platform_system!='Linux'",
 ]

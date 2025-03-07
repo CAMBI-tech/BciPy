@@ -90,13 +90,6 @@ class TaskConfigurationException(BciPyCoreException):
     ...
 
 
-class InvalidLanguageModelException(BciPyCoreException):
-    """Invalid Language Model Exception.
-
-    Thrown when attempting to load a language model from an invalid path"""
-    ...
-
-
 class KenLMInstallationException(BciPyCoreException):
     """KenLM Installation Exception.
 

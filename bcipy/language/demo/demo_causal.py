@@ -1,26 +1,36 @@
-from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.core.symbols import alphabet
+from bcipy.language.model.causal import CausalLanguageModelAdapter
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET
 from bcipy.language.main import ResponseType
 
 
 if __name__ == "__main__":
-    symbol_set = alphabet()
     response_type = ResponseType.SYMBOL
-    lm = CausalLanguageModel(response_type, symbol_set, lang_model_name="gpt2")
+    lm = CausalLanguageModelAdapter(response_type, DEFAULT_SYMBOL_SET, lang_model_name="figmtu/opt-350m-aac")
 
-    next_char_pred = lm.state_update(list("does_it_make_sen"))
-    print(next_char_pred)
+    print("Target sentence: does_it_make_sense\n")
+
+    next_char_pred = lm.predict(list("does_it_make_sen"))
+    print(f"Context: does_it_make_sen")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sens"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list("does_it_make_sens"))
+    print(f"Context: does_it_make_sens")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sense"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict(list("does_it_make_sense"))
+    print(f"Context: does_it_make_sense")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("i_like_zebra"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    print("Target sentence: i_like_zebras\n")
+
+    next_char_pred = lm.predict(list("i_like_zebra"))
+    print(f"Context: i_like_zebra")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
-    print(correct_char_rank)
+    print(f"Correct character rank: {correct_char_rank}\n")

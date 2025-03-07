@@ -6,27 +6,26 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from bcipy.core.symbols import alphabet
-from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.language.main import LanguageModelAdapter, ResponseType
 
 # pylint: disable=unused-import
 # flake8: noqa
 
 """Only imported models will be included in language_models_by_name"""
 # flake8: noqa
-from bcipy.exceptions import InvalidLanguageModelException
-from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.language.model.mixture import MixtureLanguageModel
-from bcipy.language.model.oracle import OracleLanguageModel
-from bcipy.language.model.uniform import UniformLanguageModel
+from bcipy.language.model.causal import CausalLanguageModelAdapter
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+from bcipy.language.model.oracle import OracleLanguageModelAdapter
+from bcipy.language.model.uniform import UniformLanguageModelAdapter
 
 
-def language_models_by_name() -> Dict[str, LanguageModel]:
+def language_models_by_name() -> Dict[str, LanguageModelAdapter]:
     """Returns available language models indexed by name."""
-    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
+    return {lm.name(): lm for lm in LanguageModelAdapter.__subclasses__()}
 
 
-def init_language_model(parameters: dict) -> LanguageModel:
+def init_language_model(parameters: dict) -> LanguageModelAdapter:
     """
     Init Language Model configured in the parameters. If no language model is
     specified, a uniform language model is returned.
@@ -38,7 +37,7 @@ def init_language_model(parameters: dict) -> LanguageModel:
 
     Returns
     -------
-        instance of a LanguageModel
+        instance of a LanguageModelAdapter
     """
 
     language_models = language_models_by_name()

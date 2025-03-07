@@ -1,53 +1,53 @@
-"""Tests for KENLM Language Model"""
+"""Tests for NGRAM Language Model"""
 
 import pytest
 import unittest
 import os
 from operator import itemgetter
 
-from bcipy.exceptions import UnsupportedResponseType, InvalidLanguageModelException
-from bcipy.core.symbols import alphabet, BACKSPACE_CHAR, SPACE_CHAR
-from bcipy.language.model.kenlm import KenLMLanguageModel
+from bcipy.exceptions import UnsupportedResponseType
+from aactextpredict.exceptions import InvalidLanguageModelException
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.main import ResponseType
 
 
 @pytest.mark.slow
-class TestKenLMLanguageModel(unittest.TestCase):
+class TestNGramLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):
         dirname = os.path.dirname(__file__) or '.'
         cls.lm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.kenlm"
-        cls.lmodel = KenLMLanguageModel(response_type=ResponseType.SYMBOL,
-                                        symbol_set=alphabet(), lm_path=cls.lm_path)
+        cls.lmodel = NGramLanguageModelAdapter(response_type=ResponseType.SYMBOL, lm_path=cls.lm_path)
 
     @pytest.mark.slow
     def test_default_load(self):
         """Test loading model with parameters from json
         This test requires a valid lm_params.json file and all requisite models"""
-        lm = KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet())
+        lm = NGramLanguageModelAdapter(response_type=ResponseType.SYMBOL)
 
     def test_init(self):
         """Test default parameters"""
         self.assertEqual(self.lmodel.response_type, ResponseType.SYMBOL)
-        self.assertEqual(self.lmodel.symbol_set, alphabet())
+        self.assertEqual(self.lmodel.symbol_set, DEFAULT_SYMBOL_SET)
         self.assertTrue(
             ResponseType.SYMBOL in self.lmodel.supported_response_types())
 
     def test_name(self):
         """Test model name."""
-        self.assertEqual("KENLM", KenLMLanguageModel.name())
+        self.assertEqual("NGRAM", NGramLanguageModelAdapter.name())
 
     def test_unsupported_response_type(self):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
-            KenLMLanguageModel(response_type=ResponseType.WORD,
-                               symbol_set=alphabet(), lm_path=self.lm_path)
+            NGramLanguageModelAdapter(response_type=ResponseType.WORD,
+                               lm_path=self.lm_path)
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
-            KenLMLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
+            NGramLanguageModelAdapter(response_type=ResponseType.SYMBOL,
                                lm_path="phonymodel.txt")
 
     def test_non_mutable_evidence(self):
