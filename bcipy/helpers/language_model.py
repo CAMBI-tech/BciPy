@@ -18,7 +18,6 @@ from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 from bcipy.language.model.oracle import OracleLanguageModelAdapter
 from bcipy.language.model.uniform import UniformLanguageModelAdapter
-from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModelAdapter]:
