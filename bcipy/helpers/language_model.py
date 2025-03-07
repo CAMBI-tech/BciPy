@@ -16,7 +16,7 @@ from bcipy.language.main import LanguageModelAdapter, ResponseType
 from bcipy.language.model.causal import CausalLanguageModelAdapter
 from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
-from bcipy.language.model.oracle import OracleLanguageModel
+from bcipy.language.model.oracle import OracleLanguageModelAdapter
 from bcipy.language.model.uniform import UniformLanguageModelAdapter
 from bcipy.language.model.unigram import UnigramLanguageModel
 
@@ -38,7 +38,7 @@ def init_language_model(parameters: dict) -> LanguageModelAdapter:
 
     Returns
     -------
-        instance of a LanguageModel
+        instance of a LanguageModelAdapter
     """
 
     language_models = language_models_by_name()
