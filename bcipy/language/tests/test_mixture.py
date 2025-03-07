@@ -13,7 +13,7 @@ from bcipy.language.main import ResponseType
 
 
 @pytest.mark.slow
-class TestMixtureLanguageModel(unittest.TestCase):
+class TestMixtureLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):

@@ -9,7 +9,7 @@ from bcipy.core.symbols import BACKSPACE_CHAR
 from aactextpredict.uniform import equally_probable
 
 
-class TestUniformLanguageModel(unittest.TestCase):
+class TestUniformLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
 
     def test_init(self):

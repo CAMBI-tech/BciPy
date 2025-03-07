@@ -7,7 +7,7 @@ from bcipy.language.main import ResponseType
 from bcipy.core.symbols import BACKSPACE_CHAR
 
 
-class TestOracleLanguageModel(unittest.TestCase):
+class TestOracleLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
 
     def test_init(self):

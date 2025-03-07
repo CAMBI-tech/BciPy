@@ -12,7 +12,7 @@ from bcipy.language.main import ResponseType
 from aactextpredict.exceptions import InvalidLanguageModelException
 
 @pytest.mark.slow
-class TestCausalLanguageModel(unittest.TestCase):
+class TestCausalLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):
