@@ -29,6 +29,7 @@ optional arguments:
                         Sampler args structured as a JSON string.
   -o OUTPUT, --output OUTPUT
                         Sim output path
+  -v, --verbose         Verbose mode for more detailed logging.
 ```
 
 For example,
