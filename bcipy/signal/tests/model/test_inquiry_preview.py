@@ -1,40 +1,86 @@
 import unittest
-import numpy as np
-from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from string import ascii_uppercase
+
+import numpy as np
+
+from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 
 
 class TestInquiryPreview(unittest.TestCase):
+    """Test button press probabilities under various conditions."""
+
     def setUp(self):
         self.symbol_set = list(ascii_uppercase)
-
-    def _test(self, inquiry_len, error_prob, user_likes: bool):
-        if user_likes:
-            p_shown = 1 - error_prob
-            p_not_shown = error_prob
-        else:
-            p_shown = error_prob
-            p_not_shown = 1 - error_prob
-
-        inquiry = self.symbol_set[:inquiry_len]
-        results = compute_probs_after_preview(inquiry, self.symbol_set, error_prob, user_likes)
-
-        expected = np.array(inquiry_len * [p_shown] + (len(self.symbol_set) - inquiry_len) * [p_not_shown])
-        self.assertTrue(np.allclose(results, expected))
+        self.error_prob = 0.05
 
     def test_user_likes_short_inquiry(self):
-        self._test(5, 0.95, True)
+        """Test short inquiry where user wants to proceed with the inquiry.
+        Should provide support for symbols in inquiry and downvote others."""
+
+        inquiry = ['A', 'B', 'C', 'D', 'E']
+        user_likes = True
+        expected = [
+            0.95, 0.95, 0.95, 0.95, 0.95, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05
+        ]
+        results = compute_probs_after_preview(inquiry, self.symbol_set,
+                                              self.error_prob, user_likes)
+        self.assertTrue(np.allclose(results, expected))
 
     def test_user_likes_long_inquiry(self):
-        self._test(15, 0.95, True)
+        """Test long inquiry where user wants to proceed with the inquiry."""
+        inquiry = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O'
+        ]
+        expected = [
+            0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95,
+            0.95, 0.95, 0.95, 0.95, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05
+        ]
+        results = compute_probs_after_preview(inquiry,
+                                              self.symbol_set,
+                                              self.error_prob,
+                                              proceed=True)
+
+        self.assertTrue(np.allclose(results, expected))
 
     def test_user_dislikes_short_inquiry(self):
-        self._test(5, 0.95, False)
+        """Test probabilities for short inquiry where user does not want to proceed.
+        Should downvote letters in the inquiry and upvote everything else."""
+
+        inquiry = ['A', 'B', 'C', 'D', 'E']
+        expected = [
+            0.05, 0.05, 0.05, 0.05, 0.05, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95,
+            0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95,
+            0.95, 0.95, 0.95, 0.95
+        ]
+        results = compute_probs_after_preview(inquiry,
+                                              self.symbol_set,
+                                              self.error_prob,
+                                              proceed=False)
+        self.assertTrue(np.allclose(results, expected))
 
     def test_user_dislikes_long_inquiry(self):
-        self._test(15, 0.95, False)
+        """Test probabilities for long inquiry where user does not want to proceed."""
+        inquiry = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O'
+        ]
+        expected = [
+            0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05,
+            0.05, 0.05, 0.05, 0.05, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95, 0.95,
+            0.95, 0.95, 0.95, 0.95
+        ]
+        results = compute_probs_after_preview(inquiry,
+                                              self.symbol_set,
+                                              self.error_prob,
+                                              proceed=False)
+        self.assertTrue(np.allclose(results, expected))
 
     def test_invalid_error_prob(self):
+        """Test error probability out of range"""
         inquiry = self.symbol_set[:10]
         with self.assertRaises(ValueError):
             compute_probs_after_preview(inquiry, self.symbol_set, -0.01, True)
