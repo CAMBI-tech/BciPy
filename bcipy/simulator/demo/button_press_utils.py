@@ -1,9 +1,5 @@
 """Utilities for working with button press data."""
 
-# Input data folder and parameters
-
-# could check for raw button data
-
 import random
 from pathlib import Path
 from typing import List, Tuple

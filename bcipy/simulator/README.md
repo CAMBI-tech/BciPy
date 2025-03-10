@@ -126,8 +126,11 @@ optional arguments:
                         Sim output path
 ```
 
+## Demo
+
+The simulator demo module contains code with explorations for future directions which can be adapted to meet various needs. View the README in that directory for more information.
+
 ## Current Limitations
 
-* Only provides EEG support
 * Only one sampler maybe provided for all devices. Ideally we should support a different sampling strategy for each device.
 * Only Copy Phrase is currently supported.

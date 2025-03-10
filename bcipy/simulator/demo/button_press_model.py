@@ -51,8 +51,9 @@ class ButtonPressModel(SignalModel):
         Returns:
             np.array: multiplicative update term (likelihood ratios) for each symbol in the `symbol_set`.
         """
-        proceed = np.ones(data.shape) == data
-        compute_probs_after_preview(inquiry=inquiry,
+
+        proceed = np.any(data)
+        return compute_probs_after_preview(inquiry=inquiry,
                                     symbol_set=symbol_set,
                                     user_error_prob=self.error_prob,
                                     proceed=proceed)
