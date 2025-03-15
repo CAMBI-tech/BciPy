@@ -6,7 +6,7 @@ import logging as logger
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple, Type
+from typing import List, NamedTuple, Optional, Tuple
 
 import numpy as np
 

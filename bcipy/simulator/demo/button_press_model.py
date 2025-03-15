@@ -54,9 +54,9 @@ class ButtonPressModel(SignalModel):
 
         proceed = np.any(data)
         return compute_probs_after_preview(inquiry=inquiry,
-                                    symbol_set=symbol_set,
-                                    user_error_prob=self.error_prob,
-                                    proceed=proceed)
+                                           symbol_set=symbol_set,
+                                           user_error_prob=self.error_prob,
+                                           proceed=proceed)
 
     def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
         """@override"""

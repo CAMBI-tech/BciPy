@@ -31,6 +31,9 @@ class ButtonPressDataProcessor(RawDataProcessor):
     mode is 'press to accept', all trials in that inquiry are given data of 1.0,
     otherwise the data value is 0.0. If the mode is 'press to skip', trials within
     inquiries that do not contain the target are given 1.0 values.
+
+    This also means that this processor should only be used in conjunction with the
+    InquirySampler.
     """
     consumes = ContentType.MARKERS
     produces = EvidenceType.BTN
@@ -64,6 +67,8 @@ class ButtonPressDataProcessor(RawDataProcessor):
             # collect data for each trial in the inquiry
             for trg in inquiry_triggers:
                 target_lbl = 1 if trg.type == TriggerType.TARGET else 0
+                # Returns the same value for all trials in the inquiry. Implies that
+                # the button was pressed some time during the inquiry.
                 data = 1.0 if should_press_button(inquiry_triggers,
                                                   button_press_mode) else 0.0
                 inquiry_trial_data.append(data)
