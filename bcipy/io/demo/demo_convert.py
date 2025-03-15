@@ -152,7 +152,7 @@ if __name__ == '__main__':
     bids_path_root = convert_experiment_to_bids(
         path,
         args.experiment,
-        ConvertFormat.EDF,
+        ConvertFormat.BV,
         output_dir="/Users/srikarananthoju/cambi/BciPy",
         include_eye_tracker=args.eye_tracker
     )
