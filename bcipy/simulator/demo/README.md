@@ -9,35 +9,35 @@ The `button_data_processor` and `button_press_model` are used to demonstrate a m
 
 1. Ensure that the button signal model can be loaded or create a button signal model. To create a new one:
 
-```
-from pathlib import Path
-from bcipy.acquisition.datastream.mock.switch import switch_device
-from bcipy.io.save import save_model
-from bcipy.simulator.demo.button_press_model import ButtonPressModel
-from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
+    ```
+    from pathlib import Path
+    from bcipy.acquisition.datastream.mock.switch import switch_device
+    from bcipy.io.save import save_model
+    from bcipy.simulator.demo.button_press_model import ButtonPressModel
+    from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 
-dirname = "" # TODO: enter the directory
-model = ButtonPressModel()
-model.metadata = SignalModelMetadata(device_spec=switch_device(), evidence_type="BTN", transform=None)
-save_model(model, Path(dirname, "button_model.pkl"))
-```
+    dirname = "" # TODO: enter the directory
+    model = ButtonPressModel()
+    model.metadata = SignalModelMetadata(device_spec=switch_device(), evidence_type="BTN", transform=None)
+    save_model(model, Path(dirname, "button_model.pkl"))
+    ```
 
 2. Ensure that the devices.json file has an entry for a switch
 
-```
-{
-    "name": "Switch",
-    "content_type": "MARKERS",
-    "channels": [
-        { "name": "Marker", "label": "Marker" }
-    ],
-    "sample_rate": 0.0,
-    "description": "Switch used for button press inputs",
-    "excluded_from_analysis": [],
-    "status": "active",
-    "static_offset": 0.0
-}
-```
+    ```
+    {
+        "name": "Switch",
+        "content_type": "MARKERS",
+        "channels": [
+            { "name": "Marker", "label": "Marker" }
+        ],
+        "sample_rate": 0.0,
+        "description": "Switch used for button press inputs",
+        "excluded_from_analysis": [],
+        "status": "active",
+        "static_offset": 0.0
+    }
+    ```
 
 3. Set the appropriate simulation parameters in the parameters.json file.
 
