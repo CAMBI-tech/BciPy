@@ -1,0 +1,127 @@
+{
+  "acq_mode": {
+    "value": "EEG+MARKERS",
+    "section": "acq_config",
+    "name": "Acquisition Mode",
+    "helpTip": "Specifies the hardware device(s) used for data collection. Default: EEG",
+    "recommended": [
+      "EEG",
+      "EEG/DSI-24",
+      "Eyetracker",
+      "EEG+Eyetracker"
+    ],
+    "type": "str",
+    "editable": false
+  },
+  "trial_window": {
+    "value": "0.2:0.7",
+    "section": "bci_config",
+    "name": "Trial Classification Window Length",
+    "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
+    "recommended": [
+      "0.0:0.5",
+      "0.0:0.8",
+      "0.2:0.8"
+    ],
+    "type": "range",
+    "editable": false
+  },
+  "prestim_length": {
+    "value": "1",
+    "section": "bci_config",
+    "name": "Prestimulus Window Length",
+    "helpTip": "Specifies the length (in seconds) of the EEG data window to return before inquiry presentation. Default: 1",
+    "recommended": "",
+    "type": "float",
+    "editable": false
+  },
+  "task_buffer_length": {
+    "value": "2",
+    "section": "bci_config",
+    "name": "Inter-inquiry Interval",
+    "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
+    "recommended": "",
+    "type": "float",
+    "editable": false
+  },
+  "stim_length": {
+    "value": "10",
+    "section": "bci_config",
+    "name": "Stimuli Per inquiry",
+    "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
+    "recommended": "",
+    "type": "int",
+    "editable": false
+  },
+  "time_flash": {
+    "value": "0.20",
+    "section": "bci_config",
+    "name": "Stimulus Presentation Duration",
+    "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry.",
+    "recommended": "",
+    "type": "float",
+    "editable": false
+  },
+  "show_preview_inquiry": {
+    "value": "false",
+    "section": "bci_config",
+    "name": "Preview Inquiry On/Off",
+    "helpTip": "If \u2018true\u2019, the inquiry will be previewed as applicable for the task. *Note* Not all tasks will have this enabled!",
+    "recommended": "",
+    "type": "bool",
+    "editable": false
+  },
+  "preview_inquiry_progress_method": {
+    "value": "1",
+    "section": "bci_config",
+    "name": "Preview Inquiry Progression Method",
+    "helpTip": "If show_preview_inquiry true, this will determine how to proceed after a key hit. 0 = preview only; 1 = press to confirm; 2 = press to skip to another inquiry",
+    "recommended": [
+      "0",
+      "1",
+      "2"
+    ],
+    "type": "int",
+    "editable": false
+  },
+  "preview_inquiry_length": {
+    "value": "5",
+    "section": "bci_config",
+    "name": "Preview Inquiry Display Length",
+    "helpTip": "Length of time in seconds to present an inquiry preview to the user.",
+    "recommended": "",
+    "type": "float",
+    "editable": false
+  },
+  "preview_inquiry_key_input": {
+    "value": "return",
+    "section": "bci_config",
+    "name": "Preview Inquiry Display Key Input Method",
+    "helpTip": "Defines the key used to engage with inquiry preview.",
+    "recommended": [
+      "space",
+      "escape",
+      "return"
+    ],
+    "type": "str",
+    "editable": false
+  },
+  "preview_inquiry_isi": {
+    "value": "1",
+    "section": "bci_config",
+    "name": "Preview Inquiry Inter-Stimulus Interval",
+    "helpTip": "The time between previewing an inquiry and the start of an inquiry.",
+    "recommended": "",
+    "type": "float",
+    "editable": false
+  },
+  "preview_box_text_size": {
+    "value": "0.1",
+    "section": "task_config",
+    "name": "Preview Inquiry Box Text Size",
+    "helpTip": "Specifies the height of text stimuli in the preview inquiry box. See https://www.psychopy.org/general/units.html. Default: 0.1",
+    "recommended": "",
+    "editable": false,
+    "type": "float"
+  }
+}
