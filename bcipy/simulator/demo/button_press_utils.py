@@ -86,9 +86,12 @@ def timestamp_within_inquiry(inquiry_triggers: List[Trigger],
 
 
 def simulate_raw_data(data_dir: Path, parameters: Parameters):
-    """Read through trigger data. For inquiries with target, output one or
+    """Simulate what the raw_data file for a switch would generate.
+
+    Reads through trigger data. For inquiries with target, outputs one or
     more markers within the inquiry timestamp range. Or if press to reject,
-    output markers for inquiries without target."""
+    output markers for inquiries without target.
+    """
 
     spec = switch_device()
     raw_data_path = Path(data_dir, raw_data_filename(spec))

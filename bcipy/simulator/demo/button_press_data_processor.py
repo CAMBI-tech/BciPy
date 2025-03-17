@@ -11,7 +11,7 @@ from bcipy.core.list import grouper
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
 from bcipy.core.triggers import TriggerType
-from bcipy.display.main import PreviewParams
+from bcipy.display.main import ButtonPressMode, PreviewParams
 from bcipy.io.load import load_raw_data
 from bcipy.simulator.data.data_process import (DecodedTriggers,
                                                ExtractedExperimentData,
@@ -20,6 +20,7 @@ from bcipy.simulator.data.data_process import (DecodedTriggers,
 from bcipy.simulator.demo.button_press_utils import (should_press_button,
                                                      simulate_raw_data,
                                                      switch_device)
+from bcipy.simulator.exceptions import IncompatibleParameters
 from bcipy.task.data import EvidenceType
 
 
@@ -53,6 +54,10 @@ class ButtonPressDataProcessor(RawDataProcessor):
         timing_params = parameters.instantiate(TimingParams)
         button_press_mode = parameters.instantiate(
             PreviewParams).button_press_mode
+
+        if button_press_mode is ButtonPressMode.NOTHING:
+            raise IncompatibleParameters("Button press mode must be set.")
+
         decoded_triggers = self.decode_triggers(data_folder, parameters)
 
         inquiry_data: List[List[float]] = []

@@ -12,10 +12,15 @@ from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 class ButtonPressModel(SignalModel):
     """Signal model that classifies button presses.
 
+    This is a demo model. The provided data should be comprised of ones and zeros,
+    where a 1 indicates a button press occurred. If a 1.0 occurs any time within
+    an inquiry, all symbols in the inquiry are supported and all non-inquiry symbols
+    are downgraded. Otherwise the opposite happens. See tests for
+    inquiry_preview.compute_probs_after_preview.
+
     Parameters
     ----------
         error_prob - Specifies the probability of a button press error.
-            TODO: compute this during training.
     """
 
     name = "ButtonPressModel"
