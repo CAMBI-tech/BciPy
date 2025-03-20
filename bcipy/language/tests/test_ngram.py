@@ -42,13 +42,13 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
             NGramLanguageModelAdapter(response_type=ResponseType.WORD,
-                               lm_path=self.lm_path)
+                                      lm_path=self.lm_path)
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
             NGramLanguageModelAdapter(response_type=ResponseType.SYMBOL,
-                               lm_path="phonymodel.txt")
+                                      lm_path="phonymodel.txt")
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.

@@ -4,12 +4,13 @@ from bcipy.language.main import LanguageModelAdapter, ResponseType
 from aactextpredict.ngram import NGramLanguageModel
 from bcipy.config import LM_PATH
 
+
 class NGramLanguageModelAdapter(LanguageModelAdapter):
     """Character n-gram language model using the KenLM library for querying"""
 
-    def __init__(self, 
-                 response_type: ResponseType, 
-                 symbol_set: List[str] = DEFAULT_SYMBOL_SET, 
+    def __init__(self,
+                 response_type: ResponseType,
+                 symbol_set: List[str] = DEFAULT_SYMBOL_SET,
                  lm_path: Optional[str] = None):
 
         super().__init__(response_type=response_type)

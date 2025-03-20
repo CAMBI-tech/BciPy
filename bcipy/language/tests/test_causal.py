@@ -11,13 +11,16 @@ from bcipy.language.main import ResponseType
 
 from aactextpredict.exceptions import InvalidLanguageModelException
 
+
 @pytest.mark.slow
 class TestCausalLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
     @classmethod
     def setUpClass(cls):
         cls.gpt2_model = CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL, lang_model_name="gpt2")
-        cls.opt_model = CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL, lang_model_name="facebook/opt-125m")
+        cls.opt_model = CausalLanguageModelAdapter(
+            response_type=ResponseType.SYMBOL,
+            lang_model_name="facebook/opt-125m")
 
     @pytest.mark.slow
     def test_default_load(self):
@@ -51,19 +54,19 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
         """Unsupported responses should raise an exception"""
         with self.assertRaises(UnsupportedResponseType):
             CausalLanguageModelAdapter(response_type=ResponseType.WORD,
-                                lang_model_name="gpt2")
+                                       lang_model_name="gpt2")
 
     def test_invalid_model_name(self):
         """Test that the proper exception is thrown if given an invalid lang_model_name"""
         with self.assertRaises(InvalidLanguageModelException):
             CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL,
-                                lang_model_name="phonymodel")
+                                       lang_model_name="phonymodel")
 
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
             CausalLanguageModelAdapter(response_type=ResponseType.SYMBOL,
-                                lang_model_name="gpt2", lm_path="./phonypath/")
+                                       lang_model_name="gpt2", lm_path="./phonypath/")
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.

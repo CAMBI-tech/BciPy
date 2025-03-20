@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List
 
 from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.language.main import LanguageModelAdapter, ResponseType
@@ -59,11 +59,10 @@ class CausalLanguageModelAdapter(LanguageModelAdapter):
         self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in self.symbol_set]
         self.model_symbol_set.remove(BACKSPACE_CHAR)
 
-        self.model = CausalLanguageModel(symbol_set=self.model_symbol_set, lang_model_name=self.model_name, lm_path=self.model_dir, 
-                                         lm_device=lm_device, lm_left_context=lm_left_context, 
+        self.model = CausalLanguageModel(symbol_set=self.model_symbol_set, lang_model_name=self.model_name, lm_path=self.model_dir,
+                                         lm_device=lm_device, lm_left_context=lm_left_context,
                                          beam_width=self.beam_width, fp16=fp16, mixed_case_context=mixed_case_context,
                                          case_simple=case_simple, max_completed=self.max_completed)
-
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]

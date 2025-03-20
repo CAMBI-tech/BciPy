@@ -81,4 +81,3 @@ class LanguageModelAdapter(ABC):
 
         return list(sorted(next_char_pred.items(),
                     key=lambda item: item[1], reverse=True))
-

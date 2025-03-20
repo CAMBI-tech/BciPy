@@ -52,7 +52,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
                  language_model: LanguageModelAdapter, samplers: Dict[SignalModel,
-                                                               Sampler]):
+                                                                      Sampler]):
         self.args_sm = signal_models
         self.args_lm = language_model
         self.save_session_every_inquiry = False

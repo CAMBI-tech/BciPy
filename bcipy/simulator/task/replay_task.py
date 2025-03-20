@@ -41,7 +41,7 @@ class ReplayTask(SimulatorCopyPhraseTask):
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
                  language_model: LanguageModelAdapter, samplers: Dict[SignalModel,
-                                                               Sampler]):
+                                                                      Sampler]):
         super().__init__(parameters, file_save, signal_models, language_model,
                          samplers)
 

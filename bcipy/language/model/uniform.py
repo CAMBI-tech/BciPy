@@ -1,7 +1,5 @@
 """Uniform language model"""
-from typing import Dict, List, Tuple, Union, Optional
-
-import numpy as np
+from typing import List, Optional
 
 from bcipy.language.main import LanguageModelAdapter, ResponseType
 from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
@@ -30,7 +28,6 @@ class UniformLanguageModelAdapter(LanguageModelAdapter):
         self.model_symbol_set.remove(BACKSPACE_CHAR)
 
         self.model = UniformLanguageModel(symbol_set=self.model_symbol_set)
-
 
     def supported_response_types(self) -> List[ResponseType]:
         return [ResponseType.SYMBOL]

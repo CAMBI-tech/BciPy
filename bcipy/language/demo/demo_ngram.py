@@ -82,7 +82,6 @@ if __name__ == "__main__":
         prev = token
     print(f"sum logprob = {accum:.4f}")
 
-
     # Using the adapter and aactextpredict toolkit
     response_type = ResponseType.SYMBOL
     lm = NGramLanguageModelAdapter(response_type, DEFAULT_SYMBOL_SET, lm_path)

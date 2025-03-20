@@ -27,7 +27,7 @@ class TestUniformLanguageModelAdapter(unittest.TestCase):
     def test_predict(self):
         """Test the predict method"""
         symbol_probs = UniformLanguageModelAdapter().predict(evidence=[])
-        
+
         # Backspace can be 0
         probs = [prob for sym, prob in symbol_probs if sym != BACKSPACE_CHAR]
 

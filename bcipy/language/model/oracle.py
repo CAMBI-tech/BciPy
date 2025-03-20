@@ -5,7 +5,7 @@ from typing import List, Optional, Tuple, Union
 import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.language.main import LanguageModelAdapter, ResponseType
 from aactextpredict.uniform import equally_probable
 
