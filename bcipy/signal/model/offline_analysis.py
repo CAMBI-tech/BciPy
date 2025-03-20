@@ -234,7 +234,8 @@ def analyze_gaze(
         device_spec: DeviceSpec,
         data_folder: str,
         model_type: str = "GaussianProcess",
-        symbol_set: List[str] = alphabet()) -> SignalModel:
+        symbol_set: List[str] = alphabet(), 
+        testing_acc: float = 0.0) -> SignalModel:
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
     Extract timing information from trigger file.
@@ -252,6 +253,9 @@ def analyze_gaze(
         data_folder (str): Path to the folder containing the data to be analyzed.
         model_type (str): Type of gaze model to be used. Options are: "GMIndividual", "GMCentralized",
         or "GaussianProcess".
+        symbol_set (List[str]): List of symbols to be used in the analysis.
+        testing_acc (float): Testing accuracy of the model. This is calculated during fusion analysis.
+        Imported to add to the metadata of the model.
     """
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
@@ -403,11 +407,11 @@ def analyze_gaze(
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None,
-                                         acc=model.acc)
+                                         acc=testing_acc)
     log.info("Training complete for Eyetracker model. Saving data...")
     save_model(
         model,
-        Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.acc}.pkl"))
+        Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.metadata.acc}.pkl"))
     return model
 
 
@@ -478,6 +482,7 @@ def offline_analysis(
 
     symbol_set = alphabet()
     fusion = False
+    avg_testing_acc_gaze = 0.0
     if num_devices == 2:
         # Ensure there is an EEG and Eyetracker device
         fusion = True
@@ -506,6 +511,8 @@ def offline_analysis(
             )
 
             log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+            # The average gaze model accuracy:
+            avg_testing_acc_gaze = round(np.mean(gaze_acc), 3)
 
     # Ask the user if they want to proceed with full dataset model training
     models = []
@@ -532,7 +539,8 @@ def offline_analysis(
                 parameters,
                 device_spec,
                 data_folder,
-                symbol_set=symbol_set)
+                symbol_set=symbol_set, 
+                testing_acc=avg_testing_acc_gaze)
             models.append(et_model)
 
     if alert:
