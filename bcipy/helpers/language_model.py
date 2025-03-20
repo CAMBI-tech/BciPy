@@ -19,7 +19,6 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
-from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
