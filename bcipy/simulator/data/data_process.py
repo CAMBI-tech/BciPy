@@ -252,7 +252,7 @@ class RawDataProcessor():
 
         if data_device.static_offset == devices.DEFAULT_STATIC_OFFSET:
             log.warning(' '.join([
-                f"Using the default static offset to decode triggers for {data_device.name}.",
+                f"Using the default static offset [{devices.DEFAULT_STATIC_OFFSET}] for {data_device.name}.",
                 "Please make sure the correct offset is included in the devices.json file."
             ]))
 

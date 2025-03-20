@@ -15,7 +15,7 @@ from rich.tree import Tree
 
 from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.helpers.acquisition import active_content_types
-from bcipy.io.load import choose_model_paths
+from bcipy.io.load import choose_model_paths, load_json_parameters
 from bcipy.simulator.data.sampler import (InquirySampler, Sampler,
                                           TargetNontargetSampler)
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
@@ -254,7 +254,9 @@ def main(args: Dict[str, Any]) -> TaskFactory:
     sampler = choose_sampling_strategy()
 
     print(command(params, model_paths, source_dirs, sampler))
-    return TaskFactory(params_path=params,
+
+    parameters = load_json_parameters(params, value_cast=True)
+    return TaskFactory(parameters=parameters,
                        source_dirs=source_dirs,
                        signal_model_paths=model_paths,
                        sampling_strategy=sampler,

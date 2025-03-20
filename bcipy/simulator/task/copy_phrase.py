@@ -12,6 +12,9 @@ from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
 from bcipy.simulator.task.null_display import NullDisplay
+from bcipy.simulator.task.null_daq import NullDAQ
+from bcipy.acquisition.multimodal import ClientManager
+
 from bcipy.simulator.util.state import SimState
 from bcipy.task import TaskMode
 from bcipy.task.control.evidence import EvidenceEvaluator
@@ -65,7 +68,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             data_save_location: str,
             fake: bool = False) -> Tuple[Any, Any, Display]:
         """Override the setup method to avoid initializing the data acquisition."""
-        daq = None
+        daq = self.init_acquisition()
         server = None
         display = self.init_display()
         self.initalized = True
@@ -94,6 +97,10 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def init_display(self) -> Display:
         return NullDisplay()
+
+    def init_acquisition(self) -> ClientManager:
+        """Override to do nothing"""
+        return NullDAQ()
 
     def init_feedback(self) -> Optional[VisualFeedback]:
         return None

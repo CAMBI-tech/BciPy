@@ -2,20 +2,30 @@
   "kenlm": {
     "model_file": {
       "description": "Name of the pretrained model file",
-      "value": "lm_dec19_char_tiny_12gram.kenlm",
+      "value": "lm_dec19_char_large_12gram.kenlm",
       "type": "filepath"
     }
   },
   "causal": {
     "model_name": {
       "description": "Name of the HuggingFace model to load. Required for the Causal model.",
-      "value": "facebook/opt-125m",
+      "value": "figmtu/opt-350m-aac",
       "type": "str"
     },
     "model_path": {
       "description": "Pretrained model path, relative to causal.py directory. Blank if using HuggingFace model",
       "value": "",
       "type": "directorypath"
+    },
+    "beam_width": {
+      "description": "Name of the HuggingFace model to load. Required for the Causal model.",
+      "value": "8",
+      "type": "int"
+    },
+    "max_completed": {
+      "description": "stop search once we reach this many completed hypotheses, None=don't prune",
+      "value": "32000",
+      "type": "int"
     }
   },  
   "mixture": {
