@@ -2,4 +2,3 @@
 from .calibration import MatrixCalibrationTask  # noqa
 from .copy_phrase import MatrixCopyPhraseTask  # noqa
 from .timing_verification import MatrixTimingVerificationCalibration  # noqa
-from .copy_phrase import RSVPCopyPhraseTask  # noqa
