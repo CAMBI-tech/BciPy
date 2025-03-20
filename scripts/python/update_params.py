@@ -55,7 +55,6 @@ def update(params_path: str) -> None:
 
 if __name__ == "__main__":
     from bcipy.io.load import load_experimental_data
-    from pathlib import Path
     # load experimental directory. This will have users/run/data
     data_dir = Path(load_experimental_data())
 

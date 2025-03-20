@@ -21,6 +21,7 @@ from bcipy.core.parameters import Parameters
 from bcipy.gui.file_dialog import FileDialog
 from bcipy.gui.main import static_text_control
 from bcipy.helpers.acquisition import active_content_types
+from bcipy.io.load import load_json_parameters
 from bcipy.preferences import preferences
 from bcipy.simulator.data.sampler import TargetNontargetSampler
 from bcipy.simulator.data.sampler.base_sampler import Sampler
@@ -781,7 +782,8 @@ def configure(
     factory = None
     if command:
         print(command, file=sys.stdout)
-        factory = TaskFactory(params_path=params,
+        parameters = load_json_parameters(params, value_cast=True)
+        factory = TaskFactory(parameters=parameters,
                               source_dirs=data_paths,
                               signal_model_paths=model_paths,
                               sampling_strategy=sampler,
