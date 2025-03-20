@@ -29,12 +29,11 @@ def update_latest_params(parameters: Parameters) -> None:
         parameters.add_missing_items(default_params)
 
 
-class TaskFactory():
+class TaskFactory:
     """Constructs the hierarchy of objects necessary for initializing a task."""
 
     def __init__(
             self,
-            params_path: str,
             source_dirs: List[str],
             signal_model_paths: List[str],
             sampling_strategy: Type[Sampler] = TargetNontargetSampler,
@@ -42,7 +41,6 @@ class TaskFactory():
             parameters: Optional[Parameters] = None,
             sampler_args: Optional[Dict[str, Any]] = None):
 
-        self.params_path = params_path
         self.signal_model_paths = signal_model_paths
 
         self.source_dirs = source_dirs
@@ -50,12 +48,7 @@ class TaskFactory():
         self.sampler_args = sampler_args if sampler_args else {}
         self.simulation_task = task
 
-        logger.info("Loading parameters")
-        if parameters is None:
-            self.parameters = load_json_parameters(self.params_path,
-                                                   value_cast=True)
-        else:
-            self.parameters = parameters
+        self.parameters = parameters
 
         update_latest_params(self.parameters)
 

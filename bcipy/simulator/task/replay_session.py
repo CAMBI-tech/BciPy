@@ -4,6 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
+from bcipy.io.load import load_json_parameters
 from bcipy.simulator.data.sampler.replay_sampler import ReplaySampler
 from bcipy.simulator.task.replay_task import ReplayTask
 from bcipy.simulator.task.task_factory import TaskFactory
@@ -49,7 +50,9 @@ def main():
     runs = len(sim_args['data_folder'])
     outdir = sim_args['output']
 
-    task_factory = TaskFactory(params_path=sim_args['parameters'],
+    parameters = load_json_parameters(sim_args['parameters'], value_cast=True)
+
+    task_factory = TaskFactory(parameters=parameters,
                                source_dirs=sim_args['data_folder'],
                                signal_model_paths=[sim_args['model_path']],
                                sampling_strategy=ReplaySampler,

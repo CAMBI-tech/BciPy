@@ -156,8 +156,7 @@ def run_simulation(
         raise FileNotFoundError(f"Could not find a data directory for {user}")
 
     # Construct the simulation task factory and output directory strucutre
-    task_factory = TaskFactory(params_path,
-                               source_dirs=source_dirs,
+    task_factory = TaskFactory(source_dirs=source_dirs,
                                signal_model_paths=[str(model_path)],
                                parameters=parameters)
     sim_dir = init_simulation_dir(
