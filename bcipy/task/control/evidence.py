@@ -136,7 +136,7 @@ class GazeEvaluator(EvidenceEvaluator):
         self.reshape = GazeReshaper()
 
     def preprocess(self, raw_data: np.ndarray, times: List[float],
-                   target_info: List[str], flash_time: float, 
+                   symbols: List[str], flash_time: float, 
                    stim_length: float) -> np.ndarray:
         """Preprocess the inquiry data.
 
@@ -146,9 +146,8 @@ class GazeEvaluator(EvidenceEvaluator):
                 signal length
             symbols - symbols displayed in the inquiry
             times - timestamps associated with each symbol
-            target_info - target information about the stimuli;
-                ex. ['nontarget', 'nontarget', ...]
-            window_length - The length of the time between stimuli presentation
+            flash_time - duration (in seconds) of each stimulus
+            stim_length - number of stimuli presented in each inquiry
         """
         if self.transform:
             transformed_data, transform_sample_rate = self.transform(
@@ -158,13 +157,14 @@ class GazeEvaluator(EvidenceEvaluator):
             transform_sample_rate = self.device_spec.sample_rate
 
         # The data from DAQ is assumed to have offsets applied
-        _, reshaped_data, _ = self.reshape(inq_start_times=times,
-                                            target_symbols=target_info,
+        _, reshaped_data, _ = self.reshape(inq_start_times=times, # TODO
+                                            target_symbols=symbols,
                                             gaze_data=transformed_data,
                                             sample_rate=transform_sample_rate,
                                             stimulus_duration=flash_time,
                                             num_stimuli_per_inquiry=stim_length,
                                             symbol_set=alphabet())
+        # TODO fix! The input data is already in inquiry form, reshaper needs an update.
 
         return reshaped_data
 
@@ -185,7 +185,8 @@ class GazeEvaluator(EvidenceEvaluator):
                 ex. ['nontarget', 'nontarget', ...]
             window_length - The length of the time between stimuli presentation
         """
-        data = self.preprocess(raw_data, times, target_info, flash_time, stim_length)
+        breakpoint()
+        data = self.preprocess(raw_data, times, symbols, flash_time, stim_length)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
         return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry

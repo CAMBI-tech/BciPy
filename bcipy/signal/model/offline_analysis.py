@@ -262,7 +262,7 @@ def analyze_gaze(
     sample_rate = gaze_data.sample_rate
 
     flash_time = parameters.get("time_flash")  # duration of each stimulus
-    stim_size = parameters.get("stim_length")  # number of stimuli per inquiry
+    stim_length = parameters.get("stim_length")  # number of stimuli per inquiry
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -290,10 +290,10 @@ def analyze_gaze(
     )
     ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
-    target_symbols = trigger_symbols[0::stim_size + 1]  # target symbols are the PROMPT triggers
+    target_symbols = trigger_symbols[0::stim_length + 1]  # target symbols are the PROMPT triggers
     # Use trigger_timing to generate time windows for each letter flashing
     # Take every 10th trigger as the start point of timing.
-    inq_start = trigger_timing[1::stim_size + 1]  # start of each inquiry (here we jump over prompts)
+    inq_start = trigger_timing[1::stim_length + 1]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     inquiries_dict, inquiries_list, _ = model.reshaper(
@@ -302,7 +302,7 @@ def analyze_gaze(
         gaze_data=data,
         sample_rate=sample_rate,
         stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=stim_size,
+        num_stimuli_per_inquiry=stim_length,
         symbol_set=symbol_set,
     )
 
