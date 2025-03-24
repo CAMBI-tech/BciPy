@@ -7,8 +7,9 @@ import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
+from bcipy.core.symbols import alphabet
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.core.stimuli import TrialReshaper
+from bcipy.core.stimuli import TrialReshaper, GazeReshaper
 from bcipy.signal.model import SignalModel
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
@@ -97,7 +98,8 @@ class EEGEvaluator(EvidenceEvaluator):
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.ndarray:
+                 window_length: float, flash_time: float,
+                 stim_length: float) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
@@ -131,10 +133,11 @@ class GazeEvaluator(EvidenceEvaluator):
         self.channel_map = analysis_channels(self.device_spec.channels,
                                              self.device_spec)
         self.transform = signal_model.metadata.transform
-        self.reshape = TrialReshaper()
+        self.reshape = GazeReshaper()
 
     def preprocess(self, raw_data: np.ndarray, times: List[float],
-                   target_info: List[str], window_length: float) -> np.ndarray:
+                   target_info: List[str], flash_time: float, 
+                   stim_length: float) -> np.ndarray:
         """Preprocess the inquiry data.
 
         Parameters
@@ -147,22 +150,29 @@ class GazeEvaluator(EvidenceEvaluator):
                 ex. ['nontarget', 'nontarget', ...]
             window_length - The length of the time between stimuli presentation
         """
-        transformed_data, transform_sample_rate = self.transform(
-            raw_data, self.device_spec.sample_rate)
+        if self.transform:
+            transformed_data, transform_sample_rate = self.transform(
+                raw_data, self.device_spec.sample_rate)
+        else:
+            transformed_data = raw_data
+            transform_sample_rate = self.device_spec.sample_rate
 
         # The data from DAQ is assumed to have offsets applied
-        reshaped_data, _lbls = self.reshape(trial_targetness_label=target_info,
-                                            timing_info=times,
-                                            eeg_data=transformed_data,
+        _, reshaped_data, _ = self.reshape(inq_start_times=times,
+                                            target_symbols=target_info,
+                                            gaze_data=transformed_data,
                                             sample_rate=transform_sample_rate,
-                                            channel_map=self.channel_map,
-                                            poststimulus_length=window_length)
+                                            stimulus_duration=flash_time,
+                                            num_stimuli_per_inquiry=stim_length,
+                                            symbol_set=alphabet())
+
         return reshaped_data
 
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.ndarray:
+                 window_length: float, flash_time: float,
+                 stim_length: float) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
@@ -175,7 +185,7 @@ class GazeEvaluator(EvidenceEvaluator):
                 ex. ['nontarget', 'nontarget', ...]
             window_length - The length of the time between stimuli presentation
         """
-        data = self.preprocess(raw_data, times, target_info, window_length)
+        data = self.preprocess(raw_data, times, target_info, flash_time, stim_length)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
         return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
