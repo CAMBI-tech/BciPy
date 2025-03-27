@@ -9,19 +9,18 @@ import numpy as np
 from bcipy.acquisition.datastream.mock.switch import switch_device
 from bcipy.io.load import load_json_parameters
 from bcipy.signal.model.base_model import SignalModelMetadata
-from bcipy.simulator.demo.button_press_data_processor import \
-    ButtonPressDataProcessor
-from bcipy.simulator.demo.button_press_model import ButtonPressModel
+from bcipy.simulator.demo.switch_data_processor import SwitchDataProcessor
+from bcipy.simulator.demo.switch_model import SwitchModel
 
 
-class ButtonPressProcessorTest(unittest.TestCase):
-    """Tests for Button Press data processor."""
+class SwitchProcessorTest(unittest.TestCase):
+    """Tests for Switch data processor."""
 
     def setUp(self):
         """Override."""
         self.data_dir = f"{os.path.dirname(__file__)}/resources/"
         self.temp_dir = tempfile.mkdtemp()
-        self.model = ButtonPressModel()
+        self.model = SwitchModel()
         self.model.metadata = SignalModelMetadata(device_spec=switch_device(),
                                                   evidence_type="BTN",
                                                   transform=None)
@@ -30,7 +29,7 @@ class ButtonPressProcessorTest(unittest.TestCase):
 
     def test_extracted_data(self):
         """Test extracted data."""
-        processor = ButtonPressDataProcessor(model=self.model)
+        processor = SwitchDataProcessor(model=self.model)
         params = load_json_parameters(self.params_path)
 
         extracted_data = processor.process(self.data_dir, params)

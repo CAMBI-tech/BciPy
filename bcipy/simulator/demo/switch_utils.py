@@ -1,4 +1,4 @@
-"""Utilities for working with button press data."""
+"""Utilities for working with switch data."""
 
 import random
 from pathlib import Path
@@ -68,7 +68,7 @@ def time_range(inquiry_triggers: List[Trigger],
     return (inquiry_triggers[0].time, inquiry_triggers[-1].time + time_flash)
 
 
-def should_press_button(inquiry_triggers: List[Trigger],
+def should_press_switch(inquiry_triggers: List[Trigger],
                         button_press_mode: ButtonPressMode) -> bool:
     """Determine if a marker should be written for the given inquiry
     depending on the presence of a target and the button press mode."""
@@ -110,7 +110,7 @@ def simulate_raw_data(data_dir: Path, parameters: Parameters):
                        columns=columns) as writer:
         for inquiry_triggers in partition_triggers(
                 Path(data_dir, config.TRIGGER_FILENAME)):
-            if should_press_button(inquiry_triggers, button_press_mode):
+            if should_press_switch(inquiry_triggers, button_press_mode):
                 rownum += 1
                 stamp = timestamp_within_inquiry(inquiry_triggers, parameters)
 

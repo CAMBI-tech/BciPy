@@ -7,13 +7,12 @@ from bcipy.signal.model.base_model import SignalModel
 # flake8: noqa
 from bcipy.simulator.data.data_process import (EegRawDataProcessor,
                                                RawDataProcessor)
-from bcipy.simulator.demo.button_press_data_processor import \
-    ButtonPressDataProcessor
+from bcipy.simulator.demo.switch_data_processor import SwitchDataProcessor
 from bcipy.task.data import EvidenceType
 
 log = logger.getLogger(__name__)
 
-PROCESSOR_TYPES = [EegRawDataProcessor, ButtonPressDataProcessor]
+PROCESSOR_TYPES = [EegRawDataProcessor, SwitchDataProcessor]
 
 
 def get_processors() -> List[Type[RawDataProcessor]]:

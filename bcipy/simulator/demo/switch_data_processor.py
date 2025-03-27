@@ -17,14 +17,14 @@ from bcipy.simulator.data.data_process import (DecodedTriggers,
                                                ExtractedExperimentData,
                                                RawDataProcessor, ReshapedData,
                                                TimingParams)
-from bcipy.simulator.demo.button_press_utils import (should_press_button,
-                                                     simulate_raw_data,
-                                                     switch_device)
+from bcipy.simulator.demo.switch_utils import (should_press_switch,
+                                               simulate_raw_data,
+                                               switch_device)
 from bcipy.simulator.exceptions import IncompatibleParameters
 from bcipy.task.data import EvidenceType
 
 
-class ButtonPressDataProcessor(RawDataProcessor):
+class SwitchDataProcessor(RawDataProcessor):
     """Data Processor for button press data.
 
     Note that this class does not read raw data, but instead simulates what a
@@ -74,7 +74,7 @@ class ButtonPressDataProcessor(RawDataProcessor):
                 target_lbl = 1 if trg.type == TriggerType.TARGET else 0
                 # Returns the same value for all trials in the inquiry. Implies that
                 # the button was pressed some time during the inquiry.
-                data = 1.0 if should_press_button(inquiry_triggers,
+                data = 1.0 if should_press_switch(inquiry_triggers,
                                                   button_press_mode) else 0.0
                 inquiry_trial_data.append(data)
                 inquiry_target_labels.append(target_lbl)

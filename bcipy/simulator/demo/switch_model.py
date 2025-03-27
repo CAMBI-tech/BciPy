@@ -9,7 +9,7 @@ from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 
 
-class ButtonPressModel(SignalModel):
+class SwitchModel(SignalModel):
     """Signal model that classifies button presses.
 
     This is a demo model. The provided data should be comprised of ones and zeros,
@@ -23,7 +23,7 @@ class ButtonPressModel(SignalModel):
         error_prob - Specifies the probability of a button press error.
     """
 
-    name = "ButtonPressModel"
+    name = "SwitchModel"
     reshaper: InquiryReshaper = InquiryReshaper()
 
     def __init__(self, error_prob: float = 0.05):

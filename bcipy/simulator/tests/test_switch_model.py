@@ -4,15 +4,15 @@ from string import ascii_uppercase
 
 import numpy as np
 
-from bcipy.simulator.demo.button_press_model import ButtonPressModel
+from bcipy.simulator.demo.switch_model import SwitchModel
 
 
-class ButtonPressModelTest(unittest.TestCase):
-    """Tests for Button Press Model."""
+class SwitchModelTest(unittest.TestCase):
+    """Tests for Switch Model."""
 
     def setUp(self):
         """Override; set up model."""
-        self.model = ButtonPressModel()
+        self.model = SwitchModel()
         self.symbol_set = list(ascii_uppercase)
 
     def test_all_positive_inquiry(self):

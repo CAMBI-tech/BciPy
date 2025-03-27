@@ -5,21 +5,21 @@ This module demonstrates how the simulator can be extended for various use cases
 
 ## Multimodal
 
-The `button_data_processor` and `button_press_model` are used to demonstrate a multimodal simulations using a button/switch as an example. To run a simulation with these inputs, you will need to perform the following steps:
+The `switch_data_processor` and `switch_model` are used to demonstrate a multimodal simulations using a button/switch as an example. To run a simulation with these inputs, you will need to perform the following steps:
 
-1. Ensure that the button signal model can be loaded or create a button signal model. To create a new one:
+1. Ensure that the switch signal model can be loaded or create a switch signal model. To create a new one:
 
     ```
     from pathlib import Path
     from bcipy.acquisition.datastream.mock.switch import switch_device
     from bcipy.io.save import save_model
-    from bcipy.simulator.demo.button_press_model import ButtonPressModel
+    from bcipy.simulator.demo.switch_model import SwitchModel
     from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 
     dirname = "" # TODO: enter the directory
-    model = ButtonPressModel()
+    model = SwitchModel()
     model.metadata = SignalModelMetadata(device_spec=switch_device(), evidence_type="BTN", transform=None)
-    save_model(model, Path(dirname, "button_model.pkl"))
+    save_model(model, Path(dirname, "switch_model.pkl"))
     ```
 
 2. Ensure that the devices.json file has an entry for a switch
@@ -65,7 +65,7 @@ For inquiries in which the target not shown:
 
 - evidence values for symbols in inquiry should be degraded
 
-Note that the progress method (`preview_inquiry_progress_method` parameter) doesn't matter if it is set to "press to accept" or "press to skip", since the ButtonDataProcessor interprets this and outputs a 1.0 for inquiries that should be supported and 0.0 for those that shouldn't.
+Note that the progress method (`preview_inquiry_progress_method` parameter) doesn't matter if it is set to "press to accept" or "press to skip", since the SwitchDataProcessor interprets this and outputs a 1.0 for inquiries that should be supported and 0.0 for those that shouldn't.
 
 ### Limitations
 
