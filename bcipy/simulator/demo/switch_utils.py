@@ -1,5 +1,6 @@
 """Utilities for working with switch data."""
 
+import argparse
 import random
 from pathlib import Path
 from typing import List, Tuple
@@ -8,7 +9,7 @@ from bcipy import config
 from bcipy.acquisition.datastream.mock.switch import switch_device
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawDataWriter
-from bcipy.core.triggers import Trigger, TriggerType, trigger_decoder
+from bcipy.core.triggers import Trigger, TriggerType, load_triggers
 from bcipy.display.main import ButtonPressMode, PreviewParams
 from bcipy.helpers.acquisition import raw_data_filename
 
@@ -32,15 +33,10 @@ def partition_triggers(trigger_path: Path) -> List[List[Trigger]]:
     -------
         list of entries where each entry represents the triggers for an inquiry.
     """
-    trg_types, trg_times, trg_labels = trigger_decoder(
-        str(trigger_path),
-        remove_pre_fixation=False,
-        apply_starting_offset=False)
-    triggers = [
-        Trigger(label=trg_labels[i],
-                type=TriggerType(trg_types[i]),
-                time=trg_times[i]) for i in range(len(trg_types))
-    ]
+    triggers = load_triggers(str(trigger_path),
+                             remove_pre_fixation=False,
+                             apply_starting_offset=False)
+
     # index for each prompt trigger
     inq_start_indices = [
         i for i, trg in enumerate(triggers) if trg.type == TriggerType.FIXATION
@@ -53,9 +49,9 @@ def partition_triggers(trigger_path: Path) -> List[List[Trigger]]:
     return inquiry_triggers
 
 
-def has_target(inquiry_triggers: List[Trigger]) -> bool:
+def has_target(triggers: List[Trigger]) -> bool:
     """Check if the list of inquiries contains a target."""
-    for trg in inquiry_triggers:
+    for trg in triggers:
         if trg.type == TriggerType.TARGET:
             return True
     return False
@@ -105,7 +101,7 @@ def simulate_raw_data(data_dir: Path, parameters: Parameters):
     columns = ['timestamp', 'Marker', 'lsl_timestamp']
     rownum = 0
     with RawDataWriter(raw_data_path,
-                       daq_type=spec.content_type,
+                       daq_type=spec.name,
                        sample_rate=spec.sample_rate,
                        columns=columns) as writer:
         for inquiry_triggers in partition_triggers(
@@ -113,7 +109,59 @@ def simulate_raw_data(data_dir: Path, parameters: Parameters):
             if should_press_switch(inquiry_triggers, button_press_mode):
                 rownum += 1
                 stamp = timestamp_within_inquiry(inquiry_triggers, parameters)
-
                 writer.writerow([rownum, 1.0, stamp])
 
     return raw_data_path
+
+
+def generate_raw_data(data_dir: Path,
+                      event_label_prefix: str = 'bcipy_key_press'):
+    """Given a data directory for a task where the Inquiry Preview feature was used,
+    output a raw_data file for the switch data.
+
+    Parameters
+    ----------
+        data_dir - data directory for a task which should include a triggers.txt file.
+        event_label_prefix - optional label given to key press events (see task.py get_key_press).
+    """
+
+    spec = switch_device()
+    raw_data_path = Path(data_dir, raw_data_filename(spec))
+
+    if raw_data_path.exists():
+        return raw_data_path
+
+    trigger_path = Path(data_dir, config.TRIGGER_FILENAME)
+    triggers = load_triggers(str(trigger_path), apply_starting_offset=False)
+
+    key_press_triggers = [
+        trg for trg in triggers
+        if trg.type == TriggerType.EVENT and event_label_prefix in trg.label
+    ]
+
+    columns = ['timestamp', 'Marker', 'lsl_timestamp']
+    with RawDataWriter(raw_data_path,
+                       daq_type=spec.name,
+                       sample_rate=spec.sample_rate,
+                       columns=columns) as writer:
+        for i, trg in enumerate(key_press_triggers):
+            writer.writerow([i + 1, 1.0, trg.time])
+
+    return raw_data_path
+
+
+def main():
+    """"Main method used to generate a raw data file for a switch device."""
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-d",
+                        "--data_folder",
+                        type=Path,
+                        required=True,
+                        action='append',
+                        help="Data directory (must contain triggers.txt file)")
+    args = parser.parse_args()
+    print(generate_raw_data(args.data_dir))
+
+
+if __name__ == '__main__':
+    main()
