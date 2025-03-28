@@ -1,14 +1,14 @@
 from typing import Optional, List
 
 from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import LanguageModelAdapter, ResponseType
+from bcipy.language.main import ResponseType, BciPyLanguageModel
 
 from aactextpredict.causal import CausalLanguageModel
 
 from bcipy.config import LM_PATH
 
 
-class CausalLanguageModelAdapter(LanguageModelAdapter):
+class CausalLanguageModelAdapter(BciPyLanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
 
     def __init__(self,
@@ -39,7 +39,7 @@ class CausalLanguageModelAdapter(LanguageModelAdapter):
             case_simple        - simple fixing of left context case
             max_completed      - stop search once we reach this many completed hypotheses, None=don't prune
         """
-        super().__init__(response_type=response_type)
+        super()._init_bcipy_language_model(response_type=response_type)
 
         causal_params = self.parameters['causal']
 

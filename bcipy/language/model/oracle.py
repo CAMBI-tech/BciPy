@@ -6,7 +6,7 @@ import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import LanguageModelAdapter, ResponseType
+from bcipy.language.main import ResponseType, BciPyLanguageModel
 from aactextpredict.uniform import equally_probable
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -15,7 +15,7 @@ TARGET_BUMP_MIN = 0.0
 TARGET_BUMP_MAX = 1.0
 
 
-class OracleLanguageModelAdapter(LanguageModelAdapter):
+class OracleLanguageModel(BciPyLanguageModel):
     """Language model which knows the target phrase the user is attempting to
     spell.
 
@@ -40,7 +40,7 @@ class OracleLanguageModelAdapter(LanguageModelAdapter):
                  symbol_set: Optional[List[str]] = DEFAULT_SYMBOL_SET,
                  task_text: str = None,
                  target_bump: float = 0.1):
-        super().__init__(response_type=response_type)
+        super()._init_bcipy_language_model(response_type=response_type)
 
         self.task_text = task_text
         self.target_bump = target_bump
@@ -48,7 +48,7 @@ class OracleLanguageModelAdapter(LanguageModelAdapter):
         self.symbol_set = symbol_set
 
         logger.debug(
-            f"Initialized OracleLanguageModelAdapter(task_text='{task_text}', target_bump={target_bump})"
+            f"Initialized OracleLanguageModel(task_text='{task_text}', target_bump={target_bump})"
         )
 
     @property

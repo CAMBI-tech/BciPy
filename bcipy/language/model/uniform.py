@@ -1,13 +1,13 @@
 """Uniform language model"""
 from typing import List, Optional
 
-from bcipy.language.main import LanguageModelAdapter, ResponseType
+from bcipy.language.main import ResponseType, BciPyLanguageModel
 from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 
 from aactextpredict.uniform import UniformLanguageModel
 
 
-class UniformLanguageModelAdapter(LanguageModelAdapter):
+class UniformLanguageModelAdapter(BciPyLanguageModel):
     """Language model in which probabilities for symbols are uniformly
     distributed.
 
@@ -20,7 +20,7 @@ class UniformLanguageModelAdapter(LanguageModelAdapter):
     def __init__(self,
                  response_type: Optional[ResponseType] = None,
                  symbol_set: Optional[List[str]] = DEFAULT_SYMBOL_SET):
-        super().__init__(response_type=response_type)
+        super()._init_bcipy_language_model(response_type=response_type)
 
         self.symbol_set = symbol_set
         # LM doesn't care about backspace, needs literal space

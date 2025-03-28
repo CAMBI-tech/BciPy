@@ -36,7 +36,7 @@ from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
 from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                  TriggerType, convert_timing_triggers,
                                  offset_label)
-from bcipy.language.main import LanguageModelAdapter
+from bcipy.language.main import BciPyLanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
 from bcipy.task import Task, TaskData, TaskMode
@@ -211,7 +211,7 @@ class RSVPCopyPhraseTask(Task):
 
         return daq, servers, display
 
-    def get_language_model(self) -> LanguageModelAdapter:
+    def get_language_model(self) -> BciPyLanguageModel:
         return init_language_model(self.parameters)
 
     def get_signal_models(self) -> Optional[List[SignalModel]]:

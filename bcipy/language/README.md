@@ -2,7 +2,7 @@
 
 BciPy Language module provides an interface for word and character level predictions. This module primarily relies upon the AAC-TextPredict package (aactextpredict on PyPI) for its probability calculations. More information on this package can be found on our [GitHub repo](https://github.com/kdv123/textpredict)
 
-The core methods of any `LanguageModelAdapter` include:
+The core methods of any `BciPyLanguageModel` include:
 
 > `predict` - given typing evidence input, return a prediction (character or word).
 
@@ -16,7 +16,7 @@ The language module has the following structure:
 
 > `lms` - The default location for the model resources.
 
-> `model` - The python classes for each LanguageModelAdapter subclass. Detailed descriptions of each can be found below.
+> `model` - The python classes for each BciPyLanguageModel subclass. Detailed descriptions of each can be found below.
 
 > `sets` - Different phrase sets that can be used to test the language model classes.
 

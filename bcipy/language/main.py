@@ -1,7 +1,7 @@
 """Defines the language model base class."""
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Protocol
 import json
 
 from bcipy.exceptions import UnsupportedResponseType
@@ -18,13 +18,14 @@ class ResponseType(Enum):
         return self.value
 
 
-class LanguageModelAdapter(ABC):
-    """Parent class for Language Model Adapters."""
+class BciPyLanguageModel(Protocol):
+    """Protocol for BciPy Language Models."""
 
+    parameters = None
     _response_type: ResponseType = None
     symbol_set: List[str] = None
 
-    def __init__(self,
+    def _init_bcipy_language_model(self,
                  response_type: Optional[ResponseType] = None):
         self.response_type = response_type or ResponseType.SYMBOL
         with open(DEFAULT_LM_PARAMETERS_PATH, 'r') as params_file:
@@ -33,9 +34,12 @@ class LanguageModelAdapter(ABC):
     @classmethod
     def name(cls) -> str:
         """Model name used for configuration"""
-        suffix = 'LanguageModelAdapter'
-        if cls.__name__.endswith(suffix):
-            return cls.__name__[0:-len(suffix)].upper()
+        model_suffix = 'LanguageModel'
+        adapter_suffix = 'LanguageModelAdapter'
+        if cls.__name__.endswith(model_suffix):
+            return cls.__name__[0:-len(model_suffix)].upper()
+        if cls.__name__.endswith(adapter_suffix):
+            return cls.__name__[0:-len(adapter_suffix)].upper()
         return cls.__name__.upper()
 
     @abstractmethod

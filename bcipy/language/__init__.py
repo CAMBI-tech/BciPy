@@ -1,6 +1,6 @@
-from .main import LanguageModelAdapter, ResponseType
+from .main import BciPyLanguageModel, ResponseType
 
 __all__ = [
-    "LanguageModelAdapter",
+    "BciPyLanguageModel",
     "ResponseType",
 ]

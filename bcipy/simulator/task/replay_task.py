@@ -5,7 +5,7 @@ from bcipy.config import SESSION_DATA_FILENAME
 from bcipy.core.parameters import Parameters
 from bcipy.core.session import read_session
 from bcipy.core.stimuli import InquirySchedule
-from bcipy.language.main import LanguageModelAdapter
+from bcipy.language.main import BciPyLanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler.base_sampler import Sampler
 from bcipy.simulator.data.sampler.replay_sampler import ReplaySampler
@@ -40,7 +40,7 @@ class ReplayTask(SimulatorCopyPhraseTask):
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
-                 language_model: LanguageModelAdapter, samplers: Dict[SignalModel,
+                 language_model: BciPyLanguageModel, samplers: Dict[SignalModel,
                                                                       Sampler]):
         super().__init__(parameters, file_save, signal_models, language_model,
                          samplers)

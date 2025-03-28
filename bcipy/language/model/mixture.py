@@ -1,13 +1,13 @@
 from typing import Optional, Dict, List
 
-from bcipy.language.main import LanguageModelAdapter, ResponseType
+from bcipy.language.main import ResponseType, BciPyLanguageModel
 from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.config import LM_PATH
 
 from aactextpredict.mixture import MixtureLanguageModel
 
 
-class MixtureLanguageModelAdapter(LanguageModelAdapter):
+class MixtureLanguageModelAdapter(BciPyLanguageModel):
     """
         Character language model that mixes any combination of other models
     """
@@ -32,7 +32,7 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter):
 
         MixtureLanguageModel.validate_parameters(lm_types, lm_weights, lm_params)
 
-        super().__init__(response_type=response_type)
+        super()._init_bcipy_language_model(response_type=response_type)
 
         self.symbol_set = symbol_set
         # LM doesn't care about backspace, needs literal space
