@@ -2,19 +2,19 @@
 
 import unittest
 
-from bcipy.language.model.uniform import UniformLanguageModelAdapter
+from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.language.main import ResponseType
 from bcipy.core.symbols import BACKSPACE_CHAR
 
-from aactextpredict.uniform import equally_probable
+from bcipy.language.model.uniform import equally_probable
 
 
-class TestUniformLanguageModelAdapter(unittest.TestCase):
+class TestUniformLanguageModel(unittest.TestCase):
     """Tests for language model"""
 
     def test_init(self):
         """Test default parameters"""
-        lmodel = UniformLanguageModelAdapter()
+        lmodel = UniformLanguageModel()
         self.assertEqual(lmodel.response_type, ResponseType.SYMBOL)
         self.assertEqual(
             len(lmodel.symbol_set), 28,
@@ -22,11 +22,11 @@ class TestUniformLanguageModelAdapter(unittest.TestCase):
 
     def test_name(self):
         """Test model name."""
-        self.assertEqual("UNIFORM", UniformLanguageModelAdapter.name())
+        self.assertEqual("UNIFORM", UniformLanguageModel.name())
 
     def test_predict(self):
         """Test the predict method"""
-        symbol_probs = UniformLanguageModelAdapter().predict(evidence=[])
+        symbol_probs = UniformLanguageModel().predict(evidence=[])
 
         # Backspace can be 0
         probs = [prob for sym, prob in symbol_probs if sym != BACKSPACE_CHAR]

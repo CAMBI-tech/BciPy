@@ -2,7 +2,7 @@ import unittest
 
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.core.symbols import DEFAULT_SYMBOL_SET
-from bcipy.language.model.uniform import UniformLanguageModelAdapter
+from bcipy.language.model.uniform import UniformLanguageModel
 from bcipy.task.data import EvidenceType
 
 
@@ -107,7 +107,7 @@ class TestCopyPhraseWrapper(unittest.TestCase):
         copy_phrase_task = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
-            lmodel=UniformLanguageModelAdapter(symbol_set=DEFAULT_SYMBOL_SET),
+            lmodel=UniformLanguageModel(symbol_set=DEFAULT_SYMBOL_SET),
             alp=DEFAULT_SYMBOL_SET,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,

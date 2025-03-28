@@ -7,7 +7,7 @@ import numpy as np
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.language.main import ResponseType, BciPyLanguageModel
-from aactextpredict.uniform import equally_probable
+from bcipy.language.model.uniform import equally_probable
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
