@@ -36,10 +36,12 @@ def partition_triggers(trigger_path: Path) -> List[List[Trigger]]:
     triggers = load_triggers(str(trigger_path),
                              remove_pre_fixation=False,
                              apply_starting_offset=False)
+    includes_preview = any(trg.type == TriggerType.PREVIEW for trg in triggers)
+    start_type = TriggerType.PREVIEW if includes_preview else TriggerType.FIXATION
 
     # index for each prompt trigger
     inq_start_indices = [
-        i for i, trg in enumerate(triggers) if trg.type == TriggerType.FIXATION
+        i for i, trg in enumerate(triggers) if trg.type == start_type
     ]
     inquiry_triggers = []
     for i, j in pairwise(inq_start_indices):
@@ -62,6 +64,17 @@ def time_range(inquiry_triggers: List[Trigger],
     """Given a list of triggers for a given inquiry, determine the start and
     end timestamps of that inquiry."""
     return (inquiry_triggers[0].time, inquiry_triggers[-1].time + time_flash)
+
+
+def inquiry_windows(trigger_path: Path,
+                    time_flash: float) -> List[Tuple[float, float]]:
+    """Returns a list of (inquiry_start, inquiry_stop) timestamp pairs for
+    all inquiries in the trigger file."""
+
+    return [
+        time_range(inq_triggers, time_flash)
+        for inq_triggers in partition_triggers(trigger_path)
+    ]
 
 
 def should_press_switch(inquiry_triggers: List[Trigger],
