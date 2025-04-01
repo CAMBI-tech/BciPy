@@ -4,7 +4,7 @@ from string import ascii_uppercase
 
 import numpy as np
 
-from bcipy.simulator.demo.switch_model import SwitchModel
+from bcipy.signal.model.switch_model import SwitchModel
 
 
 class SwitchModelTest(unittest.TestCase):

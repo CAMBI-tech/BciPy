@@ -7,23 +7,12 @@ from typing import List, Tuple
 
 from bcipy import config
 from bcipy.acquisition.datastream.mock.switch import switch_device
+from bcipy.core.list import pairwise
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawDataWriter
 from bcipy.core.triggers import Trigger, TriggerType, load_triggers
 from bcipy.display.main import ButtonPressMode, PreviewParams
 from bcipy.helpers.acquisition import raw_data_filename
-
-
-def pairwise(iterable):
-    """
-    pairwise('ABCDEFG') → AB BC CD DE EF FG
-    https://docs.python.org/3/library/itertools.html#itertools.pairwise
-    """
-    iterator = iter(iterable)
-    a = next(iterator, None)
-    for b in iterator:
-        yield a, b
-        a = b
 
 
 def partition_triggers(trigger_path: Path) -> List[List[Trigger]]:
@@ -113,7 +102,7 @@ def simulate_raw_data(data_dir: Path, parameters: Parameters):
 
     columns = ['timestamp', 'Marker', 'lsl_timestamp']
     rownum = 0
-    with RawDataWriter(raw_data_path,
+    with RawDataWriter(str(raw_data_path),
                        daq_type=spec.name,
                        sample_rate=spec.sample_rate,
                        columns=columns) as writer:
@@ -153,7 +142,7 @@ def generate_raw_data(data_dir: Path,
     ]
 
     columns = ['timestamp', 'Marker', 'lsl_timestamp']
-    with RawDataWriter(raw_data_path,
+    with RawDataWriter(str(raw_data_path),
                        daq_type=spec.name,
                        sample_rate=spec.sample_rate,
                        columns=columns) as writer:

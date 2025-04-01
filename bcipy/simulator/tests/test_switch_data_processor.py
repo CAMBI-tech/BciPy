@@ -11,8 +11,8 @@ from bcipy.core.raw_data import RawData
 from bcipy.display.main import ButtonPressMode
 from bcipy.io.load import load_json_parameters
 from bcipy.signal.model.base_model import SignalModelMetadata
-from bcipy.simulator.demo.switch_data_processor import SwitchDataProcessor
-from bcipy.simulator.demo.switch_model import SwitchModel
+from bcipy.signal.model.switch_model import SwitchModel
+from bcipy.simulator.data.switch_data_processor import SwitchDataProcessor
 
 
 class SwitchProcessorTest(unittest.TestCase):

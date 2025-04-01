@@ -20,8 +20,8 @@ from bcipy.simulator.data.data_process import (DecodedTriggers,
                                                ExtractedExperimentData,
                                                RawDataProcessor, ReshapedData,
                                                TimingParams)
-from bcipy.simulator.demo.switch_utils import inquiry_windows, switch_device
 from bcipy.simulator.exceptions import IncompatibleData, IncompatibleParameters
+from bcipy.simulator.util.switch_utils import inquiry_windows, switch_device
 from bcipy.task.data import EvidenceType
 
 
@@ -94,7 +94,8 @@ class SwitchDataProcessor(RawDataProcessor):
             raise IncompatibleParameters("Button press mode must be set.")
 
         decoded_triggers = self.decode_triggers(data_folder, parameters)
-        time_ranges = inquiry_windows(f"{data_folder}/{TRIGGER_FILENAME}", timing_params.time_flash)
+        time_ranges = inquiry_windows(Path(data_folder, TRIGGER_FILENAME),
+                                      timing_params.time_flash)
 
         inquiry_data: List[List[float]] = []
         target_labels: List[List[int]] = []
