@@ -270,12 +270,12 @@ class VEPDisplay(Display):
         Inquiry is a list of lists of strings.
         Each list contains what stimuli to display for each box defined in self.vep.
         """
-        self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
+        # self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
 
-        # self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
+        self.window.callOnFlip(self.add_timing, 'PROMPT')
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
@@ -336,15 +336,13 @@ class VEPDisplay(Display):
         are drawn in the order they are in the list as defined in self.vep.
         """
         self.static_clock.reset()
-        for _ in range(1):
-            self.add_timing('VEP_MSEQ_START')
-            for frame in range(self.mseq_length):
-                self.draw_boxes()
-                for stim in self.vep:
-                    stim.render_frame(frame)
-                # self.draw_static()
-                self.window.flip()
-            self.add_timing('VEP_MSEQ_END')
+        self.window.callOnFlip(self.add_timing, 'STIMULATE')
+        for frame in range(self.mseq_length):
+            self.draw_boxes()
+            for stim in self.vep:
+                stim.render_frame(frame)
+            # self.draw_static()
+            self.window.flip()
         ended_at = self.static_clock.getTime()
         self.logger.info(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
