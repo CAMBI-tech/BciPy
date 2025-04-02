@@ -1,13 +1,13 @@
 """Uniform language model"""
 from typing import List, Optional, Union, Tuple, Dict
 
-from bcipy.language.main import ResponseType, BciPyLanguageModel
+from bcipy.language.main import ResponseType, LanguageModel
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 
 import numpy as np
 
 
-class UniformLanguageModel(BciPyLanguageModel):
+class UniformLanguageModel(LanguageModel):
     """Language model in which probabilities for symbols are uniformly
     distributed.
 

@@ -1,6 +1,6 @@
-from .main import BciPyLanguageModel, ResponseType
+from .main import LanguageModel, ResponseType
 
 __all__ = [
-    "BciPyLanguageModel",
+    "LanguageModel",
     "ResponseType",
 ]

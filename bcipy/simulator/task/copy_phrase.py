@@ -8,7 +8,7 @@ from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import InquirySchedule
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.language.main import BciPyLanguageModel
+from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
 from bcipy.simulator.task.null_display import NullDisplay
@@ -51,7 +51,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
-                 language_model: BciPyLanguageModel, samplers: Dict[SignalModel,
+                 language_model: LanguageModel, samplers: Dict[SignalModel,
                                                                       Sampler]):
         self.args_sm = signal_models
         self.args_lm = language_model

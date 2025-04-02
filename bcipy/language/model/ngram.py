@@ -1,11 +1,11 @@
 from typing import Optional, List
 from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType, BciPyLanguageModel
+from bcipy.language.main import ResponseType, LanguageModel
 from aactextpredict.ngram import NGramLanguageModel
 from bcipy.config import LM_PATH
 
 
-class NGramLanguageModelAdapter(BciPyLanguageModel):
+class NGramLanguageModelAdapter(LanguageModel):
     """Character n-gram language model using the KenLM library for querying"""
 
     def __init__(self,

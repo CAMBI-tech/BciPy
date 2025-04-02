@@ -6,7 +6,7 @@ from typing import Dict, List, Tuple
 import numpy as np
 
 from bcipy.core.symbols import alphabet
-from bcipy.language.main import BciPyLanguageModel, ResponseType
+from bcipy.language.main import LanguageModel, ResponseType
 
 # pylint: disable=unused-import
 # flake8: noqa
@@ -20,12 +20,12 @@ from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
 
 
-def language_models_by_name() -> Dict[str, BciPyLanguageModel]:
+def language_models_by_name() -> Dict[str, LanguageModel]:
     """Returns available language models indexed by name."""
-    return {lm.name(): lm for lm in BciPyLanguageModel.__subclasses__()}
+    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
 
 
-def init_language_model(parameters: dict) -> BciPyLanguageModel:
+def init_language_model(parameters: dict) -> LanguageModel:
     """
     Init Language Model configured in the parameters. If no language model is
     specified, a uniform language model is returned.
@@ -37,7 +37,7 @@ def init_language_model(parameters: dict) -> BciPyLanguageModel:
 
     Returns
     -------
-        instance of a BciPyLanguageModel
+        instance of a LanguageModel
     """
 
     language_models = language_models_by_name()

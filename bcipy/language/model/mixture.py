@@ -1,13 +1,13 @@
 from typing import Optional, Dict, List
 
-from bcipy.language.main import ResponseType, BciPyLanguageModel
+from bcipy.language.main import ResponseType, LanguageModel
 from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.config import LM_PATH
 
 from aactextpredict.mixture import MixtureLanguageModel
 
 
-class MixtureLanguageModelAdapter(BciPyLanguageModel):
+class MixtureLanguageModelAdapter(LanguageModel):
     """
         Character language model that mixes any combination of other models
     """

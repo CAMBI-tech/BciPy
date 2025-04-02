@@ -1,14 +1,14 @@
 from typing import Optional, List
 
 from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType, BciPyLanguageModel
+from bcipy.language.main import ResponseType, LanguageModel
 
 from aactextpredict.causal import CausalLanguageModel
 
 from bcipy.config import LM_PATH
 
 
-class CausalLanguageModelAdapter(BciPyLanguageModel):
+class CausalLanguageModelAdapter(LanguageModel):
     """Character language model based on a pre-trained causal model, GPT-2 by default."""
 
     def __init__(self,

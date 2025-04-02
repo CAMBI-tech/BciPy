@@ -6,7 +6,7 @@ import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType, BciPyLanguageModel
+from bcipy.language.main import ResponseType, LanguageModel
 from bcipy.language.model.uniform import equally_probable
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -15,7 +15,7 @@ TARGET_BUMP_MIN = 0.0
 TARGET_BUMP_MAX = 1.0
 
 
-class OracleLanguageModel(BciPyLanguageModel):
+class OracleLanguageModel(LanguageModel):
     """Language model which knows the target phrase the user is attempting to
     spell.
 

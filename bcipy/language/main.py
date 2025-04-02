@@ -18,7 +18,7 @@ class ResponseType(Enum):
         return self.value
 
 
-class BciPyLanguageModel(Protocol):
+class LanguageModel(Protocol):
     """Protocol for BciPy Language Models."""
 
     parameters = None

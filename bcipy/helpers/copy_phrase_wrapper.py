@@ -10,7 +10,7 @@ from bcipy.core.stimuli import InquirySchedule, StimuliOrder
 from bcipy.core.symbols import BACKSPACE_CHAR
 from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import histogram, with_min_prob
-from bcipy.language.main import BciPyLanguageModel
+from bcipy.language.main import LanguageModel
 from bcipy.task.control.criteria import (CriteriaEvaluator,
                                          MaxIterationsCriteria,
                                          MinIterationsCriteria,
@@ -58,7 +58,7 @@ class CopyPhraseWrapper:
     def __init__(self,
                  min_num_inq: int,
                  max_num_inq: int,
-                 lmodel: BciPyLanguageModel,
+                 lmodel: LanguageModel,
                  alp: List[str],
                  evidence_names: List[EvidenceType] = [
                      EvidenceType.LM, EvidenceType.ERP
