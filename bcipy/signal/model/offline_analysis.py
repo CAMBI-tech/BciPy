@@ -74,6 +74,142 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
         )
     return train_data, test_data, train_labels, test_labels
 
+def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+                save_figures=False, show_figures=False):
+    """
+    Analyze VEP data and return/save the VEP model.
+    This function is identical to analyze_erp except that it assumes that every trial window has
+    a clear start and end (no overlap)
+
+    Parameters:
+    -----------
+        vep_data (RawData): RawData object containing the VEP data to be analyzed.
+        parameters (Parameters): Parameters object retrieved from parameters.json.
+        device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
+        data_folder (str): Path to the folder containing the data to be analyzed.
+        estimate_balanced_acc (bool): If true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy.
+        save_figures (bool): If true, saves VEP figures after training to the data folder.
+        show_figures (bool): If true, shows VEP figures after training.
+
+    """
+    # Extract relevant session information from parameters file
+    trial_window = parameters.get("trial_window")
+    if trial_window is None:
+        trial_window = (0.0, 0.5)
+    window_length = trial_window[1] - trial_window[0]
+
+    prestim_length = parameters.get("prestim_length")
+    trials_per_inquiry = parameters.get("stim_length")
+    # No overlapping segment, so the transformation buffer is 0
+    buffer = 0
+
+    # Get signal filtering information
+    transform_params = parameters.instantiate(ERPTransformParams)
+    downsample_rate = transform_params.down_sampling_rate
+    static_offset = device_spec.static_offset
+
+    log.info(
+        f"\nData processing settings: \n"
+        f"{str(transform_params)} \n"
+        f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
+        f"Prestimulus Length: {prestim_length}s, Buffer: {buffer}s \n"
+        f"Static offset: {static_offset}"
+    )
+    channels = vep_data.channels
+    type_amp = vep_data.daq_type
+    sample_rate = vep_data.sample_rate
+
+    # setup filtering
+    default_transform = get_default_transform(
+        sample_rate_hz=sample_rate,
+        notch_freq_hz=transform_params.notch_filter_frequency,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
+    )
+
+    log.info(f"Channels read from csv: {channels}")
+    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+
+    k_folds = parameters.get("k_folds")
+    model = PcaRdaKdeModel(k_folds=k_folds)
+
+    # Process triggers.txt files
+    trigger_targetness, trigger_timing, _ = trigger_decoder(
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        offset=static_offset,
+        device_type='EEG'
+    )
+
+    # each trial window is distinct so adjust by the trial window start
+    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+
+    channel_map = analysis_channels(channels, device_spec)
+    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    log.info(f'Channels used in analysis: {channels_used}')
+
+    data, _ = vep_data.by_channel()
+
+    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
+        trial_targetness_label=trigger_targetness,
+        timing_info=corrected_trigger_timing,
+        eeg_data=data,
+        sample_rate=sample_rate,
+        trials_per_inquiry=trials_per_inquiry,
+        channel_map=channel_map,
+        poststimulus_length=window_length,
+        prestimulus_length=prestim_length,
+        transformation_buffer=buffer,
+    )
+
+    #No need to apply overlapping segment
+    fs = sample_rate
+    trial_duration_samples = int(window_length * fs)
+    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+
+    # define the training classes using integers, where 0=nontargets/1=targets
+    labels = inquiry_labels.flatten().tolist()
+
+    # train and save the model as a .pkl file.
+    log.info("Training model. This will take some time...")
+    model = PcaRdaKdeModel(k_folds=k_folds)
+    model.fit(data, labels)
+    model.metadata = SignalModelMetadata(device_spec=device_spec,
+                                         transform=default_transform)
+    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+
+    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
+    preferences.signal_model_directory = data_folder
+
+    # Using an 80/20 split, report on balanced accuracy
+    if estimate_balanced_acc:
+        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
+        dummy_model.fit(train_data, train_labels)
+        probs = dummy_model.predict_proba(test_data)
+        preds = probs.argmax(-1)
+        score = balanced_accuracy_score(test_labels, preds)
+        log.info(f"Balanced acc with 80/20 split: {score}")
+        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
+
+    # this should have uncorrected trigger timing for display purposes
+    figure_handles = visualize_erp(
+        vep_data,
+        channel_map,
+        trigger_timing,
+        labels,
+        trial_window,
+        transform=default_transform,
+        plot_average=True,
+        plot_topomaps=True,
+        save_path=data_folder if save_figures else None,
+        show=show_figures
+    )
+    return model, figure_handles
+
 
 def analyze_vep(data_folder: str = None,
                 trigger_file: str = 'triggers.txt',
@@ -231,7 +367,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         erp_data,
         channel_map,
         trigger_timing,
-        labels,
+        labels,0
         trial_window,
         transform=default_transform,
         plot_average=True,
@@ -546,10 +682,22 @@ def offline_analysis(
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            erp_model, erp_figure_handles = analyze_erp(
-                raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
-            models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
+            # checks to see what analysis should be done based on task type
+            if task_type == TaskType.VEP_CALIBRATION:
+                vep_model, vep_fig_handles = analyze_vep(
+                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+                models.append(vep_model)
+                figure_handles.extend(vep_fig_handles)
+            elif task_type == TaskType.VEP_COPY_PHRASE:
+                vep_model, vep_fig_handles = analyze_vep(
+                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+                models.append(vep_model)
+                figure_handles.extend(vep_fig_handles)
+            else:
+                erp_model, erp_fig_handles = analyze_erp(
+                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+                models.append(erp_model)
+                figure_handles.extend(erp_fig_handles)
 
         if device_spec.content_type == "Eyetracker":
             et_model, et_figure_handles = analyze_gaze(
