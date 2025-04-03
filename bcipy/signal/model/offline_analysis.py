@@ -367,7 +367,7 @@ def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balance
         erp_data,
         channel_map,
         trigger_timing,
-        labels,0
+        labels,
         trial_window,
         transform=default_transform,
         plot_average=True,
@@ -629,6 +629,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
+    vep: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -683,12 +684,7 @@ def offline_analysis(
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
             # checks to see what analysis should be done based on task type
-            if task_type == TaskType.VEP_CALIBRATION:
-                vep_model, vep_fig_handles = analyze_vep(
-                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
-                models.append(vep_model)
-                figure_handles.extend(vep_fig_handles)
-            elif task_type == TaskType.VEP_COPY_PHRASE:
+            if vep:
                 vep_model, vep_fig_handles = analyze_vep(
                     raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
                 models.append(vep_model)
@@ -720,6 +716,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--show_figures", action="store_true")
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
+    parser.add_argument("--vep", dest="vep", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=True)
     parser.set_defaults(save_figures=False)
@@ -735,5 +732,6 @@ if __name__ == "__main__":
         alert_finished=args.alert,
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
-        show_figures=args.show_figures)
+        show_figures=args.show_figures,
+        vep = args.vep or False)
     log.info("Offline Analysis complete.")
