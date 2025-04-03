@@ -1,6 +1,5 @@
 """Utilities for working with switch data."""
 
-import argparse
 import random
 from pathlib import Path
 from typing import List, Tuple
@@ -83,7 +82,7 @@ def timestamp_within_inquiry(inquiry_triggers: List[Trigger],
     return random.uniform(inq_start, inq_end)
 
 
-def simulate_raw_data(data_dir: Path, parameters: Parameters):
+def simulate_raw_data(data_dir: Path, parameters: Parameters) -> Path:
     """Simulate what the raw_data file for a switch would generate.
 
     Reads through trigger data. For inquiries with target, outputs one or
@@ -117,7 +116,7 @@ def simulate_raw_data(data_dir: Path, parameters: Parameters):
 
 
 def generate_raw_data(data_dir: Path,
-                      event_label_prefix: str = 'bcipy_key_press'):
+                      event_label_prefix: str = 'bcipy_key_press') -> Path:
     """Given a data directory for a task where the Inquiry Preview feature was used,
     output a raw_data file for the switch data.
 
@@ -150,20 +149,3 @@ def generate_raw_data(data_dir: Path,
             writer.writerow([i + 1, 1.0, trg.time])
 
     return raw_data_path
-
-
-def main():
-    """"Main method used to generate a raw data file for a switch device."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-d",
-                        "--data_folder",
-                        type=Path,
-                        required=True,
-                        action='append',
-                        help="Data directory (must contain triggers.txt file)")
-    args = parser.parse_args()
-    print(generate_raw_data(args.data_dir))
-
-
-if __name__ == '__main__':
-    main()
