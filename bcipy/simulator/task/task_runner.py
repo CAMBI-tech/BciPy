@@ -8,6 +8,7 @@ from typing import Any, Dict
 
 from rich.progress import track
 
+from bcipy.io.load import load_json_parameters
 import bcipy.simulator.util.metrics as metrics
 # pylint: disable=wildcard-import,unused-wildcard-import
 # flake8: noqa
@@ -148,8 +149,9 @@ def main():
     elif args.interactive:
         task_factory = cli.main(sim_args)
     else:
+        parameters = load_json_parameters(sim_args['parameters'], value_cast=True)
         task_factory = TaskFactory(
-            params_path=sim_args['parameters'],
+            parameters=parameters,
             source_dirs=sim_args['data_folder'],
             signal_model_paths=sim_args['model_path'],
             sampling_strategy=classify(sim_args['sampler']),

@@ -568,7 +568,7 @@
     "type": "str"
   },
   "copy_phrases_location": {
-    "value": "bcipy/parameters/experiment/phrases.json",
+    "value": "",
     "section": "online_config",
     "name": "Copy Phrases Location",
     "helpTip": "Specifies a list of copy phrases to execute during Task Orchestration. If provided, any copy phrases in the protocol will be executed in order pulling task text and starting locations from the file.",
@@ -790,10 +790,10 @@
     "type": "str"
   },
   "lm_backspace_prob": {
-    "value": "0.0",
+    "value": "0.035",
     "section": "lang_model_config",
     "name": "Backspace Probability",
-    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
+    "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.035",
     "recommended": "0.05",
     "editable": false,
     "type": "float"

@@ -29,18 +29,36 @@ def update_latest_params(parameters: Parameters) -> None:
         parameters.add_missing_items(default_params)
 
 
-class TaskFactory():
-    """Constructs the hierarchy of objects necessary for initializing a task."""
+class TaskFactory:
+    """Constructs the hierarchy of objects necessary for initializing a task.
 
-    def __init__(self,
-                 params_path: str,
-                 source_dirs: List[str],
-                 signal_model_paths: List[str],
-                 sampling_strategy: Type[Sampler] = TargetNontargetSampler,
-                 task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask,
-                 sampler_args: Optional[Dict[str, Any]] = None):
 
-        self.params_path = params_path
+    Parameters
+    ----------
+        parameters : Parameters
+            The parameters to use for the simulation.
+        source_dirs : List[str]
+            The directories containing the raw data to be used in the simulation.
+        signal_model_paths : List[str]
+            The paths to the signal models to be used for data loaded via source_dirs in the simulation.
+        sampling_strategy : Type[Sampler], optional
+            The data sampling strategy to use, by default TargetNontargetSampler.
+        task : Type[SimulatorCopyPhraseTask], optional
+            The task to use for simulation, by default SimulatorCopyPhraseTask. This should ideally be
+            the corresponding task used to generate the data in the source_dirs.
+        sampler_args : Optional[Dict[str, Any]], optional
+            Additional arguments to pass to the sampler constructor, by default None.
+    """
+
+    def __init__(
+            self,
+            parameters: Parameters,
+            source_dirs: List[str],
+            signal_model_paths: List[str],
+            sampling_strategy: Type[Sampler] = TargetNontargetSampler,
+            task: Type[SimulatorCopyPhraseTask] = SimulatorCopyPhraseTask,
+            sampler_args: Optional[Dict[str, Any]] = None):
+
         self.signal_model_paths = signal_model_paths
 
         self.source_dirs = source_dirs
@@ -48,9 +66,8 @@ class TaskFactory():
         self.sampler_args = sampler_args if sampler_args else {}
         self.simulation_task = task
 
-        logger.info("Loading parameters")
-        self.parameters = load_json_parameters(self.params_path,
-                                               value_cast=True)
+        self.parameters = parameters
+
         update_latest_params(self.parameters)
 
         logger.info("Loading signal models")
