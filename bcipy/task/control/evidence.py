@@ -214,6 +214,12 @@ class SwitchEvaluator(EvidenceEvaluator):
             parameters.get('preview_inquiry_progress_method'))
         self.trial_count = parameters.get('stim_length')
 
+        if self.button_press_mode == ButtonPressMode.NOTHING:
+            raise AssertionError((
+                "Button press mode not supported.",
+                "To run without button press evidence set the acq_mode to exclude MARKERS."
+            ))
+
     def preprocess(self, raw_data: np.ndarray, times: List[float],
                    target_info: List[str], window_length: float) -> np.ndarray:
         """Preprocess the inquiry data.
@@ -230,8 +236,6 @@ class SwitchEvaluator(EvidenceEvaluator):
 
         # Inquiries with 1.0s will be upgraded/supported by the model probabilities.
         rules = {
-            ButtonPressMode.NOTHING:
-            lambda: ones,
             ButtonPressMode.ACCEPT:
             lambda: ones if switch_was_pressed else zeros,
             ButtonPressMode.REJECT:
@@ -256,8 +260,9 @@ class SwitchEvaluator(EvidenceEvaluator):
             window_length - The length of the time between stimuli presentation
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
-        return self.signal_model.compute_likelihood_ratio(
+        probs = self.signal_model.compute_likelihood_ratio(
             data, symbols, self.symbol_set)
+        return probs
 
 
 def get_evaluator(
@@ -303,9 +308,11 @@ def find_matching_evaluator(
     return get_evaluator(content_type, evidence_type)
 
 
-def init_evidence_evaluator(symbol_set: List[str],
-                            signal_model: SignalModel) -> EvidenceEvaluator:
+def init_evidence_evaluator(
+        symbol_set: List[str],
+        signal_model: SignalModel,
+        parameters: Optional[Parameters] = None) -> EvidenceEvaluator:
     """Find an EvidenceEvaluator that matches the given signal_model and
     initialize it."""
     evaluator_class = find_matching_evaluator(signal_model)
-    return evaluator_class(symbol_set, signal_model)
+    return evaluator_class(symbol_set, signal_model, parameters)

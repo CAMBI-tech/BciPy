@@ -8,8 +8,8 @@ from bcipy.acquisition.exceptions import (InsufficientDataException,
                                           UnsupportedContentType)
 from bcipy.acquisition.protocols.lsl.lsl_client import LslAcquisitionClient
 from bcipy.acquisition.record import Record
-from bcipy.helpers.utils import AutoNumberEnum
 from bcipy.config import SESSION_LOG_FILENAME
+from bcipy.helpers.utils import AutoNumberEnum
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -162,8 +162,10 @@ class ClientManager():
                     raise InsufficientDataException(msg)
             else:
                 # Markers have an IRREGULAR_RATE.
+                logger.info(f'Querying {name} data')
                 output[content_type] = client.get_data(start=adjusted_start,
                                                        end=adjusted_start + seconds)
+                logger.info(f"Received {len(output[content_type])} records.")
         return output
 
     def cleanup(self):
