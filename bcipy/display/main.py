@@ -265,7 +265,7 @@ class PreviewParams(NamedTuple):
     preview_box_text_size: float
 
     @property
-    def button_press_mode(self):
+    def button_press_mode(self) -> ButtonPressMode:
         """Mode indicated by the inquiry progress method."""
         return ButtonPressMode(self.preview_inquiry_progress_method)
 

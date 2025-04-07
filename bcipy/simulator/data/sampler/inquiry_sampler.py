@@ -123,5 +123,5 @@ class InquirySampler(Sampler):
             Trial(**sorted_inquiry_df.iloc[i])
             for i in range(len(sorted_inquiry_df))
         ]
-        log.debug(f"EEG Samples:\n{format_samples(rows)}")
+        log.debug(f"Samples:\n{format_samples(rows)}")
         return rows

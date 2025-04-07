@@ -608,6 +608,7 @@ class SimConfigForm(QWidget):
         if self.sampler is not None:
             args.append(f"-s {self.sampler.__name__}")
         args.append(f"--sampler_args='{self.sampler_args}'")
+        args.append("-v")
 
         return f"bcipy-sim {' '.join(args)}"
 
