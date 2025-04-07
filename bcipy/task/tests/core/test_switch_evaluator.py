@@ -1,4 +1,4 @@
-"""Tests for EEG evidence evaluator"""
+"""Tests for Switch evidence evaluator"""
 
 import unittest
 from unittest.mock import Mock

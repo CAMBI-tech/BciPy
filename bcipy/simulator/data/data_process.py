@@ -369,7 +369,7 @@ class RawDataProcessor():
         return sim_timing_params.time_flash == data_timing_params.time_flash
 
 
-class EegRawDataProcessor(RawDataProcessor):
+class EEGRawDataProcessor(RawDataProcessor):
     """RawDataProcessor that processes EEG data."""
     consumes = ContentType.EEG
     produces = EvidenceType.ERP

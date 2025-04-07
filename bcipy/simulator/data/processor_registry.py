@@ -5,14 +5,14 @@ from typing import List, Optional, Type
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.signal.model.base_model import SignalModel
 # flake8: noqa
-from bcipy.simulator.data.data_process import (EegRawDataProcessor,
+from bcipy.simulator.data.data_process import (EEGRawDataProcessor,
                                                RawDataProcessor)
 from bcipy.simulator.data.switch_data_processor import SwitchDataProcessor
 from bcipy.task.data import EvidenceType
 
 log = logger.getLogger(__name__)
 
-PROCESSOR_TYPES = [EegRawDataProcessor, SwitchDataProcessor]
+PROCESSOR_TYPES = [EEGRawDataProcessor, SwitchDataProcessor]
 
 
 def get_processors() -> List[Type[RawDataProcessor]]:
