@@ -1,6 +1,7 @@
 # mypy: disable-error-code="attr-defined"
 # needed for the ERPTransformParams
 import json
+import os
 import logging
 from pathlib import Path
 from typing import Tuple
@@ -73,6 +74,30 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
         )
     return train_data, test_data, train_labels, test_labels
 
+
+def analyze_vep(data_folder: str = None,
+                trigger_file: str = 'triggers.txt',
+                data_file: str = 'raw_data.csv',
+                exclusion: list[str] = None):
+    """
+    Analyse vep data.
+
+    Extract relevant information from raw data object. Extracting timing information from trigger file.
+    Perform CCA to correlate signal to box index.
+
+    Parameters:
+    -----------
+    data_file: raw csv data.
+    trigger_path: trigger file name.
+    exclusion (List[str]): List of optional trigger labels to be excluded.
+    """
+
+    trigger_type, trigger_timing, trigger_label = trigger_decoder(
+        trigger_path=f"{os.path.join(data_folder, trigger_file)}",
+        device_type='EEG'
+    )
+
+    return trigger_type, trigger_timing, trigger_label
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                 save_figures=False, show_figures=False):

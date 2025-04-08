@@ -68,9 +68,10 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:
-        if target == symbol:
-            return TriggerType.TARGET
-        return TriggerType.EVENT
+        if index == 0:
+            return TriggerType.PROMPT
+        else:
+            return TriggerType.STIMULATE
 
     def session_task_data(self) -> Dict[str, Any]:
         """Task-specific session data"""

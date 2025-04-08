@@ -13,7 +13,8 @@ from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
                                               round_refresh_rate,
-                                              create_vep_codes)
+                                              create_vep_codes,
+                                              ssvep_to_code)
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
@@ -50,7 +51,8 @@ class VEPDisplay(Display):
                  symbol_set: Optional[List[str]] = None,
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
-                 frame_rate: Optional[float] = None):
+                 frame_rate: Optional[float] = None,
+                 mseq_length: Optional[int] = 127):
         assert len(
             flicker_rates
         ) <= box_config.num_boxes, 'Not enough flicker rates provided'
@@ -66,6 +68,8 @@ class VEPDisplay(Display):
         self.window_size = self.window.size  # [w, h]
         self.refresh_rate = round_refresh_rate(frame_rate)
         self.logger = logging.getLogger(__name__)
+
+        self.mseq_length = mseq_length
 
         # number of VEP text areas
         self.vep_type: int = box_config.num_boxes
@@ -120,7 +124,9 @@ class VEPDisplay(Display):
         self.flicker_rates = flicker_rates
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
-        codes = create_vep_codes(length=63, count=len(flicker_rates))
+        codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
+        print(f"Number of codes: {len(codes)}")
+        print(f"Length of each code: {len(codes[0])}")
         vep_colors = [('red', 'green')] * self.vep_type
         vep_stim_size = scaled_size(0.24, self.window_size)
         self.vep = self.build_vep_stimuli(positions=box_config.positions,
@@ -194,7 +200,8 @@ class VEPDisplay(Display):
         self.animate_inquiry(stim)
         core.wait(self.timing_fixation)
         self._reset_text_boxes()
-        self.stimulate()
+        self.stimulate(target_box_index=self.box_index(
+                                       stim, target.symbol))
 
         # clear everything expect static stimuli
         self.draw_static()
@@ -219,6 +226,8 @@ class VEPDisplay(Display):
         """
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
+
+        self.window.callOnFlip(self.add_timing, 'PROMPT')
 
         if target_box_index is not None:
             self.highlight_target_box(target_box_index)
@@ -262,12 +271,10 @@ class VEPDisplay(Display):
         Inquiry is a list of lists of strings.
         Each list contains what stimuli to display for each box defined in self.vep.
         """
-        self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
 
-        self.window.callOnFlip(self.add_timing, 'VEP_INQUIRY')
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
@@ -319,7 +326,7 @@ class VEPDisplay(Display):
                 box.borderWidth = self.box_border_width + 10
             box.draw()
 
-    def stimulate(self) -> None:
+    def stimulate(self, target_box_index: int) -> None:
         """
         This is the main display function of the VEP paradigm. It is
         responsible for drawing the flickering stimuli.
@@ -327,16 +334,14 @@ class VEPDisplay(Display):
         It assumes that the VEP stimuli are already constructed. These boxes
         are drawn in the order they are in the list as defined in self.vep.
         """
-        self.window.callOnFlip(self.add_timing, 'VEP_STIMULATE')
         self.static_clock.reset()
-        while self.static_clock.getTime() < self.timing_stimuli:
-            for frame in range(self.refresh_rate):
-                self.draw_boxes()
-                for stim in self.vep:
-                    stim.render_frame(frame)
-
-                # self.draw_static()
-                self.window.flip()
+        self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
+        for frame in range(self.mseq_length):
+            self.draw_boxes()
+            for stim in self.vep:
+                stim.render_frame(frame)
+            # self.draw_static()
+            self.window.flip()
         ended_at = self.static_clock.getTime()
         self.logger.debug(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
