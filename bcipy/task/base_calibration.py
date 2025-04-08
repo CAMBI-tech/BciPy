@@ -23,8 +23,6 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     offset_label)
 from bcipy.task import Task
 
-from pprint import pprint
-
 class Inquiry(NamedTuple):
     """Represents a single Inquiry.
 
