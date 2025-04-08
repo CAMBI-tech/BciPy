@@ -62,7 +62,7 @@ def generate_vep_calibration_inquiries(alp: List[str],
 
 def generate_vep_inquiries(symbols: List[str],
                            num_boxes: int = 8,
-                           inquiry_count: int = 100,
+                           inquiry_count: int = 80,
                            is_txt: bool = True) -> List[List[Any]]:
     """Generates inquiries"""
     fixation = get_fixation(is_txt)
@@ -87,7 +87,30 @@ def generate_vep_inquiries(symbols: List[str],
             break
         #check if the target can still be placed in the inquiry
         if target_usage_count[target] < max_target_uses:
-            target_pos = 0
+
+            # For first box forced target
+            ### START ###
+
+            # target_pos = 0
+
+            ### END ###
+
+            # For random target selection
+            ### START
+
+            # Find valid boxes where the target has been used less than max times
+            valid_boxes_for_target = [
+                idx for idx in range(num_boxes) if box_target_usage_count[idx] < max_box_target_uses
+            ]
+
+            # If no valid boxes left then stop
+            if not valid_boxes_for_target:
+                raise ValueError("No more valid boxes available to place the target.")
+
+            target_pos = random.choice(valid_boxes_for_target)
+
+            ### END ###
+
             inquiry = [target, fixation] + generate_vep_inquiry(
                 alphabet=symbols,
                 num_boxes=num_boxes,
