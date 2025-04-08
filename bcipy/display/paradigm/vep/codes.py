@@ -83,39 +83,14 @@ def ssvep_to_code(refresh_rate: int = 60, flicker_rates: List[int] = DEFAULT_FLI
     --------
         list of 0s and 1s that represent the code for the SSVEP on the monitor.
     """
-    # if flicker_rate > refresh_rate:
-    #     raise BciPyCoreException(
-    #         'flicker rate cannot be greater than refresh rate')
-    # if flicker_rate <= 1:
-    #     raise BciPyCoreException('flicker rate must be greater than 1')
-
-    # # get the number of frames per flicker
-    # length_flicker = refresh_rate / flicker_rate
-
-    # if length_flicker.is_integer():
-    #     length_flicker = int(length_flicker)
-    # else:
-    #     err_message = f'flicker rate={flicker_rate} is not an integer multiple of refresh rate={refresh_rate}'
-    #     log.exception(err_message)
-    #     raise BciPyCoreException(err_message)
-
-    # # start the first frames as off (0) for length of flicker;
-    # # it will then toggle on (1)/ off (0) for length of flicker until all frames are filled for refresh rate.
-    # t = 0
-    # codes = []
-    # for _ in range(flicker_rate):
-    #     codes += [t] * length_flicker
-    #     t = 1 - t
-
-    # return codes
-
+    
     codes = []
     for flicker_rate in flicker_rates:
-        # if flicker_rate > refresh_rate:
-        #     raise BciPyCoreException(
-        #     'flicker rate cannot be greater than refresh rate')
-        # if flicker_rate <= 1:
-        #     raise BciPyCoreException('flicker rate must be greater than 1')
+        if flicker_rate > (refresh_rate / 2):
+            raise BciPyCoreException(
+            f'flicker rate {flicker_rate} Hz cannot be greater than half of the refresh rate {refresh_rate} Hz')
+        if flicker_rate <= 1:
+            raise BciPyCoreException('flicker rate must be greater than 1')
 
         # get the number of frames per on/off
         length_flicker = refresh_rate / flicker_rate / 2

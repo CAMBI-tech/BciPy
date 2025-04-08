@@ -213,7 +213,7 @@
     "recommended_values": "",
     "type": "int"
   },
-  "window_width": { 
+  "window_width": {
     "value": "2000",
     "section": "bci_config",
     "readableName": "Task Window Width",

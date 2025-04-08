@@ -62,7 +62,7 @@ class VEPDisplay(Display):
             assert frame_rate, 'An accurate window frame rate could not be established'
 
         #check if frame_rate is within a 10 hz buffer for either 60 or 120 hz
-        assert (55 <= frame_rate <= 65) or (115 <= frame_rate <= 125) or (28 <= frame_rate <= 32), \
+        assert (55 <= frame_rate <= 65) or (115 <= frame_rate <= 125), \
             f"The current refresh rate is {frame_rate} hz and must be either 60 or 120 hz"
 
         self.window_size = self.window.size  # [w, h]
@@ -125,8 +125,6 @@ class VEPDisplay(Display):
         self.logger.info(f"VEP flicker rates (hz): {flicker_rates}")
         rate = round_refresh_rate(frame_rate)
         codes = create_vep_codes(length=self.mseq_length, count=len(flicker_rates))
-        # print("Going into SSVEP code generation")
-        # codes = ssvep_to_code(refresh_rate = self.refresh_rate, flicker_rates = self.flicker_rates)
         print(f"Number of codes: {len(codes)}")
         print(f"Length of each code: {len(codes[0])}")
         vep_colors = [('red', 'green')] * self.vep_type
@@ -273,7 +271,6 @@ class VEPDisplay(Display):
         Inquiry is a list of lists of strings.
         Each list contains what stimuli to display for each box defined in self.vep.
         """
-        # self.window.callOnFlip(self.add_timing, 'VEP_INQ_ANIMATION')
 
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
@@ -346,7 +343,7 @@ class VEPDisplay(Display):
             # self.draw_static()
             self.window.flip()
         ended_at = self.static_clock.getTime()
-        self.logger.info(
+        self.logger.debug(
             f"Expected stim time: {self.timing_stimuli}; actual run time: {ended_at}"
         )
         self.logger.debug(
