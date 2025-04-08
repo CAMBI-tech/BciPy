@@ -98,22 +98,18 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     if trial_window is None:
         trial_window = (0.0, 0.5)
     window_length = trial_window[1] - trial_window[0]
-
-    prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
     # No overlapping segment, so the transformation buffer is 0
     buffer = 0
 
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
-    downsample_rate = transform_params.down_sampling_rate
     static_offset = device_spec.static_offset
 
     log.info(
         f"\nData processing settings: \n"
         f"{str(transform_params)} \n"
         f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
-        f"Prestimulus Length: {prestim_length}s, Buffer: {buffer}s \n"
         f"Static offset: {static_offset}"
     )
     channels = vep_data.channels
@@ -133,11 +129,10 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
-    k_folds = parameters.get("k_folds")
-    model = PcaRdaKdeModel(k_folds=k_folds)
 
     # Process triggers.txt files
-    trigger_targetness, trigger_timing, _ = trigger_decoder(
+    #Trigger_symbols is added because each string will have a label like stimulant_boc0
+    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
         exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
         offset=static_offset,
@@ -147,68 +142,55 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     # each trial window is distinct so adjust by the trial window start
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    channel_map = analysis_channels(channels, device_spec)
-    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
-    log.info(f'Channels used in analysis: {channels_used}')
+    #Starts with stimulant_box then the box number for triggers
+    groups = {}
+    #will iterate over each trigger symbol
+    for i, sym in enumerate(trigger_symbols):
+        if sym.lower().startswith("stimulant_box"):
+            #add index to corresponding stimulus group
+            groups.setdefault(sym, []).append(i)
 
     data, _ = vep_data.by_channel()
 
-    inquiries, inquiry_labels, inquiry_timing = model.reshaper(
-        trial_targetness_label=trigger_targetness,
-        timing_info=corrected_trigger_timing,
-        eeg_data=data,
-        sample_rate=sample_rate,
-        trials_per_inquiry=trials_per_inquiry,
-        channel_map=channel_map,
-        poststimulus_length=window_length,
-        prestimulus_length=prestim_length,
-        transformation_buffer=buffer,
-    )
+    #Number of samples taken per trial
+    trial_duration_samples = int(window_length * sample_rate)
 
-    #No need to apply overlapping segment
-    fs = sample_rate
-    trial_duration_samples = int(window_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+    #Data segments are extracted for each stimulus 
+    #based on trigger timing
+    segments_by_stimulus = {}
+    for sym, indices in groups.items():
+        segments = []
+        for index in indices:
+            timing = corrected_trigger_timing[index]
+            #Converts trigger time to sample time
+            sample_index = int(timing * sample_rate)
+            #Extract data segment for trial
+            segment = data[:, sample_index:sample_index + trial_duration_samples]
+            #Check to see if full-length segment is available, if not skip
+            if segment.shape[1] == trial_duration_samples:
+                segments.append(segment)
+        #Only will store if any segements were extracted
+        if segments:
+            segments_by_stimulus[sym] = segments
 
-    # define the training classes using integers, where 0=nontargets/1=targets
-    labels = inquiry_labels.flatten().tolist()
+    #Average template for each stimulus by averaging its segments
+    templates = {}
+    for sym, segments in segments_by_stimulus.items():
+        #Channels, trial_duration_samples
+        #find average of segments TODO
+        avg_template = 0
+        templates[sym] = avg_template
 
-    # train and save the model as a .pkl file.
-    log.info("Training model. This will take some time...")
-    model = PcaRdaKdeModel(k_folds=k_folds)
-    model.fit(data, labels)
-    model.metadata = SignalModelMetadata(device_spec=device_spec,
-                                         transform=default_transform)
-    log.info(f"Training complete [AUC={model.auc:0.4f}]. Saving data...")
+    #Convert the dictionary into a list of templates
+    model = [templates[sym] for sym in sorted(templates.keys())]
+    
+    #Saves template model
+    save_model(model, Path(data_folder, "vep_template.pkl"))
 
-    save_model(model, Path(data_folder, f"model_{model.auc:0.4f}.pkl"))
-    preferences.signal_model_directory = data_folder
-
-    # Using an 80/20 split, report on balanced accuracy
-    if estimate_balanced_acc:
-        train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
-        dummy_model = PcaRdaKdeModel(k_folds=k_folds)
-        dummy_model.fit(train_data, train_labels)
-        probs = dummy_model.predict_proba(test_data)
-        preds = probs.argmax(-1)
-        score = balanced_accuracy_score(test_labels, preds)
-        log.info(f"Balanced acc with 80/20 split: {score}")
-        del dummy_model, train_data, test_data, train_labels, test_labels, probs, preds
-
-    # this should have uncorrected trigger timing for display purposes
-    figure_handles = visualize_erp(
-        vep_data,
-        channel_map,
-        trigger_timing,
-        labels,
-        trial_window,
-        transform=default_transform,
-        plot_average=True,
-        plot_topomaps=True,
-        save_path=data_folder if save_figures else None,
-        show=show_figures
-    )
-    return model, figure_handles
+    # a list of the templates for each box,
+    # no figures handlers
+    # eventually make a visualize vep function
+    return model
 
 
 def analyze_vep(data_folder: str = None,
