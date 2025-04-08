@@ -202,7 +202,8 @@ class VEPDisplay(Display):
         self.animate_inquiry(stim)
         core.wait(self.timing_fixation)
         self._reset_text_boxes()
-        self.stimulate()
+        self.stimulate(target_box_index=self.box_index(
+                                       stim, target.symbol))
 
         # clear everything expect static stimuli
         self.draw_static()
@@ -227,6 +228,8 @@ class VEPDisplay(Display):
         """
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
+
+        self.window.callOnFlip(self.add_timing, 'PROMPT')
 
         if target_box_index is not None:
             self.highlight_target_box(target_box_index)
@@ -275,7 +278,6 @@ class VEPDisplay(Display):
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
 
-        self.window.callOnFlip(self.add_timing, 'PROMPT')
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
@@ -327,7 +329,7 @@ class VEPDisplay(Display):
                 box.borderWidth = self.box_border_width + 10
             box.draw()
 
-    def stimulate(self) -> None:
+    def stimulate(self, target_box_index: int) -> None:
         """
         This is the main display function of the VEP paradigm. It is
         responsible for drawing the flickering stimuli.
@@ -336,7 +338,7 @@ class VEPDisplay(Display):
         are drawn in the order they are in the list as defined in self.vep.
         """
         self.static_clock.reset()
-        self.window.callOnFlip(self.add_timing, 'STIMULATE')
+        self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
         for frame in range(self.mseq_length):
             self.draw_boxes()
             for stim in self.vep:

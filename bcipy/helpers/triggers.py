@@ -157,6 +157,7 @@ class TriggerType(Enum):
     TARGET = "target"
     FIXATION = "fixation"
     PROMPT = "prompt"
+    STIMULATE = "stimulate"
     SYSTEM = "system"
     OFFSET = "offset"
     EVENT = "event"
