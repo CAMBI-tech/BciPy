@@ -74,6 +74,124 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
         )
     return train_data, test_data, train_labels, test_labels
 
+def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balanced_acc,
+                save_figures=False, show_figures=False):
+    """
+    Analyze VEP data and return/save the VEP model.
+    This function is identical to analyze_erp except that it assumes that every trial window has
+    a clear start and end (no overlap)
+
+    Parameters:
+    -----------
+        vep_data (RawData): RawData object containing the VEP data to be analyzed.
+        parameters (Parameters): Parameters object retrieved from parameters.json.
+        device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
+        data_folder (str): Path to the folder containing the data to be analyzed.
+        estimate_balanced_acc (bool): If true, uses another model copy on an 80/20 split to
+            estimate balanced accuracy.
+        save_figures (bool): If true, saves VEP figures after training to the data folder.
+        show_figures (bool): If true, shows VEP figures after training.
+
+    """
+    # Extract relevant session information from parameters file
+    trial_window = parameters.get("trial_window")
+    if trial_window is None:
+        trial_window = (0.0, 0.5)
+    window_length = trial_window[1] - trial_window[0]
+    trials_per_inquiry = parameters.get("stim_length")
+    # No overlapping segment, so the transformation buffer is 0
+    buffer = 0
+
+    # Get signal filtering information
+    transform_params = parameters.instantiate(ERPTransformParams)
+    static_offset = device_spec.static_offset
+
+    log.info(
+        f"\nData processing settings: \n"
+        f"{str(transform_params)} \n"
+        f"Trial Window: {trial_window[0]}-{trial_window[1]}s, "
+        f"Static offset: {static_offset}"
+    )
+    channels = vep_data.channels
+    type_amp = vep_data.daq_type
+    sample_rate = vep_data.sample_rate
+
+    # setup filtering
+    default_transform = get_default_transform(
+        sample_rate_hz=sample_rate,
+        notch_freq_hz=transform_params.notch_filter_frequency,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
+    )
+
+    log.info(f"Channels read from csv: {channels}")
+    log.info(f"Device type: {type_amp}, fs={sample_rate}")
+
+
+    # Process triggers.txt files
+    #Trigger_symbols is added because each string will have a label like stimulant_boc0
+    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
+        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
+        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        offset=static_offset,
+        device_type='EEG'
+    )
+
+    # each trial window is distinct so adjust by the trial window start
+    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+
+    #Starts with stimulant_box then the box number for triggers
+    groups = {}
+    #will iterate over each trigger symbol
+    for i, sym in enumerate(trigger_symbols):
+        if sym.lower().startswith("stimulant_box"):
+            #add index to corresponding stimulus group
+            groups.setdefault(sym, []).append(i)
+
+    data, _ = vep_data.by_channel()
+
+    #Number of samples taken per trial
+    trial_duration_samples = int(window_length * sample_rate)
+
+    #Data segments are extracted for each stimulus 
+    #based on trigger timing
+    segments_by_stimulus = {}
+    for sym, indices in groups.items():
+        segments = []
+        for index in indices:
+            timing = corrected_trigger_timing[index]
+            #Converts trigger time to sample time
+            sample_index = int(timing * sample_rate)
+            #Extract data segment for trial
+            segment = data[:, sample_index:sample_index + trial_duration_samples]
+            #Check to see if full-length segment is available, if not skip
+            if segment.shape[1] == trial_duration_samples:
+                segments.append(segment)
+        #Only will store if any segements were extracted
+        if segments:
+            segments_by_stimulus[sym] = segments
+
+    #Average template for each stimulus by averaging its segments
+    templates = {}
+    for sym, segments in segments_by_stimulus.items():
+        #Channels, trial_duration_samples
+        #find average of segments TODO
+        avg_template = 0
+        templates[sym] = avg_template
+
+    #Convert the dictionary into a list of templates
+    model = [templates[sym] for sym in sorted(templates.keys())]
+    
+    #Saves template model
+    save_model(model, Path(data_folder, "vep_template.pkl"))
+
+    # a list of the templates for each box,
+    # no figures handlers
+    # eventually make a visualize vep function
+    return model
+
 
 def analyze_vep(data_folder: str = None,
                 trigger_file: str = 'triggers.txt',
@@ -493,6 +611,7 @@ def offline_analysis(
     estimate_balanced_acc: bool = False,
     show_figures: bool = False,
     save_figures: bool = False,
+    vep: bool = False,
 ) -> Tuple[SignalModel, Figure]:
     """Gets calibration data and trains the model in an offline fashion.
     pickle dumps the model into a .pkl folder
@@ -546,10 +665,17 @@ def offline_analysis(
         device_spec = devices_by_name.get(raw_data.daq_type)
         # extract relevant information from raw data object eeg
         if device_spec.content_type == "EEG":
-            erp_model, erp_figure_handles = analyze_erp(
-                raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
-            models.append(erp_model)
-            figure_handles.extend(erp_figure_handles)
+            # checks to see what analysis should be done based on task type
+            if vep:
+                vep_model, vep_fig_handles = analyze_vep(
+                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+                models.append(vep_model)
+                figure_handles.extend(vep_fig_handles)
+            else:
+                erp_model, erp_fig_handles = analyze_erp(
+                    raw_data, parameters, device_spec, data_folder, estimate_balanced_acc, save_figures, show_figures)
+                models.append(erp_model)
+                figure_handles.extend(erp_fig_handles)
 
         if device_spec.content_type == "Eyetracker":
             et_model, et_figure_handles = analyze_gaze(
@@ -572,6 +698,7 @@ if __name__ == "__main__":
     parser.add_argument("-v", "--show_figures", action="store_true")
     parser.add_argument("--alert", dest="alert", action="store_true")
     parser.add_argument("--balanced-acc", dest="balanced", action="store_true")
+    parser.add_argument("--vep", dest="vep", action="store_true")
     parser.set_defaults(alert=False)
     parser.set_defaults(balanced=True)
     parser.set_defaults(save_figures=False)
@@ -587,5 +714,6 @@ if __name__ == "__main__":
         alert_finished=args.alert,
         estimate_balanced_acc=args.balanced,
         save_figures=args.save_figures,
-        show_figures=args.show_figures)
+        show_figures=args.show_figures,
+        vep = args.vep or False)
     log.info("Offline Analysis complete.")

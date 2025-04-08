@@ -1,4 +1,5 @@
 import logging
+import re
 from itertools import cycle
 from typing import (Any, Dict, Iterable, List, NamedTuple, Optional, Tuple,
                     Union)
@@ -24,6 +25,7 @@ from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.symbols import BACKSPACE_CHAR
 
 from bcipy.language.model.ambiguous import AmbiguousLanguageModel
+from bcipy.language.main import ResponseType
 
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
@@ -133,8 +135,9 @@ class VEPDisplay(Display):
         self.box_border_width = 4
         self.text_boxes = self._build_text_boxes(box_config)
 
-        #To display prviously chosen boxes
         self.chosen_boxes = []
+
+        self.model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
 
     @property
     def box_colors(self) -> List[str]:
@@ -144,12 +147,33 @@ class VEPDisplay(Display):
         else:
             [_fixation_color, *colors] = self.stimuli_colors
         return colors
-
+        
     def check_configuration(self):
         """Check that configured properties are consistent"""
         assert len(self.stimuli_pos) == self.vep_type, (
             f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}"
         )
+    
+    def get_top_predictions(self, context: str, group_sequence: List[str]) -> List[str]:
+        """Top two word predictions are generated from language model"""
+
+        # Ensure valid group_sequence
+        if not group_sequence:
+            return ["", ""]  #returns empty predictions to stop crash
+
+        try:
+            predictions = self.model.predict(list(context), list(group_sequence))
+
+            if not predictions:
+                return ["", ""]
+
+            #Retrieve only the predicted words
+            final_prediction = [word for word, _ in predictions]  
+
+            return final_prediction[:2] if len(final_prediction) >= 2 else final_prediction + [""]
+    
+        except Exception as e:
+            return ["", ""]
 
     def stim_properties(self) -> List[StimProps]:
         """Returns a tuple of (symbol, duration, and color) for each stimuli,
@@ -229,30 +253,31 @@ class VEPDisplay(Display):
             
             #Handles backspace
             if target_box_index == 7:
-                if self.chosen_boxes:
-                    last_box = int(self.chosen_boxes.pop())
-                    #Remove last word if last number is being popped
-                    if last_box == 6 or last_box == 7:
-                        if hasattr(self, "top_display_text") and self.top_display_text:
-                            self.top_display_text.pop()
+                if hasattr(self.task_bar, "spelled_text") and self.task_bar.spelled_text:
+                    spelled_words = self.task_bar.spelled_text.strip().split()
+                    if spelled_words:
+                        spelled_words.pop()
+                    self.task_bar.update(spelled_text=" ".join(spelled_words))
 
             #if box 6 or 7 is chosen, append the content to the top display text
-            elif target_box_index == 5:
+            elif target_box_index in [5, 6]:
+                predictions = self.get_top_predictions(
+                    context=self.task_bar.spelled_text,
+                    group_sequence=self.chosen_boxes
+                )
+
+                if len(predictions) > (target_box_index - 5):
+                    predicted_word = predictions[target_box_index - 5]
+                    if predicted_word:
+                        new_text = (self.task_bar.spelled_text + " " + predicted_word).strip()
+                        self.task_bar.update(spelled_text=new_text)
+
                 self.chosen_boxes.clear()
-                if not hasattr(self, "top_display_text"):
-                    self.top_display_text = []
-                #TODO: replace with actually box content not fixed
-                self.top_display_text.append(" ")
-            elif target_box_index == 6:
-                self.chosen_boxes.clear()
-                if not hasattr(self, "top_display_text"):
-                    self.top_display_text = []
-                #TODO: replace with actually box content not fixed
-                self.top_display_text.append(" ")
 
             #otherwise update box selection list
             else:
                 self.update_chosen_boxes(target_box_index)
+            
             #No need to highlight target box in copy phrase
             self.highlight_target_box(target_box_index)
         self.draw_static()
@@ -343,44 +368,35 @@ class VEPDisplay(Display):
         )
 
     def update_chosen_boxes(self, chosen_box_index: int) -> None:
-        """Update the list of chosen boxes."""
-        self.chosen_boxes.append(str(chosen_box_index + 1))
+        """Update the list of chosen boxes"""
+
+        if chosen_box_index in [5, 6]:
+            self.chosen_boxes.clear()
+         #Only will store boxes 1-4
+        elif chosen_box_index in range(4):
+            self.chosen_boxes.append(str(chosen_box_index + 1))
 
     def draw_boxes(self) -> None:
-        """Draw the text boxes under VEP stimuli."""
+        """Draw the text boxes under VEP stimuli, ensuring chosen box numbers display correctly."""
 
-        #sentence display
-        if hasattr(self, "top_display_text") and self.top_display_text:
-            top_message = visual.TextStim(
-                win=self.window,
-                #join the words with a space
-                text=' '.join(self.top_display_text),
-                font=self.stimuli_font,
-                pos=(0, 0.9),
-                height=0.1,
-                color='white',
-                colorSpace='rgb',
-                opacity=1.0,
-            )
-        
-        #selected box display
-        chosen_numbers = ''.join(self.chosen_boxes)
-        if chosen_numbers:
-            chosen_message = visual.TextStim(
-                win=self.window,
-                text=chosen_numbers,
-                font=self.stimuli_font,
-                pos=(0, -0.055),
-                height=0.2,
-                color='white',
-                colorSpace='rgb',
-                opacity=1.0,
-            )
-            chosen_message.draw()
-            
-        #Array of numbers to be displayed
+        if self.chosen_boxes:
+            chosen_box_text = " ".join(self.chosen_boxes)
+        else:
+            chosen_box_text = " "  
+
+        chosen_message = visual.TextStim(
+            win=self.window,
+            text=chosen_box_text, 
+            font=self.stimuli_font,
+            pos=(0, 0),
+            height=0.2,
+            color='white',
+            colorSpace='rgb',
+            opacity=1.0,
+        )
+        chosen_message.draw()
+
         box_numbers = ['1', '2', '3', '4']
-        #Draws numbers in the upper-left corner of top four boxes
         for i in range(4):
             box = self.text_boxes[i]
             number_position = (
@@ -392,16 +408,18 @@ class VEPDisplay(Display):
                 text=box_numbers[i],
                 font=self.stimuli_font,
                 pos=number_position,
-                height=0.05,  # Small font size
+                height=0.05,
                 color='white',
                 colorSpace='rgb',
                 opacity=1.0,
             )
             number_text.draw()
+
         for i, box in enumerate(self.text_boxes):
             #if i == self.current_highlighted_box_index:
             #    box.borderWidth = self.box_border_width + 10
             box.draw()
+
 
     def stimulate(self) -> None:
         """
@@ -444,8 +462,6 @@ class VEPDisplay(Display):
         ----------
             text - text for task
         """
-        if self.task_bar:
-            self.task_bar.update(text)
 
     def add_timing(self, stimuli: str):
         """Add a new timing entry using the stimuli as a label.
@@ -567,27 +583,40 @@ class VEPDisplay(Display):
             text_box.borderWidth = self.box_border_width
 
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
-        """Set the correct inquiry text for each text boxes.
-        """
-        #box layout
+        """Set the correct inquiry text for each text box and ensure predictive words are displayed."""
+
         layout = [
             ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-            ['Mode   ', 'Switch'],
-            ['" "'],
-            ['" "'],
+            ['Mode', 'Switch'],
+            [" "],
+            [" "],
             ['Backspace']
         ]
-    
+
+        # Get predictive text
+        top_predictions = self.get_top_predictions(
+            context=self.task_bar.spelled_text,
+            group_sequence=self.chosen_boxes
+        )
+
+        self.logger.info(f"Top predictions: {top_predictions}")
+
+        # Ensure predictions are displayed correctly
+        layout[5] = [top_predictions[0]] if top_predictions[0].strip() else [" "]
+        layout[6] = [top_predictions[1]] if top_predictions[1].strip() else [" "]
+
         for box_index, symbols in enumerate(layout):
             box = self.text_boxes[box_index]
             text = ' '.join(symbols)
             box.text = text
             box.color = 'white'
             box.borderColor = 'white'
+
         return self.text_boxes
+
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.

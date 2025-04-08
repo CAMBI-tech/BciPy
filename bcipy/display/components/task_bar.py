@@ -182,8 +182,11 @@ class CopyPhraseTaskBar(TaskBar):
             'border': self.border_stim()
         }
 
-    def update(self, text: str = ''):
+    def update(self, spelled_text: Optional[str] = None):
         """Update the task bar to display the given text."""
+        if spelled_text is not None:
+            self.spelled_text = spelled_text
+        self.stim['spelled_text'].text = self.displayed_text()
 
     def displayed_text(self):
         """Spelled text padded for alignment."""
