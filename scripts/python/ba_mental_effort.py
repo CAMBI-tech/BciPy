@@ -46,28 +46,34 @@ for session in progress_bar:
     if session.is_dir():
         session_folder = str(session.resolve())
 
-        try:
-            # grab the data and labels
-            results[session.name] = {}
-            progress_bar.set_description(f"Processing {session.name}...")
-            parameters = load_json_parameters(f"{session}/parameters.json", value_cast=True)
+        # check if this is a calibration session
+        if 'calibration' in session.name.lower():
+            try:
+                # grab the data and labels
+                results[session.name] = {}
+                progress_bar.set_description(f"Processing {session.name}...")
+                parameters = load_json_parameters(f"{session}/parameters.json", value_cast=True)
 
-            model_path = f'{path}/models/{session.name}'
-            if not os.path.exists(model_path):
-                os.makedirs(model_path)
-            
-            # Train the model
-            df = train_model(session_folder, parameters, model_path)
-            results[session.name]['df'] = df
-            for name in scores:
-                results[session.name][name] = df[f'mean_test_{name}']
-                results[session.name][f'std_{name}'] = df[f'std_test_{name}']
+                model_path = f'{path}/models/{session.name}'
+                if not os.path.exists(model_path):
+                    os.makedirs(model_path)
+                
+                breakpoint()
+                # Train the model
+                df = train_model(session_folder, parameters, model_path)
+                results[session.name]['df'] = df
+                for name in scores:
+                    results[session.name][name] = df[f'mean_test_{name}']
+                    results[session.name][f'std_{name}'] = df[f'std_test_{name}']
 
 
 
-        except Exception as e:
-            print(f"Error processing {session.name}: {e}")
-            breakpoint()
+            except Exception as e:
+                print(f"Error processing {session.name}: {e}")
+                breakpoint()
+                continue
+        else:
+            progress_bar.set_description(f"Skipping {session.name}...")
             continue
 
 filename = 'retrain_ME_results.csv'
