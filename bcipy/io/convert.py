@@ -9,7 +9,7 @@ import glob
 import mne
 from enum import Enum
 from mne.io import RawArray
-from mne_bids import BIDSPath, write_raw_bids
+from mne_bids import BIDSPath, write_raw_bids, find_matching_paths, read_raw_bids, get_entity_vals
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
@@ -476,3 +476,64 @@ def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
     tobii_x = (norm_units[0] / 2) + 0.5
     tobii_y = ((norm_units[1] * -1) / 2) + 0.5
     return (tobii_x, tobii_y)
+
+
+def BIDS_to_MNE(
+        bids_root_path: str,
+        session_label: Optional[str] = 'ses',
+        task_name: Optional[str] = None) -> List[mne.io.Raw]:
+    """Convert BIDS data to MNE Raw object.
+
+    Parameters
+    ----------
+    bids_root_path : str
+        Path to the BIDS directory.
+    task_name : str, optional
+        Task name. Example: 'RSVPCalibration'.
+
+    Returns
+    -------
+    List[mne.io.Raw]
+        List of MNE Raw objects containing the BIDS data.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the BIDS root path does not exist or no matching files are found.
+    ValueError
+        If the BIDS directory is invalid or contains unsupported data types.
+    """
+    # Check if the BIDS root path exists
+    if not os.path.exists(bids_root_path):
+        raise FileNotFoundError(f"BIDS root path '{bids_root_path}' does not exist.")
+    logger.info(f"Searching for BIDS data in '{bids_root_path}'...")
+
+    # Get the sessions from the BIDS root path using the session label (e.g., 'ses' or 'session')
+    sessions = get_entity_vals(bids_root_path, session_label)
+    data_type = 'eeg'
+    extensions = ['.tsv', '.vhdr', '.vmrk', '.eeg', '.edf', '.bdf']  # Supported file extensions
+
+    bid_paths = find_matching_paths(
+        bids_root_path,
+        extensions=extensions,
+        sessions=sessions,
+        datatypes=data_type
+    )
+    if not bid_paths:
+        raise FileNotFoundError(f"No matching BIDS files found in '{bids_root_path}'.")
+
+    raw_data = []
+    for bid_path in bid_paths:
+        if task_name and bid_path.task != task_name:
+            log.debug(f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
+            continue
+
+        logger.info(f"Reading BIDS file: {bid_path}")
+
+        # Read the raw data from the BIDS path
+        raw = read_raw_bids(bid_path)
+        raw_data.append(raw)
+
+    logger.info(f"Successfully loaded {len(raw_data)} BIDS files.")
+
+    return raw_data
