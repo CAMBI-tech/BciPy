@@ -6,10 +6,10 @@ from typing import List, Tuple
 import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.exceptions import BciPyCoreException
-from bcipy.helpers.language_model import histogram, with_min_prob
 from bcipy.core.stimuli import InquirySchedule, StimuliOrder
 from bcipy.core.symbols import BACKSPACE_CHAR
+from bcipy.exceptions import BciPyCoreException
+from bcipy.helpers.language_model import histogram, with_min_prob
 from bcipy.language.main import LanguageModel
 from bcipy.task.control.criteria import (CriteriaEvaluator,
                                          MaxIterationsCriteria,
@@ -206,7 +206,7 @@ class CopyPhraseWrapper:
             ]
 
             # display histogram of LM probabilities
-            log.info(histogram(lm_letter_prior))
+            log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:

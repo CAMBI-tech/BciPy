@@ -19,7 +19,6 @@ from bcipy.language.model.kenlm import KenLMLanguageModel
 from bcipy.language.model.mixture import MixtureLanguageModel
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
-from bcipy.language.model.unigram import UnigramLanguageModel
 
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
@@ -29,7 +28,8 @@ def language_models_by_name() -> Dict[str, LanguageModel]:
 
 def init_language_model(parameters: dict) -> LanguageModel:
     """
-    Init Language Model configured in the parameters.
+    Init Language Model configured in the parameters. If no language model is
+    specified, a uniform language model is returned.
 
     Parameters
     ----------
@@ -49,9 +49,11 @@ def init_language_model(parameters: dict) -> LanguageModel:
 
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
-    return model(response_type=ResponseType.SYMBOL,
-                 symbol_set=alphabet(parameters),
-                 **params)
+
+    return model(
+        response_type=ResponseType.SYMBOL,
+        symbol_set=alphabet(parameters),
+        **params)
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:

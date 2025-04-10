@@ -2,13 +2,12 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, NamedTuple, Union, get_args, get_origin
+from typing import Any, List, NamedTuple, get_args, get_origin
 
 import pandas as pd
 
 from bcipy.core.parameters import Parameters
 from bcipy.exceptions import TaskConfigurationException
-from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,
                                                RawDataProcessor)
 from bcipy.simulator.data.trial import Trial, convert_trials
@@ -75,8 +74,7 @@ class RawDataEngine(DataEngine):
         self.parameters: Parameters = parameters
 
         self.data_processor = data_processor
-        self.data: List[Union[ExtractedExperimentData,
-                              data_process.ExtractedExperimentData]] = []
+        self.data: List[ExtractedExperimentData] = []
         self._trials_df = pd.DataFrame()
 
         self.load()

@@ -120,5 +120,17 @@
         "excluded_from_analysis": ["device_ts", "system_ts", "left_pupil", "right_pupil"],
         "status": "active",
         "static_offset": 0.0
+    },
+    {
+        "name": "Switch",
+        "content_type": "MARKERS",
+        "channels": [
+            { "name": "Marker", "label": "Marker" }
+        ],
+        "sample_rate": 0.0,
+        "description": "Switch used for button press inputs",
+        "excluded_from_analysis": [],
+        "status": "active",
+        "static_offset": 0.0
     }
 ]

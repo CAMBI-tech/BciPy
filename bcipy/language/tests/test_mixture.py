@@ -61,21 +61,21 @@ class TestMixtureLanguageModel(unittest.TestCase):
         """Test that the proper exception is thrown if given an improper number of lm_weights"""
         with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when too few weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
-                                 lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.5],
-                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
+                                 lm_types=["KENLM", "CAUSAL"], lm_weights=[0.5],
+                                 lm_params=self.lm_params)
         with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when no weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
-                                 lm_types=["UNIGRAM", "CAUSAL"], lm_weights=None,
-                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
+                                 lm_types=["KENLM", "CAUSAL"], lm_weights=None,
+                                 lm_params=self.lm_params)
         with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when too many weights given"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
-                                 lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.2, 0.3, 0.5],
-                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
+                                 lm_types=["KENLM", "CAUSAL"], lm_weights=[0.2, 0.3, 0.5],
+                                 lm_params=self.lm_params)
         with self.assertRaises(InvalidLanguageModelException, msg="Exception not thrown when weights given do not \
                                  sum to 1"):
             MixtureLanguageModel(response_type=ResponseType.SYMBOL, symbol_set=alphabet(),
-                                 lm_types=["UNIGRAM", "CAUSAL"], lm_weights=[0.5, 0.8],
-                                 lm_params=[{}, {"lang_model_name": "gpt2"}])
+                                 lm_types=["KENLM", "CAUSAL"], lm_weights=[0.5, 0.8],
+                                 lm_params=self.lm_params)
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in."""
