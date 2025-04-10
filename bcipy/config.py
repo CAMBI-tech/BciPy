@@ -51,6 +51,7 @@ SESSION_DATA_FILENAME = 'session.json'
 SESSION_SUMMARY_FILENAME = 'session.xlsx'
 LOG_FILENAME = 'bcipy_system_log.txt'
 STIMULI_POSITIONS_FILENAME = 'stimuli_positions.json'
+VEP_PARAMETERS_FILENAME = 'vep_parameters.json'
 
 # misc configuration
 WAIT_SCREEN_MESSAGE = 'Press Space to start or Esc to exit'

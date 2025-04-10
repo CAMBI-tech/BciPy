@@ -23,6 +23,7 @@ from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.symbols import BACKSPACE_CHAR
+from bcipy.helpers.save import save_vep_parameters
 
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
@@ -52,7 +53,8 @@ class VEPDisplay(Display):
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
                  should_prompt_target: bool = True,
                  frame_rate: Optional[float] = None,
-                 mseq_length: Optional[int] = 127):
+                 mseq_length: Optional[int] = 127,
+                 file_save: Optional[str] = None):
         assert len(
             flicker_rates
         ) <= box_config.num_boxes, 'Not enough flicker rates provided'
@@ -85,6 +87,8 @@ class VEPDisplay(Display):
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
         self.logger.info(self.stimuli_pos)
+
+        self.file_save = file_save or None
 
         self.stim_length = stimuli.stim_length
         self.should_prompt_target = should_prompt_target
@@ -136,6 +140,9 @@ class VEPDisplay(Display):
                                           num_squares=25)
         self.box_border_width = 4
         self.text_boxes = self._build_text_boxes(box_config)
+
+        if self.file_save:
+            save_vep_parameters(self.mseq_length, self.refresh_rate, self.file_save)
 
     @property
     def box_colors(self) -> List[str]:

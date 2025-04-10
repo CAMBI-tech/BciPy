@@ -47,7 +47,7 @@ class VEPCalibrationTask(BaseCalibrationTask):
         """Initialize the display"""
         return init_vep_display(self.parameters, self.window,
                                 self.experiment_clock, self.symbol_set,
-                                self.box_colors)
+                                self.box_colors, self.file_save)
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
@@ -119,7 +119,7 @@ def target_box_index(inquiry: Inquiry) -> Optional[int]:
 
 def init_vep_display(parameters: Parameters, window: visual.Window,
                      experiment_clock: Clock, symbol_set: List[str],
-                     box_colors: List[str]) -> VEPDisplay:
+                     box_colors: List[str], file_save: str) -> VEPDisplay:
     """Initialize the display"""
     info = InformationProperties(
         info_color=[parameters['info_color']],
@@ -166,4 +166,5 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
                       symbol_set=symbol_set,
                       box_config=box_config,
                       flicker_rates=DEFAULT_FLICKER_RATES,
-                      should_prompt_target=True)
+                      should_prompt_target=True,
+                      file_save=file_save)

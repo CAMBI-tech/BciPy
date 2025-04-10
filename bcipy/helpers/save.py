@@ -15,7 +15,8 @@ from bcipy.config import (DEFAULT_ENCODING,
                           DEFAULT_LM_PARAMETERS_PATH,
                           DEFAULT_PARAMETER_FILENAME,
                           SIGNAL_MODEL_FILE_SUFFIX,
-                          STIMULI_POSITIONS_FILENAME)
+                          STIMULI_POSITIONS_FILENAME,
+                          VEP_PARAMETERS_FILENAME)
 from bcipy.helpers.validate import validate_experiments
 from bcipy.signal.model.base_model import SignalModel
 
@@ -206,3 +207,10 @@ def save_stimuli_position_info(
     # combine the dicts
     all_data = {**stimuli_position_info, **screen_info}
     return save_json_data(all_data, path, STIMULI_POSITIONS_FILENAME)
+
+def save_vep_parameters(
+        mseq_length: int,
+        refresh_rate: int,
+        path: Union[Path, str]):
+    all_data = {"m_sequence_length": mseq_length, "refresh_rate": refresh_rate}
+    return save_json_data(all_data, path, VEP_PARAMETERS_FILENAME)
