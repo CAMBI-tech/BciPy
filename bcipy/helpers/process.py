@@ -14,7 +14,7 @@ import mne
 
 from bcipy.core.stimuli import TrialReshaper, InquiryReshaper, update_inquiry_timing, mne_epochs
 from bcipy.core.triggers import TriggerType, trigger_decoder
-from bcipy.signal.process import filter_inquiries, get_default_transform, get_fir_transform
+from bcipy.signal.process import filter_inquiries, get_default_transform
 from bcipy.io.load import load_raw_data, load_json_parameters
 from bcipy.io.convert import convert_to_mne
 
@@ -96,17 +96,6 @@ def load_data_inquiries(
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-
-    # default_transform = get_fir_transform(
-    #     sample_rate_hz=sample_rate,
-    #     notch_freq_hz=notch_filter,
-    #     low=filter_low,
-    #     high=filter_high,
-    #     fir_design='firwin',
-    #     fir_window='hamming',
-    #     phase='zero-double',
-    #     downsample_factor=downsample_rate,
-    # )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")
@@ -211,17 +200,6 @@ def load_data_mne(
         bandpass_order=filter_order,
         downsample_factor=downsample_rate,
     )
-
-    # default_transform = get_fir_transform(
-    #     sample_rate_hz=sample_rate,
-    #     notch_freq_hz=notch_filter,
-    #     low=filter_low,
-    #     high=filter_high,
-    #     fir_design='firwin',
-    #     fir_window='hamming',
-    #     phase='zero-double',
-    #     downsample_factor=downsample_rate,
-    # )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {device_spec}, fs={sample_rate}")

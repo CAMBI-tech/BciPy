@@ -48,11 +48,11 @@ scores = {
 # scores = ('accuracy', 'precision', 'recall', 'f1', 'roc_auc', 'balanced_accuracy', mcc)
 clfs = {
     'LR': (
-        make_pipeline(Vectorizer(), LogisticRegression(penalty='l2', solver='lbfgs', C=0.0183, random_state=42)),
+        make_pipeline(Vectorizer(), LogisticRegression(penalty='l2', solver='lbfgs', C=0.0183, random_state=42, max_iter=1000)),
         {},
     ),
     'NN': (
-        make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=41, alpha=54.5982)),
+        make_pipeline(Vectorizer(), MLPClassifier(solver='lbfgs', activation='relu', random_state=41, alpha=54.5982, max_iter=1000)),
         {},
     ),
     'SVM': (
@@ -68,7 +68,7 @@ clfs = {
         {},
     ),
     'PCA_RDA_KDE': (
-        make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=10)),
+        make_pipeline(FunctionTransformer(reorder), PcaRdaKdeModel(k_folds=k_folds)),
         {},
     ),
     'Random Model': (
@@ -109,12 +109,14 @@ def crossvalidate_record(record, clfs=clfs, scores=scores, session_name=None):
         results = pd.DataFrame(cv.cv_results_)[headers]
         results['classifier'] = name
         df = pd.concat((df, results), sort=False)
-
+        
+        # get the best score for the classifier
+        best_score = cv.best_score_
         # save the best model
         if session_name is not None:
             # create a models folder if it doesn't exist
             if not os.path.exists(f'{session_name}/models'):
                 os.makedirs(f'{session_name}/models')
-            with open(f'{session_name}/models/model_{name}.pkl', 'wb') as f:
+            with open(f'{session_name}/models/model_{name}_{best_score}.pkl', 'wb') as f:
                 pickle.dump(cv.best_estimator_, f)
     return df.reindex(sorted(df.columns), axis=1)

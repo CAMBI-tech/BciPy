@@ -6,7 +6,7 @@ from bcipy.signal.model.offline_analysis import offline_analysis
 from bcipy.io.load import load_json_parameters, load_experimental_data
 import pandas as pd
 from bcipy.helpers.process import load_data_inquiries
-from .grid_search_classifier import crossvalidate_record, scores
+from grid_search_classifier import crossvalidate_record, scores
 
 
 
@@ -44,39 +44,50 @@ results = {}
 results['all'] = []
 for session in progress_bar:                               
     if session.is_dir():
-        session_folder = str(session.resolve())
-
-        # check if this is a calibration session
-        if 'calibration' in session.name.lower():
-            try:
-                # grab the data and labels
-                results[session.name] = {}
-                progress_bar.set_description(f"Processing {session.name}...")
-                parameters = load_json_parameters(f"{session}/parameters.json", value_cast=True)
-
-                model_path = f'{path}/models/{session.name}'
-                if not os.path.exists(model_path):
-                    os.makedirs(model_path)
-                
-                breakpoint()
-                # Train the model
-                df = train_model(session_folder, parameters, model_path)
-                results[session.name]['df'] = df
-                for name in scores:
-                    results[session.name][name] = df[f'mean_test_{name}']
-                    results[session.name][f'std_{name}'] = df[f'std_test_{name}']
-
-
-
-            except Exception as e:
-                print(f"Error processing {session.name}: {e}")
-                breakpoint()
+        for session_sub in session.iterdir():
+            # skip non-directories
+            if not session_sub.is_dir():
                 continue
-        else:
-            progress_bar.set_description(f"Skipping {session.name}...")
-            continue
+            session_folder = str(session_sub.resolve())
 
-filename = 'retrain_ME_results.csv'
+            print(f"Processing {session_sub.name}...")
+            # check if this is a calibration session
+            if 'calibration' in session_sub.name.lower():
+                try:
+                    # grab the data and labels
+                    results[session_sub.name] = {}
+                    progress_bar.set_description(f"Processing {session_sub.name}...")
+                    parameters = load_json_parameters(f"{session_sub}/parameters.json", value_cast=True)
+
+                    model_path = f'./retrained_models/{session_sub.name}'
+                    if not os.path.exists(model_path):
+                        os.makedirs(model_path)
+                                        # Train the model
+                    df = train_model(session_folder, parameters, model_path)
+                    results[session_sub.name]['df'] = df
+                    for name in scores:
+                        results[session_sub.name][name] = df[f'mean_test_{name}']
+                        results[session_sub.name][f'std_{name}'] = df[f'std_test_{name}']
+
+
+
+                except Exception as e:
+                    print(f"Error processing {session_sub.name}: {e}")
+                    breakpoint()
+                    continue
+            else:
+                progress_bar.set_description(f"Skipping {session.name}...")
+                continue
+
+filename = './retrained_models/retrain_ME_results.csv'
+print(f"Saving results to {filename}...")
+
+# Save the results to a CSV file
+if os.path.exists(filename):
+    os.remove(filename)
+
+breakpoint()
+
 export = pd.DataFrame.from_dict(results).transpose()
 export.to_csv(filename)
 
