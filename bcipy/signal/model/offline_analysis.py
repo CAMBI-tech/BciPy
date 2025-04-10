@@ -1,10 +1,10 @@
 # mypy: disable-error-code="attr-defined"
 # needed for the ERPTransformParams
 import json
-import os
 import logging
 from pathlib import Path
 from typing import Tuple
+import csv
 
 import numpy as np
 from matplotlib.figure import Figure
@@ -75,7 +75,7 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
     return train_data, test_data, train_labels, test_labels
 
 def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balanced_acc,
-                save_figures=False, show_figures=False):
+                save_figures=False, show_figures=False, vep_template_name="vep_template.csv"):
     """
     Analyze VEP data and return/save the VEP model.
     This function is identical to analyze_erp except that it assumes that every trial window has
@@ -91,6 +91,7 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
             estimate balanced accuracy.
         save_figures (bool): If true, saves VEP figures after training to the data folder.
         show_figures (bool): If true, shows VEP figures after training.
+        vep_template_name: (str) File name for what the user calls the template being created for vep
 
     """
     # Extract relevant session information from parameters file
@@ -98,7 +99,6 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     if trial_window is None:
         trial_window = (0.0, 0.5)
     window_length = trial_window[1] - trial_window[0]
-    trials_per_inquiry = parameters.get("stim_length")
     # No overlapping segment, so the transformation buffer is 0
     buffer = 0
 
@@ -117,14 +117,14 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     sample_rate = vep_data.sample_rate
 
     # setup filtering
-    default_transform = get_default_transform(
-        sample_rate_hz=sample_rate,
-        notch_freq_hz=transform_params.notch_filter_frequency,
-        bandpass_low=transform_params.filter_low,
-        bandpass_high=transform_params.filter_high,
-        bandpass_order=transform_params.filter_order,
-        downsample_factor=transform_params.down_sampling_rate,
-    )
+    #default_transform = get_default_transform(
+    #    sample_rate_hz=sample_rate,
+    #    notch_freq_hz=transform_params.notch_filter_frequency,
+    #    bandpass_low=transform_params.filter_low,
+    #    bandpass_high=transform_params.filter_high,
+    #    bandpass_order=transform_params.filter_order,
+    #    downsample_factor=transform_params.down_sampling_rate,
+    #)
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -142,9 +142,9 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     # each trial window is distinct so adjust by the trial window start
     corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
 
-    #Starts with stimulant_box then the box number for triggers
+
+    #----Group data by trigger label (stimulant_box_X)
     groups = {}
-    #will iterate over each trigger symbol
     for i, sym in enumerate(trigger_symbols):
         if sym.lower().startswith("stimulant_box"):
             #add index to corresponding stimulus group
@@ -162,7 +162,7 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
         segments = []
         for index in indices:
             timing = corrected_trigger_timing[index]
-            #Converts trigger time to sample time
+            #Converts trigger time to sample time (seconds)
             sample_index = int(timing * sample_rate)
             #Extract data segment for trial
             segment = data[:, sample_index:sample_index + trial_duration_samples]
@@ -172,50 +172,31 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
         #Only will store if any segements were extracted
         if segments:
             segments_by_stimulus[sym] = segments
-
-    #Average template for each stimulus by averaging its segments
+    
+    #----Extract segments of data and average each stimulant_box_X ones
     templates = {}
     for sym, segments in segments_by_stimulus.items():
-        #Channels, trial_duration_samples
-        #find average of segments TODO
-        avg_template = 0
+        #Stacks individual trial segment into single array
+        #channels, trial_duration_samples
+        #axis_0 addes new dimension for trial numbers
+        #array becomes num_trials, channels, trial_duration_samples)
+        stacked = np.stack(segments, axis=0)
+        #Takes mean along axis=0, collapses the trials so becomes (channels, trial_duration_samples)
+        avg_template = np.mean(stacked, axis=0) 
         templates[sym] = avg_template
 
-    #Convert the dictionary into a list of templates
-    model = [templates[sym] for sym in sorted(templates.keys())]
+    averaged_templates = list(templates.values())
     
-    #Saves template model
-    save_model(model, Path(data_folder, "vep_template.pkl"))
+    #----Write to csv
+    csv_filepath = Path(data_folder) / vep_template_name
+    with open(csv_filepath, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile)
+        for template in averaged_templates:
+            #Flatten from 2d(channels, samples) to a 1D list for writing
+            flattened = template.flatten().tolist()
+            writer.writerow(flattened)
+    return averaged_templates, []
 
-    # a list of the templates for each box,
-    # no figures handlers
-    # eventually make a visualize vep function
-    return model
-
-
-def analyze_vep(data_folder: str = None,
-                trigger_file: str = 'triggers.txt',
-                data_file: str = 'raw_data.csv',
-                exclusion: list[str] = None):
-    """
-    Analyse vep data.
-
-    Extract relevant information from raw data object. Extracting timing information from trigger file.
-    Perform CCA to correlate signal to box index.
-
-    Parameters:
-    -----------
-    data_file: raw csv data.
-    trigger_path: trigger file name.
-    exclusion (List[str]): List of optional trigger labels to be excluded.
-    """
-
-    trigger_type, trigger_timing, trigger_label = trigger_decoder(
-        trigger_path=f"{os.path.join(data_folder, trigger_file)}",
-        device_type='EEG'
-    )
-
-    return trigger_type, trigger_timing, trigger_label
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                 save_figures=False, show_figures=False):
