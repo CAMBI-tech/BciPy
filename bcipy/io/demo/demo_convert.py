@@ -42,7 +42,7 @@ def load_historical_bcipy_data(directory: str, experiment_id: str) -> List[BciPy
         for task_run in participant.iterdir():
             if not task_run.is_dir():
                 continue
-            
+
             extracted_task_paradigm = task_run.name.split('_')[1]
             extracted_task_mode = task_run.name.split('_')[2]
             if extracted_task_mode == 'Copy':
@@ -50,10 +50,10 @@ def load_historical_bcipy_data(directory: str, experiment_id: str) -> List[BciPy
                 extracted_task_time = task_run.name.split('_')[8]
             else:
                 extracted_task_time = task_run.name.split('_')[7]
-    
+
             # add the tasks to the list with the time as the key
             run_tasks[extracted_task_time] = [task_run, f'{extracted_task_paradigm}{extracted_task_mode}']
-        
+
         # sort the tasks by time
         sorted_tasks = sorted(run_tasks.items())
         # print(sorted_tasks)

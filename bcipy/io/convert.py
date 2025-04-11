@@ -480,7 +480,6 @@ def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
 
 def BIDS_to_MNE(
         bids_root_path: str,
-        session_label: Optional[str] = 'ses',
         task_name: Optional[str] = None) -> List[mne.io.Raw]:
     """Convert BIDS data to MNE Raw object.
 
@@ -509,15 +508,16 @@ def BIDS_to_MNE(
     logger.info(f"Searching for BIDS data in '{bids_root_path}'...")
 
     # Get the sessions from the BIDS root path using the session label (e.g., 'ses' or 'session')
-    sessions = get_entity_vals(bids_root_path, session_label)
+    sessions = get_entity_vals(bids_root_path, 'session')
     data_type = 'eeg'
-    extensions = ['.tsv', '.vhdr', '.vmrk', '.eeg', '.edf', '.bdf']  # Supported file extensions
+    extensions = ['.vhdr', '.edf', '.bdf']  # Supported file extensions
 
     bid_paths = find_matching_paths(
         bids_root_path,
         extensions=extensions,
         sessions=sessions,
-        datatypes=data_type
+        datatypes=data_type,
+        tasks=task_name,
     )
     if not bid_paths:
         raise FileNotFoundError(f"No matching BIDS files found in '{bids_root_path}'.")
@@ -525,7 +525,7 @@ def BIDS_to_MNE(
     raw_data = []
     for bid_path in bid_paths:
         if task_name and bid_path.task != task_name:
-            log.debug(f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
+            logger.debug(f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
             continue
 
         logger.info(f"Reading BIDS file: {bid_path}")

@@ -920,10 +920,11 @@ class BCIGui(QWidget):
 
             if width > height:
                 new_width = size
-                new_height = size * height / width
+                new_height = int(size * height / width)
             else:
                 new_height = size
-                new_width = size * width / height
+                new_width = int(size * width / height)
+
 
             labelImage.resize(new_width, new_height)
             labelImage.move(position[0], position[1])
@@ -1135,8 +1136,8 @@ def start_app() -> None:
     """Start BCIGui."""
     bcipy_gui = app(sys.argv)
     ex = BCIGui(title='BCI GUI',
-                height=650,
-                width=650,
+                height=500,
+                width=500,
                 background_color='white')
     ex.show_gui()
     sys.exit(bcipy_gui.exec())
