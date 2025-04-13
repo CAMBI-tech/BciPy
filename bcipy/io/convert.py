@@ -18,7 +18,7 @@ from bcipy.config import (RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.io.load import load_raw_data
 from bcipy.core.raw_data import RawData, get_1020_channel_map
-from bcipy.core.triggers import trigger_decoder
+from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.signal.process import Composition
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -110,6 +110,7 @@ def convert_to_bids(
         trigger_path=trigger_file,
         offset=device_spec.static_offset,
         device_type='EEG',
+        exclusion=[TriggerType.PREVIEW]
     )
 
     # convert the raw data to MNE format
