@@ -179,7 +179,6 @@ exclude = [
     "scripts",
     "acquisition",
     "display.paradigm",
-    "language",
     "signal.model",
     "task.control",
     "core.parameters",
