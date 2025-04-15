@@ -1,35 +1,32 @@
 """Uniform language model"""
 from typing import List, Optional, Union, Tuple, Dict
 
-from bcipy.language.main import ResponseType, LanguageModel
-from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.core.symbols import BACKSPACE_CHAR
+from bcipy.exceptions import InvalidSymbolSetException
 
 import numpy as np
 
 
-class UniformLanguageModel(LanguageModel):
+class UniformLanguageModel(CharacterLanguageModel):
     """Language model in which probabilities for symbols are uniformly
     distributed.
 
     Parameters
     ----------
-        response_type - SYMBOL only
-        symbol_set - optional specify the symbol set, otherwise uses DEFAULT_SYMBOL_SET
+        None
     """
 
-    def __init__(self,
-                 response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = DEFAULT_SYMBOL_SET):
-        super()._init_bcipy_language_model(response_type=response_type)
+    def __init__(self):
+        self.symbol_set = None
 
+    def set_symbol_set(self, symbol_set: List[str]) -> None:
         self.symbol_set = symbol_set
+
         self.model_symbol_set = [ch for ch in symbol_set]
         self.model_symbol_set.remove(BACKSPACE_CHAR)
-
-    def supported_response_types(self) -> List[ResponseType]:
-        return [ResponseType.SYMBOL]
     
-    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
+    def predict_character(self, evidence: Union[str, List[str]]) -> List[Tuple]:
         """
         Using the provided data, compute probabilities over the entire symbol.
         set.
@@ -42,6 +39,10 @@ class UniformLanguageModel(LanguageModel):
         -------
             list of (symbol, probability) tuples
         """
+
+        if self.symbol_set is None:
+            raise InvalidSymbolSetException("symbol set must be set prior to requesting predictions.")
+
         probs = equally_probable(self.model_symbol_set)
         return list(zip(self.model_symbol_set, probs)) + [(BACKSPACE_CHAR, 0.0)]
 

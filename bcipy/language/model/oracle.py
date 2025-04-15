@@ -6,7 +6,8 @@ import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType, LanguageModel
+from bcipy.exceptions import InvalidSymbolSetException
+from bcipy.language.main import CharacterLanguageModel
 from bcipy.language.model.uniform import equally_probable
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
@@ -15,7 +16,7 @@ TARGET_BUMP_MIN = 0.0
 TARGET_BUMP_MAX = 1.0
 
 
-class OracleLanguageModel(LanguageModel):
+class OracleLanguageModel(CharacterLanguageModel):
     """Language model which knows the target phrase the user is attempting to
     spell.
 
@@ -28,28 +29,26 @@ class OracleLanguageModel(LanguageModel):
 
     Parameters
     ----------
-        response_type - SYMBOL only
-        symbol_set - optional specify the symbol set, otherwise uses DEFAULT_SYMBOL_SET
         task_text - the phrase the user is attempting to spell (ex. 'HELLO_WORLD')
         target_bump - the amount by which the probability of the target letter
             is increased.
     """
 
     def __init__(self,
-                 response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = DEFAULT_SYMBOL_SET,
                  task_text: str = None,
                  target_bump: float = 0.1):
-        super()._init_bcipy_language_model(response_type=response_type)
 
         self.task_text = task_text
         self.target_bump = target_bump
 
-        self.symbol_set = symbol_set
+        self.symbol_set = None
 
         logger.debug(
             f"Initialized OracleLanguageModel(task_text='{task_text}', target_bump={target_bump})"
         )
+
+    def set_symbol_set(self, symbol_set: List[str]) -> None:
+        self.symbol_set = symbol_set
 
     @property
     def task_text(self):
@@ -74,10 +73,7 @@ class OracleLanguageModel(LanguageModel):
         assert TARGET_BUMP_MIN <= value <= TARGET_BUMP_MAX, msg
         self._target_bump = value
 
-    def supported_response_types(self) -> List[ResponseType]:
-        return [ResponseType.SYMBOL]
-
-    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
+    def predict_character(self, evidence: Union[str, List[str]]) -> List[Tuple]:
         """
         Using the provided data, compute probabilities over the entire symbol.
         set.
@@ -90,6 +86,10 @@ class OracleLanguageModel(LanguageModel):
         -------
             list of (symbol, probability) tuples
         """
+
+        if self.symbol_set is None:
+            raise InvalidSymbolSetException("symbol set must be set prior to requesting predictions.")
+
         spelled_text = ''.join(evidence)
         target = self._next_target(spelled_text)
 
@@ -109,6 +109,7 @@ class OracleLanguageModel(LanguageModel):
 
         return sorted(symbol_probs.items(),
                       key=lambda item: item[1], reverse=True)
+    
 
     def _next_target(self, spelled_text: str) -> Optional[str]:
         """Computes the next target letter based on the currently spelled_text.

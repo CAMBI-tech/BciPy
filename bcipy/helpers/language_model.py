@@ -1,12 +1,13 @@
 """Helper functions for language model use."""
 import inspect
 import math
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Type
 
 import numpy as np
 
 from bcipy.core.symbols import alphabet
-from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.language.main import LanguageModel
+from bcipy.exceptions import LanguageModelNameInUseException
 
 # pylint: disable=unused-import
 # flake8: noqa
@@ -19,10 +20,26 @@ from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
 
+VALID_LANGUAGE_MODELS = {
+    "CAUSAL": CausalLanguageModelAdapter,
+    "NGRAM": NGramLanguageModelAdapter,
+    "MIXTURE": MixtureLanguageModelAdapter,
+    "ORACLE": OracleLanguageModel,
+    "UNIFORM": UniformLanguageModel
+}
+
 
 def language_models_by_name() -> Dict[str, LanguageModel]:
     """Returns available language models indexed by name."""
-    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
+    return VALID_LANGUAGE_MODELS
+
+
+def register_language_model(name: str, lm_type: Type[LanguageModel]) -> None:
+    if name in VALID_LANGUAGE_MODELS:
+        raise LanguageModelNameInUseException(
+            f"{name} is already registered as {VALID_LANGUAGE_MODELS[name]}.")
+    else:
+        VALID_LANGUAGE_MODELS[name] = lm_type
 
 
 def init_language_model(parameters: dict) -> LanguageModel:
@@ -49,10 +66,11 @@ def init_language_model(parameters: dict) -> LanguageModel:
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
 
-    return model(
-        response_type=ResponseType.SYMBOL,
-        symbol_set=alphabet(parameters),
-        **params)
+    lm = model(**params)
+
+    lm.set_symbol_set(alphabet(parameters))
+
+    return lm
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:

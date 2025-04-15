@@ -75,14 +75,6 @@ class InvalidFieldException(FieldException):
     ...
 
 
-class UnsupportedResponseType(BciPyCoreException):
-    """Unsupported ResponseType
-
-    Thrown when attempting to set the response type of a language model to an
-    unsupported value."""
-    ...
-
-
 class TaskConfigurationException(BciPyCoreException):
     """Task Configuration Exception.
 
@@ -94,4 +86,17 @@ class KenLMInstallationException(BciPyCoreException):
     """KenLM Installation Exception.
 
     Thrown when attempting to import kenlm without installing the module"""
+    ...
+
+
+class InvalidSymbolSetException(BciPyCoreException):
+    """Invalid Symbol Set Exception.
+    
+    Thrown when querying a language model for predictions without setting the symbol set."""
+    ...
+
+class LanguageModelNameInUseException(BciPyCoreException):
+    """Language Model Name In Use Exception.
+    
+    Thrown when attempting to register a language model type with a duplicate name."""
     ...

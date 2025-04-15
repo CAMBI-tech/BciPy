@@ -104,10 +104,13 @@ class TestCopyPhraseWrapper(unittest.TestCase):
 
     def test_init_series(self):
 
+        lmodel = UniformLanguageModel()
+        lmodel.set_symbol_set(DEFAULT_SYMBOL_SET)
+
         copy_phrase_task = CopyPhraseWrapper(
             min_num_inq=1,
             max_num_inq=50,
-            lmodel=UniformLanguageModel(symbol_set=DEFAULT_SYMBOL_SET),
+            lmodel=lmodel,
             alp=DEFAULT_SYMBOL_SET,
             task_list=[("HELLO_WORLD", "HE")],
             is_txt_stim=True,

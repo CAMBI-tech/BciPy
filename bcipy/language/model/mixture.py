@@ -1,13 +1,13 @@
 from typing import Optional, Dict, List
 
-from bcipy.language.main import ResponseType, LanguageModel
-from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.adapter import LanguageModelAdapter
 from bcipy.config import LM_PATH
 
 from aactextpredict.mixture import MixtureLanguageModel
 
 
-class MixtureLanguageModelAdapter(LanguageModel):
+class MixtureLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
     """
         Character language model that mixes any combination of other models
     """
@@ -15,16 +15,12 @@ class MixtureLanguageModelAdapter(LanguageModel):
     supported_lm_types = MixtureLanguageModel.supported_lm_types
 
     def __init__(self,
-                 response_type: ResponseType,
-                 symbol_set: List[str] = DEFAULT_SYMBOL_SET,
                  lm_types: Optional[List[str]] = None,
                  lm_weights: Optional[List[float]] = None,
                  lm_params: Optional[List[Dict[str, str]]] = None):
         """
-        Initialize instance variables and load the language model with given path
+        Initialize instance variables and load parameters
         Args:
-            response_type - SYMBOL only
-            symbol_set - list of symbol strings
             lm_types - list of types of models to mix
             lm_weights - list of weights to use when mixing the models
             lm_params - list of dictionaries to pass as parameters for each model's instantiation
@@ -32,12 +28,7 @@ class MixtureLanguageModelAdapter(LanguageModel):
 
         MixtureLanguageModel.validate_parameters(lm_types, lm_weights, lm_params)
 
-        super()._init_bcipy_language_model(response_type=response_type)
-
-        self.symbol_set = symbol_set
-        # LM doesn't care about backspace, needs literal space
-        self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in symbol_set]
-        self.model_symbol_set.remove(BACKSPACE_CHAR)
+        self._load_parameters()
 
         mixture_params = self.parameters['mixture']
         self.lm_types = lm_types or mixture_params['model_types']['value']
@@ -50,7 +41,7 @@ class MixtureLanguageModelAdapter(LanguageModel):
 
         MixtureLanguageModel.validate_parameters(self.lm_types, self.lm_weights, self.lm_params)
 
+    def _load_model(self) -> None:
+        """Load the model itself using stored parameters"""
         self.model = MixtureLanguageModel(self.model_symbol_set, self.lm_types, self.lm_weights, self.lm_params)
 
-    def supported_response_types(self) -> List[ResponseType]:
-        return [ResponseType.SYMBOL]

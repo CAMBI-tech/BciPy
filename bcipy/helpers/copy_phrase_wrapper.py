@@ -190,7 +190,7 @@ class CopyPhraseWrapper:
             log.info(f"Querying language model: '{update}'")
 
             # update the lmodel and get back the priors
-            lm_letter_prior = self.lmodel.predict(list(update))
+            lm_letter_prior = self.lmodel.predict_character(list(update))
 
             if BACKSPACE_CHAR in self.alp:
                 # Apply configured backspace probability.

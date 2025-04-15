@@ -1,19 +1,16 @@
-from typing import Optional, List
+from typing import Optional
 
-from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR, DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType, LanguageModel
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.adapter import LanguageModelAdapter
+from bcipy.config import LM_PATH
 
 from aactextpredict.causal import CausalLanguageModel
 
-from bcipy.config import LM_PATH
 
-
-class CausalLanguageModelAdapter(LanguageModel):
-    """Character language model based on a pre-trained causal model, GPT-2 by default."""
+class CausalLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
+    """Character language model based on a pre-trained causal model."""
 
     def __init__(self,
-                 response_type: ResponseType,
-                 symbol_set: List[str] = DEFAULT_SYMBOL_SET,
                  lang_model_name: Optional[str] = None,
                  lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
@@ -25,10 +22,8 @@ class CausalLanguageModelAdapter(LanguageModel):
                  max_completed: int = None,
                  ):
         """
-        Initialize instance variables and load the language model with given path
+        Initialize instance variables and load model parameters
         Args:
-            response_type - SYMBOL only
-            symbol_set         - list of symbol strings
             lang_model_name    - name of the Hugging Face casual language model to load
             lm_path            - load fine-tuned model from specified directory
             lm_device          - device to use for making predictions (cpu, mps, or cuda)
@@ -39,7 +34,8 @@ class CausalLanguageModelAdapter(LanguageModel):
             case_simple        - simple fixing of left context case
             max_completed      - stop search once we reach this many completed hypotheses, None=don't prune
         """
-        super()._init_bcipy_language_model(response_type=response_type)
+
+        self._load_parameters()
 
         causal_params = self.parameters['causal']
 
@@ -54,15 +50,17 @@ class CausalLanguageModelAdapter(LanguageModel):
         local_model_path = lm_path or causal_params['model_path']['value']
         self.model_dir = f"{LM_PATH}/{local_model_path}" if local_model_path != "" else self.model_name
 
-        self.symbol_set = symbol_set
-        # LM doesn't care about backspace, needs literal space
-        self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in self.symbol_set]
-        self.model_symbol_set.remove(BACKSPACE_CHAR)
+        self.lm_device = lm_device
+        self.lm_left_context = lm_left_context
+        self.fp16 = fp16
+        self.mixed_case_context = mixed_case_context
+        self.case_simple = case_simple
+
+
+    def _load_model(self) -> None:
+        """Load the model itself using stored parameters"""
 
         self.model = CausalLanguageModel(symbol_set=self.model_symbol_set, lang_model_name=self.model_name, lm_path=self.model_dir,
-                                         lm_device=lm_device, lm_left_context=lm_left_context,
-                                         beam_width=self.beam_width, fp16=fp16, mixed_case_context=mixed_case_context,
-                                         case_simple=case_simple, max_completed=self.max_completed)
-
-    def supported_response_types(self) -> List[ResponseType]:
-        return [ResponseType.SYMBOL]
+                                         lm_device=self.lm_device, lm_left_context=self.lm_left_context,
+                                         beam_width=self.beam_width, fp16=self.fp16, mixed_case_context=self.mixed_case_context,
+                                         case_simple=self.case_simple, max_completed=self.max_completed)

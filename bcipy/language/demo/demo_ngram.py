@@ -2,7 +2,6 @@
 
 from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.core.symbols import DEFAULT_SYMBOL_SET
-from bcipy.language.main import ResponseType
 from bcipy.config import LM_PATH
 from bcipy.exceptions import KenLMInstallationException
 
@@ -83,36 +82,36 @@ if __name__ == "__main__":
     print(f"sum logprob = {accum:.4f}")
 
     # Using the adapter and aactextpredict toolkit
-    response_type = ResponseType.SYMBOL
-    lm = NGramLanguageModelAdapter(response_type, DEFAULT_SYMBOL_SET, lm_path)
+    lm = NGramLanguageModelAdapter(lm_path)
+    lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
     print("Target sentence: i_like_zebras\n")
 
-    next_char_pred = lm.predict(list("i_like_z"))
+    next_char_pred = lm.predict_character(list("i_like_z"))
     print("Context: i_like_z")
     print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
     print(f"Correct character rank: {correct_char_rank}\n")
 
-    next_char_pred = lm.predict(list("i_lik"))
+    next_char_pred = lm.predict_character(list("i_lik"))
     print("Context: i_lik")
     print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
     print(f"Correct character rank: {correct_char_rank}\n")
 
-    next_char_pred = lm.predict(list("i_like_zebras"))
+    next_char_pred = lm.predict_character(list("i_like_zebras"))
     print("Context: i_like_zebras")
     print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
     print(f"Correct character rank: {correct_char_rank}\n")
 
-    next_char_pred = lm.predict(list(""))
+    next_char_pred = lm.predict_character(list(""))
     print("Context: ")
     print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("I") + 1
     print(f"Correct character rank: {correct_char_rank}\n")
 
-    next_char_pred = lm.predict(list("i_like_zebra"))
+    next_char_pred = lm.predict_character(list("i_like_zebra"))
     print("Context: i_like_zebra")
     print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
