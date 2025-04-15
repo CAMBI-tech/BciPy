@@ -9,7 +9,7 @@ from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.causal import CausalLanguageModelAdapter
 from bcipy.language.main import CharacterLanguageModel
 
-from aactextpredict.exceptions import InvalidLanguageModelException
+from textslinger.exceptions import InvalidLanguageModelException
 
 
 @pytest.mark.slow

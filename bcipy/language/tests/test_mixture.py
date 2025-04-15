@@ -6,7 +6,7 @@ import os
 from operator import itemgetter
 
 from bcipy.exceptions import InvalidSymbolSetException
-from aactextpredict.exceptions import InvalidLanguageModelException
+from textslinger.exceptions import InvalidLanguageModelException
 from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 from bcipy.language.main import CharacterLanguageModel

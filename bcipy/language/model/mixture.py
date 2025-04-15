@@ -4,7 +4,7 @@ from bcipy.language.main import CharacterLanguageModel
 from bcipy.language.model.adapter import LanguageModelAdapter
 from bcipy.config import LM_PATH
 
-from aactextpredict.mixture import MixtureLanguageModel
+from textslinger.mixture import MixtureLanguageModel
 
 
 class MixtureLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):

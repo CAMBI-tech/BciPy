@@ -2,7 +2,7 @@ from typing import Optional
 
 from bcipy.language.main import CharacterLanguageModel
 from bcipy.language.model.adapter import LanguageModelAdapter
-from aactextpredict.ngram import NGramLanguageModel
+from textslinger.ngram import NGramLanguageModel
 from bcipy.config import LM_PATH
 
 

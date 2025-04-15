@@ -8,7 +8,7 @@ from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 import json
 
 class LanguageModelAdapter(ABC):
-    """Abstract base class for aactextpredict language model adapters."""
+    """Abstract base class for textslinger language model adapters."""
 
     symbol_set: List[str] = None
     model = None

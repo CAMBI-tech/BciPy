@@ -81,7 +81,7 @@ if __name__ == "__main__":
         prev = token
     print(f"sum logprob = {accum:.4f}")
 
-    # Using the adapter and aactextpredict toolkit
+    # Using the adapter and textslinger toolkit
     lm = NGramLanguageModelAdapter(lm_path)
     lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 

@@ -4,7 +4,7 @@ from bcipy.language.main import CharacterLanguageModel
 from bcipy.language.model.adapter import LanguageModelAdapter
 from bcipy.config import LM_PATH
 
-from aactextpredict.causal import CausalLanguageModel
+from textslinger.causal import CausalLanguageModel
 
 
 class CausalLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):

@@ -1,6 +1,6 @@
 # Language
 
-BciPy Language module provides an interface for word and character level predictions. This module primarily relies upon the AAC-TextPredict package (aactextpredict on PyPI) for its probability calculations. More information on this package can be found on our [GitHub repo](https://github.com/kdv123/textpredict)
+BciPy Language module provides an interface for word and character level predictions. This module primarily relies upon the TextSlinger package (textslinger on PyPI) for its probability calculations. More information on this package can be found on our [GitHub repo](https://github.com/kdv123/textpredict)
 
 The core methods of any `LanguageModel` include:
 
