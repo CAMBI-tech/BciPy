@@ -73,7 +73,7 @@ vep = VEPDisplay(win,
                  info,
                  box_config=box_config,
                  flicker_rates=DEFAULT_FLICKER_RATES,
-                 should_prompt_target=True,
+                 should_set_target=True,
                  frame_rate=frame_rate)
 wait_seconds = 2
 

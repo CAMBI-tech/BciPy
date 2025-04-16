@@ -91,7 +91,7 @@ class VEPDisplay(Display):
         self.file_save = file_save or None
 
         self.stim_length = stimuli.stim_length
-        self.should_prompt_target = should_prompt_target
+        self.should_set_target = should_prompt_target
 
         self.symbol_set = symbol_set or alphabet()
         self.sort_order = self.symbol_set.index
@@ -147,7 +147,7 @@ class VEPDisplay(Display):
     @property
     def box_colors(self) -> List[str]:
         """Get the colors used for boxes"""
-        if self.should_prompt_target:
+        if self.should_set_target:
             [_target_color, _fixation_color, *colors] = self.stimuli_colors
         else:
             [_fixation_color, *colors] = self.stimuli_colors
@@ -192,11 +192,11 @@ class VEPDisplay(Display):
         self._reset_text_boxes()
         self.reset_symbol_positions()
 
-        if self.should_prompt_target:
+        if self.should_set_target:
             [target, _fixation, *stim] = self.stim_properties()
             if isinstance(target.symbol, str):
                 self.set_stimuli_colors(stim)
-                self.prompt_target(target,
+                self.set_target(target,
                                    target_box_index=self.box_index(
                                        stim, target.symbol))
         else:
@@ -204,8 +204,8 @@ class VEPDisplay(Display):
             self.set_stimuli_colors(stim)
 
         self.log_inquiry(stim)
-        self.animate_inquiry(stim)
-        core.wait(self.timing_fixation)
+        self.show_box_text(stim)
+        core.wait(self.timing_prompt)
         self._reset_text_boxes()
         self.stimulate(target_box_index=self.box_index(
                                        stim, target.symbol))
@@ -221,7 +221,7 @@ class VEPDisplay(Display):
         pos_index = self.sort_order(sym)
         return self.starting_positions[pos_index]
 
-    def prompt_target(self,
+    def set_target(self,
                       target: StimProps,
                       target_box_index: Optional[int] = None) -> None:
         """Present the target for the configured length of time. Records the
@@ -234,15 +234,12 @@ class VEPDisplay(Display):
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
 
-        self.window.callOnFlip(self.add_timing, 'PROMPT')
-
         if target_box_index is not None:
             self.highlight_target_box(target_box_index)
 
-        self.draw_static()
+        # self.draw_static()
 
-        self.window.flip()
-        core.wait(target.duration / 2)
+        # self.window.flip()
 
     def log_inquiry(self, stimuli: List[StimProps]) -> None:
         """Log the inquiry"""
@@ -260,27 +257,19 @@ class VEPDisplay(Display):
                 box.borderWidth = self.box_border_width - 2
                 box.setOpacity(0.8)
 
-    def do_fixation(self, fixation: StimProps) -> None:
-        """Show all symbols before animating."""
-        duration = fixation.duration or self.timing_fixation
-        self.draw_static()
-        self.draw_boxes()
-        self.window.flip()
-        core.wait(duration / 2)
-        self.draw_static()
-        self.draw_boxes()
-        self.window.flip()
-        core.wait(duration / 2)
-
-    def animate_inquiry(self, stimuli: List[StimProps]) -> None:
+    def show_box_text(self, stimuli: List[StimProps]) -> None:
         """Display the inquiry.
 
         Inquiry is a list of lists of strings.
         Each list contains what stimuli to display for each box defined in self.vep.
         """
 
+        # print("PROMPT")
+
         self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
+        
+        self.window.callOnFlip(self.add_timing, "PROMPT")
 
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
@@ -293,37 +282,6 @@ class VEPDisplay(Display):
         for group in stim_groups:
             for sym in group.symbol:
                 self.sti[sym].color = 'white'
-
-    def draw_animation(self, stimuli: List[StimProps]) -> None:
-        """Draw the stimuli animation.
-
-        Parameters
-        ----------
-            stimuli - information about each symbol's destination.
-        """
-        frames = int(self.refresh_rate * self.timing_animation)
-        # Compute intermediate positions
-        animation_paths = {}
-        for i, stim_props in enumerate(stimuli):
-            end_pos = self.text_boxes[i].pos
-            for sym in stim_props.symbol:
-                start_pos = self.starting_position(sym)
-                animation_paths[sym] = animation_path(start_pos, end_pos,
-                                                      frames)
-        counter = 0
-        self.static_clock.reset()
-        while self.static_clock.getTime() < self.timing_animation:
-            for frame in range(frames):
-                self.draw_boxes()
-                for sym, sti in self.sti.items():
-                    sti.pos = animation_paths[sym][frame]
-                    sti.draw()
-                self.draw_static()
-                self.window.flip()
-                counter += 1
-        self.logger.debug(
-            f"{counter} animation frames rendered in {self.timing_animation} seconds"
-        )
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
@@ -343,6 +301,7 @@ class VEPDisplay(Display):
         """
         self.static_clock.reset()
         self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
+        # print("STIMULATE")
         for frame in range(self.mseq_length):
             self.draw_boxes()
             for stim in self.vep:
