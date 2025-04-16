@@ -67,11 +67,18 @@ class GaussianProcess(SignalModel):
         self.ready_to_predict = False
         self.acc = None
 
-    def fit(self, training_data: np.ndarray):
-        ...
+    def fit(self, train_data: np.ndarray):
+        return self
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
+
+    def evaluate_likelihood(self, data: np.ndarray, symbols: List[str]) -> np.ndarray:
+        ...
+        # TODO: This function should take in preprocessed data and other necessary model
+        # parameters to evaluate likelihood. Necessary model parameters include the time average 
+        # for each symbol - in a dict format. This should be saved in model.pkl beforehand!
+        # Then you need to implement fusion.py lines 313-324 here.
 
     def predict(self, test_data: np.ndarray, inquiry, symbol_set) -> np.ndarray:
         ...

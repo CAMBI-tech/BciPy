@@ -370,6 +370,7 @@ def analyze_gaze(
                         temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
+            # TODO: Save the time_averages into the model
 
     if model_type == "GaussianProcess":
         # Split the data into train and test sets & fit the model:
@@ -392,7 +393,8 @@ def analyze_gaze(
                             cov_matrix[l_ind, m_ind] = 0
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        # Save model parameters which are mean and covariance matrix
+        # TODO: Save model parameters which are reshaped_mean (i.e. sample average) 
+        # and the covariance matrix (cov_matrix)
         model.fit(reshaped_mean)
 
     if model_type == "GMCentralized":

@@ -7,10 +7,10 @@ import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.core.symbols import alphabet
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.core.stimuli import TrialReshaper, GazeReshaper
 from bcipy.signal.model import SignalModel
+from bcipy.signal.process import extract_eye_info
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
 
@@ -136,18 +136,24 @@ class GazeEvaluator(EvidenceEvaluator):
         self.reshape = GazeReshaper()
 
     def preprocess(self, raw_data: np.ndarray, times: List[float],
-                   symbols: List[str], flash_time: float, 
-                   stim_length: float) -> np.ndarray:
-        """Preprocess the inquiry data.
+                   flash_time: float) -> np.ndarray:
+        """Preprocess the inquiry data. 
 
         Parameters
         ----------
             raw_data - C x L eeg data where C is number of channels and L is the
-                signal length
+                signal length. Includes all channels in devices.json
             symbols - symbols displayed in the inquiry
             times - timestamps associated with each symbol
             flash_time - duration (in seconds) of each stimulus
-            stim_length - number of stimuli presented in each inquiry
+
+        Function
+        --------
+        The preprocessing is functionally different than Gaze Reshaper, since 
+        the raw data contains only one inquiry. start_idx is determined as the
+        start time of first symbol flashing multiplied by the sampling rate
+        of eye tracker. stop_idx is the index indicating the end of last
+        symbol flashing.
         """
         if self.transform:
             transformed_data, transform_sample_rate = self.transform(
@@ -156,17 +162,15 @@ class GazeEvaluator(EvidenceEvaluator):
             transformed_data = raw_data
             transform_sample_rate = self.device_spec.sample_rate
 
-        # The data from DAQ is assumed to have offsets applied
-        _, reshaped_data, _ = self.reshape(inq_start_times=times, # TODO
-                                            target_symbols=symbols,
-                                            gaze_data=transformed_data,
-                                            sample_rate=transform_sample_rate,
-                                            stimulus_duration=flash_time,
-                                            num_stimuli_per_inquiry=stim_length,
-                                            symbol_set=alphabet())
-        # TODO fix! The input data is already in inquiry form, reshaper needs an update.
+        start_idx = int(self.device_spec.sample_rate*times[0])
+        stop_idx = start_idx + int((times[-1]-times[0]+flash_time) * self.device_spec.sample_rate)
+        data_all_channels = transformed_data[:, start_idx:stop_idx]
+        
+        # Extract left and right eye from all channels. Remove/replace nan values
+        left_eye, right_eye, _, _, _, _ = extract_eye_info(data_all_channels)
+        reshaped_data = np.vstack((np.array(left_eye).T, np.array(right_eye).T))
 
-        return reshaped_data
+        return reshaped_data  # (4, N_samples)
 
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
@@ -185,11 +189,11 @@ class GazeEvaluator(EvidenceEvaluator):
                 ex. ['nontarget', 'nontarget', ...]
             window_length - The length of the time between stimuli presentation
         """
-        breakpoint()
-        data = self.preprocess(raw_data, times, symbols, flash_time, stim_length)
+        data = self.preprocess(raw_data, times, flash_time)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
-        return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
+        # return self.signal_model.evaluate_likelihood(data, symbols)  # multiplication over the inquiry
+        return np.array([0.5]*len(self.symbol_set))
 
 
 def get_evaluator(

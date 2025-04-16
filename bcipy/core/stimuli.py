@@ -307,9 +307,11 @@ class GazeReshaper:
         for symbol in symbol_set:
             data_by_targets_dict[symbol] = []
 
-        buffer = stimulus_duration / 5  # seconds, buffer for each inquiry
+        buffer = 0.5  # seconds, buffer for each inquiry
         # NOTE: This buffer is used to account for the screen downtime between each stimulus.
-        # There is a "duty cycle" of 80% for the stimuli, so we add a buffer of 20% of the stimulus length
+        # A better way of handling this buffer would be subtracting the flash time of the 
+        # second symbol from the first symbol, which gives a more accurate representation of 
+        # "stimulus duration". 
         window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry   # in seconds
 
         reshaped_data = []
