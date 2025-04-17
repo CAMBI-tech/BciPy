@@ -382,9 +382,9 @@ def analyze_gaze(
                             cov_matrix[l_ind, m_ind] = 0
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        # Save model parameters which are sample averages (i.e. reshaped_mean),
-        # the covariance matrix (cov_matrix) and time averages (time_average)
-        model.fit(time_average, reshaped_mean, cov_matrix)
+        # Save model parameters which are time averages per symbol (time_average): Dict(np.array),
+        # and centralized data points (centralized_gaze_data): (np.array) of shape N_inquiries x N_dims x N_timesamples
+        model.fit(time_average, centralized_gaze_data)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None,

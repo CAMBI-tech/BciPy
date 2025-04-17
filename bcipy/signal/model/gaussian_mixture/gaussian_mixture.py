@@ -64,16 +64,11 @@ class GaussianProcess(SignalModel):
         self.ready_to_predict = False
         self.acc = None
         self.time_average = None
-        self.means = None
-        self.covs = None
+        self.centralized_data = None
         self.model = None
 
-    # @property
-    # def ready_to_predict(self) -> bool:
-    #     """Returns True if a model has been trained"""
-    #     return bool(self.model)
 
-    def fit(self, time_avg: np.ndarray, mean_data: np.ndarray, cov_data: np.ndarray):
+    def fit(self, time_avg: np.ndarray, cent_data: np.ndarray):
         """Fit the Gaussian Process model to the training data.
         Args:
             time_avg Dict[(np.ndarray)]: Time average for the symbols.
@@ -81,8 +76,7 @@ class GaussianProcess(SignalModel):
             cov_data (np.ndarray): Covariance matrix for the training data.
         """
         self.time_average = time_avg
-        self.means = mean_data
-        self.covs = cov_data
+        self.centralized_data = cent_data
         self.ready_to_predict = True
         return self
 
@@ -95,6 +89,13 @@ class GaussianProcess(SignalModel):
             raise SignalException("must use model.fit() before model.evaluate_likelihood()")
         
         gaze_log_likelihoods = np.zeros((len(symbol_set)))
+        # Clip the pre-saved centralized data to the length of our test data 
+        cent_data = self.centralized_data[:, :, :data.shape[1]]
+        reshaped_data = cent_data.reshape((len(cent_data), data.shape[0] * data.shape[1]))
+        cov_matrix = np.cov(reshaped_data, rowvar=False)
+        reshaped_mean = np.mean(reshaped_data, axis=0)
+        eps = 10e-1  # add a small value to the diagonal to make the cov matrix invertible
+        inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
 
         for idx, sym in enumerate(symbol_set):
             if self.time_average[sym] == []:
@@ -103,11 +104,9 @@ class GaussianProcess(SignalModel):
                 # Compute the likelihood of the data for each symbol
                 central_data = self.subtract_mean(data, self.time_average[sym])
                 # flatten this data
-                flattened_data = np.reshape(central_data, (1, -1))
-                diff = flattened_data - self.means
-                inv_cov = np.linalg.inv(self.covs)
-                numerator = -np.dot(diff.T, np.dot(inv_cov, diff)) / 2
-                # denominator = np.sqrt(np.linalg.det(self.covs) * (2 * np.pi) ** len(self.means))
+                flattened_data = np.reshape(central_data, (-1, ))
+                diff = flattened_data - reshaped_mean
+                numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
                 denominator = 0
                 unnormalized_log_likelihood_gaze = numerator - denominator
                 gaze_log_likelihoods[idx] = unnormalized_log_likelihood_gaze

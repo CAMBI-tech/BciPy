@@ -192,11 +192,8 @@ class GazeEvaluator(EvidenceEvaluator):
         data = self.preprocess(raw_data, times, flash_time)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
-        lklhd = self.signal_model.evaluate_likelihood(data, symbols, self.symbol_set)
-        breakpoint()
-        return lklhd
-        # return self.signal_model.evaluate_likelihood(data, symbols, self.symbol_set)
-        # return np.array([0.5]*len(self.symbol_set))
+        likelihood = self.signal_model.evaluate_likelihood(data, symbols, self.symbol_set)
+        return likelihood
 
 
 def get_evaluator(

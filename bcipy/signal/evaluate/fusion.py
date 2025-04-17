@@ -260,7 +260,6 @@ def calculate_eeg_gaze_fusion_acc(
         # generate a tuple that matches the index of the symbol with the symbol itself:
         symbol_to_index = {symbol: i for i, symbol in enumerate(symbol_set)}
 
-        # train and save the gaze model as a pkl file:
         reshaped_data = centralized_gaze_data_train.reshape(
             (len(centralized_gaze_data_train), inquiry_length * predefined_dimensions))
         units = 1e4
