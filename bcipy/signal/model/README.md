@@ -62,7 +62,7 @@ These models may be trained and evalulated, but are still being integrated into 
 
 *Note*: The gaze model is currently under development and is not yet fully implemented.
 
-These models are used to update the posterior probability of stimuli viewed by a user based on gaze data. The gaze model uses a generative model to estimate the likelihood of the gaze data given the stimuli. There are several models implemented in this module, including a Gaussian Mixture Model (GMIndividual and GMCentralized) and Gaussian Process Model (GaussianProcess). When training data via offline analysis, if the data folder contains gaze data, the gaze model will be trained and saved to the output directory.
+These models are used to update the posterior probability of stimuli viewed by a user based on gaze data. The gaze model uses a generative model to estimate the likelihood of the gaze data given the stimuli. There are several models implemented in this module, including a Gaussian Mixture Model (GMIndividual) and a Gaussian Process Model (GaussianProcess). When training data via offline analysis, if the data folder contains gaze data, the gaze model will be trained and saved to the output directory.
 
 ## Fusion Analyis
 

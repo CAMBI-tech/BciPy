@@ -251,8 +251,8 @@ def analyze_gaze(
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
-        model_type (str): Type of gaze model to be used. Options are: "GMIndividual", "GMCentralized",
-        or "GaussianProcess".
+        model_type (str): Type of gaze model to be used. Options are: "GMIndividual" or 
+        "GaussianProcess".
         symbol_set (List[str]): List of symbols to be used in the analysis.
         testing_acc (float): Testing accuracy of the model. This is calculated during fusion analysis.
         Imported to add to the metadata of the model.
@@ -349,16 +349,6 @@ def analyze_gaze(
                  preprocessed_data[sym].shape[1]))
             model.fit(reshaped_data)
 
-        if model_type == "GMCentralized":
-            # Centralize the data using symbol positions and fit a single Gaussian.
-            # Load json file.
-            with open(f"{data_folder}/{STIMULI_POSITIONS_FILENAME}", 'r') as params_file:
-                symbol_positions = json.load(params_file)
-
-            # Subtract the symbol positions from the data:
-            for j in range(len(preprocessed_data[sym])):
-                centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
-
         if model_type == "GaussianProcess":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
@@ -370,7 +360,6 @@ def analyze_gaze(
                         temp))  # Delta_t = X_t - mu
             centralized_data[sym] = np.array(centralized_data[sym])
             time_average[sym] = np.mean(np.array(time_average[sym]), axis=0)
-            # TODO: Save the time_averages into the model
 
     if model_type == "GaussianProcess":
         # Split the data into train and test sets & fit the model:
@@ -393,19 +382,9 @@ def analyze_gaze(
                             cov_matrix[l_ind, m_ind] = 0
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        # TODO: Save model parameters which are reshaped_mean (i.e. sample average) 
-        # and the covariance matrix (cov_matrix)
-        model.fit(reshaped_mean)
-
-    if model_type == "GMCentralized":
-        # Fit the model parameters using the centralized data:
-        # flatten the dict to a np array:
-        cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
-        # Merge the first and third dimensions:
-        cent_data = cent_data.reshape((cent_data.shape[0] * cent_data.shape[2], cent_data.shape[1]))
-
-        # cent_data = np.concatenate(centralized_data, axis=0)
-        model.fit(cent_data)
+        # Save model parameters which are sample averages (i.e. reshaped_mean),
+        # the covariance matrix (cov_matrix) and time averages (time_average)
+        model.fit(time_average, reshaped_mean, cov_matrix)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None,
