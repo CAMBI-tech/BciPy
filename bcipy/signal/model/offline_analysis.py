@@ -114,7 +114,7 @@ def analyze_erp(
     # Get signal filtering information
     transform_params = parameters.instantiate(ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
-    static_offset = device_spec.static_offset
+    static_offset = 0.09
 
     log.info(
         f"\nData processing settings: \n"
@@ -212,7 +212,10 @@ def analyze_erp(
     except Exception as e:
         log.error(f"Error calculating balanced accuracy: {e}")
 
-    save_model(model, Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.auc:0.4f}.pkl"))
+    # create a subdirectory for the model
+    model_dir = Path(data_folder, "window_analysis")
+    model_dir.mkdir(parents=True, exist_ok=True)
+    save_model(model, Path(model_dir, f"model_{device_spec.content_type.lower()}_{model.auc:0.4f}_{trial_window[0]}_{trial_window[1]}.pkl"))
     preferences.signal_model_directory = data_folder
 
     if save_figures or show_figures:
