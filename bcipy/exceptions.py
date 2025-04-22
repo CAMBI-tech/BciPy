@@ -1,4 +1,3 @@
-
 class BciPyCoreException(Exception):
     """BciPy Core Exception.
 
@@ -91,12 +90,13 @@ class KenLMInstallationException(BciPyCoreException):
 
 class InvalidSymbolSetException(BciPyCoreException):
     """Invalid Symbol Set Exception.
-    
+
     Thrown when querying a language model for predictions without setting the symbol set."""
     ...
 
+
 class LanguageModelNameInUseException(BciPyCoreException):
     """Language Model Name In Use Exception.
-    
+
     Thrown when attempting to register a language model type with a duplicate name."""
     ...

@@ -1,16 +1,17 @@
 """Defines the language model adapter base class."""
-from abc import ABC, abstractmethod
-from typing import List, Tuple, Union
-
-from bcipy.exceptions import InvalidSymbolSetException
-from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
 import json
+from abc import ABC, abstractmethod
+from typing import List, Optional, Tuple, Union
+
+from bcipy.config import DEFAULT_LM_PARAMETERS_PATH
+from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR
+from bcipy.exceptions import InvalidSymbolSetException
+
 
 class LanguageModelAdapter(ABC):
     """Abstract base class for textslinger language model adapters."""
 
-    symbol_set: List[str] = None
+    symbol_set: Optional[List[str]] = None
     model = None
 
     def predict_character(self, evidence: Union[str, List[str]]) -> List[Tuple]:
@@ -25,7 +26,7 @@ class LanguageModelAdapter(ABC):
 
         if self.symbol_set is None:
             raise InvalidSymbolSetException("symbol set must be set prior to requesting predictions.")
-        
+
         assert self.model is not None, "language model does not exist!"
 
         context = "".join(evidence)
@@ -44,24 +45,21 @@ class LanguageModelAdapter(ABC):
 
         return list(sorted(next_char_pred.items(),
                     key=lambda item: item[1], reverse=True))
-    
 
     def _load_parameters(self) -> None:
-        with open(DEFAULT_LM_PARAMETERS_PATH, 'r') as params_file:
+        with open(DEFAULT_LM_PARAMETERS_PATH, 'r',
+                  encoding='utf8') as params_file:
             self.parameters = json.load(params_file)
-
 
     @abstractmethod
     def _load_model(self) -> None:
         """Load the model itself using stored parameters"""
-        ...
-
 
     def set_symbol_set(self, symbol_set: List[str]) -> None:
         """Update the symbol set and call for the model to be loaded"""
-        
+
         self.symbol_set = symbol_set
-        
+
         # LM doesn't care about backspace, needs literal space
         self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in self.symbol_set]
         self.model_symbol_set.remove(BACKSPACE_CHAR)

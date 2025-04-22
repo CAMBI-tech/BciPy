@@ -1,15 +1,16 @@
 """Tests for MIXTURE Language Model"""
 
-import pytest
-import unittest
 import os
+import unittest
 from operator import itemgetter
 
-from bcipy.exceptions import InvalidSymbolSetException
+import pytest
 from textslinger.exceptions import InvalidLanguageModelException
-from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
-from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET, SPACE_CHAR
+from bcipy.exceptions import InvalidSymbolSetException
 from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 
 
 @pytest.mark.slow
@@ -25,7 +26,6 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
                                                  lm_params=cls.lm_params)
         cls.lmodel.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-
     @pytest.mark.slow
     def test_default_load(self):
         """Test loading model with parameters from json
@@ -33,12 +33,10 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
         lm = MixtureLanguageModelAdapter()
         lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-
     def test_init(self):
         """Test default parameters"""
         self.assertEqual(self.lmodel.symbol_set, DEFAULT_SYMBOL_SET)
         self.assertTrue(isinstance(self.lmodel, CharacterLanguageModel))
-
 
     def test_invalid_symbol_set(self):
         """Should raise an exception if predict is called without setting symbol set"""
@@ -57,7 +55,6 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
             lm = MixtureLanguageModelAdapter(lm_types=["CAUSAL", "PHONY"], lm_weights=[0.5, 0.5],
                                              lm_params=[{"lang_model_name": "gpt2"}, {}])
             lm.set_symbol_set(DEFAULT_SYMBOL_SET)
-
 
     def test_invalid_model_weights(self):
         """Test that the proper exception is thrown if given an improper number of lm_weights"""
@@ -81,7 +78,6 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
             lm = MixtureLanguageModelAdapter(lm_types=["NGRAM", "CAUSAL"], lm_weights=[0.5, 0.8],
                                              lm_params=[{"lm_path": self.kenlm_path}, {"lang_model_name": "gpt2"}])
             lm.set_symbol_set(DEFAULT_SYMBOL_SET)
-
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in."""

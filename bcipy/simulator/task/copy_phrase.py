@@ -4,6 +4,7 @@ import logging
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from bcipy.acquisition.multimodal import ClientManager
 from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import InquirySchedule
 from bcipy.display.main import Display
@@ -11,10 +12,8 @@ from bcipy.feedback.visual.visual_feedback import VisualFeedback
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
-from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.simulator.task.null_daq import NullDAQ
-from bcipy.acquisition.multimodal import ClientManager
-
+from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.simulator.util.state import SimState
 from bcipy.task import TaskMode
 from bcipy.task.control.evidence import EvidenceEvaluator
@@ -52,7 +51,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     def __init__(self, parameters: Parameters, file_save: str,
                  signal_models: List[SignalModel],
                  language_model: LanguageModel, samplers: Dict[SignalModel,
-                                                                      Sampler]):
+                                                               Sampler]):
         self.args_sm = signal_models
         self.args_lm = language_model
         self.save_session_every_inquiry = False

@@ -10,7 +10,7 @@ from bcipy.core.stimuli import InquirySchedule, StimuliOrder
 from bcipy.core.symbols import BACKSPACE_CHAR
 from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import histogram, with_min_prob
-from bcipy.language.main import LanguageModel
+from bcipy.language.main import CharacterLanguageModel, LanguageModel
 from bcipy.task.control.criteria import (CriteriaEvaluator,
                                          MaxIterationsCriteria,
                                          MinIterationsCriteria,
@@ -180,6 +180,9 @@ class CopyPhraseWrapper:
     def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
         assert self.lmodel, "Language model must be initialized."
+        if not isinstance(self.lmodel, CharacterLanguageModel):
+            raise BciPyCoreException(
+                "Only character language models are currently supported.")
 
         try:
             # First, reset the history for this new series

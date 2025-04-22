@@ -2,12 +2,10 @@
 
 import unittest
 
-from bcipy.language.model.uniform import UniformLanguageModel
-from bcipy.language.main import CharacterLanguageModel
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.exceptions import InvalidSymbolSetException
-
-from bcipy.language.model.uniform import equally_probable
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.uniform import UniformLanguageModel, equally_probable
 
 
 class TestUniformLanguageModel(unittest.TestCase):
@@ -18,7 +16,6 @@ class TestUniformLanguageModel(unittest.TestCase):
         cls.lm = UniformLanguageModel()
         cls.lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-
     def test_init(self):
         """Test default parameters"""
         lmodel = UniformLanguageModel()
@@ -28,13 +25,12 @@ class TestUniformLanguageModel(unittest.TestCase):
             "Should be the alphabet plus the backspace and space chars")
         self.assertTrue(isinstance(lmodel, CharacterLanguageModel))
 
-
     def test_invalid_symbol_set(self):
         """Should raise an exception if predict is called before setting a symbol set"""
+        lm = UniformLanguageModel()
+        lm.set_symbol_set([])
         with self.assertRaises(InvalidSymbolSetException):
-            lm = UniformLanguageModel()
             lm.predict_character("this_should_fail")
-
 
     def test_predict(self):
         """Test the predict method"""
@@ -46,7 +42,6 @@ class TestUniformLanguageModel(unittest.TestCase):
         self.assertEqual(len(set(probs)), 1, "All values should be the same")
         self.assertTrue(0 < probs[0] < 1)
         self.assertAlmostEqual(sum(probs), 1)
-
 
     def test_equally_probable(self):
         """Test generation of equally probable values."""
