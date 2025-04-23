@@ -35,19 +35,20 @@ class OracleLanguageModel(CharacterLanguageModel):
     """
 
     def __init__(self,
-                 task_text: str = None,
+                 task_text: Optional[str] = None,
                  target_bump: float = 0.1):
 
         self.task_text = task_text
         self.target_bump = target_bump
 
-        self.symbol_set = None
+        self.symbol_set = DEFAULT_SYMBOL_SET
 
         logger.debug(
             f"Initialized OracleLanguageModel(task_text='{task_text}', target_bump={target_bump})"
         )
 
     def set_symbol_set(self, symbol_set: List[str]) -> None:
+        """Updates the symbol set of the model. Must be called prior to prediction"""
         self.symbol_set = symbol_set
 
     @property
@@ -87,8 +88,9 @@ class OracleLanguageModel(CharacterLanguageModel):
             list of (symbol, probability) tuples
         """
 
-        if self.symbol_set is None:
-            raise InvalidSymbolSetException("symbol set must be set prior to requesting predictions.")
+        if not self.symbol_set:
+            raise InvalidSymbolSetException(
+                "symbol set must be set prior to requesting predictions.")
 
         spelled_text = ''.join(evidence)
         target = self._next_target(spelled_text)
@@ -105,11 +107,12 @@ class OracleLanguageModel(CharacterLanguageModel):
                 else:
                     symbol_probs[ch] = non_target_prob
         else:
-            symbol_probs = dict(zip(self.symbol_set, equally_probable(self.symbol_set)))
+            symbol_probs = dict(
+                zip(self.symbol_set, equally_probable(self.symbol_set)))
 
         return sorted(symbol_probs.items(),
-                      key=lambda item: item[1], reverse=True)
-    
+                      key=lambda item: item[1],
+                      reverse=True)
 
     def _next_target(self, spelled_text: str) -> Optional[str]:
         """Computes the next target letter based on the currently spelled_text.

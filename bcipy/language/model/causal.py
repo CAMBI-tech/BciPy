@@ -1,13 +1,12 @@
 from typing import Optional
 
-from bcipy.language.main import CharacterLanguageModel
-from bcipy.language.model.adapter import LanguageModelAdapter
-from bcipy.config import LM_PATH
-
 from textslinger.causal import CausalLanguageModel
 
+from bcipy.config import LM_PATH
+from bcipy.language.model.adapter import LanguageModelAdapter
 
-class CausalLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
+
+class CausalLanguageModelAdapter(LanguageModelAdapter):
     """Character language model based on a pre-trained causal model."""
 
     def __init__(self,
@@ -15,11 +14,11 @@ class CausalLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
                  lm_path: Optional[str] = None,
                  lm_device: str = "cpu",
                  lm_left_context: str = "",
-                 beam_width: int = None,
+                 beam_width: Optional[int] = None,
                  fp16: bool = True,
                  mixed_case_context: bool = True,
                  case_simple: bool = True,
-                 max_completed: int = None,
+                 max_completed: Optional[int] = None,
                  ):
         """
         Initialize instance variables and load model parameters
@@ -56,11 +55,17 @@ class CausalLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
         self.mixed_case_context = mixed_case_context
         self.case_simple = case_simple
 
-
     def _load_model(self) -> None:
         """Load the model itself using stored parameters"""
 
-        self.model = CausalLanguageModel(symbol_set=self.model_symbol_set, lang_model_name=self.model_name, lm_path=self.model_dir,
-                                         lm_device=self.lm_device, lm_left_context=self.lm_left_context,
-                                         beam_width=self.beam_width, fp16=self.fp16, mixed_case_context=self.mixed_case_context,
-                                         case_simple=self.case_simple, max_completed=self.max_completed)
+        self.model = CausalLanguageModel(
+            symbol_set=self.model_symbol_set,
+            lang_model_name=self.model_name,
+            lm_path=self.model_dir,
+            lm_device=self.lm_device,
+            lm_left_context=self.lm_left_context,
+            beam_width=self.beam_width,
+            fp16=self.fp16,
+            mixed_case_context=self.mixed_case_context,
+            case_simple=self.case_simple,
+            max_completed=self.max_completed)

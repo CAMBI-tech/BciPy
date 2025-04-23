@@ -1,13 +1,13 @@
 """Helper functions for language model use."""
 import inspect
 import math
-from typing import Dict, List, Tuple, Type
+from typing import Callable, Dict, List, Tuple
 
 import numpy as np
 
 from bcipy.core.symbols import alphabet
-from bcipy.language.main import LanguageModel
 from bcipy.exceptions import LanguageModelNameInUseException
+from bcipy.language.main import LanguageModel
 
 # pylint: disable=unused-import
 # flake8: noqa
@@ -15,12 +15,12 @@ from bcipy.exceptions import LanguageModelNameInUseException
 """Only imported models will be included in language_models_by_name"""
 # flake8: noqa
 from bcipy.language.model.causal import CausalLanguageModelAdapter
-from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
 
-VALID_LANGUAGE_MODELS = {
+VALID_LANGUAGE_MODELS: Dict[str, Callable[[], LanguageModel]] = {
     "CAUSAL": CausalLanguageModelAdapter,
     "NGRAM": NGramLanguageModelAdapter,
     "MIXTURE": MixtureLanguageModelAdapter,
@@ -29,12 +29,12 @@ VALID_LANGUAGE_MODELS = {
 }
 
 
-def language_models_by_name() -> Dict[str, LanguageModel]:
+def language_models_by_name() -> Dict[str, Callable[[], LanguageModel]]:
     """Returns available language models indexed by name."""
     return VALID_LANGUAGE_MODELS
 
 
-def register_language_model(name: str, lm_type: Type[LanguageModel]) -> None:
+def register_language_model(name: str, lm_type: Callable[[], LanguageModel]) -> None:
     if name in VALID_LANGUAGE_MODELS:
         raise LanguageModelNameInUseException(
             f"{name} is already registered as {VALID_LANGUAGE_MODELS[name]}.")

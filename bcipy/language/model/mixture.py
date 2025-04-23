@@ -1,13 +1,12 @@
-from typing import Optional, Dict, List
-
-from bcipy.language.main import CharacterLanguageModel
-from bcipy.language.model.adapter import LanguageModelAdapter
-from bcipy.config import LM_PATH
+from typing import Dict, List, Optional
 
 from textslinger.mixture import MixtureLanguageModel
 
+from bcipy.config import LM_PATH
+from bcipy.language.model.adapter import LanguageModelAdapter
 
-class MixtureLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
+
+class MixtureLanguageModelAdapter(LanguageModelAdapter):
     """
         Character language model that mixes any combination of other models
     """
@@ -43,5 +42,5 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter, CharacterLanguageModel):
 
     def _load_model(self) -> None:
         """Load the model itself using stored parameters"""
-        self.model = MixtureLanguageModel(self.model_symbol_set, self.lm_types, self.lm_weights, self.lm_params)
-
+        self.model = MixtureLanguageModel(self.model_symbol_set, self.lm_types,
+                                          self.lm_weights, self.lm_params)

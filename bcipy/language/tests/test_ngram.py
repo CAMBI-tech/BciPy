@@ -1,27 +1,28 @@
 """Tests for NGRAM Language Model"""
 
-import pytest
-import unittest
 import os
+import unittest
 from operator import itemgetter
 
-from bcipy.exceptions import InvalidSymbolSetException
+import pytest
 from textslinger.exceptions import InvalidLanguageModelException
-from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
-from bcipy.language.model.ngram import NGramLanguageModelAdapter
+
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET, SPACE_CHAR
+from bcipy.exceptions import InvalidSymbolSetException
 from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 
 
 @pytest.mark.slow
 class TestNGramLanguageModelAdapter(unittest.TestCase):
     """Tests for language model"""
+
     @classmethod
     def setUpClass(cls):
         dirname = os.path.dirname(__file__) or '.'
         cls.lm_path = f"{dirname}/resources/lm_dec19_char_tiny_12gram.kenlm"
         cls.lmodel = NGramLanguageModelAdapter(lm_path=cls.lm_path)
         cls.lmodel.set_symbol_set(DEFAULT_SYMBOL_SET)
-
 
     @pytest.mark.slow
     def test_default_load(self):
@@ -30,12 +31,10 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         lm = NGramLanguageModelAdapter()
         lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-
     def test_init(self):
         """Test default parameters"""
         self.assertEqual(self.lmodel.symbol_set, DEFAULT_SYMBOL_SET)
         self.assertTrue(isinstance(self.lmodel, CharacterLanguageModel))
-
 
     def test_invalid_symbol_set(self):
         """Should raise an exception if predict is called without settting symbol set"""
@@ -43,13 +42,11 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
             lm = NGramLanguageModelAdapter(lm_path=self.lm_path)
             lm.predict_character("this_should_fail")
 
-
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
             lm = NGramLanguageModelAdapter(lm_path="phonymodel.txt")
             lm.set_symbol_set(DEFAULT_SYMBOL_SET)
-
 
     def test_non_mutable_evidence(self):
         """Test that the model does not change the evidence variable passed in.
@@ -59,7 +56,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         self.lmodel.predict_character(evidence)
         self.assertEqual(evidence, evidence2)
 
-
     def test_identical(self):
         """Ensure predictions are the same for subsequent queries with the same evidence."""
         query1 = self.lmodel.predict_character(list("evidenc"))
@@ -68,7 +64,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
             self.assertAlmostEqual(prob1, prob2, places=5)
             self.assertEqual(sym1, sym2)
 
-
     def test_upper_lower_case(self):
         """Ensure predictions are the same for upper or lower case evidence."""
         lc = self.lmodel.predict_character(list("EVIDENC"))
@@ -76,7 +71,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         for ((l_sym, l_prob), (u_sym, u_prob)) in zip(lc, uc):
             self.assertAlmostEqual(l_prob, u_prob, places=5)
             self.assertEqual(l_sym, u_sym)
-
 
     def test_predict_start_of_word(self):
         """Test the predict method with no prior evidence."""
@@ -92,7 +86,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         for prob in probs:
             self.assertTrue(0 <= prob < 1)
         self.assertAlmostEqual(sum(probs), 1, places=5)
-
 
     def test_predict_middle_of_word(self):
         """Test the predict method in the middle of a word."""
@@ -111,7 +104,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
                                         reverse=True)[0]
         self.assertEqual('E', most_likely_sym,
                          "Should predict 'E' as the next most likely symbol")
-        
 
     def test_phrase(self):
         """Test that a phrase can be used for input"""
@@ -121,7 +113,6 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
                                         reverse=True)[0]
         self.assertEqual('S', most_likely_sym)
 
-
     def test_multiple_spaces(self):
         """Test that the probability of space after a space is smaller than before the space"""
         symbol_probs_before = self.lmodel.predict_character(list("the"))
@@ -130,11 +121,12 @@ class TestNGramLanguageModelAdapter(unittest.TestCase):
         space_prob_after = (dict(symbol_probs_after))[SPACE_CHAR]
         self.assertTrue(space_prob_before > space_prob_after)
 
-
     def test_nonzero_prob(self):
         """Test that all letters in the alphabet have nonzero probability except for backspace"""
         symbol_probs = self.lmodel.predict_character(list("does_it_make_sens"))
-        prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
+        prob_values = [
+            item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR
+        ]
         for value in prob_values:
             self.assertTrue(value > 0)
 

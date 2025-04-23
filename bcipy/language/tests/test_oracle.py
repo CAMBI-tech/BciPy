@@ -2,10 +2,10 @@
 
 import unittest
 
-from bcipy.language.model.oracle import OracleLanguageModel
-from bcipy.language.main import CharacterLanguageModel
 from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
 from bcipy.exceptions import InvalidSymbolSetException
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.oracle import OracleLanguageModel
 
 
 class TestOracleLanguageModel(unittest.TestCase):
@@ -16,7 +16,6 @@ class TestOracleLanguageModel(unittest.TestCase):
         with self.assertRaises(AssertionError):
             OracleLanguageModel()
 
-
     def test_init_with_text(self):
         """Test with task_text provided"""
         lmodel = OracleLanguageModel(task_text="HELLO_WORLD")
@@ -24,17 +23,16 @@ class TestOracleLanguageModel(unittest.TestCase):
         self.assertEqual(
             len(lmodel.symbol_set), 28,
             "Should be the alphabet plus the backspace and space chars")
-        
-        self.assertTrue(isinstance(lmodel, CharacterLanguageModel))
 
+        self.assertTrue(isinstance(lmodel, CharacterLanguageModel))
 
     def test_invalid_symbol_set(self):
         """Should raise an exception if predict is called before settting the symbol set"""
+        lm = OracleLanguageModel(task_text="HELLO_WORLD")
+        lm.set_symbol_set([])
         with self.assertRaises(InvalidSymbolSetException):
-            lm = OracleLanguageModel(task_text="HELLO_WORLD")
             lm.predict_character("this_should_fail")
 
-    
     def test_predict(self):
         """Test the predict method"""
         lm = OracleLanguageModel(task_text="HELLO_WORLD")
