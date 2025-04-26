@@ -4,7 +4,9 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
+import os
 import re
+from datetime import datetime
 from operator import index
 from typing import Optional, List, OrderedDict
 from pathlib import Path
@@ -14,10 +16,12 @@ from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 import mne_bids as biddy
 import argparse
+from tqdm import tqdm
 
 from bcipy.io.utils import extract_task_type
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
+
 
 def get_session_num(filename: str) -> int:
     """Extract the session number from the filename."""
@@ -28,6 +32,7 @@ def get_session_num(filename: str) -> int:
         return run_number
     else:
         raise ValueError("Session number not found in filename")
+
 
 def load_historical_bcipy_data(directory: str, experiment_id: str,
                                task_name: str = 'Calibration') -> List[BciPySessionTaskData]:
@@ -77,6 +82,50 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
     return sorted_experiment_data
 
 
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
+from datetime import datetime
+
+
+def convert_session(data, output_dir, experiment_id, format):
+    try:
+        bids_path = convert_to_bids_drowsiness(
+            data_dir=data.path,
+            participant_id=data.user_id,
+            session_id=data.session_id,
+            run_id=str(1),
+            task_name=data.task_name,
+            output_dir=f'{output_dir}/bids_{experiment_id}/',
+            format=format,
+        )
+        return (data.path, None)
+    except Exception as e:
+        return (data.path, str(e))
+
+
+def parallel_convert(experiment_data, output_dir, experiment_id, format, log_file_path):
+    errors = []
+    MAX_WORKERS = 20
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:  # adjust max_workers as needed
+        futures = [
+            executor.submit(convert_session, data, output_dir, experiment_id, format)
+            for data in experiment_data
+        ]
+
+        with open(log_file_path, "w") as log_file:
+            for future in tqdm(as_completed(futures), total=len(futures), desc="Converting to BIDS",
+                               unit="session"):
+                path, error = future.result()
+                if error:
+                    log_file.write(f"[{datetime.now()}] Error converting {path}:\n{error}\n\n")
+                    errors.append(path)
+
+    print(f"\n✅ Conversion complete. {len(errors)} sessions failed.")
+    if errors:
+        print(f"❌ Failed sessions were logged in: {log_file_path}")
+
+
 def convert_experiment_to_bids(
         directory: str,
         experiment_id: str,
@@ -86,118 +135,55 @@ def convert_experiment_to_bids(
 ) -> Path:
     """Converts the data in the study folder to BIDS format."""
 
-    # Use for data pre-2.0rc4
+
     experiment_data = load_historical_bcipy_data(
         directory,
-        experiment_id="")
+        experiment_id=""
+    )
+    print(f"Found {len(experiment_data)} sessions in folder ...")
 
     if not output_dir:
         output_dir = directory
 
     errors = []
+    log_file_path = "".join([output_dir, f"{experiment_id}_conversion_log.txt"])
+    with open(log_file_path, "w") as log_file:
 
-    for data in experiment_data:
-        try:
-            bids_path = convert_to_bids_drowsiness(
-                data_dir=data.path,
-                participant_id=data.user_id,
-                session_id=data.session_id,
-                run_id=str(1),
-                task_name=data.task_name,
-                output_dir=f'{output_dir}/bids_{experiment_id}/',
-                format=format,
-            )
+        for data in tqdm(experiment_data, total=len(experiment_data), desc="Converting to BIDS",
+                         unit="session"):
+            try:
+                bids_path = convert_to_bids_drowsiness(
+                    data_dir=data.path,
+                    participant_id=data.user_id,
+                    session_id=data.session_id,
+                    run_id=str(1),
+                    task_name=data.task_name,
+                    output_dir=f'{output_dir}/bids_{experiment_id}/',
+                    format=format,
+                )
+            except Exception as e:
+                error_msg = f"[{datetime.now()}] Error converting {data.path}:\n{str(e)}\n\n"
+                log_file.write(error_msg)
+                errors.append(data.path)
 
-            if include_eye_tracker:
-                # Convert the eye tracker data
-                # The eye tracker data is in the same folder as the EEG data, but should be saved in a different folder
-                bids_path = Path(bids_path).parent
-                try:
-                    convert_eyetracking_to_bids(
-                        raw_data_path=data.path,
-                        participant_id=data.user_id,
-                        session_id=data.session_id,
-                        run_id=data.run,
-                        output_dir=bids_path,
-                        task_name=data.task_name
-                    )
-                except Exception as e:
-                    print(f"Error converting eye tracker data for {data.path} - {e}")
-                    errors.append(f"Error converting eye tracker data for {data.path}")
-
-        except Exception as e:
-            print(f"\nError converting {data.path} : \n{e}\n")
-            errors.append(str(data.path))
-
-    print("--------------------")
-    if errors:
-        print(f"{len(errors)} Errors converting ==> {errors}")
+        print("\n--------------------")
+        if errors:
+            print(f"{len(errors)} session(s) failed. Details saved in: {log_file_path}")
+        else:
+            print("All sessions converted successfully!")
 
     bids_output = Path(f'{output_dir}/bids_{experiment_id}/')
-    print(f"\nData converted to BIDS format in {bids_output}/")
+    print(f"Data converted to BIDS format in: {bids_output}/")
     print("--------------------")
+
     return bids_output
 
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-d',
-        '--directory',
-        help='Path to the directory with raw_data to be converted',
-        required=False)
-    parser.add_argument(
-        '-e',
-        '--experiment',
-        help='Experiment ID to convert',
-        default='Matrix Multimodal Experiment',
-    )
-    parser.add_argument(
-        '-et',
-        '--eye_tracker',
-        help='Include eye tracker data',
-        default=False,
-        action='store_true',
-    )
-
-    args = parser.parse_args()
-
-    # path = args.directory
-    path = "/Users/srikarananthoju/cambi/data/drowsinessData"
-    if not path:
-        path = ask_directory("Select the directory with data to be converted", strict=True)
-
-    # convert a study to BIDS format
-    bids_path_root = convert_experiment_to_bids(
-        path,
-        args.experiment,
-        ConvertFormat.BV,
-        output_dir="/Users/srikarananthoju/cambi/BciPy",
-        include_eye_tracker=args.eye_tracker
-    )
-
-    # --- Post Processing --- #
-
-    # Updating dataset description file
-    description_params = {
-        "path": bids_path_root,
-        "name": "CAMBI_MultiModal_Experiment",
-        "dataset_type": "raw",
-        "data_license": None,
-        "authors": None,
-        "how_to_acknowledge": None,
-        "funding": None,
-        "references_and_links": None,
-        "overwrite": True
-    }
-    biddy.make_dataset_description(**description_params)
-
 if __name__ == "__main__":
-    print(
-        "This script is intended to be run directly. Use the command line interface to execute it.")
     path = "/Users/srikarananthoju/cambi/data/drowsinessData"
-    experiment_id = "drowsiness_data_v1"
+    experiment_id = "drowsiness_data_v3"
     # convert a study to BIDS format
+    breakpoint()
     bids_path_root = convert_experiment_to_bids(
         path,
         experiment_id,

@@ -151,7 +151,8 @@ def convert_to_bids(
         bids_path,
         format=format.value,
         allow_preload=True,
-        overwrite=True)
+        overwrite=True,
+        verbose="ERROR")
 
     return bids_path.directory
 
@@ -194,6 +195,8 @@ def convert_to_bids_drowsiness(
     The path to the BIDS formatted data
     """
     # validate the inputs before proceeding
+    mne.set_log_level("CRITICAL")
+
     if not os.path.exists(data_dir):
         raise FileNotFoundError(f"Data directory={data_dir} does not exist")
     if not os.path.exists(output_dir):
@@ -228,10 +231,11 @@ def convert_to_bids_drowsiness(
     mne_data = convert_to_mne(raw_data, volts=volts, channel_map=channel_map)
 
     # add the trigger annotations to the MNE data
+    string_targetness = ['target' if val == 1 else 'nontarget' for val in trigger_targetness]
     targetness_annotations = mne.Annotations(
         onset=trigger_timing,
         duration=duration_list,
-        description=trigger_targetness,
+        description=string_targetness,
     )
 
     if full_labels:
@@ -533,7 +537,7 @@ def convert_to_mne(
         f'Number of channel types ({len(channel_types)}) must match number of channels ({len(channels)})'
 
     info = mne.create_info(channels, fs, channel_types)
-    mne_data = RawArray(data, info)
+    mne_data = RawArray(data, info, verbose="ERROR")
     ten_twenty_montage = mne.channels.make_standard_montage(montage)
     mne_data.set_montage(ten_twenty_montage)
 
