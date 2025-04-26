@@ -20,6 +20,7 @@ from bcipy.io.load import load_raw_data
 from bcipy.core.raw_data import RawData, get_1020_channel_map
 from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.signal.process import Composition
+from scipy.io import loadmat
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -27,7 +28,6 @@ FILE_LENGTH_LIMIT = 150
 
 
 class ConvertFormat(Enum):
-
     BV = 'BrainVision'
     EDF = 'EDF'
     FIF = 'FIF'
@@ -127,6 +127,117 @@ def convert_to_bids(
         label_annotations = mne.Annotations(
             onset=trigger_timing,
             duration=[label_duration] * len(trigger_timing),
+            description=trigger_labels,
+        )
+        mne_data.set_annotations(targetness_annotations + label_annotations)
+    else:
+        mne_data.set_annotations(targetness_annotations)
+    # add the line frequency to the MNE data
+    mne_data.info["line_freq"] = line_frequency
+
+    # create the BIDS path for the data
+    bids_path = BIDSPath(
+        subject=participant_id,
+        session=session_id,
+        task=task_name,
+        run=run_id,
+        datatype="eeg",
+        root=output_dir
+    )
+
+    # use the BIDS conversion function from MNE-BIDS
+    write_raw_bids(
+        mne_data,
+        bids_path,
+        format=format.value,
+        allow_preload=True,
+        overwrite=True)
+
+    return bids_path.directory
+
+
+def convert_to_bids_drowsiness(
+        data_dir: str,
+        participant_id: str,
+        session_id: str,
+        run_id: str,
+        output_dir: str,
+        task_name: Optional[str] = None,
+        line_frequency: float = 60,
+        format: ConvertFormat = ConvertFormat.BV,
+        label_duration: float = 0.5,
+        full_labels: bool = True) -> Path:
+    """Convert to BIDS.
+
+    Convert the raw data to the Brain Imaging Data Structure (BIDS) format.
+    The BIDS format is a standard for organizing and describing neuroimaging data.
+    See: https://bids.neuroimaging.io/.
+
+    Currently, this function only supports EEG data.
+
+    Parameters
+    ----------
+    data_dir - path to the directory containing the raw data, triggers, and parameters
+    participant_id - the participant ID
+    session_id - the session ID
+    run_id - the run ID
+    output_dir - the directory to save the BIDS formatted data
+    task_name - the name of the task
+    line_frequency - the line frequency of the data (50 or 60 Hz)
+    format - the format to convert the data to (BrainVision, EDF, FIF, or EEGLAB)
+    label_duration - the duration of the trigger labels in seconds. Default is 0.5 seconds.
+    full_labels - if True, include the full trigger labels in the BIDS data. Default is True. If False, only include
+        the targetness labels (target/non-target).
+
+    Returns
+    -------
+    The path to the BIDS formatted data
+    """
+    # validate the inputs before proceeding
+    if not os.path.exists(data_dir):
+        raise FileNotFoundError(f"Data directory={data_dir} does not exist")
+    if not os.path.exists(output_dir):
+        try:
+            os.mkdir(output_dir)
+        except OSError as e:
+            raise OSError(f"Failed to create output directory={output_dir}") from e
+    if format not in ConvertFormat.all():
+        raise ValueError(f"Unsupported format={format}")
+    if line_frequency not in [50, 60]:
+        raise ValueError("Line frequency must be 50 or 60 Hz")
+
+    # create file paths for raw data, triggers, and parameters
+    raw_data_file = glob.glob(f'{data_dir}/*.csv')[0]
+    trigger_file = os.path.join(data_dir, 'trials.mat')
+
+    # load the raw data and specifications for the device used to collect the data
+    raw_data: RawData = load_raw_data(raw_data_file)
+    channel_map = get_1020_channel_map(raw_data.channels)
+    # device_spec = preconfigured_device(raw_data.daq_type)
+    volts = False  # TODO double check
+
+    # load triggers from decoded matlab trigger signal
+    trigger_mat_data = loadmat(trigger_file)
+    trigger_labels, trigger_sample_idx, trigger_targetness = trigger_mat_data['trialLabels'][0], \
+        trigger_mat_data['trialSampleTimeIndices'][0], trigger_mat_data['trialTargetness'][0]
+    trigger_timing = [idx / raw_data.sample_rate for idx in
+                      trigger_sample_idx]  # TODO double check timing
+    duration_list = [label_duration for _ in range(len(trigger_timing))]
+
+    # convert the raw data to MNE format
+    mne_data = convert_to_mne(raw_data, volts=volts, channel_map=channel_map)
+
+    # add the trigger annotations to the MNE data
+    targetness_annotations = mne.Annotations(
+        onset=trigger_timing,
+        duration=duration_list,
+        description=trigger_targetness,
+    )
+
+    if full_labels:
+        label_annotations = mne.Annotations(
+            onset=trigger_timing,
+            duration=duration_list,
             description=trigger_labels,
         )
         mne_data.set_annotations(targetness_annotations + label_annotations)
@@ -414,7 +525,7 @@ def convert_to_mne(
 
     # if no channel types provided, assume all channels are eeg
     if not channel_types:
-        logger.warning("No channel types provided. Assuming all channels are EEG.")
+        # logger.warning("No channel types provided. Assuming all channels are EEG.")
         channel_types = ['eeg'] * len(channels)
 
     # check that number of channel types matches number of channels in the case custom channel types are provided

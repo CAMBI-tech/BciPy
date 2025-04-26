@@ -4,10 +4,12 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
+import re
 from operator import index
 from typing import Optional, List, OrderedDict
 from pathlib import Path
-from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
+from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids, \
+    convert_to_bids_drowsiness
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 import mne_bids as biddy
@@ -17,6 +19,15 @@ from bcipy.io.utils import extract_task_type
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
+def get_session_num(filename: str) -> int:
+    """Extract the session number from the filename."""
+    # Example filename: "CSL_RSVPKeyboard_DRS001_1_IRB15331_ERPCalibration_2017-03-02-T-08-12.csv"
+    match = re.search(r'_([0-9]+)_IRB', filename)
+    if match:
+        run_number = int(match.group(1))
+        return run_number
+    else:
+        raise ValueError("Session number not found in filename")
 
 def load_historical_bcipy_data(directory: str, experiment_id: str,
                                task_name: str = 'Calibration') -> List[BciPySessionTaskData]:
@@ -49,18 +60,21 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
             if not task_run.is_dir():
                 continue
 
-            task_type = extract_task_type(str(task_run), default=task_name)
+            task_type = "CALIBRATION"
 
+            session_id = get_session_num(str(task_run))
             session_data = BciPySessionTaskData(
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
-                session_id=i,
+                session_id=session_id,
                 run=1,
                 task_name=task_type
             )
             experiment_data.append(session_data)
-    return experiment_data
+
+    sorted_experiment_data = sorted(experiment_data, key=lambda x: str(x.path))
+    return sorted_experiment_data
 
 
 def convert_experiment_to_bids(
@@ -77,39 +91,18 @@ def convert_experiment_to_bids(
         directory,
         experiment_id="")
 
-    # Use for data post-2.0rc4
-    # experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
-
     if not output_dir:
         output_dir = directory
 
     errors = []
 
-    task_group_order = ['CALIBRATION', 'IPC', 'IPS', 'IPO', 'NP']
-    task_group_order_map = {task: i for i, task in enumerate(task_group_order)}
-    # Organizing task runs by session type (IPO, IPS, NP, IPC,CALIBRATION)
-    task_groups = {}
-    for data in experiment_data:
-        task_group_key = (data.user_id, data.task_name)
-        if task_group_key in task_groups:
-            task_groups[task_group_key].append(data.path)
-        else:
-            task_groups[task_group_key] = [data.path]
-    # sorting the task runs
-    for key, val in task_groups.items():
-        task_groups[key] = sorted(val)
-
     for data in experiment_data:
         try:
-            task_group_key = (data.user_id, data.task_name)
-            task_group_value = task_groups[task_group_key]
-            run_id = task_group_value.index(data.path)
-            session_id = str(task_group_order_map[data.task_name])
-            bids_path = convert_to_bids(
+            bids_path = convert_to_bids_drowsiness(
                 data_dir=data.path,
                 participant_id=data.user_id,
-                session_id=session_id,
-                run_id=str(run_id),
+                session_id=data.session_id,
+                run_id=str(1),
                 task_name=data.task_name,
                 output_dir=f'{output_dir}/bids_{experiment_id}/',
                 format=format,
@@ -170,7 +163,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     # path = args.directory
-    path = "/Users/srikarananthoju/cambi/data/inquirypreview"
+    path = "/Users/srikarananthoju/cambi/data/drowsinessData"
     if not path:
         path = ask_directory("Select the directory with data to be converted", strict=True)
 
@@ -202,8 +195,8 @@ if __name__ == '__main__':
 if __name__ == "__main__":
     print(
         "This script is intended to be run directly. Use the command line interface to execute it.")
-    path = "/Users/srikarananthoju/cambi/data/inquirypreview"
-    experiment_id = "inquiry_preview_with_ids"
+    path = "/Users/srikarananthoju/cambi/data/drowsinessData"
+    experiment_id = "drowsiness_data_v1"
     # convert a study to BIDS format
     bids_path_root = convert_experiment_to_bids(
         path,
@@ -217,20 +210,13 @@ if __name__ == "__main__":
     # Updating dataset description file
     description_params = {
         "path": bids_path_root,
-        "name": "CAMBI_MultiModal_Experiment",
+        "name": "CAMBI_Drowsiness_Experiment",
         "dataset_type": "raw",
         "data_license": None,
         "authors": "Daniel Klee, Betts Peters, Michelle Kinsela, Tab Memmott, Srikar,  MFO",
         "how_to_acknowledge": None,
         "funding": None,
-        "references_and_links": (
-            "Peters B, Celik B, Gaines D, Galvin-McLaughlin D, Imbiriba T, Kinsella M, "
-            "Klee D, Lawhead M, Memmott T, Smedemark-Margulies N, Wiedrick J, Erdogmus D, "
-            "Oken B, Vertanen K, Fried-Oken M. RSVP keyboard with inquiry preview: mixed "
-            "performance and user experience with an adaptive, multimodal typing interface "
-            "combining EEG and switch input. J Neural Eng. 2025 Feb 4;22(1). doi: "
-            "10.1088/1741-2552/ada8e0. PMID: 39793200."
-        ),
+        "references_and_links": "",
         "overwrite": True
     }
     biddy.make_dataset_description(**description_params)
