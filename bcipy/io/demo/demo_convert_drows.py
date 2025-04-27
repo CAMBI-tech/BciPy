@@ -4,21 +4,16 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-import os
 import re
 from datetime import datetime
-from operator import index
-from typing import Optional, List, OrderedDict
 from pathlib import Path
-from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids, \
-    convert_to_bids_drowsiness
-from bcipy.gui.file_dialog import ask_directory
-from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
+from typing import Optional, List
+
 import mne_bids as biddy
-import argparse
 from tqdm import tqdm
 
-from bcipy.io.utils import extract_task_type
+from bcipy.io.convert import ConvertFormat, convert_to_bids_drowsiness
+from bcipy.io.load import BciPySessionTaskData
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
@@ -81,51 +76,6 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
     sorted_experiment_data = sorted(experiment_data, key=lambda x: str(x.path))
     return sorted_experiment_data
 
-
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from tqdm import tqdm
-from datetime import datetime
-
-
-def convert_session(data, output_dir, experiment_id, format):
-    try:
-        bids_path = convert_to_bids_drowsiness(
-            data_dir=data.path,
-            participant_id=data.user_id,
-            session_id=data.session_id,
-            run_id=str(1),
-            task_name=data.task_name,
-            output_dir=f'{output_dir}/bids_{experiment_id}/',
-            format=format,
-        )
-        return (data.path, None)
-    except Exception as e:
-        return (data.path, str(e))
-
-
-def parallel_convert(experiment_data, output_dir, experiment_id, format, log_file_path):
-    errors = []
-    MAX_WORKERS = 20
-
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:  # adjust max_workers as needed
-        futures = [
-            executor.submit(convert_session, data, output_dir, experiment_id, format)
-            for data in experiment_data
-        ]
-
-        with open(log_file_path, "w") as log_file:
-            for future in tqdm(as_completed(futures), total=len(futures), desc="Converting to BIDS",
-                               unit="session"):
-                path, error = future.result()
-                if error:
-                    log_file.write(f"[{datetime.now()}] Error converting {path}:\n{error}\n\n")
-                    errors.append(path)
-
-    print(f"\n✅ Conversion complete. {len(errors)} sessions failed.")
-    if errors:
-        print(f"❌ Failed sessions were logged in: {log_file_path}")
-
-
 def convert_experiment_to_bids(
         directory: str,
         experiment_id: str,
@@ -134,7 +84,6 @@ def convert_experiment_to_bids(
         include_eye_tracker: bool = False
 ) -> Path:
     """Converts the data in the study folder to BIDS format."""
-
 
     experiment_data = load_historical_bcipy_data(
         directory,
@@ -181,7 +130,7 @@ def convert_experiment_to_bids(
 
 if __name__ == "__main__":
     path = "/Users/srikarananthoju/cambi/data/drowsinessData"
-    experiment_id = "drowsiness_data_v3"
+    experiment_id = "experimenting_drows"
     # convert a study to BIDS format
     breakpoint()
     bids_path_root = convert_experiment_to_bids(

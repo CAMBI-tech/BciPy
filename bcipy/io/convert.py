@@ -17,7 +17,7 @@ from bcipy.acquisition.devices import preconfigured_device
 from bcipy.config import (RAW_DATA_FILENAME,
                           TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.io.load import load_raw_data
-from bcipy.core.raw_data import RawData, get_1020_channel_map
+from bcipy.core.raw_data import RawData, get_1020_channel_map, RawDataForBids
 from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.signal.process import Composition
 from scipy.io import loadmat
@@ -100,7 +100,7 @@ def convert_to_bids(
     trigger_file = os.path.join(data_dir, TRIGGER_FILENAME)
 
     # load the raw data and specifications for the device used to collect the data
-    raw_data = load_raw_data(raw_data_file)
+    raw_data: RawDataForBids = RawDataForBids.load(raw_data_file)
     channel_map = get_1020_channel_map(raw_data.channels)
     device_spec = preconfigured_device(raw_data.daq_type)
     volts = True if device_spec.channel_specs[0].units == 'volts' else False
@@ -214,7 +214,7 @@ def convert_to_bids_drowsiness(
     trigger_file = os.path.join(data_dir, 'trials.mat')
 
     # load the raw data and specifications for the device used to collect the data
-    raw_data: RawData = load_raw_data(raw_data_file)
+    raw_data: RawDataForBids = RawDataForBids.load(raw_data_file)
     channel_map = get_1020_channel_map(raw_data.channels)
     # device_spec = preconfigured_device(raw_data.daq_type)
     volts = False  # TODO double check
@@ -482,7 +482,7 @@ def tar_name_checker(tar_file_name: str) -> str:
 
 
 def convert_to_mne(
-        raw_data: RawData,
+        raw_data: RawDataForBids,
         channel_map: Optional[List[int]] = None,
         channel_types: Optional[List[str]] = None,
         transform: Optional[Composition] = None,
@@ -526,7 +526,6 @@ def convert_to_mne(
             channel_map = [1] * len(raw_data.channels)
 
     data, channels, fs = raw_data.by_channel_map(channel_map, transform)
-
     # if no channel types provided, assume all channels are eeg
     if not channel_types:
         # logger.warning("No channel types provided. Assuming all channels are EEG.")

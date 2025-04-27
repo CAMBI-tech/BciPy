@@ -341,6 +341,34 @@ def read_metadata(file_obj: TextIO) -> Tuple[str, int]:
     sample_rate = int(float(next(file_obj).strip().split(",")[1]))
     return daq_type, sample_rate
 
+def read_metadata_2(file_obj: TextIO) -> Tuple[str, int]:
+    """Reads the metadata from an open raw data file and retuns the result as
+    a tuple. Increments the reader.
+
+    Parameters
+    ----------
+    - file_obj : open TextIO object
+
+    Returns
+    -------
+    tuple of daq_type, sample_rate
+    """
+    # Save the current position of the file pointer
+    current_position = file_obj.tell()
+
+    # Read the first two lines (metadata lines)
+    daq_type_line = next(file_obj).strip()
+    sample_rate_line = next(file_obj).strip()
+
+    # Parse the metadata lines
+    daq_type = daq_type_line.split(',')[1]
+    sample_rate = int(float(sample_rate_line.split(",")[1]))
+
+    # Rewind the file pointer to its original position
+    file_obj.seek(current_position)
+
+    return daq_type, sample_rate
+
 
 def write(data: RawData, filename: str):
     """Write the given raw data file.
@@ -433,3 +461,139 @@ def get_1020_channel_map(channels_name: List[str]) -> List[int]:
     """
     valid_channels = get_1020_channels()
     return [1 if name in valid_channels else 0 for name in channels_name]
+
+
+import polars as pl
+class RawDataForBids:
+    """Represents the raw data format used by BciPy. Used primarily for loading
+    a raw datda file into memory."""
+
+    def __init__(self, daq_type: str, sample_rate: int, columns: List[str], dataframe : pl.DataFrame) -> None:
+        self.daq_type = daq_type
+        self.sample_rate = sample_rate
+        self.columns = columns
+
+        self.dataframe: pl.DataFrame = dataframe
+        self._rows: List[Any] = dataframe.to_numpy()
+
+    @classmethod
+    def load(cls, filename: str):
+        """Constructs a RawData object by deserializing the given file.
+        All data will be read into memory. If you want to lazily read data one
+        record at a time, use a RawDataReader.
+
+        Parameters
+        ----------
+        - filename : path to the csv file to read
+        """
+        return load_for_bids(filename)
+
+
+    @property
+    def channels(self) -> List[str]:
+        """Compute the list of channels. Channels are the numeric columns
+        excluding the timestamp column."""
+
+        # Start data slice at 1 to remove the timestamp column.
+        return self.numeric_data.columns[1:]
+
+    @property
+    def numeric_data(self) -> pl.DataFrame:
+        """Data for columns with numeric data. This is usually comprised of the
+        timestamp column and device channels, excluding string triggers."""
+        numeric_cols = [
+            col for col in self.dataframe.columns
+            if self.dataframe[col].dtype in (
+                pl.Float32, pl.Float64,
+                pl.Int8, pl.Int16, pl.Int32, pl.Int64,
+                pl.UInt8, pl.UInt16, pl.UInt32, pl.UInt64
+            )
+        ]
+        return self.dataframe.select(numeric_cols)
+
+    @property
+    def channel_data(self) -> np.ndarray:
+        """Data for columns with numeric data, excluding the timestamp column."""
+
+        numeric_vals = self.numeric_data.to_numpy()
+        numeric_column_count = numeric_vals.shape[1]
+        # Start data slice at 1 to remove the timestamp column.
+        return numeric_vals[:, 1:numeric_column_count].transpose()
+
+    def apply_transform(self, data: np.ndarray, transform: Composition) -> Tuple[np.ndarray, int]:
+        """Apply Transform.
+
+        Using data provided as an np.ndarray, call the Composition with self.sample_rate to apply
+            transformations to the data. This will return the transformed data and resulting sample rate.
+        """
+        return transform(data, self.sample_rate)
+
+    def by_channel(self, transform: Optional[Composition] = None) -> Tuple[np.ndarray, int]:
+        """Data organized by channel.
+
+        Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
+        This will apply n tranformations to the data before returning. For an example Composition with
+        EEG preprocessing, see bcipy.signal.get_default_transform().
+
+        Returns
+        ----------
+        data: C x N numpy array with samples where C is the number of channels and N
+        is number of time samples
+        fs: resulting sample rate if any transformations applied"""
+
+        data = self.channel_data
+        fs = self.sample_rate
+
+        if transform:
+            data, fs = self.apply_transform(data, transform)
+
+        return data, fs
+
+    def by_channel_map(
+            self,
+            channel_map: List[int],
+            transform: Optional[Composition] = None) -> Tuple[np.ndarray, List[str], int]:
+        """By Channel Map.
+
+        Returns channels with columns removed if index in list (channel_map) is zero. The channel map must align
+        with the numeric channels read in as self.channels. We assume most trigger or other string columns are
+        removed, however some are numeric trigger columns from devices that will require filtering before returning
+        data. Other cases could be dropping bad channels before running further analyses.
+
+        Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
+        This will apply n tranformations to the data before returning. For an example Composition with
+        EEG preprocessing, see bcipy.signal.get_default_transform().
+        """
+        data, fs = self.by_channel(transform)
+        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        data = np.delete(data, channels_to_remove, axis=0)
+        channels: List[str] = np.delete(self.channels, channels_to_remove, axis=0).tolist()
+
+        return data, channels, fs
+
+    def __str__(self) -> str:
+        return f"RawData({self.daq_type})"
+
+    def __repr__(self) -> str:
+        return f"RawData({self.daq_type})"
+
+
+def load_for_bids(filename: str) -> RawDataForBids:
+    """Reads the file at the given path and initializes a RawData object.
+
+    Parameters
+    ----------
+    - filename : path to the csv file to read
+    """
+    try:
+        with open(filename, mode='r', encoding=DEFAULT_ENCODING) as file_obj:
+            daq_type, sample_rate = read_metadata_2(file_obj)
+            file_obj.readline()  # Skip the daq_type line
+            file_obj.readline()  # Skip the sample_rate line
+
+            dataframe = pl.read_csv(file_obj)
+            data = RawDataForBids(daq_type, sample_rate, list(dataframe.columns), dataframe)
+            return data
+    except FileNotFoundError:
+        raise BciPyCoreException(
+            f"\nError loading BciPy RawData. Valid data not found at: {filename}")
