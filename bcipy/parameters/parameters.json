@@ -345,7 +345,7 @@
     "type": "float"
   },
   "time_prompt": {
-    "value": "1",
+    "value": "2",
     "section": "bci_config",
     "readableName": "Time Prompt Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
@@ -353,7 +353,7 @@
     "type": "float"
   },
   "time_fixation": {
-    "value": "1",
+    "value": "2",
     "section": "bci_config",
     "readableName": "Time Fixation Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the fixation stimuli in an inquiry.",
