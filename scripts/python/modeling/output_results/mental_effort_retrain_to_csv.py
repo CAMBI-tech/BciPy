@@ -57,21 +57,53 @@ def main(filename: str):
                 df.columns.name = "Participant-Run Type"
 
     # save the dataframe to a csv file
-    # df.to_csv("mental_effort_results.csv")
+    df.to_csv("mental_effort_results_2.csv")
     # get the average for each trial type (matrix or rsvp)
-    df_avg = df.groupby(df.columns.str.split('_').str[1], axis=1).mean()
-    ax = df_avg.plot(
-        kind='bar',
-        figsize=(10, 6),
-        title='Average AUC for each Trial Window by Paradigm',
-        xlabel='Trial Window',
-        ylabel='AUC')
+    df_summary = df.groupby(df.columns.str.split('_').str[1], axis=1).mean()
+    df_summary_std = df.groupby(df.columns.str.split('_').str[1], axis=1).std().T.values
+   
+    df_summary.plot(kind='bar', yerr=df_summary_std, capsize=4, figsize=(10, 6))
     
-    # add the values to the bars
-    for p in ax.patches:
-        ax.annotate(f'{p.get_height():.2f}', (p.get_x() + p.get_width() / 2., p.get_height()), ha='center', va='bottom')
+    # ax.set_xlabel("Trial Window")
+    # ax.set_ylabel("AUC")
+    # ax.set_title("Mental Effort Model Results")
+    # ax.legend(title="Run Type")
+    plt.xticks(rotation=45)
+
     breakpoint()
     print(f"Results saved to mental_effort_results.csv")
+
+    # make a new plot for RSVP and Matrix separately
+    df_rsvp = df.filter(like="RSVP")
+    # get the mean and std for each trial window
+    df_rsvp_mean = df_rsvp.mean(axis=1)
+    df_rsvp_std = df_rsvp.std(axis=1)
+    
+    df_rsvp_mean.plot(kind='bar', yerr=df_rsvp_std, capsize=4, figsize=(10, 6), color='lightgreen')
+    plt.plot(df_rsvp_mean.index, df_rsvp_mean.values, marker='o', linestyle='-', color='red')
+    max_value = df_rsvp_mean.max()
+    max_index = df_rsvp_mean.idxmax()
+    plt.annotate(f'Max: {max_value:.2f}', xy=(max_index, max_value), xytext=(max_index, max_value + 0.05), arrowprops=dict(facecolor='black', arrowstyle='->'), fontsize=10, ha='center')
+    plt.title("RSVP Mental Effort Model Results")
+
+    # Now for the Matrix
+    df_matrix = df.filter(like="Matrix")
+    df_matrix_mean = df_matrix.mean(axis=1)
+    df_matrix_std = df_matrix.std(axis=1)
+
+    df_matrix_mean.plot(kind='bar', yerr=df_matrix_std, capsize=4, figsize=(10, 6), color='lightblue')
+    plt.plot(df_matrix_mean.index, df_matrix_mean.values, marker='o', linestyle='-', color='blue')
+    max_value = df_matrix_mean.max()
+    max_index = df_matrix_mean.idxmax()
+    plt.annotate(f'Max: {max_value:.2f}', xy=(max_index, max_value), xytext=(max_index, max_value + 0.05), arrowprops=dict(facecolor='black', arrowstyle='->'), fontsize=10, ha='center')
+    plt.title("Matrix Mental Effort Model Results")
+    plt.xlabel("Trial Window")
+
+    
+    breakpoint()    
+
+
+
 
 
 if __name__ == "__main__":
