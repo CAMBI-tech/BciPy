@@ -86,6 +86,10 @@ class VEPDisplay(Display):
         self.stimuli_pos = stimuli.stim_pos
         self.logger.info(self.stimuli_pos)
 
+        # Use to force selections for demo
+        # self.target_indices = [7, 1, 0, 1, 1, 2, 5]
+        # self.i = 0
+
         self.stim_length = stimuli.stim_length
         self.should_prompt_target = should_prompt_target
 
@@ -248,6 +252,10 @@ class VEPDisplay(Display):
         """
         assert isinstance(target.symbol, str), "Target must be a str"
         self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
+
+        # Use to force selections for demo
+        # target_box_index = self.target_indices[self.i]
+        # self.i += 1
 
         if target_box_index is not None:
             
