@@ -1,11 +1,21 @@
 # 2.0.0
 
+The next major BciPy release is here! All features included from release canidates rc1-rc4 and contributions described below.
+
 ## Contributions
 
 - BIDS
   - Bundling support and refactor of `convert` module. See `demo_convert.py` #362 Add support for 1020 channels and eye tracker data #369
 - Library Refactor
   - Refactor `helpers` into `io` and `core` #362
+- Refactor to use `pyproject.toml` for installs #367
+- Language Model Refactor to use lm-toolkit #381 #390
+- Simulator
+    - Multimodal support #385
+    - Replay feature #376
+    - Verbose mode configuration #375 and logging fixes #373
+    - Inquiry- Ranger Sampler #374 Trial Sampler #372
+    - Metrics #371
 - Dependencies
   - Upgrade
     - `seaborn` #362
