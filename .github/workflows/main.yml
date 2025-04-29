@@ -113,9 +113,11 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: update pip & install custom dependencies
       run: |
+        python -m pip install --upgrade pip
+        brew update
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        python -m pip install --upgrade pip
+        make install
     - name: install dependencies
       run: |
         make dev-install
