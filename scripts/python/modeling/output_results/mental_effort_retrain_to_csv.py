@@ -107,5 +107,5 @@ def main(filename: str):
 
 
 if __name__ == "__main__":
-    json_filename = 'C:\\Users\\tabme\\Desktop\\BciPy\\scripts\\python\\modeling\\output_results\\mental_effort_retrain_results_2.json'
+    json_filename = 'C:\\Users\\tabme\\Desktop\\BciPy\\scripts\\python\\modeling\\output_results\\ME_trial_window_data.json'
     main(json_filename)
