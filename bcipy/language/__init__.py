@@ -1,6 +1,7 @@
-from .main import LanguageModel, ResponseType
+from .main import LanguageModel, CharacterLanguageModel, WordLanguageModel
 
 __all__ = [
     "LanguageModel",
-    "ResponseType",
+    "CharacterLanguageModel",
+    "WordLanguageModel"
 ]
