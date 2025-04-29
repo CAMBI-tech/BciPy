@@ -925,7 +925,6 @@ class BCIGui(QWidget):
                 new_height = size
                 new_width = int(size * width / height)
 
-
             labelImage.resize(new_width, new_height)
             labelImage.move(position[0], position[1])
 

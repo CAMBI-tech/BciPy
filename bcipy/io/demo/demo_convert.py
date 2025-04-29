@@ -86,7 +86,7 @@ def convert_experiment_to_bids(
         experiment_id=experiment_id)
 
     # Use for data post-2.0rc4
-    # experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
+    experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
 
     if not output_dir:
         output_dir = directory
