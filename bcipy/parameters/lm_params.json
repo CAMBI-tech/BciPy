@@ -1,5 +1,5 @@
 {
-  "kenlm": {
+  "ngram": {
     "model_file": {
       "description": "Name of the pretrained model file",
       "value": "lm_dec19_char_large_12gram.kenlm",
@@ -33,7 +33,7 @@
       "description": "Defines the types of models to be used by the mixture model.",
       "value": [
         "CAUSAL",
-        "KENLM"
+        "NGRAM"
       ],
       "type": "List[str]"
     },
@@ -48,8 +48,8 @@
     "model_params": {
       "description": "Defines the extra parameters of models to be used by the mixture model.",
       "value": [
-        {}, 
-        {}
+        {"lang_model_name": "figmtu/opt-350m-aac"}, 
+        {"lm_path": "lm_dec19_char_large_12gram.kenlm"}
       ],
       "type": "List[Dict[str, str]]"
     }

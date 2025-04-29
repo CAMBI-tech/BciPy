@@ -6,7 +6,7 @@ import logging as logger
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple, Type
+from typing import List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -15,13 +15,13 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME)
-from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.core.list import grouper
-from bcipy.io.load import load_json_parameters, load_raw_data
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
 from bcipy.core.stimuli import update_inquiry_timing
-from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.core.triggers import Trigger, TriggerType, trigger_decoder
+from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
+from bcipy.io.load import load_json_parameters, load_raw_data
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
@@ -79,6 +79,16 @@ class DecodedTriggers(NamedTuple):
     symbols: List[str]  # symbol
     corrected_times: List[float]
 
+    @property
+    def triggers(self) -> List[Trigger]:
+        """List of triggers"""
+        return [
+            Trigger(label=self.symbols[i],
+                    type=TriggerType(self.targetness[i]),
+                    time=self.corrected_times[i])
+            for i in range(len(self.symbols))
+        ]
+
 
 @dataclass()
 class ExtractedExperimentData:
@@ -88,7 +98,6 @@ class ExtractedExperimentData:
     trials: np.ndarray
     labels: List
     inquiry_timing: List
-
     decoded_triggers: DecodedTriggers
     trials_per_inquiry: int
 
@@ -267,8 +276,7 @@ class RawDataProcessor():
             parameters - parameters.json file for the calibration session used
                 to train the model / run the simulation.
         """
-        raw_data, device_spec = load_device_data(data_folder,
-                                                 self.content_type.name)
+        raw_data, device_spec = self.load_device_data(data_folder, parameters)
         data_parameters = load_json_parameters(
             f"{data_folder}/{DEFAULT_PARAMETERS_FILENAME}", value_cast=True)
 
@@ -279,9 +287,8 @@ class RawDataProcessor():
             sim_timing_params=timing_params,
             data_timing_params=data_parameters.instantiate(TimingParams))
 
-        decoded_triggers = decode_triggers(data_folder, timing_params,
-                                           device_spec.static_offset,
-                                           self.excluded_triggers())
+        decoded_triggers = self.decode_triggers(data_folder, parameters,
+                                                device_spec.static_offset)
 
         reshaped_data = self.reshape_data(raw_data, decoded_triggers,
                                           timing_params)
@@ -299,6 +306,20 @@ class RawDataProcessor():
             filtered_reshaped_data.inquiry_timing,
             decoded_triggers=decoded_triggers,
             trials_per_inquiry=timing_params.trials_per_inquiry)
+
+    def load_device_data(self, data_folder: str,
+                         parameters: Parameters) -> Tuple[RawData, DeviceSpec]:
+        """Load the device data"""
+        return load_device_data(data_folder, self.content_type.name)
+
+    def decode_triggers(self,
+                        data_folder: str,
+                        parameters: Parameters,
+                        device_offset: float = 0.0) -> DecodedTriggers:
+        """Decode the triggers.txt file in the given directory."""
+        timing_params = parameters.instantiate(TimingParams)
+        return decode_triggers(data_folder, timing_params, device_offset,
+                               self.excluded_triggers())
 
     @abstractmethod
     def reshape_data(self, raw_data: RawData,
@@ -348,7 +369,7 @@ class RawDataProcessor():
         return sim_timing_params.time_flash == data_timing_params.time_flash
 
 
-class EegRawDataProcessor(RawDataProcessor):
+class EEGRawDataProcessor(RawDataProcessor):
     """RawDataProcessor that processes EEG data."""
     consumes = ContentType.EEG
     produces = EvidenceType.ERP
@@ -426,52 +447,3 @@ class EegRawDataProcessor(RawDataProcessor):
             bandpass_order=transform_params.filter_order,
             downsample_factor=transform_params.down_sampling_rate,
         )
-
-
-# Module functions for matching a model to the correct processor.
-def get_processor(
-        data_source: ContentType,
-        evidence_type: Optional[EvidenceType] = None
-) -> Type[RawDataProcessor]:
-    """Returns the matching processor class.
-
-    Parameters
-    ----------
-        data_source - type of data that the processor should consume
-        evidence_type - type of evidence that the processor should produce.
-    """
-    matches = [
-        cls for cls in RawDataProcessor.__subclasses__()
-        if cls.consumes == data_source and (
-            evidence_type is None or cls.produces == evidence_type)
-    ]
-    if matches:
-        return matches[0]
-    else:
-        msg = f"Data processor not found for {data_source.name}"
-        if evidence_type:
-            msg += f" -> {evidence_type.name}"
-        raise Exception(msg)
-
-
-def find_data_processor(model: SignalModel) -> Type[RawDataProcessor]:
-    """Get the DataProcessor appropriate for the given model."""
-    content_type = ContentType(model.metadata.device_spec.content_type)
-    # Metadata may provide an EvidenceType with a model so the same data source can
-    # be used to produce multiple types of evidence (ex. alpha)
-    evidence_type = None
-    model_output = model.metadata.evidence_type
-    if model_output:
-        try:
-            evidence_type = EvidenceType(model_output.upper())
-        except ValueError:
-            logger.error(f"Unsupported evidence type: {model_output}")
-
-    return get_processor(content_type, evidence_type)
-
-
-def init_data_processor(signal_model: SignalModel) -> RawDataProcessor:
-    """Find an DataProcessor that matches the given signal_model and
-    initialize it."""
-    processor_class = find_data_processor(signal_model)
-    return processor_class(signal_model)

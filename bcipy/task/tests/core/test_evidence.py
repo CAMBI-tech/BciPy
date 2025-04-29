@@ -4,7 +4,8 @@ import unittest
 from unittest.mock import Mock
 
 from bcipy.acquisition.multimodal import ContentType
-from bcipy.task.control.evidence import (EEGEvaluator, find_matching_evaluator,
+from bcipy.task.control.evidence import (EEGEvaluator, SwitchEvaluator,
+                                         find_matching_evaluator,
                                          get_evaluator)
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
@@ -18,11 +19,10 @@ class TestEvidence(unittest.TestCase):
         self.assertEqual(EEGEvaluator, get_evaluator(ContentType.EEG))
         self.assertEqual(EEGEvaluator,
                          get_evaluator(ContentType.EEG, EvidenceType.ERP))
+        self.assertEqual(SwitchEvaluator, get_evaluator(ContentType.MARKERS))
 
     def test_missing_evaluator(self):
         """Test error condition when evaluator is missing"""
-        with self.assertRaises(MissingEvidenceEvaluator):
-            get_evaluator(ContentType.MARKERS)
 
         with self.assertRaises(MissingEvidenceEvaluator):
             get_evaluator(ContentType.EEG, EvidenceType.EYE)

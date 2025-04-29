@@ -6,10 +6,10 @@ from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple
 from psychopy import core, visual
 
 from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
-from bcipy.helpers.clock import Clock
-from bcipy.exceptions import BciPyCoreException
 from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import resize_image
+from bcipy.exceptions import BciPyCoreException
+from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 
@@ -495,6 +495,45 @@ def convert_timing_triggers(timing: List[Tuple[str, float]], target_stimuli: str
     ]
 
 
+def load_triggers(trigger_path: str,
+                  remove_pre_fixation: bool = True,
+                  offset: float = 0.0,
+                  exclusion: Optional[List[TriggerType]] = None,
+                  device_type: Optional[str] = None,
+                  apply_starting_offset: bool = True) -> List[Trigger]:
+    """Trigger Decoder.
+
+    Given a path to trigger data, this method loads valid Triggers.
+
+    Parameters
+    ----------
+        trigger_path: path to triggers file
+        remove_pre_fixation: boolean to determine whether any stimuli before a fixation + system should be removed
+        offset: static offset value to apply to triggers.
+        exclusion: any TriggerTypes to be filtered from data returned
+        device_type: used to determine which starting_offset value to use; if
+            a 'starting_offset' trigger is found it will be applied.
+        apply_starting_offset: if False, does not apply the starting offset for
+            the given device_type.
+    Returns
+    -------
+        list of Triggers
+    """
+    excluded_types = exclusion or []
+    excluded_types += TriggerType.pre_fixation() if remove_pre_fixation else [
+        TriggerType.SYSTEM
+    ]
+
+    triggers = read(trigger_path)
+    starting_offset = Trigger('', TriggerType.OFFSET, 0.0)
+    if apply_starting_offset:
+        starting_offset = find_starting_offset(triggers, device_type)
+
+    filtered = exclude_types(triggers, excluded_types)
+    corrected = apply_offsets(filtered, starting_offset, static_offset=offset)
+    return corrected
+
+
 def trigger_decoder(
         trigger_path: str,
         remove_pre_fixation: bool = True,
@@ -520,18 +559,8 @@ def trigger_decoder(
     -------
         tuple: trigger_type, trigger_timing, trigger_label
     """
-    excluded_types = exclusion or []
-    excluded_types += TriggerType.pre_fixation() if remove_pre_fixation else [
-        TriggerType.SYSTEM
-    ]
+    triggers = load_triggers(trigger_path, remove_pre_fixation, offset,
+                             exclusion, device_type, apply_starting_offset)
 
-    triggers = read(trigger_path)
-    starting_offset = Trigger('', TriggerType.OFFSET, 0.0)
-    if apply_starting_offset:
-        starting_offset = find_starting_offset(triggers, device_type)
-
-    filtered = exclude_types(triggers, excluded_types)
-    corrected = apply_offsets(filtered, starting_offset, static_offset=offset)
-
-    labels, types, times = zip(*corrected)
+    labels, types, times = zip(*triggers)
     return list(map(str, types)), list(times), list(labels)

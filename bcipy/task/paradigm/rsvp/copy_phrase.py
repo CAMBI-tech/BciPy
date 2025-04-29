@@ -9,6 +9,14 @@ from bcipy.acquisition import ClientManager
 from bcipy.config import (DEFAULT_EVIDENCE_PRECISION, SESSION_DATA_FILENAME,
                           SESSION_LOG_FILENAME, SESSION_SUMMARY_FILENAME,
                           TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.core.list import destutter
+from bcipy.core.parameters import Parameters
+from bcipy.core.session import session_excel
+from bcipy.core.stimuli import InquirySchedule, StimuliOrder
+from bcipy.core.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
 from bcipy.display import (InformationProperties, StimuliProperties,
                            init_display_window)
 from bcipy.display.components.task_bar import CopyPhraseTaskBar
@@ -21,21 +29,13 @@ from bcipy.helpers.acquisition import (LslDataServer, active_content_types,
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.language_model import init_language_model
-from bcipy.core.list import destutter
-from bcipy.io.load import choose_signal_models
-from bcipy.core.parameters import Parameters
-from bcipy.io.save import _save_session_related_data
-from bcipy.core.session import session_excel
-from bcipy.core.stimuli import InquirySchedule, StimuliOrder
-from bcipy.core.symbols import BACKSPACE_CHAR, alphabet
 from bcipy.helpers.task import (consecutive_incorrect, construct_triggers,
                                 fake_copy_phrase_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
                                 trial_complete_message)
-from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                 TriggerType, convert_timing_triggers,
-                                 offset_label)
+from bcipy.io.load import choose_signal_models
+from bcipy.io.save import _save_session_related_data
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model import SignalModel
 from bcipy.signal.model.inquiry_preview import compute_probs_after_preview
@@ -282,7 +282,8 @@ class RSVPCopyPhraseTask(Task):
         evidence_types = []
         evaluators = []
         for model in signal_models:
-            evaluator = init_evidence_evaluator(self.alp, model)
+            evaluator = init_evidence_evaluator(self.alp, model,
+                                                self.parameters)
             content_type = evaluator.consumes
             evidence_type = evaluator.produces
             if content_type in self.daq.active_device_content_types:

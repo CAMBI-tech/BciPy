@@ -1,29 +1,45 @@
 """Helper functions for language model use."""
 import inspect
 import math
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
 import numpy as np
 
 from bcipy.core.symbols import alphabet
-from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.exceptions import LanguageModelNameInUseException
+from bcipy.language.main import LanguageModel
 
 # pylint: disable=unused-import
 # flake8: noqa
 
 """Only imported models will be included in language_models_by_name"""
 # flake8: noqa
-from bcipy.exceptions import InvalidLanguageModelException
-from bcipy.language.model.causal import CausalLanguageModel
-from bcipy.language.model.kenlm import KenLMLanguageModel
-from bcipy.language.model.mixture import MixtureLanguageModel
+from bcipy.language.model.causal import CausalLanguageModelAdapter
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 from bcipy.language.model.oracle import OracleLanguageModel
 from bcipy.language.model.uniform import UniformLanguageModel
 
+VALID_LANGUAGE_MODELS: Dict[str, Callable[[], LanguageModel]] = {
+    "CAUSAL": CausalLanguageModelAdapter,
+    "NGRAM": NGramLanguageModelAdapter,
+    "MIXTURE": MixtureLanguageModelAdapter,
+    "ORACLE": OracleLanguageModel,
+    "UNIFORM": UniformLanguageModel
+}
 
-def language_models_by_name() -> Dict[str, LanguageModel]:
+
+def language_models_by_name() -> Dict[str, Callable[[], LanguageModel]]:
     """Returns available language models indexed by name."""
-    return {lm.name(): lm for lm in LanguageModel.__subclasses__()}
+    return VALID_LANGUAGE_MODELS
+
+
+def register_language_model(name: str, lm_type: Callable[[], LanguageModel]) -> None:
+    if name in VALID_LANGUAGE_MODELS:
+        raise LanguageModelNameInUseException(
+            f"{name} is already registered as {VALID_LANGUAGE_MODELS[name]}.")
+    else:
+        VALID_LANGUAGE_MODELS[name] = lm_type
 
 
 def init_language_model(parameters: dict) -> LanguageModel:
@@ -50,10 +66,11 @@ def init_language_model(parameters: dict) -> LanguageModel:
     # select the relevant parameters into a dict.
     params = {key: parameters[key] for key in args & parameters.keys()}
 
-    return model(
-        response_type=ResponseType.SYMBOL,
-        symbol_set=alphabet(parameters),
-        **params)
+    lm = model(**params)
+
+    lm.set_symbol_set(alphabet(parameters))
+
+    return lm
 
 
 def norm_domain(priors: List[Tuple[str, float]]) -> List[Tuple[str, float]]:

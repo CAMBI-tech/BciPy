@@ -81,6 +81,13 @@ class LslAcquisitionClient:
         self._max_samples = None
 
     @property
+    def has_irregular_rate(self) -> bool:
+        """Returns true for sampling devices with an irregular rate,
+        such as markers.
+        """
+        return self.device_spec.sample_rate == IRREGULAR_RATE
+
+    @property
     def first_sample_time(self) -> float:
         """Timestamp returned by the first sample. If the data is being
         recorded this value reflects the timestamp of the first recorded sample"""
@@ -90,7 +97,7 @@ class LslAcquisitionClient:
     def max_samples(self) -> int:
         """Maximum number of samples available at any given time."""
         if self._max_samples is None:
-            if self.device_spec.sample_rate == IRREGULAR_RATE:
+            if self.has_irregular_rate:
                 self._max_samples = int(self.max_buffer_len)
             else:
                 self._max_samples = int(self.max_buffer_len *
@@ -128,16 +135,19 @@ class LslAcquisitionClient:
                 device_spec=self.device_spec,
                 queue=msg_queue)
             self.recorder.start()
-            logger.info("Waiting for first sample from lsl_recorder")
-            self._first_sample_time = msg_queue.get(block=True,
-                                                    timeout=LSL_TIMEOUT)
-            logger.info(f"First sample time: {self.first_sample_time}")
+            if not self.has_irregular_rate:
+                logger.info("Waiting for first sample from lsl_recorder")
+                self._first_sample_time = msg_queue.get(block=True,
+                                                        timeout=LSL_TIMEOUT)
+                logger.info(f"First sample time: {self.first_sample_time}")
 
         self.inlet.open_stream(timeout=LSL_TIMEOUT)
         if self.max_buffer_len and self.max_buffer_len > 0:
             self.buffer = RingBuffer(size_max=self.max_samples)
         if not self._first_sample_time:
-            _, self._first_sample_time = self.inlet.pull_sample()
+            timeout = 0.0 if self.has_irregular_rate else LSL_TIMEOUT
+            _, self._first_sample_time = self.inlet.pull_sample(
+                timeout=timeout)
         return True
 
     def stop_acquisition(self) -> None:
@@ -171,13 +181,14 @@ class LslAcquisitionClient:
             data_start = data[0].timestamp
             data_end = data[-1].timestamp
             precision = 3
+            expected_diff = 0.0 if self.has_irregular_rate else round(
+                1 / self.device_spec.sample_rate, precision)
             return {
                 'count': len(data),
                 'seconds': round(data_end - data_start, precision),
                 'from': round(data_start, precision),
                 'to': round(data_end, precision),
-                'expected_diff': round(1 / self.device_spec.sample_rate,
-                                       precision),
+                'expected_diff': expected_diff,
                 'mean_diff': round(diffs.mean(), precision),
                 'max_diff': round(diffs.max(), precision)
             }
@@ -218,8 +229,9 @@ class LslAcquisitionClient:
         if end is None:
             end = data_end
 
-        assert start >= data_start, 'Start time out of range'
-        assert end <= data_end, 'End time out of range'
+        if not self.has_irregular_rate:
+            assert start >= data_start, 'Start time out of range'
+            assert end <= data_end, 'End time out of range'
 
         data_slice = [
             record for record in data if start <= record.timestamp <= end
@@ -357,7 +369,7 @@ class LslAcquisitionClient:
         event, or 0.0 .
         """
 
-        if not first_stim_time:
+        if not first_stim_time or self.has_irregular_rate:
             return 0.0
         assert self.first_sample_time, "Acquisition was not started."
         offset_from_stim = first_stim_time - self.first_sample_time

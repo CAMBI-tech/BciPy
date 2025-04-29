@@ -4,15 +4,19 @@ import sys
 
 from pylsl import StreamInfo, StreamOutlet
 
-from bcipy.acquisition.devices import DeviceSpec, IRREGULAR_RATE
-from bcipy.gui.main import BCIGui, app
+from bcipy.acquisition.devices import (IRREGULAR_RATE, DeviceSpec,
+                                       preconfigured_device)
 from bcipy.config import SESSION_LOG_FILENAME
+from bcipy.gui.main import BCIGui, app
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def switch_device() -> DeviceSpec:
     """Mock DeviceSpec for a switch"""
+    device = preconfigured_device('Switch', strict=False)
+    if device:
+        return device
     return DeviceSpec(name='Switch',
                       channels=['Marker'],
                       sample_rate=IRREGULAR_RATE,
