@@ -17,7 +17,7 @@ SUPPORTED_DATA_TYPES = [
     'float32', 'double64', 'string', 'int32', 'int16', 'int8'
 ]
 DEFAULT_DEVICE_TYPE = 'EEG'
-DEFAULT_STATIC_OFFSET = 0.1
+DEFAULT_STATIC_OFFSET = 0.09
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
