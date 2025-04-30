@@ -99,7 +99,7 @@ jobs:
 
   build-macos:
 
-    runs-on: macos-14.7.4
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
@@ -117,6 +117,7 @@ jobs:
         brew update
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
+        pip install psychopy --no-deps
         make install
     - name: install dependencies
       run: |
