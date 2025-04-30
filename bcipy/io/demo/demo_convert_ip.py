@@ -7,13 +7,16 @@ To use at bcipy root,
 from operator import index
 from typing import Optional, List, OrderedDict
 from pathlib import Path
+
+from tqdm import tqdm
+
 from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 import mne_bids as biddy
 import argparse
 
-from bcipy.io.utils import extract_task_type
+from bcipy.io.utils import extract_task_type, extract_timestamp
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
@@ -95,20 +98,37 @@ def convert_experiment_to_bids(
             task_groups[task_group_key].append(data.path)
         else:
             task_groups[task_group_key] = [data.path]
-    # sorting the task runs
-    for key, val in task_groups.items():
-        task_groups[key] = sorted(val)
 
-    for data in experiment_data:
+    breakpoint()
+    subject_task_timestamps = {}
+    for key, val in task_groups.items():
+        sorted_paths = sorted(val)
+        task_groups[key] = sorted_paths # sorting the task runs
+        # Needed for finding task run ordering
+        sub, task_name = key
+        earliest_task_path = sorted_paths[0]
+        dt = extract_timestamp(str(earliest_task_path))
+        if sub not in subject_task_timestamps:
+            subject_task_timestamps[sub] = []
+        subject_task_timestamps[sub].append((task_name, dt))
+
+    subject_task_orderings = {}
+    for key, val in subject_task_timestamps.items():
+        # Sort the task runs by timestamp
+        sorted_tasks = sorted(val, key=lambda x: x[1])
+        subject_task_orderings[key] = [x[0] for x in sorted_tasks]
+
+    for data in tqdm(experiment_data, desc="Processing data", unit="dir"):
         try:
             task_group_key = (data.user_id, data.task_name)
             task_group_value = task_groups[task_group_key]
-            run_id = task_group_value.index(data.path)
-            session_id = str(task_group_order_map[data.task_name])
+            sub = data.user_id
+            run_id = task_group_value.index(data.path) # picking the run id from the sorted task runs
+            session_id = subject_task_orderings[sub].index(data.task_name) # picking session_id from sorted task types
             bids_path = convert_to_bids(
                 data_dir=data.path,
                 participant_id=data.user_id,
-                session_id=session_id,
+                session_id=str(session_id),
                 run_id=str(run_id),
                 task_name=data.task_name,
                 output_dir=f'{output_dir}/bids_{experiment_id}/',
@@ -145,65 +165,11 @@ def convert_experiment_to_bids(
     print("--------------------")
     return bids_output
 
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-d',
-        '--directory',
-        help='Path to the directory with raw_data to be converted',
-        required=False)
-    parser.add_argument(
-        '-e',
-        '--experiment',
-        help='Experiment ID to convert',
-        default='Matrix Multimodal Experiment',
-    )
-    parser.add_argument(
-        '-et',
-        '--eye_tracker',
-        help='Include eye tracker data',
-        default=False,
-        action='store_true',
-    )
-
-    args = parser.parse_args()
-
-    # path = args.directory
-    path = "/Users/srikarananthoju/cambi/data/inquirypreview"
-    if not path:
-        path = ask_directory("Select the directory with data to be converted", strict=True)
-
-    # convert a study to BIDS format
-    bids_path_root = convert_experiment_to_bids(
-        path,
-        args.experiment,
-        ConvertFormat.BV,
-        output_dir="/Users/srikarananthoju/cambi/BciPy",
-        include_eye_tracker=args.eye_tracker
-    )
-
-    # --- Post Processing --- #
-
-    # Updating dataset description file
-    description_params = {
-        "path": bids_path_root,
-        "name": "CAMBI_MultiModal_Experiment",
-        "dataset_type": "raw",
-        "data_license": None,
-        "authors": None,
-        "how_to_acknowledge": None,
-        "funding": None,
-        "references_and_links": None,
-        "overwrite": True
-    }
-    biddy.make_dataset_description(**description_params)
-
 if __name__ == "__main__":
     print(
         "This script is intended to be run directly. Use the command line interface to execute it.")
     path = "/Users/srikarananthoju/cambi/data/inquirypreview"
-    experiment_id = "inquiry_preview_with_ids"
+    experiment_id = "inquiry_preview_corrected_order"
     # convert a study to BIDS format
     bids_path_root = convert_experiment_to_bids(
         path,
@@ -217,7 +183,7 @@ if __name__ == "__main__":
     # Updating dataset description file
     description_params = {
         "path": bids_path_root,
-        "name": "CAMBI_MultiModal_Experiment",
+        "name": "CAMBI_Inquiry_Preview_Experiment",
         "dataset_type": "raw",
         "data_license": None,
         "authors": "Daniel Klee, Betts Peters, Michelle Kinsela, Tab Memmott, Srikar,  MFO",
