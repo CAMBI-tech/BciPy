@@ -5,6 +5,7 @@ To use at bcipy root,
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
 import re
+import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Optional, List
@@ -130,9 +131,9 @@ def convert_experiment_to_bids(
 
 if __name__ == "__main__":
     path = "/Users/srikarananthoju/cambi/data/drowsinessData"
-    experiment_id = "experimenting_drows"
+    salt = str(uuid.uuid4())[:4]
+    experiment_id = "drows_" + salt
     # convert a study to BIDS format
-    breakpoint()
     bids_path_root = convert_experiment_to_bids(
         path,
         experiment_id,

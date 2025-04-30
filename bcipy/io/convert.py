@@ -156,6 +156,22 @@ def convert_to_bids(
 
     return bids_path.directory
 
+def apply_trigger_timing(samples, sample_rate):
+    """Convert trigger sample indices to timing in seconds.
+
+    Convert the trigger sample indices to timing in seconds.
+
+    Parameters
+    ----------
+    trigger_sample_idx - list of trigger sample indices
+
+    Returns
+    -------
+    list of trigger timings in seconds
+    """
+
+    trigger_timing = [i / sample_rate for i in samples]
+    return trigger_timing
 
 def convert_to_bids_drowsiness(
         data_dir: str,
@@ -211,7 +227,7 @@ def convert_to_bids_drowsiness(
 
     # create file paths for raw data, triggers, and parameters
     raw_data_file = glob.glob(f'{data_dir}/*.csv')[0]
-    trigger_file = os.path.join(data_dir, 'trials.mat')
+    trigger_file = os.path.join(data_dir, 'triggers.mat')
 
     # load the raw data and specifications for the device used to collect the data
     raw_data: RawDataForBids = RawDataForBids.load(raw_data_file)
@@ -223,6 +239,10 @@ def convert_to_bids_drowsiness(
     trigger_mat_data = loadmat(trigger_file)
     trigger_labels, trigger_sample_idx, trigger_targetness = trigger_mat_data['trialLabels'][0], \
         trigger_mat_data['trialSampleTimeIndices'][0], trigger_mat_data['trialTargetness'][0]
+
+    all_triggers, all_triggers_idx = trigger_mat_data['rawTrialLabels'], trigger_mat_data['rawTrialLabelSampleIndices']
+    all_triggers, all_triggers_idx = all_triggers[:,0], all_triggers_idx[:,0]
+
     trigger_timing = [idx / raw_data.sample_rate for idx in
                       trigger_sample_idx]  # TODO double check timing
     duration_list = [label_duration for _ in range(len(trigger_timing))]
@@ -239,12 +259,27 @@ def convert_to_bids_drowsiness(
     )
 
     if full_labels:
-        label_annotations = mne.Annotations(
-            onset=trigger_timing,
-            duration=duration_list,
-            description=trigger_labels,
+
+        fixation_samples = [sample_num for sample_num, trigger_val in zip(all_triggers_idx, all_triggers) if trigger_val == 29]
+        prompt_samples = [sample_num for sample_num, trigger_val in zip(all_triggers_idx, all_triggers) if trigger_val >= 128]
+
+        full_label_duration_list = [label_duration for _ in range(len(fixation_samples))]
+        fixation_onsets = apply_trigger_timing(fixation_samples, raw_data.sample_rate)
+        prompt_onsets = apply_trigger_timing(prompt_samples, raw_data.sample_rate)
+
+        fixation_annotations = mne.Annotations(
+            onset=fixation_onsets,
+            duration=full_label_duration_list,
+            description=['fixation' for _ in fixation_samples],
         )
-        mne_data.set_annotations(targetness_annotations + label_annotations)
+
+        prompt_annotations = mne.Annotations(
+            onset=prompt_onsets,
+            duration=full_label_duration_list,
+            description=['prompt' for _ in prompt_samples],
+        )
+
+        mne_data.set_annotations(targetness_annotations + fixation_annotations + prompt_annotations)
     else:
         mne_data.set_annotations(targetness_annotations)
     # add the line frequency to the MNE data
