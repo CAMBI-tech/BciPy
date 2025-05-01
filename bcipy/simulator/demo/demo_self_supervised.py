@@ -42,7 +42,11 @@ import bcipy.simulator.util.metrics as metrics
 # Define the phrases, starting indeces, and language models to use for the simulation
 
 # Add phrases and starting indeces to this list
-target_phrase = "we demonstrate sub doppler laser cooling and magneto optical trapping of the rare earth element holmium".replace(" ", "_").upper()
+target_phrase =  "earth day has always been a day that acknowledges our planet, " \
+"which provides for us, and ways we can protect and preserve its beauty"
+target_phrase = target_phrase.replace(" ", "_")
+target_phrase = target_phrase.replace(".", "_")
+target_phrase = target_phrase.replace(",", "")
 PHRASES = [(target_phrase, 0)]
 
 #     ("I_LOVE_YOU", 0),

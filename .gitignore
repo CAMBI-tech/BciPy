@@ -39,3 +39,6 @@ bcipy/simulator/tests/resource/
 data/
 bids/
 !bcipy/simulator/data
+
+# Ignore the simulator results directory
+results/
