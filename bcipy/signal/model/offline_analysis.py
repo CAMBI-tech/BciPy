@@ -3,7 +3,7 @@
 import json
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List, Dict
 import csv
 
 import numpy as np
@@ -77,9 +77,13 @@ def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_s
 def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                 save_figures=False, show_figures=False, vep_template_name="vep_template.csv"):
     """
-    Analyze VEP data and return/save the VEP model.
-    This function is identical to analyze_erp except that it assumes that every trial window has
-    a clear start and end (no overlap)
+    Analyze VEP data and write results to a template csv file.
+
+    Loads in the raw lsl timstamps from raw_data.csv and parses each STIMULANT_X trigger, this 
+    has been adjusted by the starting offset, to find the neareast index in the eeg data. It 
+    then groups these indexes by stimulant number. Then the averages are taken for O1, Oz, 
+    and O2 channel values for each stimulus and outputs results in a template csv file. This
+    assumes that every trial window has a clear start and end (no overlap) unlike analyze_erp.
 
     Parameters:
     -----------
@@ -91,7 +95,7 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
             estimate balanced accuracy.
         save_figures (bool): If true, saves VEP figures after training to the data folder.
         show_figures (bool): If true, shows VEP figures after training.
-        vep_template_name: (str) File name for what the user calls the template being created for vep
+        vep_template_name (str): File name for what the user calls the template being created.
 
     """
     # Extract relevant session information from parameters file
@@ -99,12 +103,12 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     if trial_window is None:
         trial_window = (0.0, 0.5)
     window_length = trial_window[1] - trial_window[0]
-    # No overlapping segment, so the transformation buffer is 0
-    buffer = 0
 
     # Get signal filtering information
+    # unused
     transform_params = parameters.instantiate(ERPTransformParams)
     static_offset = device_spec.static_offset
+    sample_rate = vep_data.sample_rate
 
     log.info(
         f"\nData processing settings: \n"
@@ -117,86 +121,105 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     sample_rate = vep_data.sample_rate
 
     # setup filtering
-    #default_transform = get_default_transform(
-    #    sample_rate_hz=sample_rate,
-    #    notch_freq_hz=transform_params.notch_filter_frequency,
-    #    bandpass_low=transform_params.filter_low,
-    #    bandpass_high=transform_params.filter_high,
-    #    bandpass_order=transform_params.filter_order,
-    #    downsample_factor=transform_params.down_sampling_rate,
-    #)
+    default_transform = get_default_transform(
+        sample_rate_hz=sample_rate,
+        notch_freq_hz=transform_params.notch_filter_frequency,
+        bandpass_low=transform_params.filter_low,
+        bandpass_high=transform_params.filter_high,
+        bandpass_order=transform_params.filter_order,
+        downsample_factor=transform_params.down_sampling_rate,
+    )
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
 
 
-    # Process triggers.txt files
-    #Trigger_symbols is added because each string will have a label like stimulant_boc0
-    trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
-        trigger_path=f"{data_folder}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
-        offset=static_offset,
-        device_type='EEG'
-    )
+    #Load raw_data.csv lsl timestamps
+    raw_csv_path = Path(data_folder) / raw_data_filename(device_spec)
+    with open(raw_csv_path, 'r') as f:
+        reader = csv.reader(f)
+        #Find header row
+        for row in reader:
+            if 'lsl_timestamp' in row:
+                header = row
+                lsl_i = header.index('lsl_timestamp')
+                break
+        #Read all timestamps
+        lsl_times = [float(r[lsl_i]) for r in reader if r]
+    lsl_times = np.array(lsl_times)
+    lsl_times -= lsl_times[0]
 
-    # each trial window is distinct so adjust by the trial window start
-    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+    #Process trigger to find stimulant_X
+    trigger_path = Path(data_folder) / "triggers.txt"
+    starting_offset = 0.0
+    trigger_offset = None
+    triggers = []
+    with open(Path(data_folder) / "triggers.txt") as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) != 3:
+                continue
+            key, _, stamp = parts
+            current_stamp = float(stamp)
+            if key == 'starting_offset':
+                trigger_offset = current_stamp
+                continue
+            #STIMULANT_X
+            if key.startswith('STIMULATE_'):
+                if trigger_offset is None:
+                    raise ValueError("starting_offset must precede STIMULATE_ lines")
+                #Gets the symbol number
+                sym = key.split('_', 1)[1]
+                #Add negative offset to get seconds since raw_data[0]
+                lsl_time = current_stamp + trigger_offset
+                #Finds the index with an lsl timstamp closest to the one in triggers.txt
+                idx = int(np.argmin(np.abs(lsl_times - lsl_time)))
+                triggers.append((sym, idx))
 
-
-    #----Group data by trigger label (stimulant_box_X)
-    groups = {}
-    for i, sym in enumerate(trigger_symbols):
-        if sym.lower().startswith("stimulant_box"):
-            #add index to corresponding stimulus group
-            groups.setdefault(sym, []).append(i)
-
+    groups: Dict[str, List[int]] = {}
+    for sym, idx in triggers:
+        #add index to corresponding stimulus group
+        groups.setdefault(sym, []).append(idx)
     data, _ = vep_data.by_channel()
+    # erp - channel_map = analysis_channels(channels, device_spec)
+    channel_map = analysis_channels(vep_data.channels, device_spec)
+    #Fins what channel index are marked in channel_map
+    keep = [i for i,v in enumerate(channel_map) if v]
+    #new list of channel names containing only O1, Oz, and O2
+    channels = [vep_data.channels[i] for i in keep]
+    #Data array for kept channels
+    data = data[keep]
+    #Creates a dict for each channel and maps its row index in data
+    cmap = {ch: i for i,ch in enumerate(channels)}
 
-    #Number of samples taken per trial
-    trial_duration_samples = int(window_length * sample_rate)
+    #Figure out the highest box number
+    highest_stim_number = max((int(s) for s in groups.keys()), default=0)
 
-    #Data segments are extracted for each stimulus 
-    #based on trigger timing
-    segments_by_stimulus = {}
-    for sym, indices in groups.items():
-        segments = []
-        for index in indices:
-            timing = corrected_trigger_timing[index]
-            #Converts trigger time to sample time (seconds)
-            sample_index = int(timing * sample_rate)
-            #Extract data segment for trial
-            segment = data[:, sample_index:sample_index + trial_duration_samples]
-            #Check to see if full-length segment is available, if not skip
-            if segment.shape[1] == trial_duration_samples:
-                segments.append(segment)
-        #Only will store if any segements were extracted
-        if segments:
-            segments_by_stimulus[sym] = segments
-    
-    #----Extract segments of data and average each stimulant_box_X ones
-    templates = {}
-    for sym, segments in segments_by_stimulus.items():
-        #Stacks individual trial segment into single array
-        #channels, trial_duration_samples
-        #axis_0 addes new dimension for trial numbers
-        #array becomes num_trials, channels, trial_duration_samples)
-        stacked = np.stack(segments, axis=0)
-        #Takes mean along axis=0, collapses the trials so becomes (channels, trial_duration_samples)
-        avg_template = np.mean(stacked, axis=0) 
-        templates[sym] = avg_template
+    path_to_template = Path(data_folder) / vep_template_name
+    #log.info(f"VEP template path - {path_to_template}")
+    with open(path_to_template, 'w') as f:
+        for sym_i in range(1, highest_stim_number + 1):
+            vep_indexes = groups.get(str(sym_i), [])
+            #Compute average, or none if no triggers for a box
+            if vep_indexes:
+                o1 = data[cmap['O1'], vep_indexes].mean()
+                oz = data[cmap['Oz'], vep_indexes].mean()
+                o2 = data[cmap['O2'], vep_indexes].mean()
+            else:
+                o1 = oz = o2 = None
 
-    averaged_templates = list(templates.values())
-    
-    #----Write to csv
-    csv_filepath = Path(data_folder) / vep_template_name
-    with open(csv_filepath, 'w', newline='') as csvfile:
-        writer = csv.writer(csvfile)
-        for template in averaged_templates:
-            #Flatten from 2d(channels, samples) to a 1D list for writing
-            flattened = template.flatten().tolist()
-            writer.writerow(flattened)
-    return averaged_templates, []
+            o1_data = f"{o1:.4f}" if o1 is not None else "None"
+            oz_data = f"{oz:.4f}" if oz is not None else "None"
+            o2_data = f"{o2:.4f}" if o2 is not None else "None"
+            #Box indexes start at 0 so offset of 1
+            box_idx = sym_i - 1
+            f.write(f"01_box{box_idx}: {o1_data}\n")
+            f.write(f"0z_box{box_idx}: {oz_data}\n")
+            f.write(f"02_box{box_idx}: {o2_data}\n\n") #extra seperating line for boxes
 
+
+    #Template saved to CSV; no need to return template or figures
+    return {}, []
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
                 save_figures=False, show_figures=False):
