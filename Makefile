@@ -57,6 +57,7 @@ clean:
 	rm -rf build
 	rm -rf bcipy.egg-info
 	rm -rf bcipy_cache
+	pip cache purge
 
 bci-gui:
 	python bcipy/gui/BCInterface.py

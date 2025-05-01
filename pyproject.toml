@@ -26,7 +26,7 @@ classifiers = [
 dependencies = [
     "attrdict3==2.0.2",
     "EDFlib-Python==1.0.8",
-    "transformers==4.36.0",
+    "transformers==4.47.0",
     "torch==2.2.0",
     "construct==2.8.14",
     "mne==1.6.1",

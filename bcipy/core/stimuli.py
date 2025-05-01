@@ -443,7 +443,7 @@ def mne_epochs(mne_data: RawArray,
     return Epochs(
         mne_data,
         events_from_annot,
-        baseline=baseline,
+        baseline=None,
         tmax=trial_length,
         tmin=tmin,
         proj=False,  # apply SSP projection to data. Defaults to True in Epochs.

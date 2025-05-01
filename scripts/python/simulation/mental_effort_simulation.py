@@ -66,13 +66,12 @@ TRIAL_WINDOWS = [
 
 
 # Number of runs for each simulation
-RUN_COUNT = 2
-
-# add a custom output path for simulation output
-OUTPUT_DIR = "./output/simulation/"
+RUN_COUNT = 20
 
 # Filter data by file name that will be loaded and used for the simulation
-MODE = "RSVP"
+MODE = "Matrix"
+# add a custom output path for simulation output
+OUTPUT_DIR = f"./output/simulation/{MODE}/"
 DATA_PATTERN = f"{MODE}_Copy_Phrase"
 
 
@@ -116,7 +115,7 @@ def run_simulation(
     -------
     The simulation results will be saved in the output directory defined by OUTPUT_DIR.
     """
-    print(f"Running simulation for {user} with phrase {phrase} and language model {language_model}")
+    print(f"Running simulation for {user} with phrase {phrase} and trial window {trial_window}")
 
     model_path = None
     params_path = None
@@ -173,7 +172,7 @@ def run_simulation(
                                parameters=parameters)
     sim_dir = init_simulation_dir(
         save_location=Path(OUTPUT_DIR),
-        prefix=f"{user}/{trial_window}/{phrase}/{user}_{phrase}_{trial_window}_")
+        prefix=f"{user}/{trial_window_str}/{phrase}/{user}_{phrase}_{trial_window_str}_")
     runner = TaskRunner(save_dir=sim_dir,
                         task_factory=task_factory,
                         runs=RUN_COUNT)
@@ -182,7 +181,7 @@ def run_simulation(
         runner.run()
         metrics.report(sim_dir)
     except Exception as e:
-        print(f"Error running simulation for {user} with phrase {phrase} and language model {language_model}")
+        print(f"Error running simulation for {user} with phrase {phrase} and trial window {trial_window}")
         print(e)
 
 
