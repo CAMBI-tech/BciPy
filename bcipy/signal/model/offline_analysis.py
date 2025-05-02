@@ -172,9 +172,18 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
                 sym = key.split('_', 1)[1]
                 #Add negative offset to get seconds since raw_data[0]
                 lsl_time = current_stamp + trigger_offset
+                #Assume for now, can't find
+                mseq_length = 127
+                ref_rate    = 60
+                sample_rate = 125
+                trial_length = int(mseq_length / ref_rate * sample_rate)
+
                 #Finds the index with an lsl timstamp closest to the one in triggers.txt
-                idx = int(np.argmin(np.abs(lsl_times - lsl_time)))
-                triggers.append((sym, idx))
+                start_idx = int(np.argmin(np.abs(lsl_times - lsl_time)))
+                #Build with full range of window of indexes for specific stimulant trial
+                window_range = list(range(start_idx, start_idx + trial_length))
+                triggers.append((sym, window_range))
+
 
     groups: Dict[str, List[int]] = {}
     for sym, idx in triggers:
