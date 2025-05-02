@@ -106,8 +106,7 @@ class EEGEvaluator(EvidenceEvaluator):
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float, flash_time: float,
-                 stim_length: float) -> np.ndarray:
+                 window_length: float, *args) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
