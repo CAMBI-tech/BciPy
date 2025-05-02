@@ -1,36 +1,7 @@
-"""Process Sim Output.
+"""Compare the results of the simulation for different paradigms (RSVP and Matrix).
 
-This script processes the output of the simulation and generates a summary of the results. The current output directory structure is as follows:
-
-```text
-output_dir/
-    user1/
-        trail_window1/
-            phrase1/
-                user1_phrase1_trail_window1_SIM_datetime/
-                    run_1/
-                        run_1.log
-                        session.json
-                        session.xlsx
-                        triggers.txt
-                    run_2/
-                        ...
-                    summary_data.json
-                    metrics.png
-            phrase2/
-                ...
-        trial_window2/
-            phrase1/
-                user1_phrase1_trial_window2_SIM_datetime/
-                    ...
-    user2/
-        ...
-```
-
-The data will be processed and averages extracted for each language model across phrases. The results will be saved in a CSV file in the output directory.
-
-TODO: review with Dylan. 
-- Determine best way to estimate characters per minute per phrase
+This script is similar to the process mental effort script, but it will compare the paradigms instead of
+examining the results of the simulation for a single paradigm.
 """
 import json
 from pathlib import Path
@@ -233,101 +204,88 @@ def grab_data_keys(metrics: List[str], models: List[str]) -> List[str]:
     return data_keys
 
 def plot_results(
-        data: pd.DataFrame,
+        data: dict,
         metric: str,
         data_keys: List[str],
         output_dir: Path,
-        mode='RSVP',
         show=True,
         save=True) -> None:
-    """Plot the results of the simulation."""
-    # BAR PLOT
-    len_bars = len(data_keys)
-    colors = dict(zip(data_keys, [COLOR_MAP(i / len_bars) for i in range(len(data_keys))]))
-    plot = data[data_keys].plot(kind="bar", figsize=(10, 6), color=colors)
-    plt.xticks(rotation=45)
-    plt.ylabel(metric)
-    plt.xlabel("User")
-    plt.title(f"{metric} by Trial Window")
-
-    if show:
-        plt.show()
+    """Plot the results of the simulation.
     
-    if save:
-        fig = plot.get_figure()
-        fig.savefig(f"{output_dir}/{mode}_{metric}_bar.png")
+    The data should be a dictionary with the following structure:
+        {'RSVP': dataframe, 'Matrix': dataframe}
+    
+    Metrics should be a list of the metrics to plot.
+    Data keys should be a list of the data keys to plot from the dataframes
 
-    colors = dict(boxes="#6da066", whiskers="#0f0f0f", medians="#0f0f0f", caps="#0f0f0f")
-    # BOXPLOT
-    boxplot = data.boxplot(column=data_keys, figsize=(10, 6), fontsize=15, color=colors, patch_artist=True)
-    plt.ylabel(metric)
-    label_text = [f"{key.split('_')[0]}:{key.split('_')[1]}" for key in data_keys]
-    plt.xticks(range(1, len(data_keys) + 1), label_text)
+    We want to compare the results of each metric across modes (RSVP or Matrix).
+    """
 
-    if show:
-        plt.show()
+    # grab matrix and rsvp dataframes average for each metric
+    rsvp_data = data["RSVP"].copy()
+    matrix_data = data["Matrix"].copy()
 
-    if save:
-        fig = boxplot.get_figure()
-        fig.savefig(f"{output_dir}/{mode}_{metric}_box.png")
+    rsvp_data = rsvp_data[data_keys].mean(axis=0)
+    matrix_data = matrix_data[data_keys].mean(axis=0)
 
-    # average all the users for each the metric and trial window
-    # and plot the average for each trial window
-    avg_data = data[data_keys].mean(axis=0)
-    avg_data = pd.DataFrame(avg_data).transpose()
-    colors = dict(zip(label_text, [COLOR_MAP(i / len_bars) for i in range(len(label_text))]))
-    avg_data = avg_data.rename(columns={key: f'{key.split("_")[0]}:{key.split("_")[1]}' for key in data_keys})
-    # calculate standard error for each trial window standard deviation / sqrt(n)
-    avg_data_std = data[data_keys].std(axis=0) / (len(data) ** 0.5)
-    avg_data_std = pd.DataFrame(avg_data_std).transpose()
-    avg_data_std = avg_data_std.rename(columns={key: f'{key.split("_")[0]}:{key.split("_")[1]}' for key in data_keys})
-    plot = avg_data.plot(kind="bar", figsize=(10, 6), color=colors, yerr=avg_data_std, capsize=5)
-    plt.ylabel(metric)
+    rsvp_data_std = data["RSVP"][data_keys].std(axis=0) / (len(data["RSVP"]) ** 0.5)
+    matrix_data_std = data["Matrix"][data_keys].std(axis=0) / (len(data["Matrix"]) ** 0.5)
+
+    trial_labels = [f'{key.split("_")[0]}:{key.split("_")[1]}' for key in data_keys]
+    plt.errorbar(trial_labels, rsvp_data, yerr=rsvp_data_std, label='RSVP', fmt='o')
+    plt.errorbar(trial_labels, matrix_data, yerr=matrix_data_std, label='Matrix', fmt='o')
+
+    plt.title(f"{metric} Comparison")
     plt.xlabel("Trial Window")
-    plt.title(f"{metric} by Trial Window (Average)")
-
-    if show:
-        plt.show()
+    plt.ylabel(metric)
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
     
     if save:
-        fig = plot.get_figure()
-        fig.savefig(f"{output_dir}/{mode}_{metric}_avg_bar.png")
+        plt.savefig(output_dir / f"{metric}_comparison.png")
+    if show:
+        plt.show()
+
+    pass
 
 def run_stats(
-        data: pd.DataFrame,
-        data_keys: List[str],
+        dist_1: List[float],
+        dist_2: List[float],
+        key_1: str,
+        key_2: str,
+        significant_results: dict,
+        results: dict,
         permutations=10000) -> None:
     """Run statistical tests on the results.
     
     This function should run a series of statistical tests to determine if there is a significant
-        difference between the language models for the specified metrics.
+        difference between the keys for the specified metrics.
     """
-    # compare all data keys to each other
-    results = {}
-    significant_results = {}
-    for i in range(len(data_keys)):
-        for j in range(i + 1, len(data_keys)):
-            key_1 = data_keys[i]
-            key_2 = data_keys[j]
-            dist_1 = data[key_1].tolist()
-            dist_2 = data[key_2].tolist()
-
-            # Run a t-test
-            t_stat, p_value = t_test(dist_1, dist_2, permutations=permutations, alternative="two-sided")
-            # print(f"t-statistic: {t_stat}, p-value: {p_value}")
-            results[f"{key_1} vs {key_2}"] = (t_stat, p_value)
-            if p_value < 0.05:
-                significant_results[f"{key_1} vs {key_2}"] = (t_stat, p_value)
-                print(f"Significant difference between {key_1} and {key_2}: t-statistic = {t_stat}, p-value = {p_value}")
+    # Run a t-test
+    t_stat, p_value = t_test(dist_1, dist_2, permutations=permutations, alternative="two-sided")
+    # print(f"t-statistic: {t_stat}, p-value: {p_value}")
+    results[f"{key_1} vs {key_2}"] = (t_stat, p_value)
+    if p_value < 0.05:
+        significant_results[f"{key_1} vs {key_2}"] = (t_stat, p_value)
+        print(f"Significant difference between {key_1} and {key_2}: t-statistic = {t_stat}, p-value = {p_value}")
 
     return results, significant_results
 
 if __name__ == "__main__":
-    paradigm = "Matrix"
-    path = load_experimental_data(message="Select the directory containing the simulation output")
-    data = extract_sim_output(Path(path))
-    final_data = process_sim_output(data)
-    df = save_results(final_data, Path(path), mode=paradigm)
+    modes = ["RSVP", "Matrix"]
+    data_path = Path(load_experimental_data(message="Select the directory containing the simulation output"))
+
+    data_by_mode = {}
+
+    for sub_path in data_path.iterdir():
+        mode = sub_path.name
+        if mode not in modes:
+            continue
+        data = extract_sim_output(Path(sub_path))
+        final_data = process_sim_output(data)
+        df = save_results(final_data, Path(sub_path), mode=mode)
+        data_by_mode[mode] = df
 
     # for plotting and statistical analysis
     processing_metrics = [
@@ -343,9 +301,18 @@ if __name__ == "__main__":
 
     for metric in processing_metrics:
         data_keys = grab_data_keys([metric], processing_models)
-        plot_df = df.copy()
-        plot_results(plot_df, metric, data_keys, Path(path), mode=paradigm, show=True, save=True)
+        plot_results(data_by_mode, metric, data_keys, data_path, show=True, save=True)
 
-        stats_df = df.copy()
-        # results, sig_results = run_stats(stats_df, data_keys)
+    # loop over matrix and rsvp dataframes and run stats on each metric
+    results = {}
+    significant_results = {}
+    for metric in processing_metrics:
+        data_keys = grab_data_keys([metric], processing_models)
+        for i, key_1 in enumerate(data_keys):
+            dist_1 = data_by_mode["RSVP"][key_1].tolist()
+            dist_2 = data_by_mode["Matrix"][key_1].tolist()
+            key_1 = f"RSVP_{key_1}"
+            key_2 = f"Matrix_{key_1}"
+            results, significant_results = run_stats(dist_1, dist_2, key_1, key_2, significant_results, results)
+
     breakpoint()
