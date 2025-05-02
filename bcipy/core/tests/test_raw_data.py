@@ -384,7 +384,7 @@ class Test1020(unittest.TestCase):
     def test_get_1020_channels(self):
         """Tests that the 10-20 channel map is correctly generated."""
         channels = get_1020_channels()
-        self.assertEqual(19, len(channels))
+        self.assertEqual(27, len(channels))
         self.assertTrue(isinstance(channels[0], str))
 
     def test_get_1020_channel_map(self):
