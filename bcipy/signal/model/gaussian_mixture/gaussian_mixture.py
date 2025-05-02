@@ -67,7 +67,6 @@ class GaussianProcess(SignalModel):
         self.centralized_data = None
         self.model = None
 
-
     def fit(self, time_avg: np.ndarray, cent_data: np.ndarray):
         """Fit the Gaussian Process model to the training data.
         Args:
@@ -83,13 +82,13 @@ class GaussianProcess(SignalModel):
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
         ...
 
-    def evaluate_likelihood(self, data: np.ndarray, symbols: List[str], 
+    def evaluate_likelihood(self, data: np.ndarray, symbols: List[str],
                             symbol_set: List[str]) -> np.ndarray:
         if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.evaluate_likelihood()")
-        
+
         gaze_log_likelihoods = np.zeros((len(symbol_set)))
-        # Clip the pre-saved centralized data to the length of our test data 
+        # Clip the pre-saved centralized data to the length of our test data
         cent_data = self.centralized_data[:, :, :data.shape[1]]
         reshaped_data = cent_data.reshape((len(cent_data), data.shape[0] * data.shape[1]))
         cov_matrix = np.cov(reshaped_data, rowvar=False)
@@ -255,11 +254,11 @@ class GMIndividual(SignalModel):
 
         return likelihoods
 
-    def evaluate_likelihood(self, data: np.ndarray, symbols: List[str], 
+    def evaluate_likelihood(self, data: np.ndarray, symbols: List[str],
                             symbol_set: List[str]) -> np.ndarray:
         if not self.ready_to_predict:
             raise SignalException("must use model.fit() before model.evaluate_likelihood()")
-        
+
         data_length, _ = data.shape
         likelihoods = np.zeros((data_length, self.num_components), dtype=object)
 

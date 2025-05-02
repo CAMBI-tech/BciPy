@@ -309,9 +309,9 @@ class GazeReshaper:
 
         buffer = 0.5  # seconds, buffer for each inquiry
         # NOTE: This buffer is used to account for the screen downtime between each stimulus.
-        # A better way of handling this buffer would be subtracting the flash time of the 
-        # second symbol from the first symbol, which gives a more accurate representation of 
-        # "stimulus duration". 
+        # A better way of handling this buffer would be subtracting the flash time of the
+        # second symbol from the first symbol, which gives a more accurate representation of
+        # "stimulus duration".
         window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry   # in seconds
 
         reshaped_data = []

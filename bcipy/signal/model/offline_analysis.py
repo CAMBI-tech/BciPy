@@ -1,5 +1,4 @@
 # mypy: disable-error-code="attr-defined"
-import json
 import logging
 import subprocess
 from pathlib import Path
@@ -14,8 +13,7 @@ import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
-                          STIMULI_POSITIONS_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
                            load_raw_data)
@@ -234,7 +232,7 @@ def analyze_gaze(
         device_spec: DeviceSpec,
         data_folder: str,
         model_type: str = "GaussianProcess",
-        symbol_set: List[str] = alphabet(), 
+        symbol_set: List[str] = alphabet(),
         testing_acc: float = 0.0) -> SignalModel:
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
@@ -251,7 +249,7 @@ def analyze_gaze(
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
-        model_type (str): Type of gaze model to be used. Options are: "GMIndividual" or 
+        model_type (str): Type of gaze model to be used. Options are: "GMIndividual" or
         "GaussianProcess".
         symbol_set (List[str]): List of symbols to be used in the analysis.
         testing_acc (float): Testing accuracy of the model. This is calculated during fusion analysis.
@@ -520,7 +518,7 @@ def offline_analysis(
                 parameters,
                 device_spec,
                 data_folder,
-                symbol_set=symbol_set, 
+                symbol_set=symbol_set,
                 testing_acc=avg_testing_acc_gaze)
             models.append(et_model)
 

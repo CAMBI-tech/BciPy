@@ -8,7 +8,6 @@ import numpy as np
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.parameters import Parameters
-from bcipy.core.stimuli import TrialReshaper
 from bcipy.display.main import ButtonPressMode
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.core.stimuli import TrialReshaper, GazeReshaper
@@ -150,7 +149,7 @@ class GazeEvaluator(EvidenceEvaluator):
 
     def preprocess(self, raw_data: np.ndarray, times: List[float],
                    flash_time: float) -> np.ndarray:
-        """Preprocess the inquiry data. 
+        """Preprocess the inquiry data.
 
         Parameters
         ----------
@@ -162,7 +161,7 @@ class GazeEvaluator(EvidenceEvaluator):
 
         Function
         --------
-        The preprocessing is functionally different than Gaze Reshaper, since 
+        The preprocessing is functionally different than Gaze Reshaper, since
         the raw data contains only one inquiry. start_idx is determined as the
         start time of first symbol flashing multiplied by the sampling rate
         of eye tracker. stop_idx is the index indicating the end of last
@@ -175,10 +174,10 @@ class GazeEvaluator(EvidenceEvaluator):
             transformed_data = raw_data
             transform_sample_rate = self.device_spec.sample_rate
 
-        start_idx = int(self.device_spec.sample_rate*times[0])
-        stop_idx = start_idx + int((times[-1]-times[0]+flash_time) * self.device_spec.sample_rate)
+        start_idx = int(self.device_spec.sample_rate * times[0])
+        stop_idx = start_idx + int((times[-1] - times[0] + flash_time) * self.device_spec.sample_rate)
         data_all_channels = transformed_data[:, start_idx:stop_idx]
-        
+
         # Extract left and right eye from all channels. Remove/replace nan values
         left_eye, right_eye, _, _, _, _ = extract_eye_info(data_all_channels)
         reshaped_data = np.vstack((np.array(left_eye).T, np.array(right_eye).T))
