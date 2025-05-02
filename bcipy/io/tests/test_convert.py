@@ -5,11 +5,12 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Tuple, Union
+from unittest.mock import patch, MagicMock
 
 import bcipy.acquisition.devices as devices
+import mne
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
-# from bcipy.io import convert
 from bcipy.io.convert import (
     archive_list,
     compress,
@@ -19,7 +20,8 @@ from bcipy.io.convert import (
     decompress,
     norm_to_tobii,
     tobii_to_norm,
-    convert_eyetracking_to_bids
+    convert_eyetracking_to_bids,
+    BIDS_to_MNE
 )
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData, sample_data, write
@@ -349,6 +351,14 @@ class TestMNEConvert(unittest.TestCase):
         self.assertEqual(data.ch_names, self.channels[1:-2])
         self.assertEqual(data.info['sfreq'], self.sample_rate)
 
+    def test_convert_to_mne_with_custom_channel_types_length_mismatch(self):
+        """Test the convert_to_mne function raises an error when channel types length doesn't match channels"""
+        # Not enough channel types
+        channel_types = ['eeg', 'eeg']  # Only 2 types for 3 channels
+
+        with self.assertRaises(AssertionError):
+            convert_to_mne(self.raw_data, channel_types=channel_types)
+
 
 class TestCompressionSupport(unittest.TestCase):
 
@@ -610,6 +620,184 @@ class TestConvertETBIDS(unittest.TestCase):
                 task_name='TestTask',
                 output_dir=self.temp_dir,
             )
+
+
+class TestBIDSToMNE(unittest.TestCase):
+    """Tests for the BIDS_to_MNE function."""
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    @patch('bcipy.io.convert.read_raw_bids')
+    def test_successful_conversion(self, mock_read_raw_bids, mock_find_matching_paths,
+                                   mock_get_entity_vals, mock_path_exists):
+        """Test successful conversion from BIDS to MNE."""
+        # Setup mocks
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01']
+
+        # Create mock BIDSPath objects
+        mock_bids_path1 = MagicMock()
+        mock_bids_path1.task = 'RSVPCalibration'
+        mock_bids_path2 = MagicMock()
+        mock_bids_path2.task = 'RSVPCalibration'
+        mock_find_matching_paths.return_value = [mock_bids_path1, mock_bids_path2]
+
+        # Create mock Raw objects that read_raw_bids will return
+        mock_raw1 = MagicMock(spec=mne.io.Raw)
+        mock_raw2 = MagicMock(spec=mne.io.Raw)
+        mock_read_raw_bids.side_effect = [mock_raw1, mock_raw2]
+
+        result = BIDS_to_MNE('/fake/bids/path', task_name='RSVPCalibration')
+
+        self.assertEqual(len(result), 2)
+        self.assertIs(result[0], mock_raw1)
+        self.assertIs(result[1], mock_raw2)
+        mock_path_exists.assert_called_once_with('/fake/bids/path')
+        mock_get_entity_vals.assert_called_once_with('/fake/bids/path', 'session')
+        mock_find_matching_paths.assert_called_once()
+        self.assertEqual(mock_read_raw_bids.call_count, 2)
+
+    @patch('bcipy.io.convert.os.path.exists')
+    def test_nonexistent_path(self, mock_path_exists):
+        """Test handling of non-existent BIDS path."""
+        mock_path_exists.return_value = False
+
+        with self.assertRaises(FileNotFoundError):
+            BIDS_to_MNE('/nonexistent/path')
+
+        mock_path_exists.assert_called_once_with('/nonexistent/path')
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    def test_no_matching_files(self, mock_find_matching_paths, mock_get_entity_vals, mock_path_exists):
+        """Test handling of no matching BIDS files."""
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01']
+        mock_find_matching_paths.return_value = []
+
+        with self.assertRaises(FileNotFoundError):
+            BIDS_to_MNE('/fake/bids/path')
+
+        mock_path_exists.assert_called_once_with('/fake/bids/path')
+        mock_get_entity_vals.assert_called_once_with('/fake/bids/path', 'session')
+        mock_find_matching_paths.assert_called_once()
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    @patch('bcipy.io.convert.read_raw_bids')
+    @patch('bcipy.io.convert.logger')  # Mock the logger to prevent actual logging during tests
+    def test_task_filtering(self, mock_logger, mock_read_raw_bids, mock_find_matching_paths,
+                            mock_get_entity_vals, mock_path_exists):
+        """Test task name filtering."""
+        # Setup mocks
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01']
+
+        # Create mock BIDSPath objects with different tasks
+        mock_bids_path1 = MagicMock()
+        mock_bids_path1.task = 'RSVPCalibration'
+        mock_bids_path2 = MagicMock()
+        mock_bids_path2.task = 'OtherTask'
+        mock_find_matching_paths.return_value = [mock_bids_path1, mock_bids_path2]
+
+        # Create mock Raw object that read_raw_bids will return
+        mock_raw = MagicMock(spec=mne.io.Raw)
+        mock_read_raw_bids.return_value = mock_raw
+
+        # Call function with specific task_name
+        result = BIDS_to_MNE('/fake/bids/path', task_name='RSVPCalibration')
+
+        # Assertions
+        self.assertEqual(len(result), 1)
+        self.assertIs(result[0], mock_raw)
+        mock_read_raw_bids.assert_called_once_with(mock_bids_path1)
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    @patch('bcipy.io.convert.read_raw_bids')
+    def test_multiple_sessions(self, mock_read_raw_bids, mock_find_matching_paths,
+                               mock_get_entity_vals, mock_path_exists):
+        """Test handling multiple sessions."""
+        # Setup mocks
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01', '02']  # Multiple sessions
+
+        # Create mock BIDSPath objects for different sessions
+        mock_bids_path1 = MagicMock()
+        mock_bids_path1.task = 'RSVPCalibration'
+        mock_bids_path1.session = '01'
+        mock_bids_path2 = MagicMock()
+        mock_bids_path2.task = 'RSVPCalibration'
+        mock_bids_path2.session = '02'
+        mock_find_matching_paths.return_value = [mock_bids_path1, mock_bids_path2]
+
+        # Create mock Raw objects
+        mock_raw1 = MagicMock(spec=mne.io.Raw)
+        mock_raw2 = MagicMock(spec=mne.io.Raw)
+        mock_read_raw_bids.side_effect = [mock_raw1, mock_raw2]
+
+        result = BIDS_to_MNE('/fake/bids/path')
+
+        self.assertEqual(len(result), 2)
+        mock_get_entity_vals.assert_called_once_with('/fake/bids/path', 'session')
+        self.assertEqual(mock_read_raw_bids.call_count, 2)
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    @patch('bcipy.io.convert.read_raw_bids')
+    def test_extension_filtering(self, mock_read_raw_bids, mock_find_matching_paths,
+                                 mock_get_entity_vals, mock_path_exists):
+        """Test file extension filtering."""
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01']
+
+        # Check that the function properly searches for supported extensions
+        mock_find_matching_paths.return_value = []
+
+        with self.assertRaises(FileNotFoundError):
+            BIDS_to_MNE('/fake/bids/path')
+
+        # Verify extensions were specified in the find_matching_paths call
+        call_args = mock_find_matching_paths.call_args[1]
+        self.assertIn('extensions', call_args)
+        self.assertTrue(len(call_args['extensions']) > 0)
+        self.assertIn('.vhdr', call_args['extensions'])  # BrainVision format
+        self.assertIn('.edf', call_args['extensions'])   # EDF format
+
+    @patch('bcipy.io.convert.os.path.exists')
+    @patch('bcipy.io.convert.get_entity_vals')
+    @patch('bcipy.io.convert.find_matching_paths')
+    @patch('bcipy.io.convert.read_raw_bids')
+    @patch('bcipy.io.convert.logger')
+    def test_debug_logging(self, mock_logger, mock_read_raw_bids, mock_find_matching_paths,
+                           mock_get_entity_vals, mock_path_exists):
+        """Test debug logging when skipping files due to task name mismatch."""
+        mock_path_exists.return_value = True
+        mock_get_entity_vals.return_value = ['01']
+
+        # Create mock BIDSPath objects with different tasks
+        mock_bids_path1 = MagicMock()
+        mock_bids_path1.task = 'RSVPCalibration'
+        mock_bids_path2 = MagicMock()
+        mock_bids_path2.task = 'OtherTask'
+        mock_find_matching_paths.return_value = [mock_bids_path1, mock_bids_path2]
+
+        # Mock the debug logging method specifically
+        mock_logger.debug = MagicMock()
+
+        # Create mock Raw object
+        mock_raw = MagicMock(spec=mne.io.Raw)
+        mock_read_raw_bids.return_value = mock_raw
+
+        BIDS_to_MNE('/fake/bids/path', task_name='RSVPCalibration')
+
+        # Check if debug was called for skipping a file
+        self.assertTrue(any('Skipping' in str(args) for args, _ in mock_logger.debug.call_args_list))
 
 
 if __name__ == '__main__':
