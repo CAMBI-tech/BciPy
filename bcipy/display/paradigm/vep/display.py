@@ -274,6 +274,43 @@ class VEPDisplay(Display):
         # Display the inquiry with symbols in their final positions
         self.draw_boxes()
         self.draw_static()
+
+        if self.chosen_boxes:
+            chosen_box_text = " ".join(self.chosen_boxes)
+        else:
+            chosen_box_text = " "  
+
+        chosen_message = visual.TextStim(
+            win=self.window,
+            text=chosen_box_text, 
+            font=self.stimuli_font,
+            pos=(0, 0),
+            height=0.2,
+            color='white',
+            colorSpace='rgb',
+            opacity=1.0,
+        )
+        chosen_message.draw()
+
+        box_numbers = ['1', '2', '3', '4']
+        for i in range(4):
+            box = self.text_boxes[i]
+            number_position = (
+                box.pos[0] - box.size[0] / 2 + 0.025,
+                box.pos[1] + box.size[1] / 2 - 0.05
+            )
+            number_text = visual.TextStim(
+                win=self.window,
+                text=box_numbers[i],
+                font=self.stimuli_font,
+                pos=number_position,
+                height=0.05,
+                color='white',
+                colorSpace='rgb',
+                opacity=1.0,
+            )
+            number_text.draw()
+
         self.window.flip()
 
     def set_stimuli_colors(self, stim_groups: List[StimProps]) -> None:
