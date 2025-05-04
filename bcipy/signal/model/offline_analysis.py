@@ -184,15 +184,15 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
                 window_range = list(range(start_idx, start_idx + trial_length))
                 triggers.append((sym, window_range))
 
-
-    groups: Dict[str, List[int]] = {}
+    #Maps STIMULANT_X to the list of the windows becuase each window is a list of integers
+    groups: Dict[str, List[List[int]]] = {}
     for sym, idx in triggers:
         #add index to corresponding stimulus group
         groups.setdefault(sym, []).append(idx)
     data, _ = vep_data.by_channel()
     # erp - channel_map = analysis_channels(channels, device_spec)
     channel_map = analysis_channels(vep_data.channels, device_spec)
-    #Fins what channel index are marked in channel_map
+    #Finds what channel index are marked in channel_map
     keep = [i for i,v in enumerate(channel_map) if v]
     #new list of channel names containing only O1, Oz, and O2
     channels = [vep_data.channels[i] for i in keep]
@@ -208,23 +208,33 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     #log.info(f"VEP template path - {path_to_template}")
     with open(path_to_template, 'w') as f:
         for sym_i in range(1, highest_stim_number + 1):
+            stimulant_number = sym_i - 1
             vep_indexes = groups.get(str(sym_i), [])
-            #Compute average, or none if no triggers for a box
-            if vep_indexes:
-                o1 = data[cmap['O1'], vep_indexes].mean()
-                oz = data[cmap['Oz'], vep_indexes].mean()
-                o2 = data[cmap['O2'], vep_indexes].mean()
-            else:
-                o1 = oz = o2 = None
 
-            o1_data = f"{o1:.4f}" if o1 is not None else "None"
-            oz_data = f"{oz:.4f}" if oz is not None else "None"
-            o2_data = f"{o2:.4f}" if o2 is not None else "None"
-            #Box indexes start at 0 so offset of 1
-            box_idx = sym_i - 1
-            f.write(f"01_box{box_idx}: {o1_data}\n")
-            f.write(f"0z_box{box_idx}: {oz_data}\n")
-            f.write(f"02_box{box_idx}: {o2_data}\n\n") #extra seperating line for boxes
+            if vep_indexes:
+                #Make array shape vep indexes
+                stim_trial_indexes = np.array(vep_indexes)
+                #Pull out each channel over all trials
+                o1_trials = data[cmap['O1'], stim_trial_indexes]
+                oz_trials = data[cmap['Oz'], stim_trial_indexes]
+                o2_trials = data[cmap['O2'], stim_trial_indexes]
+
+                #Compute per-sample means (length = trial_length)
+                o1_means = o1_trials.mean(axis=0)
+                oz_means = oz_trials.mean(axis=0)
+                o2_means = o2_trials.mean(axis=0)
+
+                #Formatting CSV
+                o1_str = ",".join(f"{v:.4f}" for v in o1_means)
+                oz_str = ",".join(f"{v:.4f}" for v in oz_means)
+                o2_str = ",".join(f"{v:.4f}" for v in o2_means)
+
+            else:
+                o1_str = oz_str = o2_str = ""
+
+            f.write(f"01_box{stimulant_number}: {o1_str}\n")
+            f.write(f"0z_box{stimulant_number}: {oz_str}\n")
+            f.write(f"02_box{stimulant_number}: {o2_str}\n\n") #extra seperating line for boxes
 
 
     #Template saved to CSV; no need to return template or figures
