@@ -4,7 +4,6 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-import json
 import re
 import uuid
 from datetime import datetime
@@ -14,22 +13,12 @@ from typing import Optional, List
 import mne_bids as biddy
 from tqdm import tqdm
 
-from bcipy.io.convert import ConvertFormat, convert_to_bids_drowsiness
-from bcipy.io.demo.anonymize import make_id
-from bcipy.io.load import BciPySessionTaskData
+from bcipy.io.convert import ConvertFormat, convert_to_bids_drowsiness, convert_eyetracking_to_bids, \
+    convert_to_bids
+from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
+from bcipy.io.utils import extract_task_type, extract_session_type, sort_by_timestamp
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
-
-
-def get_session_num(filename: str) -> int:
-    """Extract the session number from the filename."""
-    # Example filename: "CSL_RSVPKeyboard_DRS001_1_IRB15331_ERPCalibration_2017-03-02-T-08-12.csv"
-    match = re.search(r'_([0-9]+)_IRB', filename)
-    if match:
-        run_number = int(match.group(1))
-        return run_number
-    else:
-        raise ValueError("Session number not found in filename")
 
 
 def load_historical_bcipy_data(directory: str, experiment_id: str,
@@ -58,33 +47,36 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
         # pull out the user id. This is the name of the folder
         user_id = participant.name
 
-        # To group task runs by task type
-        for i, task_run in enumerate(participant.iterdir()):
-            if not task_run.is_dir():
+        for ses_id, ses_path in enumerate(participant.iterdir()):
+            if not ses_path.is_dir():
                 continue
 
-            task_type = "CALIBRATION"
+            tasks = [task_run for task_run in ses_path.iterdir() if task_run.is_dir()]
+            sorted_tasks = sort_by_timestamp(tasks)
 
-            session_id = get_session_num(str(task_run))
-            session_data = BciPySessionTaskData(
-                path=task_run,
-                user_id=user_id,
-                experiment_id=experiment_id,
-                session_id=session_id,
-                run=1,
-                task_name=task_type
-            )
-            experiment_data.append(session_data)
+            for i, task_run in enumerate(sorted_tasks):
+                task_type = extract_session_type(task_run)
+
+                session_data = BciPySessionTaskData(
+                    path=task_run,
+                    user_id=user_id,
+                    experiment_id=experiment_id,
+                    session_id=ses_id,
+                    run=i,
+                    task_name=task_type
+                )
+                experiment_data.append(session_data)
 
     sorted_experiment_data = sorted(experiment_data, key=lambda x: str(x.path))
     return sorted_experiment_data
+
 
 def convert_experiment_to_bids(
         directory: str,
         experiment_id: str,
         format: ConvertFormat = ConvertFormat.BV,
         output_dir: Optional[str] = None,
-        include_eye_tracker: bool = False
+        include_eye_tracker: bool = True
 ) -> Path:
     """Converts the data in the study folder to BIDS format."""
 
@@ -92,36 +84,50 @@ def convert_experiment_to_bids(
         directory,
         experiment_id=""
     )
+
+    # # Use for data post-2.0rc4
+    # experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
+
     print(f"Found {len(experiment_data)} sessions in folder ...")
 
     if not output_dir:
         output_dir = directory
 
     errors = []
-    log_file_path = "".join([output_dir, f"{experiment_id}_conversion_log.txt"])
-    id_map = {}
+    log_file_path = Path(output_dir) / f"{experiment_id}_conversion_log.log"
     with open(log_file_path, "w") as log_file:
 
         for data in tqdm(experiment_data, total=len(experiment_data), desc="Converting to BIDS",
-                         unit="session"):
+                         unit="dir"):
             try:
-                new_name = make_id(data.user_id)
-                id_map[data.user_id] = new_name
-                bids_path = convert_to_bids_drowsiness(
+                bids_path = convert_to_bids(
                     data_dir=data.path,
-                    participant_id=new_name,
+                    participant_id=data.user_id,
                     session_id=data.session_id,
-                    run_id=str(1),
+                    run_id=data.run,
                     task_name=data.task_name,
                     output_dir=f'{output_dir}/bids_{experiment_id}/',
                     format=format,
                 )
+
+                if include_eye_tracker:
+                    # Convert the eye tracker data
+                    # The eye tracker data is in the same folder as the EEG data, but should be saved in a different folder
+                    bids_path = Path(bids_path).parent
+                    convert_eyetracking_to_bids(
+                        raw_data_path=data.path,
+                        participant_id=data.user_id,
+                        session_id=data.session_id,
+                        run_id=data.run,
+                        output_dir=str(bids_path),
+                        task_name=data.task_name
+                    )
             except Exception as e:
-                error_msg = f"[{datetime.now()}] Error converting {data.path}:\n{str(e)}\n\n"
+                error_msg = f"Error {data.path}:\n{str(e)}\n\n"
                 log_file.write(error_msg)
                 errors.append(data.path)
 
-        print("\n--------------------")
+        print("\n-------------------- Conversion Summary --------------------\n")
         if errors:
             print(f"{len(errors)} session(s) failed. Details saved in: {log_file_path}")
         else:
@@ -131,18 +137,13 @@ def convert_experiment_to_bids(
     print(f"Data converted to BIDS format in: {bids_output}/")
     print("--------------------")
 
-    # Save the mapping
-    map_path = bids_output / "id_map.json"
-    with open(map_path, "w") as f:
-        json.dump(id_map, f, indent=2)
-
     return bids_output
 
 
 if __name__ == "__main__":
-    path = "/Users/srikarananthoju/cambi/data/drowsinessData"
+    path = "/Users/srikarananthoju/cambi/data/SSPI_Main"
     salt = str(uuid.uuid4())[:4]
-    experiment_id = "drows_" + salt
+    experiment_id = "sspi_experiment_" + salt
     # convert a study to BIDS format
     bids_path_root = convert_experiment_to_bids(
         path,

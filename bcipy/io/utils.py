@@ -1,5 +1,5 @@
 import re
-from datetime import time
+from datetime import time, datetime
 
 
 def extract_task_type(filename: str, default: str = "Unknown") -> str:
@@ -22,20 +22,25 @@ def extract_task_type(filename: str, default: str = "Unknown") -> str:
 
 
 def extract_session_type(filename: str, default: str = "Unknown") -> str:
-    filename_ex = "005_Matrix_Calibration_1716331369"
+    filename_ex = "/Users/srikarananthoju/cambi/data/jitter/0012/0012_RSVP_Calibration_10hr12min09sec"
 
-    pattern = r'^\d+_([A-Za-z]+(?:_[A-Za-z]+)*)_\d+$'
-    match = re.search(pattern, filename, re.IGNORECASE)
+    # pattern = r'^\d+_([A-Za-z]+(?:_[A-Za-z]+)*)_\d+$'
+    # pattern = r'_(\w+_\w+)_\d+$'
+    pattern = r'\d+_RSVP_([A-Za-z]+)_+'
+    match = re.search(pattern, str(filename), re.IGNORECASE)
     if match:
         session_type = match.group(1)
         # Normalize the task type to uppercase
+        session_type = session_type.replace('_', '')
         session_type = session_type.upper()
         return session_type
     else:
         return default
 
+
 def extract_timestamp(filename: str) -> time:
     """Extracts the timestamp (last number) from the filename."""
+    filename = str(filename)
     match = re.search(r'(\d{1,2})hr(\d{1,2})min(\d{1,2})sec$', filename)
     if match:
         hours, minutes, seconds = map(int, match.groups())
@@ -44,29 +49,18 @@ def extract_timestamp(filename: str) -> time:
     else:
         raise ValueError(f"No timestamp found in {filename}")
 
+# def extract_timestamp(filename: str) -> datetime:
+#     ex = ["006_Matrix_Calibration_1728937425", "006_Matrix_CopyPhrase_1728938187"]
+#     pattern = r'_(\d+)$'
+#     match = re.search(pattern, str(filename))
+#     if match:
+#         match = int(match.group(1))
+#     else:
+#         raise ValueError(f"No timestamp found in {filename}")
+#     dt: datetime = datetime.fromtimestamp(match)
+#     return dt
+
+
 def sort_by_timestamp(file_list):
     """Sorts filenames by extracted timestamp."""
     return sorted(file_list, key=extract_timestamp)
-
-if __name__ == "__main__":
-    filenames = [
-        "007_RSVP_CopyPhrase_IPO_14hr43min47sec",
-        "007_RSVP_CopyPhrase_IPO_14hr25min31sec",
-        "007_RSVP_CopyPhrase_IPO_14hr37min38sec",
-        "007_RSVP_CopyPhrase_IPS_14hr50min36sec",
-        "007_RSVP_CopyPhrase_IPO_14hr32min45sec",
-    ]
-
-    filenames_2 = [
-        "0010_Matrix_Calibration_1715118261",
-        "0010_RSVP_Calibration_1715122073",
-        "0010_Matrix_CopyPhrase_1715119811",
-        "0010_RSVP_CopyPhrase_1715122889",
-        "0010_Matrix_CopyPhrase_1715120795",
-        "0010_RSVP_CopyPhrase_1715123836",
-    ]
-
-    filenames_2 = sort_by_timestamp(filenames_2)
-    for filename in filenames_2:
-        task_type = extract_session_type(filename)
-        print(f"Filename: {filename}, Session Type: {task_type}")

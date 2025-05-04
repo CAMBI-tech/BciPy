@@ -16,12 +16,13 @@ from tqdm import tqdm
 from bcipy.io.convert import ConvertFormat, convert_to_bids_drowsiness, convert_eyetracking_to_bids, \
     convert_to_bids
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
+from bcipy.io.utils import extract_task_type, extract_session_type, sort_by_timestamp, \
+    extract_timestamp
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
-
 def load_historical_bcipy_data(directory: str, experiment_id: str,
-                               task_name: str = 'Calibration') -> List[BciPySessionTaskData]:
+                               task_name: str = 'MatrixCalibration') -> List[BciPySessionTaskData]:
     """Load the data from the given directory.
 
     The expected directory structure is:
@@ -46,27 +47,21 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
         # pull out the user id. This is the name of the folder
         user_id = participant.name
 
-        # To group task runs by task type
-        for i, task_run in enumerate(participant.iterdir()):
-            if not task_run.is_dir():
-                continue
-
-            task_type = "CALIBRATION"
-
-            session_id = i
+        task_runs = [task_run for task_run in participant.iterdir() if task_run.is_dir()]
+        task_runs = sorted(task_runs, key=lambda x: extract_timestamp(x))
+        for i, task_run in enumerate(task_runs):
+            task_name = extract_session_type(str(task_run))
             session_data = BciPySessionTaskData(
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
-                session_id=session_id,
+                session_id=i,
                 run=1,
-                task_name=task_type
+                task_name=task_name
             )
             experiment_data.append(session_data)
 
-    sorted_experiment_data = sorted(experiment_data, key=lambda x: str(x.path))
-    return sorted_experiment_data
-
+    return experiment_data
 
 def convert_experiment_to_bids(
         directory: str,
@@ -85,7 +80,10 @@ def convert_experiment_to_bids(
     # # Use for data post-2.0rc4
     # experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
 
-    print(f"Found {len(experiment_data)} sessions in folder ...")
+    print(f"Found {len(experiment_data)} sessions in folder {directory}")
+    if not experiment_data:
+        print("No data found. Exiting.")
+        exit(1)
 
     if not output_dir:
         output_dir = directory
@@ -95,30 +93,17 @@ def convert_experiment_to_bids(
     with open(log_file_path, "w") as log_file:
 
         for data in tqdm(experiment_data, total=len(experiment_data), desc="Converting to BIDS",
-                         unit="session"):
+                         unit="dir"):
             try:
                 bids_path = convert_to_bids(
                     data_dir=data.path,
                     participant_id=data.user_id,
                     session_id=data.session_id,
-                    run_id=str(1),
+                    run_id=data.run,
                     task_name=data.task_name,
                     output_dir=f'{output_dir}/bids_{experiment_id}/',
                     format=format,
                 )
-
-                if include_eye_tracker:
-                    # Convert the eye tracker data
-                    # The eye tracker data is in the same folder as the EEG data, but should be saved in a different folder
-                    bids_path = Path(bids_path).parent
-                    convert_eyetracking_to_bids(
-                        raw_data_path=data.path,
-                        participant_id=data.user_id,
-                        session_id=data.session_id,
-                        run_id=data.run,
-                        output_dir=str(bids_path),
-                        task_name=data.task_name
-                    )
             except Exception as e:
                 error_msg = f"Error {data.path}:\n{str(e)}\n\n"
                 log_file.write(error_msg)
@@ -138,11 +123,10 @@ def convert_experiment_to_bids(
 
 
 if __name__ == "__main__":
-    path = "/Users/srikarananthoju/cambi/data/SSPI_test"
+    path = "/Users/srikarananthoju/cambi/data/jitter"
     salt = str(uuid.uuid4())[:4]
-    experiment_id = "sspi_experiment_" + salt
+    experiment_id = "jitter_experiment_" + salt
     # convert a study to BIDS format
-    breakpoint()
     bids_path_root = convert_experiment_to_bids(
         path,
         experiment_id,
@@ -155,7 +139,7 @@ if __name__ == "__main__":
     # Updating dataset description file
     description_params = {
         "path": bids_path_root,
-        "name": "CAMBI_Drowsiness_Experiment",
+        "name": "CAMBI_Jitter_Experiment",
         "dataset_type": "raw",
         "data_license": None,
         "authors": "Daniel Klee, Betts Peters, Michelle Kinsela, Tab Memmott, Srikar,  MFO",
