@@ -523,6 +523,7 @@ def BIDS_to_MNE(
         raise FileNotFoundError(f"No matching BIDS files found in '{bids_root_path}'.")
 
     raw_data = []
+    data = {}
     for bid_path in bid_paths:
         if task_name and bid_path.task != task_name:
             logger.debug(f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
@@ -530,10 +531,21 @@ def BIDS_to_MNE(
 
         logger.info(f"Reading BIDS file: {bid_path}")
 
+        # pull out the user_id, session_id, and run_id from the BIDS path
+        user_id = bid_path.subject
+        session_id = bid_path.session
+        run_id = bid_path.run
+
+        if user_id not in data:
+            data[user_id] = {}
+        if session_id not in data[user_id]:
+            data[user_id][session_id] = {}
+
         # Read the raw data from the BIDS path
         raw = read_raw_bids(bid_path)
+        data[user_id][session_id][run_id] = raw
         raw_data.append(raw)
 
     logger.info(f"Successfully loaded {len(raw_data)} BIDS files.")
 
-    return raw_data
+    return data

@@ -20,22 +20,27 @@ from mne.viz import plot_compare_evokeds
 try:
     path_to_bids = load_experimental_data()
 
-    # Load BIDS data using MNE-Python and MNE-BIDS. This returns a list of raw data objects.
+    # Load BIDS data using MNE-Python and MNE-BIDS. This returns a dict of raw data objects.
     # The data is loaded from the BIDS directory specified in the path_to_bids variable.
     # task_name = 'Calibration'  # Specify the task name to load data for.
     # This will filter the data to only include the specified task.
     task_name = None  # Set to None to load all tasks.
     raw_data_files = BIDS_to_MNE(path_to_bids, task_name=task_name)
 
-    raw_data = raw_data_files[0]  # Get the first raw data object from the list.
-
+    participant_ids = list(raw_data_files.keys())
+    first_participant_data = raw_data_files[participant_ids[0]]
+    session_ids = list(first_participant_data.keys())
+    first_session_data = first_participant_data[session_ids[0]]
+    run_ids = list(first_session_data.keys())
+    first_run_data = first_session_data[run_ids[0]] 
+    raw_data = first_run_data  # Get the first raw data object.
     # to see where the data is stored, you can use the following command:
     # print(raw_data.filenames)
 
     # PLOT THE RAW DATA
     raw_data.load_data()
-    raw_data.filter(1, 20)  # Apply a bandpass filter to the data (1-20 Hz).
-    raw_data.plot()  #
+    raw_data.filter(1, 20)
+    raw_data.plot() 
 
     # EPOCH THE DATA / CREATE ERPS
     # epoch the data using the events from the raw data object.
@@ -55,15 +60,7 @@ try:
     target_evoked = target_epochs.average()
 
     # PLOT THE EVOKED DATA
-    plot_compare_evokeds(
-        dict(
-            nontarget=non_target_evoked,
-            target=target_evoked),
-        title='Evoked Responses for Non-Target and Target Events',
-        show_sensors=True,
-        ci=0.95,
-        combine='mean',
-        invert_y=True)
+    plot_compare_evokeds(dict(nontarget=non_target_evoked, target=target_evoked), title='Evoked Responses for Non-Target and Target Events', show_sensors=True, ci=0.95, combine='mean', invert_y=True)
     target_evoked.plot_joint()
     non_target_evoked.plot_joint()
 
