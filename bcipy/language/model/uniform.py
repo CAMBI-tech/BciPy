@@ -1,30 +1,34 @@
 """Uniform language model"""
-from typing import Dict, List, Tuple, Union, Optional
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
-from bcipy.language.main import LanguageModel, ResponseType
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.exceptions import InvalidSymbolSetException
+from bcipy.language.main import CharacterLanguageModel
 
 
-class UniformLanguageModel(LanguageModel):
+class UniformLanguageModel(CharacterLanguageModel):
     """Language model in which probabilities for symbols are uniformly
     distributed.
 
     Parameters
     ----------
-        response_type - SYMBOL only
-        symbol_set - optional specify the symbol set, otherwise uses DEFAULT_SYMBOL_SET
+        None
     """
 
-    def __init__(self,
-                 response_type: Optional[ResponseType] = None,
-                 symbol_set: Optional[List[str]] = None):
-        super().__init__(response_type=response_type, symbol_set=symbol_set)
+    def __init__(self):
+        self.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-    def supported_response_types(self) -> List[ResponseType]:
-        return [ResponseType.SYMBOL]
+    def set_symbol_set(self, symbol_set: List[str]) -> None:
+        """Updates the symbol set of the model. Must be called prior to prediction"""
+        self.symbol_set = symbol_set
 
-    def predict(self, evidence: Union[str, List[str]]) -> List[Tuple]:
+        self.model_symbol_set = [ch for ch in symbol_set]
+        if BACKSPACE_CHAR in symbol_set:
+            self.model_symbol_set.remove(BACKSPACE_CHAR)
+
+    def predict_character(self, evidence: Union[str, List[str]]) -> List[Tuple]:
         """
         Using the provided data, compute probabilities over the entire symbol.
         set.
@@ -37,18 +41,19 @@ class UniformLanguageModel(LanguageModel):
         -------
             list of (symbol, probability) tuples
         """
-        probs = equally_probable(self.symbol_set)
-        return list(zip(self.symbol_set, probs))
 
-    def update(self) -> None:
-        """Update the model state"""
+        if not self.symbol_set:
+            raise InvalidSymbolSetException(
+                "symbol set must be set prior to requesting predictions.")
 
-    def load(self) -> None:
-        """Restore model state from the provided checkpoint"""
+        probs = equally_probable(self.model_symbol_set)
+        return list(zip(self.model_symbol_set, probs)) + [(BACKSPACE_CHAR, 0.0)
+                                                          ]
 
 
-def equally_probable(alphabet: List[str],
-                     specified: Optional[Dict[str, float]] = None) -> List[float]:
+def equally_probable(
+        alphabet: List[str],
+        specified: Optional[Dict[str, float]] = None) -> List[float]:
     """Returns a list of probabilities which correspond to the provided
     alphabet. Unless overridden by the specified values, all items will
     have the same probability. All probabilities sum to 1.0.

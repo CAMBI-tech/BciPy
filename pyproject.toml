@@ -24,6 +24,7 @@ classifiers = [
 ]
 
 dependencies = [
+    "textslinger~=0.1.1",
     "attrdict3==2.0.2",
     "EDFlib-Python==1.0.8",
     "transformers==4.47.0",
@@ -31,6 +32,7 @@ dependencies = [
     "construct==2.8.14",
     "mne==1.6.1",
     "mne-bids==0.14.0",
+    "pyobjc==7.3;platform_system=='Darwin'",
     "pybv==0.7.5",
     "pyo==1.0.5",
     "pyglet<=1.5.27,>=1.4",
@@ -57,7 +59,6 @@ dependencies = [
     "rich==13.9.4",
     "reportlab==4.2.0",
     "tables==3.7.0",
-    "kenlm==0.1",
     "pyWinhook==1.6.2;python_version=='3.9' and platform_system=='Windows'",
     "WxPython==4.2.1;platform_system!='Linux'",
 ]
@@ -181,7 +182,6 @@ exclude = [
     "scripts",
     "acquisition",
     "display.paradigm",
-    "language",
     "signal.model",
     "task.control",
     "core.parameters",

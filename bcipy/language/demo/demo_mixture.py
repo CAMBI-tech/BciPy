@@ -1,22 +1,36 @@
-from bcipy.language.model.mixture import MixtureLanguageModel
-from bcipy.core.symbols import alphabet
-from bcipy.language.main import ResponseType
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET
 
 
 if __name__ == "__main__":
-    symbol_set = alphabet()
-    response_type = ResponseType.SYMBOL
-    lm = MixtureLanguageModel(response_type, symbol_set)
+    # Load the default mixture model from lm_params.json
+    lm = MixtureLanguageModelAdapter()
+    lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-    next_char_pred = lm.state_update(list("does_it_make_sen"))
-    print(next_char_pred)
+    print("Target sentence: does_it_make_sense\n")
+
+    next_char_pred = lm.predict_character(list("does_it_make_sen"))
+    print("Context: does_it_make_sen")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sens"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict_character(list("does_it_make_sens"))
+    print("Context: does_it_make_sens")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("E") + 1
-    print(correct_char_rank)
-    next_char_pred = lm.state_update(list("does_it_make_sense"))
-    print(next_char_pred)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    next_char_pred = lm.predict_character(list("does_it_make_sense"))
+    print("Context: does_it_make_sense")
+    print(f"Predictions: {next_char_pred}")
     correct_char_rank = [c[0] for c in next_char_pred].index("_") + 1
-    print(correct_char_rank)
+    print(f"Correct character rank: {correct_char_rank}\n")
+
+    print("Target sentence: i_like_zebras\n")
+
+    next_char_pred = lm.predict_character(list("i_like_zebra"))
+    print("Context: i_like_zebra")
+    print(f"Predictions: {next_char_pred}")
+    correct_char_rank = [c[0] for c in next_char_pred].index("S") + 1
+    print(f"Correct character rank: {correct_char_rank}\n")

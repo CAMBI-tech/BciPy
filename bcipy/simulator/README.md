@@ -29,6 +29,7 @@ optional arguments:
                         Sampler args structured as a JSON string.
   -o OUTPUT, --output OUTPUT
                         Sim output path
+  -v, --verbose         Verbose mode for more detailed logging.
 ```
 
 For example,
@@ -125,9 +126,9 @@ optional arguments:
                         Sim output path
 ```
 
+
 ## Current Limitations
 
-- Only provides EEG support
 - Only one sampler maybe provided for all devices. Ideally we should support a different sampling strategy for each device.
 - Only Copy Phrase is currently supported.
 
@@ -140,3 +141,93 @@ python bcipy/simulator/demo/demo_group_simulation.py
 ```
 
 See the demo file for more details on how to configure the simulation.
+
+## Multimodal
+
+The `switch_data_processor` and `switch_model` are used to demonstrate a multimodal simulations using a button/switch as an example. To run a simulation with these inputs, you will need to perform the following steps:
+
+1. Ensure that the devices.json file has an entry for a switch
+
+    ```
+    {
+        "name": "Switch",
+        "content_type": "MARKERS",
+        "channels": [
+            { "name": "Marker", "label": "Marker" }
+        ],
+        "sample_rate": 0.0,
+        "description": "Switch used for button press inputs",
+        "excluded_from_analysis": [],
+        "status": "active",
+        "static_offset": 0.0
+    }
+    ```
+
+2. Ensure that the switch signal model can be loaded or create a switch signal model. To create a new one:
+
+    ```
+    from pathlib import Path
+    from bcipy.acquisition.devices import preconfigured_device
+    from bcipy.io.save import save_model
+    from bcipy.signal.model.base_model import SignalModelMetadata
+    from bcipy.signal.model.switch_model import SwitchModel
+
+    dirname = "" # TODO: enter the directory
+    model = SwitchModel()
+    # name should match devices.json spec. Alternatively, use bcipy.acquisition.datastream.mock.switch.switch_device()
+    device = preconfigured_device("Switch")
+    model.metadata = SignalModelMetadata(device_spec=device, evidence_type="BTN", transform=None)
+    save_model(model, Path(dirname, "switch_model.pkl"))
+    ```
+
+3. Set the appropriate simulation parameters in the parameters.json file.
+
+    - set the `acq_mode` parameter to 'EEG+MARKERS'.
+    - ensure that `preview_inquiry_progress_method` parameter is set to '1' or '2'.
+    - You may also want to set the `summarize_session` parameter to `true` to see how the evidences get combined during decision-making.
+
+4. Ensure that the data directories have a raw data file (csv) for markers in addition to the EEG data. If your data does not have marker data, you can extract this from the triggers.txt file using the script `bcipy.simulator.util.generate_marker_data`. If the task was run with Inquiry Preview, the script can use the button press events recoreded in the trigger file. Otherwise you can use the `--mock` flag along with a parameters file to mock what a raw data file would look like if the user pressed the button according to the configured button press mode.
+
+    ```
+    $ python -m bcipy.simulator.util.generate_marker_data -h
+    usage: generate_marker_data.py [-h] [-m] [-p PARAMETERS] data_folder
+
+    Create raw marker data for a given session.
+
+    positional arguments:
+      data_folder           Data directory (must contain triggers.txt file)
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -m, --mock            Mock data; use when button presses are not recorded in trigger file.
+      -p PARAMETERS, --parameters PARAMETERS
+                            Optional parameters file to use when mocking data.
+    ```
+
+5. Run a simulation.
+
+    - Set the simulation parameters for both the EEG and the Button models (.pkl files).
+    - Use the InquirySampler
+
+Run with verbose mode and inspect the detailed run logs to ensure that the evidence is being sampled correctly.
+
+### Expected Behavior
+
+Along with the 'eeg' evidence, the output session.json (and session.xlsx) should record 'btn' evidence for each inquiry. These evidences should be fused
+to provide the 'likelihood' values.
+
+For inquiries in which the target is shown:
+
+- evidence values for symbols in the inquiry should be boosted relative to non-inquiry symbols (default values are 0.95 for boosted and 0.05 for degraded).
+
+For inquiries in which the target not shown:
+
+- evidence values for symbols in inquiry should be degraded
+
+Note that the progress method (`preview_inquiry_progress_method` parameter) doesn't matter if it is set to "press to accept" or "press to skip", since the SwitchDataProcessor interprets this and outputs a 1.0 for inquiries that should be supported and 0.0 for those that shouldn't.
+
+### Multimodal Limitations
+
+- A `preview_inquiry_progress_method` of 0 is currently not supported and an exception will be thrown. Ideally, all inquiries should get an evidence value of 1.0 (no change) with this mode.
+- Button evidence only works correctly with the InquirySampler. This is due to all trials in the same inquiry receiving the same value.
+

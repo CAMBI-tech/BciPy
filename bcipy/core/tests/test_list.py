@@ -1,7 +1,8 @@
 """Tests for list processing utilities"""
 import unittest
 
-from bcipy.core.list import destutter, expanded, find_index, grouper, swapped
+from bcipy.core.list import (destutter, expanded, find_index, grouper,
+                             pairwise, swapped)
 
 
 class TestListUtilities(unittest.TestCase):
@@ -89,6 +90,13 @@ class TestListUtilities(unittest.TestCase):
     def test_expanded(self):
         """Test expanded function."""
         self.assertEqual([1, 2, 3, 3, 3], expanded([1, 2, 3], length=5))
+
+    def test_pairwise(self):
+        """Test pairwise iterator"""
+        iterable = 'ABCDEFG'
+        response = pairwise(iterable)
+        expected = [('A', 'B'), ('B', 'C'), ('C', 'D'), ('D', 'E'), ('E', 'F'), ('F', 'G')]
+        self.assertListEqual(expected, list(response))
 
 
 if __name__ == '__main__':

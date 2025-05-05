@@ -13,8 +13,7 @@ from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
 
-def load_historical_bcipy_data(directory: str, experiment_id: str,
-                               task_name: str = 'MatrixCalibration') -> List[BciPySessionTaskData]:
+def load_historical_bcipy_data(directory: str, experiment_id: str) -> List[BciPySessionTaskData]:
     """Load the data from the given directory.
 
     The expected directory structure is:
@@ -39,16 +38,34 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
         # pull out the user id. This is the name of the folder
         user_id = participant.name
 
+        run_tasks = {}
         for task_run in participant.iterdir():
             if not task_run.is_dir():
                 continue
+
+            extracted_task_paradigm = task_run.name.split('_')[1]
+            extracted_task_mode = task_run.name.split('_')[2]
+            if extracted_task_mode == 'Copy':
+                task_name = 'CopyPhrase'
+                extracted_task_time = task_run.name.split('_')[8]
+            else:
+                extracted_task_time = task_run.name.split('_')[7]
+
+            # add the tasks to the list with the time as the key
+            run_tasks[extracted_task_time] = [task_run, f'{extracted_task_paradigm}{extracted_task_mode}']
+
+        # sort the tasks by time
+        sorted_tasks = sorted(run_tasks.items())
+        # print(sorted_tasks)
+        for i, (_, task_info) in enumerate(sorted_tasks):
+            task_run, task_name = task_info
 
             session_data = BciPySessionTaskData(
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
                 session_id=1,
-                run=1,
+                run=i + 1,
                 task_name=task_name
             )
             experiment_data.append(session_data)
@@ -64,9 +81,9 @@ def convert_experiment_to_bids(
     """Converts the data in the study folder to BIDS format."""
 
     # Use for data pre-2.0rc4
-    # experiment_data = load_historical_bcipy_data(
-    #     directory,
-    #     experiment_id=experiment_id)
+    experiment_data = load_historical_bcipy_data(
+        directory,
+        experiment_id=experiment_id)
 
     # Use for data post-2.0rc4
     experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
@@ -129,7 +146,7 @@ if __name__ == '__main__':
         '-e',
         '--experiment',
         help='Experiment ID to convert',
-        default='Matrix Multimodal Experiment',
+        default='BciPyDefaultExperiment',
     )
     parser.add_argument(
         '-et',

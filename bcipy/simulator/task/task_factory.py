@@ -7,7 +7,7 @@ from bcipy.helpers.language_model import init_language_model
 from bcipy.io.load import load_json_parameters, load_signal_model
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.data_engine import RawDataEngine
-from bcipy.simulator.data.data_process import init_data_processor
+from bcipy.simulator.data.processor_registry import init_data_processor
 from bcipy.simulator.data.sampler import Sampler, TargetNontargetSampler
 from bcipy.simulator.task.copy_phrase import SimulatorCopyPhraseTask
 from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME

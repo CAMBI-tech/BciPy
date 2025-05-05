@@ -7,8 +7,10 @@ import numpy as np
 
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.helpers.acquisition import analysis_channels
+from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import TrialReshaper
+from bcipy.display.main import ButtonPressMode
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.signal.model import SignalModel
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
@@ -27,7 +29,10 @@ class EvidenceEvaluator:
         signal_model: model trained using a calibration session of the same user.
     """
 
-    def __init__(self, symbol_set: List[str], signal_model: SignalModel):
+    def __init__(self,
+                 symbol_set: List[str],
+                 signal_model: SignalModel,
+                 parameters: Optional[Parameters] = None):
         assert signal_model.metadata, "Metadata missing from signal model."
         device_spec = signal_model.metadata.device_spec
         assert ContentType(
@@ -60,8 +65,11 @@ class EEGEvaluator(EvidenceEvaluator):
     consumes = ContentType.EEG
     produces = EvidenceType.ERP
 
-    def __init__(self, symbol_set: List[str], signal_model: SignalModel):
-        super().__init__(symbol_set, signal_model)
+    def __init__(self,
+                 symbol_set: List[str],
+                 signal_model: SignalModel,
+                 parameters: Optional[Parameters] = None):
+        super().__init__(symbol_set, signal_model, parameters)
 
         self.channel_map = analysis_channels(self.device_spec.channels,
                                              self.device_spec)
@@ -111,7 +119,8 @@ class EEGEvaluator(EvidenceEvaluator):
             window_length - The length of the time between stimuli presentation
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
-        return self.signal_model.compute_likelihood_ratio(data, symbols, self.symbol_set)
+        return self.signal_model.compute_likelihood_ratio(
+            data, symbols, self.symbol_set)
 
 
 class GazeEvaluator(EvidenceEvaluator):
@@ -125,8 +134,11 @@ class GazeEvaluator(EvidenceEvaluator):
     consumes = ContentType.EYETRACKER
     produces = EvidenceType.EYE
 
-    def __init__(self, symbol_set: List[str], signal_model: SignalModel):
-        super().__init__(symbol_set, signal_model)
+    def __init__(self,
+                 symbol_set: List[str],
+                 signal_model: SignalModel,
+                 parameters: Optional[Parameters] = None):
+        super().__init__(symbol_set, signal_model, parameters)
 
         self.channel_map = analysis_channels(self.device_spec.channels,
                                              self.device_spec)
@@ -178,7 +190,79 @@ class GazeEvaluator(EvidenceEvaluator):
         data = self.preprocess(raw_data, times, target_info, window_length)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
-        return self.signal_model.evaluate_likelihood(data)  # multiplication over the inquiry
+        return self.signal_model.evaluate_likelihood(
+            data)  # multiplication over the inquiry
+
+
+class SwitchEvaluator(EvidenceEvaluator):
+    """EvidenceEvaluator that extracts symbol likelihoods from raw Switch data.
+
+    Parameters
+    ----------
+        symbol_set: set of possible symbols presented
+        signal_model: trained signal model
+    """
+    consumes = ContentType.MARKERS
+    produces = EvidenceType.BTN
+
+    def __init__(self,
+                 symbol_set: List[str],
+                 signal_model: SignalModel,
+                 parameters: Optional[Parameters] = None):
+        super().__init__(symbol_set, signal_model, parameters)
+        self.button_press_mode = ButtonPressMode(
+            parameters.get('preview_inquiry_progress_method'))
+        self.trial_count = parameters.get('stim_length')
+
+        if self.button_press_mode == ButtonPressMode.NOTHING:
+            raise AssertionError((
+                "Button press mode not supported.",
+                "To run without button press evidence set the acq_mode to exclude MARKERS."
+            ))
+
+    def preprocess(self, raw_data: np.ndarray, times: List[float],
+                   target_info: List[str], window_length: float) -> np.ndarray:
+        """Preprocess the inquiry data.
+
+        Determines the return data based on whether the switch was pressed
+        during the inquiry and the configured ButtonPressMode.
+        """
+        switch_was_pressed = np.any(raw_data)
+
+        # shape: (channels/1, trials/trial_count, samples/1)
+        data_shape = (1, self.trial_count, 1)
+        ones = np.ones(data_shape)
+        zeros = np.zeros(data_shape)
+
+        # Inquiries with 1.0s will be upgraded/supported by the model probabilities.
+        rules = {
+            ButtonPressMode.ACCEPT:
+            lambda: ones if switch_was_pressed else zeros,
+            ButtonPressMode.REJECT:
+            lambda: ones if not switch_was_pressed else zeros
+        }
+        return rules[self.button_press_mode]()
+
+    # pylint: disable=arguments-differ
+    def evaluate(self, raw_data: np.ndarray, symbols: List[str],
+                 times: List[float], target_info: List[str],
+                 window_length: float) -> np.ndarray:
+        """Evaluate the evidence.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            symbols - symbols displayed in the inquiry
+            times - timestamps associated with each symbol
+            target_info - target information about the stimuli;
+                ex. ['nontarget', 'nontarget', ...]
+            window_length - The length of the time between stimuli presentation
+        """
+        data = self.preprocess(raw_data, times, target_info, window_length)
+        probs = self.signal_model.compute_likelihood_ratio(
+            data, symbols, self.symbol_set)
+        return probs
 
 
 def get_evaluator(
@@ -224,9 +308,11 @@ def find_matching_evaluator(
     return get_evaluator(content_type, evidence_type)
 
 
-def init_evidence_evaluator(symbol_set: List[str],
-                            signal_model: SignalModel) -> EvidenceEvaluator:
+def init_evidence_evaluator(
+        symbol_set: List[str],
+        signal_model: SignalModel,
+        parameters: Optional[Parameters] = None) -> EvidenceEvaluator:
     """Find an EvidenceEvaluator that matches the given signal_model and
     initialize it."""
     evaluator_class = find_matching_evaluator(signal_model)
-    return evaluator_class(symbol_set, signal_model)
+    return evaluator_class(symbol_set, signal_model, parameters)

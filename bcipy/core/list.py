@@ -78,3 +78,15 @@ def expanded(lst: List[Any],
         item = fill(lst) if callable(fill) else fill
         return lst + ([item] * times)
     return lst
+
+
+def pairwise(iterable):
+    """
+    pairwise('ABCDEFG') → AB BC CD DE EF FG
+    https://docs.python.org/3/library/itertools.html#itertools.pairwise
+    """
+    iterator = iter(iterable)
+    a = next(iterator, None)
+    for b in iterator:
+        yield a, b
+        a = b
