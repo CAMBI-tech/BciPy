@@ -340,7 +340,10 @@ class BciPySessionTaskData:
 
         self.user_id = user_id
         self.experiment_id = experiment_id.replace('_', '')
-        self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
+        if isinstance(session_id, str):
+            self.session_id = session_id
+        else:
+            self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
         self.date_time = date_time
         self.date = date
         self.run = f'0{str(run)}' if run < 10 else str(run)

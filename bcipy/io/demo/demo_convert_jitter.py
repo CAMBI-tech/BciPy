@@ -17,7 +17,7 @@ from bcipy.io.convert import ConvertFormat, convert_to_bids_drowsiness, convert_
     convert_to_bids
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 from bcipy.io.utils import extract_task_type, extract_session_type, sort_by_timestamp, \
-    extract_timestamp
+    extract_timestamp_jitter, extract_jitter_type
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']
 
@@ -48,14 +48,24 @@ def load_historical_bcipy_data(directory: str, experiment_id: str,
         user_id = participant.name
 
         task_runs = [task_run for task_run in participant.iterdir() if task_run.is_dir()]
-        task_runs = sorted(task_runs, key=lambda x: extract_timestamp(x))
+        task_runs = sorted(task_runs, key=lambda x: extract_timestamp_jitter(x))
+        jitter_types: list = [extract_jitter_type(task_run) for task_run in task_runs]
+        jitter_types[-1] = "-1"
+        jitter_map = {"0.05": "JitterShort", "0.1": "JitterLong", "0.0": "NoJitter", "-1": "NoJitterSlow"}
+        jitter_types = [jitter_map.get(jitter_type) for jitter_type in jitter_types]
+        jitter_type_ordering = []
+        for i, jitter_type in enumerate(jitter_types):
+            if jitter_type not in jitter_type_ordering:
+                jitter_type_ordering.append(jitter_type)
         for i, task_run in enumerate(task_runs):
             task_name = extract_session_type(str(task_run))
+            jitter_type = jitter_types[i]
+            session_index = jitter_type_ordering.index(jitter_type)
             session_data = BciPySessionTaskData(
                 path=task_run,
                 user_id=user_id,
                 experiment_id=experiment_id,
-                session_id=i,
+                session_id=f"{session_index}XX{jitter_type}",
                 run=1,
                 task_name=task_name
             )

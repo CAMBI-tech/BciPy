@@ -1,5 +1,7 @@
+import json
 import re
 from datetime import time, datetime
+from pathlib import PosixPath
 
 
 def extract_task_type(filename: str, default: str = "Unknown") -> str:
@@ -60,6 +62,18 @@ def extract_timestamp_sspi(filename: str) -> datetime:
     dt: datetime = datetime.fromtimestamp(match)
     return dt
 
+def extract_jitter_type(parent_dir: PosixPath) -> str:
+    """Extracts the jitter type from the parameters.json in filename"""
+
+    parameters_file = parent_dir / "parameters.json"
+    with open(parameters_file, 'r') as file:
+        data = json.load(file)
+        jitter_type = data.get('stim_jitter')
+
+    if not jitter_type:
+        raise ValueError(f"No jitter type found in {parameters_file}")
+
+    return str(jitter_type["value"])
 
 def sort_by_timestamp(file_list):
     """Sorts filenames by extracted timestamp."""
