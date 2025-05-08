@@ -38,7 +38,7 @@ def extract_session_type(filename: str, default: str = "Unknown") -> str:
         return default
 
 
-def extract_timestamp(filename: str) -> time:
+def extract_timestamp_jitter(filename: str) -> time:
     """Extracts the timestamp (last number) from the filename."""
     filename = str(filename)
     match = re.search(r'(\d{1,2})hr(\d{1,2})min(\d{1,2})sec$', filename)
@@ -49,18 +49,18 @@ def extract_timestamp(filename: str) -> time:
     else:
         raise ValueError(f"No timestamp found in {filename}")
 
-# def extract_timestamp(filename: str) -> datetime:
-#     ex = ["006_Matrix_Calibration_1728937425", "006_Matrix_CopyPhrase_1728938187"]
-#     pattern = r'_(\d+)$'
-#     match = re.search(pattern, str(filename))
-#     if match:
-#         match = int(match.group(1))
-#     else:
-#         raise ValueError(f"No timestamp found in {filename}")
-#     dt: datetime = datetime.fromtimestamp(match)
-#     return dt
+def extract_timestamp_sspi(filename: str) -> datetime:
+    ex = ["006_Matrix_Calibration_1728937425", "006_Matrix_CopyPhrase_1728938187"]
+    pattern = r'_(\d+)$'
+    match = re.search(pattern, str(filename))
+    if match:
+        match = int(match.group(1))
+    else:
+        raise ValueError(f"No timestamp found in {filename}")
+    dt: datetime = datetime.fromtimestamp(match)
+    return dt
 
 
 def sort_by_timestamp(file_list):
     """Sorts filenames by extracted timestamp."""
-    return sorted(file_list, key=extract_timestamp)
+    return sorted(file_list, key=extract_timestamp_sspi)

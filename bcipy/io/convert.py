@@ -102,6 +102,11 @@ def convert_to_bids(
     # load the raw data and specifications for the device used to collect the data
     raw_data: RawDataForBids = RawDataForBids.load(raw_data_file)
     channel_map = get_1020_channel_map(raw_data.channels)
+
+    # TODO change for non sspi
+    sspi_channel_map = [0, 1, 1, 1, 1, 1, 1, 1, 0, 0]
+    channel_map = sspi_channel_map
+
     device_spec = preconfigured_device(raw_data.daq_type)
     volts = True if device_spec.channel_specs[0].units == 'volts' else False
 
