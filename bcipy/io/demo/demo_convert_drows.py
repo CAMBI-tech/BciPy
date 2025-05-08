@@ -105,7 +105,8 @@ def convert_experiment_to_bids(
         for data in tqdm(experiment_data, total=len(experiment_data), desc="Converting to BIDS",
                          unit="session"):
             try:
-                new_name = make_id(data.user_id)
+
+                new_name = id_map.get(data.user_id, make_id(data.user_id))
                 id_map[data.user_id] = new_name
                 bids_path = convert_to_bids_drowsiness(
                     data_dir=data.path,

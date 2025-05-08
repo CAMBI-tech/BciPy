@@ -559,7 +559,6 @@ def convert_to_mne(
             channel_map.extend([0, 0])  # exclude the system and trigger channels
         else:
             channel_map = [1] * len(raw_data.channels)
-
     data, channels, fs = raw_data.by_channel_map(channel_map, transform)
     # if no channel types provided, assume all channels are eeg
     if not channel_types:

@@ -494,8 +494,7 @@ class RawDataForBids:
         """Compute the list of channels. Channels are the numeric columns
         excluding the timestamp column."""
 
-        # Start data slice at 1 to remove the timestamp column.
-        return self.numeric_data.columns[1:]
+        return self.numeric_data.columns
 
     @property
     def numeric_data(self) -> pl.DataFrame:
@@ -517,8 +516,7 @@ class RawDataForBids:
 
         numeric_vals = self.numeric_data.to_numpy()
         numeric_column_count = numeric_vals.shape[1]
-        # Start data slice at 1 to remove the timestamp column.
-        return numeric_vals[:, 1:numeric_column_count].transpose()
+        return numeric_vals[:, 0:numeric_column_count].transpose()
 
     def apply_transform(self, data: np.ndarray, transform: Composition) -> Tuple[np.ndarray, int]:
         """Apply Transform.
