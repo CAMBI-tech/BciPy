@@ -13,8 +13,7 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from scipy.stats import multivariate_normal, entropy
 from datetime import datetime
-# from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
-from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
+from bcipy.signal.model.pca_rda_kde.modified_rda import ModifiedRdaModel
 class Simulation:
     """
     Simulate the BCI experiment.
@@ -38,6 +37,7 @@ class Simulation:
         self.sampling_rate = 50  # Hz
         self.inquiry_length = inquiry_length
         self.n_classes = inquiry_length + 1
+        self.n_electrodes = 1  # Number of EEG electrodes
         self.inquiry_duration = self.flash_time * self.inquiry_length + 0.2 # seconds
         self.dim = int(self.inquiry_duration * self.sampling_rate)
         self.time_samples = np.linspace(0, self.inquiry_duration, self.dim, endpoint=False)
@@ -414,26 +414,36 @@ class Simulation:
         self.l_means_estimate, self.vec_a, self.vec_d = params
         self.l_covariances_estimate = self.generate_cov_matrix(self.vec_a, self.vec_d)
 
-    def calibrate(self, n_samples_per_class=20):
+    def calibrate(self, n_samples_per_class=20, results_dir=None):
         """ Sample from the true distribution. Generate initial estimates for parameters."""
         samples_list = np.zeros((self.n_classes, n_samples_per_class, self.dim))
+        labels_list = np.zeros((self.n_classes, n_samples_per_class), dtype=int)
         for i_class, (mean_, cov_) in enumerate(zip(self.l_means_true, self.l_covariances_true)):
             # Generate samples from the true distribution.
             samples = scipy.stats.multivariate_normal.rvs(mean_, cov_, size=n_samples_per_class)
             samples_list[i_class] = samples
             self.l_means_estimate[i_class] = np.mean(samples, axis=0)
-            
-            model = RegularizedDiscriminantAnalysis()
-            model.fit(samples, np.zeros(n_samples_per_class))
+            labels_list[i_class] = i_class * np.ones(n_samples_per_class, dtype=int)
+        # Reshape sample_list and label_list to match the shapes expected by the model.
+        samples_list = np.reshape(samples_list, (self.n_electrodes, self.n_classes * n_samples_per_class, self.dim))
+        labels_list = np.reshape(labels_list, (self.n_classes * n_samples_per_class,))
+        # Shuffle the labels to include all unique labels at each fold
+        breakpoint()
 
-            self.l_covariances_estimate[i_class] = np.cov(samples, rowvar=False) # PCA + RDA
+        model = ModifiedRdaModel(k_folds=10, data_type="synthetic")
+        model.fit(samples_list, labels_list)
+        self.l_covariances_estimate = model.cov
+        
+        # Save the visualization of calibration samples from Classes 0 and 1
         fig, (ax1, ax2) = plt.subplots(1, 2)  
         ax1.plot(self.time_samples, samples_list[0].T, alpha=0.1)
         ax1.set_xlabel("Time (s)")
-        ax1.set_ylabel("Amplitude")
+        ax1.set_ylabel("Amplitude (uV)")
         ax2.plot(self.time_samples, samples_list[1].T, alpha=0.1)
         ax2.set_xlabel("Time (s)")
-        plt.savefig(f"results/initial_samples.png")
+        if results_dir is None:
+            results_dir = "results"
+        plt.savefig(f"{results_dir}/Calibration_Samples.png")
         plt.close()
 
     def simulate(self, results_dir=None, update_toggle=True):
@@ -522,8 +532,8 @@ if __name__ == "__main__":
 
     simulation = Simulation(target_phrase, alphabet, inquiry_length, prob_alphabet,
                             seed_inquiry, threshold)
-    simulation.calibrate(n_samples_per_class=20)
-    simulation.simulate(results_dir, update_toggle=True)
+    simulation.calibrate(n_samples_per_class=20, results_dir=results_dir)
+    simulation.simulate(results_dir=results_dir, update_toggle=True)
 
     # Save as pickle
     with open(f"{results_dir}/simulation.pkl", "wb") as f:

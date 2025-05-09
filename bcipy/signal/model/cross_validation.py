@@ -58,14 +58,15 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             x_train = np.concatenate([fold_x[i] for i in list_train], axis=1)
             y_train = np.concatenate([fold_y[i] for i in list_train], axis=0)
             x_valid = fold_x[list_valid]
-            y_valid = fold_y[list_valid]
+            y_valid = fold_y[list_valid]        
 
             model.fit(x_train, y_train)
             sc = model.transform(x_valid)
-
+            breakpoint()
+            
             sc_h.append(sc)
             y_valid_h.append(y_valid)
-
+    breakpoint()
     y_valid_h = np.concatenate(np.array(y_valid_h))
     sc_h = np.concatenate(np.array(sc_h))
     fpr, tpr, _ = metrics.roc_curve(y_valid_h, sc_h, pos_label=1)
