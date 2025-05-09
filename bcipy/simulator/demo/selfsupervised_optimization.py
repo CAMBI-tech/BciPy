@@ -1,6 +1,5 @@
 """
-Note: This simulator requires optax, a JAX-based library for gradient processing and optimization.
-It is not included in the BciPy package.
+P(Theta | X) = Sum_{qj} P(X | Qj=qj) * P(Qj | Theta) * P(Theta) / P(X)
 """
 import os
 import pickle
@@ -14,8 +13,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from scipy.stats import multivariate_normal, entropy
 from datetime import datetime
-
-
+# from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
+from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 class Simulation:
     """
     Simulate the BCI experiment.
@@ -29,15 +28,21 @@ class Simulation:
         the inquiry.
         :param prob_alphabet list: Prior probability for each character.
         :param seed int: Seed used for random number generator.
+        :param generative_fn function: Generative model.
         """
         self.target_phrase = target_phrase
         self.alphabet = alphabet
         self.n_alphabet = len(alphabet)
-        self.dim = 2
+        self.erp = 0.3 # seconds, P300 response
+        self.flash_time = 0.3 # seconds
+        self.sampling_rate = 50  # Hz
         self.inquiry_length = inquiry_length
         self.n_classes = inquiry_length + 1
+        self.inquiry_duration = self.flash_time * self.inquiry_length + 0.2 # seconds
+        self.dim = int(self.inquiry_duration * self.sampling_rate)
+        self.time_samples = np.linspace(0, self.inquiry_duration, self.dim, endpoint=False)
         self.nll = []
-        self.maxiter = 200
+        self.maxiter = 50
         self.stepsize = 1e-2
         self.prob_alphabet = prob_alphabet
         self.prob_alphabet_prior = prob_alphabet.copy()
@@ -48,9 +53,11 @@ class Simulation:
         self.rng_inquiry = rnd.default_rng(seed_inquiry)
         self.vec_a = np.ones((self.n_classes, int(self.dim * (self.dim - 1) / 2))) * 1e-3
         self.vec_d = np.ones((self.n_classes, self.dim)) * 1e-3
+        self.cov_mean = 5e-3
         self.l_means_true = self.generate_initial_means()
-        self.l_covariances_true = self.generate_cov_matrix(self.vec_a, self.vec_d)
-        self.l_covariances_true[0] = np.eye(self.dim) * 10
+        # self.l_covariances_true = self.generate_cov_matrix(self.vec_a, self.vec_d)
+        # self.l_covariances_true[0] = np.eye(self.dim) / (self.cov_mean * 2 * np.pi * 100)
+        self.l_covariances_true = np.array([np.eye(self.dim) / (self.cov_mean * 2 * np.pi * 400) for i_class in range(self.n_classes)])
         self.l_means_estimate = np.zeros_like(self.l_means_true)     # initialize, update with calibration
         self.l_covariances_estimate = np.zeros_like(self.l_covariances_true)
         self.parameter_prior = multivariate_normal.pdf(np.zeros(self.dim), np.zeros(self.dim), np.eye(self.dim))
@@ -63,6 +70,13 @@ class Simulation:
         self.written_phrase = []
         self.hamming = 0
 
+
+    def plot_means(self):
+        for i_class in range(self.n_classes):
+            plt.plot(self.time_samples, 
+                     self.l_means_true[i_class], label=f"Class {i_class}")
+        plt.show()
+        
     def generate_precision_matrix(self, vec_a, vec_d):
         """
         Generate precision matrix using the SVD property.
@@ -86,16 +100,17 @@ class Simulation:
                 i_vec += 1
         return A
     
-    def generate_initial_means(self, y_val=10.0, factor=10.0, seed_mean=None):
+    def generate_initial_means(self):
         """Generate initial means."""
-        if seed_mean is not None:
-            rng_mean = rnd.default_rng(seed_mean)
-            mean_min = -10
-            mean_max = 10
-            l_means = rng_mean.uniform(mean_min, mean_max, (self.n_classes, self.dim))
-        else:
-            l_means = np.array([[idx*factor, y_val] for idx in range(self.n_classes)])
-            l_means[0] = np.array([(self.n_classes-1)*factor/2, y_val/2])
+        l_means = np.zeros((self.n_classes, self.dim))
+        for i_class in range(self.n_classes):
+            if not i_class:
+                continue
+            l_means[i_class] = multivariate_normal.pdf(
+                self.time_samples,
+                mean=i_class * self.erp,
+                cov=self.cov_mean
+            )
 
         return l_means
 
@@ -312,6 +327,7 @@ class Simulation:
                 # print("Covariance matrix is singular.")
                 pass
             else:
+                breakpoint()
                 posterior[i_character] = (
                     self.prob_alphabet[i_character] *
                     multivariate_normal.pdf(
@@ -400,11 +416,25 @@ class Simulation:
 
     def calibrate(self, n_samples_per_class=20):
         """ Sample from the true distribution. Generate initial estimates for parameters."""
+        samples_list = np.zeros((self.n_classes, n_samples_per_class, self.dim))
         for i_class, (mean_, cov_) in enumerate(zip(self.l_means_true, self.l_covariances_true)):
             # Generate samples from the true distribution.
             samples = scipy.stats.multivariate_normal.rvs(mean_, cov_, size=n_samples_per_class)
+            samples_list[i_class] = samples
             self.l_means_estimate[i_class] = np.mean(samples, axis=0)
-            self.l_covariances_estimate[i_class] = np.cov(samples, rowvar=False)
+            
+            model = RegularizedDiscriminantAnalysis()
+            model.fit(samples, np.zeros(n_samples_per_class))
+
+            self.l_covariances_estimate[i_class] = np.cov(samples, rowvar=False) # PCA + RDA
+        fig, (ax1, ax2) = plt.subplots(1, 2)  
+        ax1.plot(self.time_samples, samples_list[0].T, alpha=0.1)
+        ax1.set_xlabel("Time (s)")
+        ax1.set_ylabel("Amplitude")
+        ax2.plot(self.time_samples, samples_list[1].T, alpha=0.1)
+        ax2.set_xlabel("Time (s)")
+        plt.savefig(f"results/initial_samples.png")
+        plt.close()
 
     def simulate(self, results_dir=None, update_toggle=True):
         # Show the initial clusters.
