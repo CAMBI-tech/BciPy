@@ -1,6 +1,10 @@
 import subprocess
 import sys
 from typing import List
+import os
+import tkinter as tk
+from tkinter import filedialog
+
 
 from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
                           STATIC_IMAGES_PATH)
@@ -401,6 +405,16 @@ class BCInterface(BCIGui):
             command to bcipy main and subprocess.
         """
         if self.check_input() and not self.action_disabled():
+
+            #Does nothing at the moment with selection however will be utilized for the model
+            root = tk.Tk()
+            root.withdraw()
+            csv_path = filedialog.askopenfilename(
+                title="Select Model",
+                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+            )
+            root.destroy()
+
             self.throw_alert_message(
                 title='BciPy Alert',
                 message='Task Starting ...',
