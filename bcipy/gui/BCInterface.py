@@ -16,6 +16,7 @@ from bcipy.helpers.load import (copy_parameters, load_experiments,
                                 load_json_parameters, load_users)
 from bcipy.task import TaskType
 
+from bcipy.signal.model.vep_signal_model import VEPSignalModel
 
 class BCInterface(BCIGui):
     """BCI Interface.
@@ -406,14 +407,21 @@ class BCInterface(BCIGui):
         """
         if self.check_input() and not self.action_disabled():
 
-            #Does nothing at the moment with selection however will be utilized for the model
-            root = tk.Tk()
-            root.withdraw()
-            csv_path = filedialog.askopenfilename(
-                title="Select Model",
-                filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
-            )
-            root.destroy()
+            if self.task == TaskType.VEP_COPY_PHRASE.label:
+                root = tk.Tk()
+                root.withdraw()
+                csv_path = filedialog.askopenfilename(
+                    title="Select Model",
+                    filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+                )
+                root.destroy()
+
+                try:
+                    self.vep_model = VEPSignalModel(csv_path)
+                except Exception as e:
+                    return
+                else:
+                    print(f"Loaded VEP template from: {csv_path}")
 
             self.throw_alert_message(
                 title='BciPy Alert',
