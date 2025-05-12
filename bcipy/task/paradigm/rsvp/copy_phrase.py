@@ -725,6 +725,8 @@ class RSVPCopyPhraseTask(Task):
         post_stim_buffer = int(self.parameters.get("task_buffer_length") / 2)
         prestim_buffer: float = self.parameters["prestim_length"]
         trial_window: Tuple[float, float] = self.parameters["trial_window"]
+        flash_time = self.parameters["time_flash"]
+        stim_length = self.parameters["stim_length"]
         window_length = trial_window[1] - trial_window[0]
         inquiry_timing = self.stims_for_decision(stim_times)
 
@@ -757,6 +759,8 @@ class RSVPCopyPhraseTask(Task):
                 times=times,
                 target_info=filtered_labels,
                 window_length=window_length,
+                flash_time=flash_time,
+                stim_length=stim_length,
             )
             evidences.append((evidence_evaluator.produces, probs))
 

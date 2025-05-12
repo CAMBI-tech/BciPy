@@ -1,5 +1,4 @@
 # mypy: disable-error-code="attr-defined"
-import json
 import logging
 import subprocess
 from pathlib import Path
@@ -14,8 +13,7 @@ import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
-                          STIMULI_POSITIONS_FILENAME)
+                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
                            load_raw_data)
@@ -234,7 +232,8 @@ def analyze_gaze(
         device_spec: DeviceSpec,
         data_folder: str,
         model_type: str = "GaussianProcess",
-        symbol_set: List[str] = alphabet()) -> SignalModel:
+        symbol_set: List[str] = alphabet(),
+        testing_acc: float = 0.0) -> SignalModel:
     """Analyze gaze data and return/save the gaze model.
     Extract relevant information from gaze data object.
     Extract timing information from trigger file.
@@ -250,15 +249,18 @@ def analyze_gaze(
         parameters (Parameters): Parameters object retireved from parameters.json.
         device_spec (DeviceSpec): DeviceSpec object containing information about the device used.
         data_folder (str): Path to the folder containing the data to be analyzed.
-        model_type (str): Type of gaze model to be used. Options are: "GMIndividual", "GMCentralized",
-        or "GaussianProcess".
+        model_type (str): Type of gaze model to be used. Options are: "GMIndividual" or
+        "GaussianProcess".
+        symbol_set (List[str]): List of symbols to be used in the analysis.
+        testing_acc (float): Testing accuracy of the model. This is calculated during fusion analysis.
+        Imported to add to the metadata of the model.
     """
     channels = gaze_data.channels
     type_amp = gaze_data.daq_type
     sample_rate = gaze_data.sample_rate
 
     flash_time = parameters.get("time_flash")  # duration of each stimulus
-    stim_size = parameters.get("stim_length")  # number of stimuli per inquiry
+    stim_length = parameters.get("stim_length")  # number of stimuli per inquiry
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
@@ -286,10 +288,10 @@ def analyze_gaze(
     )
     ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
-    target_symbols = trigger_symbols[0::stim_size + 1]  # target symbols are the PROMPT triggers
+    target_symbols = trigger_symbols[0::stim_length + 1]  # target symbols are the PROMPT triggers
     # Use trigger_timing to generate time windows for each letter flashing
     # Take every 10th trigger as the start point of timing.
-    inq_start = trigger_timing[1::stim_size + 1]  # start of each inquiry (here we jump over prompts)
+    inq_start = trigger_timing[1::stim_length + 1]  # start of each inquiry (here we jump over prompts)
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     inquiries_dict, inquiries_list, _ = model.reshaper(
@@ -298,7 +300,7 @@ def analyze_gaze(
         gaze_data=data,
         sample_rate=sample_rate,
         stimulus_duration=flash_time,
-        num_stimuli_per_inquiry=stim_size,
+        num_stimuli_per_inquiry=stim_length,
         symbol_set=symbol_set,
     )
 
@@ -345,16 +347,6 @@ def analyze_gaze(
                  preprocessed_data[sym].shape[1]))
             model.fit(reshaped_data)
 
-        if model_type == "GMCentralized":
-            # Centralize the data using symbol positions and fit a single Gaussian.
-            # Load json file.
-            with open(f"{data_folder}/{STIMULI_POSITIONS_FILENAME}", 'r') as params_file:
-                symbol_positions = json.load(params_file)
-
-            # Subtract the symbol positions from the data:
-            for j in range(len(preprocessed_data[sym])):
-                centralized_data[sym].append(model.centralize(preprocessed_data[sym][j], symbol_positions[sym]))
-
         if model_type == "GaussianProcess":
             # Instead of centralizing, take the time average:
             for j in range(len(preprocessed_data[sym])):
@@ -388,26 +380,17 @@ def analyze_gaze(
                             cov_matrix[l_ind, m_ind] = 0
         reshaped_mean = np.mean(reshaped_data, axis=0)
 
-        # Save model parameters which are mean and covariance matrix
-        model.fit(reshaped_mean)
-
-    if model_type == "GMCentralized":
-        # Fit the model parameters using the centralized data:
-        # flatten the dict to a np array:
-        cent_data = np.concatenate([centralized_data[sym] for sym in symbol_set], axis=0)
-        # Merge the first and third dimensions:
-        cent_data = cent_data.reshape((cent_data.shape[0] * cent_data.shape[2], cent_data.shape[1]))
-
-        # cent_data = np.concatenate(centralized_data, axis=0)
-        model.fit(cent_data)
+        # Save model parameters which are time averages per symbol (time_average): Dict(np.array),
+        # and centralized data points (centralized_gaze_data): (np.array) of shape N_inquiries x N_dims x N_timesamples
+        model.fit(time_average, centralized_gaze_data)
 
     model.metadata = SignalModelMetadata(device_spec=device_spec,
                                          transform=None,
-                                         acc=model.acc)
+                                         acc=testing_acc)
     log.info("Training complete for Eyetracker model. Saving data...")
     save_model(
         model,
-        Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.acc}.pkl"))
+        Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.metadata.acc}.pkl"))
     return model
 
 
@@ -478,6 +461,7 @@ def offline_analysis(
 
     symbol_set = alphabet()
     fusion = False
+    avg_testing_acc_gaze = 0.0
     if num_devices == 2:
         # Ensure there is an EEG and Eyetracker device
         fusion = True
@@ -506,6 +490,8 @@ def offline_analysis(
             )
 
             log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+            # The average gaze model accuracy:
+            avg_testing_acc_gaze = round(np.mean(gaze_acc), 3)
 
     # Ask the user if they want to proceed with full dataset model training
     models = []
@@ -532,7 +518,8 @@ def offline_analysis(
                 parameters,
                 device_spec,
                 data_folder,
-                symbol_set=symbol_set)
+                symbol_set=symbol_set,
+                testing_acc=avg_testing_acc_gaze)
             models.append(et_model)
 
     if alert:

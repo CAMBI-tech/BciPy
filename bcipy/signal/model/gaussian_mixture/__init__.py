@@ -1,8 +1,7 @@
-from .gaussian_mixture import GMIndividual, GMCentralized, GaussianProcess, GazeModelResolver
+from .gaussian_mixture import GMIndividual, GaussianProcess, GazeModelResolver
 
 __all__ = [
     'GMIndividual',
-    'GMCentralized',
     'GaussianProcess',
     'GazeModelResolver'
 ]

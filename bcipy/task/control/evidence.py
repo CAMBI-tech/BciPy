@@ -8,10 +8,11 @@ import numpy as np
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.parameters import Parameters
-from bcipy.core.stimuli import TrialReshaper
 from bcipy.display.main import ButtonPressMode
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.core.stimuli import TrialReshaper, GazeReshaper
 from bcipy.signal.model import SignalModel
+from bcipy.signal.process import extract_eye_info
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
 
@@ -105,7 +106,7 @@ class EEGEvaluator(EvidenceEvaluator):
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.ndarray:
+                 window_length: float, *args) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
@@ -143,38 +144,50 @@ class GazeEvaluator(EvidenceEvaluator):
         self.channel_map = analysis_channels(self.device_spec.channels,
                                              self.device_spec)
         self.transform = signal_model.metadata.transform
-        self.reshape = TrialReshaper()
+        self.reshape = GazeReshaper()
 
     def preprocess(self, raw_data: np.ndarray, times: List[float],
-                   target_info: List[str], window_length: float) -> np.ndarray:
+                   flash_time: float) -> np.ndarray:
         """Preprocess the inquiry data.
 
         Parameters
         ----------
             raw_data - C x L eeg data where C is number of channels and L is the
-                signal length
+                signal length. Includes all channels in devices.json
             symbols - symbols displayed in the inquiry
             times - timestamps associated with each symbol
-            target_info - target information about the stimuli;
-                ex. ['nontarget', 'nontarget', ...]
-            window_length - The length of the time between stimuli presentation
-        """
-        transformed_data, transform_sample_rate = self.transform(
-            raw_data, self.device_spec.sample_rate)
+            flash_time - duration (in seconds) of each stimulus
 
-        # The data from DAQ is assumed to have offsets applied
-        reshaped_data, _lbls = self.reshape(trial_targetness_label=target_info,
-                                            timing_info=times,
-                                            eeg_data=transformed_data,
-                                            sample_rate=transform_sample_rate,
-                                            channel_map=self.channel_map,
-                                            poststimulus_length=window_length)
-        return reshaped_data
+        Function
+        --------
+        The preprocessing is functionally different than Gaze Reshaper, since
+        the raw data contains only one inquiry. start_idx is determined as the
+        start time of first symbol flashing multiplied by the sampling rate
+        of eye tracker. stop_idx is the index indicating the end of last
+        symbol flashing.
+        """
+        if self.transform:
+            transformed_data, transform_sample_rate = self.transform(
+                raw_data, self.device_spec.sample_rate)
+        else:
+            transformed_data = raw_data
+            transform_sample_rate = self.device_spec.sample_rate
+
+        start_idx = int(self.device_spec.sample_rate * times[0])
+        stop_idx = start_idx + int((times[-1] - times[0] + flash_time) * self.device_spec.sample_rate)
+        data_all_channels = transformed_data[:, start_idx:stop_idx]
+
+        # Extract left and right eye from all channels. Remove/replace nan values
+        left_eye, right_eye, _, _, _, _ = extract_eye_info(data_all_channels)
+        reshaped_data = np.vstack((np.array(left_eye).T, np.array(right_eye).T))
+
+        return reshaped_data  # (4, N_samples)
 
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.ndarray:
+                 window_length: float, flash_time: float,
+                 stim_length: float) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
@@ -187,11 +200,11 @@ class GazeEvaluator(EvidenceEvaluator):
                 ex. ['nontarget', 'nontarget', ...]
             window_length - The length of the time between stimuli presentation
         """
-        data = self.preprocess(raw_data, times, target_info, window_length)
+        data = self.preprocess(raw_data, times, flash_time)
         # We need the likelihoods in the form of p(label | gaze). predict returns the argmax of the likelihoods.
         # Therefore we need predict_proba method to get the likelihoods.
-        return self.signal_model.evaluate_likelihood(
-            data)  # multiplication over the inquiry
+        likelihood = self.signal_model.evaluate_likelihood(data, symbols, self.symbol_set)
+        return likelihood
 
 
 class SwitchEvaluator(EvidenceEvaluator):
