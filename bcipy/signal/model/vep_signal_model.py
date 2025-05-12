@@ -1,4 +1,6 @@
 import numpy as np
+from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME
+import bcipy.acquisition.devices as devices
 
 class VEPSignalModel:
     """ Loads in VEP template and returns a probability distribution over the target boxes
@@ -44,6 +46,12 @@ class VEPSignalModel:
         ----------
             template_file: csv file with VEP templates
         """
+
+        template_path = "/".join(template_file.split("/")[:-1])
+        devices_by_name = devices.load(
+            Path(template_path, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
+
+        self.device_spec = devices_by_name.get("openbci_eeg")
 
         with open(template_file, 'r') as f:
             lines = [ln.strip() for ln in f.readlines() if ln.strip()]
