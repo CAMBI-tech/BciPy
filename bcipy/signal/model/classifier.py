@@ -28,7 +28,7 @@ class RegularizedDiscriminantAnalysis:
         inv_reg_cov_i(list[ndarray]): inverse of regularized covariance matrix for class i
     """
 
-    def __init__(self):  # TODO: Make it more modular
+    def __init__(self): 
         self.lam = 0.9
         self.gam = 0.1
 
@@ -67,9 +67,6 @@ class RegularizedDiscriminantAnalysis:
         # Number of data samples in each class
         self.N_i = [np.sum(y == i) for i in self.class_i]
 
-        # MATLAB gets confused if np.where is not used. Insert this relation
-        #  in order to make the ndarray readable from MATLAB side. There are
-        #  two arrays, [0] for the correctness, choose it
         # Class means
         self.mean_i = [np.mean(x[np.where(y == i)[0]], axis=0) for i in self.class_i]
 
@@ -97,14 +94,14 @@ class RegularizedDiscriminantAnalysis:
 
         self.regularize(param=[self.gam, self.lam])
 
-    def regularize(self, param):  # TODO: what if no param passed?
+    def regularize(self, param):
         """Regularizes the covariance based on hyper parameters
         Args:
             param(list[gam(float),lam(float)]): List of regularization
                 parameters. Parameters should be a list instead of
                 individual elements for training purposes.
         """
-
+        # TODO: This is not suitable for multi-class parameter optimization
         self.gam = param[0]
         self.lam = param[1]
 

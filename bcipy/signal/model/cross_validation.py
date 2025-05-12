@@ -3,6 +3,7 @@ import numpy as np
 import scipy.optimize
 from sklearn import metrics
 from bcipy.config import SESSION_LOG_FILENAME
+from sklearn.metrics import roc_auc_score
 
 import logging
 
@@ -10,7 +11,7 @@ log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
-                              split='uniform'):
+                              split='uniform', n_classes=2):
     """ Minimize cost of the overall -AUC.
         Cost function: given a particular architecture (model). Fits the
         parameters to the folds with leave one fold out procedure. Calculates
@@ -27,6 +28,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             k_folds(int): number of folds
             split(string): split type,
                 'uniform': Takes the data as is
+            n_classes(int): number of unique class labels in the data, Default: 2
+                (added for multi-class classification)
         Return:
             -auc(float): negative AUC value for current setup
             sc_h(ndarray[float]): scores computed for each validation fold
@@ -45,8 +48,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
         for idx_fold in range(k_folds):
             fold_x.append(x[:, int(idx_fold * fold_len):int((idx_fold + 1) * fold_len), :])
             fold_y.append(y[int(idx_fold * fold_len):int((idx_fold + 1) * fold_len)])
-
-            if len(np.unique(fold_y[idx_fold])) != 2:
+            if len(np.unique(fold_y[idx_fold])) != n_classes:
                 raise Exception(
                     f'Cannot use {split}-folding in cross_validation '
                     'or # of folds is inconsistent')
@@ -62,21 +64,33 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
 
             model.fit(x_train, y_train)
             sc = model.transform(x_valid)
-            breakpoint()
             
             sc_h.append(sc)
             y_valid_h.append(y_valid)
-    breakpoint()
+
     y_valid_h = np.concatenate(np.array(y_valid_h))
     sc_h = np.concatenate(np.array(sc_h))
-    fpr, tpr, _ = metrics.roc_curve(y_valid_h, sc_h, pos_label=1)
-    auc = metrics.auc(fpr, tpr)
 
-    return -auc, sc_h, y_valid_h
+    # One hot encoding
+    y_one_hot = np.array([np.where(y_valid_h == i, 1, 0) for i in range(n_classes)])
+
+    # Calculate the micro average AUC for multiclass classification
+    micro_roc_auc_ovr = roc_auc_score(y_one_hot, sc_h.T, multi_class="ovr", average="micro")
+
+    # Calculate the macro average AUC for multiclass classification
+    macro_roc_auc_ovr = roc_auc_score(y_one_hot, sc_h.T, multi_class="ovr", average="macro")
+    
+    auc = np.zeros(n_classes)
+    for i_class in range(n_classes):
+        # Calculate AUC for each class
+        fpr, tpr, _ = metrics.roc_curve(y_one_hot.T[:, i_class], sc_h[:, i_class], pos_label=1)
+        auc[i_class] = metrics.auc(fpr, tpr)
+
+    return -auc.mean(), sc_h, y_valid_h
 
 
 def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
-                  arg_op_type=[10, 'uniform']):
+                  arg_op_type=[10, 'uniform'], n_classes=2):
     """ Optimizes lambda, gamma values for given  penalty function
         Args:
             model(pipeline): model to be iterated on
@@ -94,13 +108,12 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
     if not init:
         init = [model.pipeline[opt_el].lam, model.pipeline[opt_el].gam]
     if op_type:
-        # TODO: maybe we should not have such an option and set it by ourselves
         if op_type == 'cost_auc':
             k_folds, split = arg_op_type
 
             def cost_fun_param(b):
                 return cost_cross_validation_auc(model, opt_el, x, y, [b[0], b[1]],
-                                                 k_folds=k_folds, split=split)[0]
+                                                 k_folds=k_folds, split=split, n_classes=n_classes)[0]
 
         # Intervals for lambda and gamma parameters
         # Observe that 0 < lam < 1, 0 < gam < 1
@@ -127,7 +140,7 @@ def nonlinear_opt(model, opt_el, x, y, init=None, op_type='cost_auc',
     return arg_opt
 
 
-def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
+def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform', n_classes=2):
     """ Cross validation function for hyper parameter optimization
         Args:
             x(ndarray[float]): C x N x k data array
@@ -146,5 +159,5 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform'):
 
     log.info('Starting Cross Validation !')
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
-                            arg_op_type=[k_folds, split])
+                            arg_op_type=[k_folds, split], n_classes=n_classes)
     return arg_opt

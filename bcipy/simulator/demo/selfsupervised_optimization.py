@@ -14,6 +14,7 @@ from matplotlib.patches import Ellipse
 from scipy.stats import multivariate_normal, entropy
 from datetime import datetime
 from bcipy.signal.model.pca_rda_kde.modified_rda import ModifiedRdaModel
+from sklearn.model_selection import train_test_split
 class Simulation:
     """
     Simulate the BCI experiment.
@@ -416,30 +417,37 @@ class Simulation:
 
     def calibrate(self, n_samples_per_class=20, results_dir=None):
         """ Sample from the true distribution. Generate initial estimates for parameters."""
-        samples_list = np.zeros((self.n_classes, n_samples_per_class, self.dim))
-        labels_list = np.zeros((self.n_classes, n_samples_per_class), dtype=int)
-        for i_class, (mean_, cov_) in enumerate(zip(self.l_means_true, self.l_covariances_true)):
-            # Generate samples from the true distribution.
-            samples = scipy.stats.multivariate_normal.rvs(mean_, cov_, size=n_samples_per_class)
-            samples_list[i_class] = samples
-            self.l_means_estimate[i_class] = np.mean(samples, axis=0)
-            labels_list[i_class] = i_class * np.ones(n_samples_per_class, dtype=int)
-        # Reshape sample_list and label_list to match the shapes expected by the model.
-        samples_list = np.reshape(samples_list, (self.n_electrodes, self.n_classes * n_samples_per_class, self.dim))
-        labels_list = np.reshape(labels_list, (self.n_classes * n_samples_per_class,))
-        # Shuffle the labels to include all unique labels at each fold
-        breakpoint()
+        samples_arr = np.zeros((self.n_electrodes, self.n_classes * n_samples_per_class, self.dim))
+        labels_arr = np.zeros(self.n_classes * n_samples_per_class)
+        for i_sample in range(n_samples_per_class):
+            for i_class, (mean_, cov_) in enumerate(zip(self.l_means_true, self.l_covariances_true)):
+                # Generate samples from the true distribution.
+                ind_ =  i_sample * self.n_classes + i_class
+                samples_arr[0, ind_] = scipy.stats.multivariate_normal.rvs(mean_, cov_)
+                labels_arr[ind_] = i_class
 
-        model = ModifiedRdaModel(k_folds=10, data_type="synthetic")
-        model.fit(samples_list, labels_list)
-        self.l_covariances_estimate = model.cov
+        model = ModifiedRdaModel(k_folds=10, pca_n_components=self.dim, data_type="synthetic", n_classes=self.n_classes)
+        rda_means, rda_covs = model.fit(samples_arr, labels_arr)
+        
+        # Find the mean and covariance estimates after RDA
+        self.l_means_estimate = np.array(rda_means)
+        self.l_covariances_estimate = np.array(rda_covs)
+
+        # Visually check the means and covariances
+        for i_class in range(self.n_classes):
+            plt.plot(range(len(self.l_means_estimate[i_class])), self.l_means_estimate[i_class], label=f"Class {i_class}")
+        plt.legend()
+        plt.title("RDA means")
+        plt.show()
+        breakpoint()
+    
         
         # Save the visualization of calibration samples from Classes 0 and 1
         fig, (ax1, ax2) = plt.subplots(1, 2)  
-        ax1.plot(self.time_samples, samples_list[0].T, alpha=0.1)
+        ax1.plot(self.time_samples, samples_arr[0].T, alpha=0.1)
         ax1.set_xlabel("Time (s)")
         ax1.set_ylabel("Amplitude (uV)")
-        ax2.plot(self.time_samples, samples_list[1].T, alpha=0.1)
+        ax2.plot(self.time_samples, samples_arr[1].T, alpha=0.1)
         ax2.set_xlabel("Time (s)")
         if results_dir is None:
             results_dir = "results"
