@@ -72,10 +72,10 @@ class Simulation:
         self.hamming = 0
 
 
-    def plot_means(self):
+    def plot_means(self, means):
         for i_class in range(self.n_classes):
-            plt.plot(self.time_samples, 
-                     self.l_means_true[i_class], label=f"Class {i_class}")
+            plt.plot(self.time_samples, means[i_class], label=f"Class {i_class}")
+            plt.legend()
         plt.show()
         
     def generate_precision_matrix(self, vec_a, vec_d):
@@ -293,6 +293,19 @@ class Simulation:
         plt.savefig(f"{results_dir}/clusters_{len(self.written_phrase)}.png")
         plt.close()
 
+    def visualize_training_samples(self, training_samples):
+        """
+        Visualize training samples.
+        """
+        fig, ax = plt.subplots()
+        for i_class in range(self.n_classes):
+            ax.plot(self.time_samples, training_samples[:, i_class, :].T, alpha=0.5, label=f"Class {i_class}")
+            ax.set_xlabel("Time (s)")
+            ax.set_ylabel("Amplitude (uV)")
+        plt.legend()
+        plt.show()
+        plt.close()
+
     def visualize_posterior(self, posterior):
         """
         Visualize posterior probability.
@@ -328,7 +341,6 @@ class Simulation:
                 # print("Covariance matrix is singular.")
                 pass
             else:
-                breakpoint()
                 posterior[i_character] = (
                     self.prob_alphabet[i_character] *
                     multivariate_normal.pdf(
@@ -425,13 +437,37 @@ class Simulation:
                 ind_ =  i_sample * self.n_classes + i_class
                 samples_arr[0, ind_] = scipy.stats.multivariate_normal.rvs(mean_, cov_)
                 labels_arr[ind_] = i_class
+       
 
-        model = ModifiedRdaModel(k_folds=10, pca_n_components=self.dim, data_type="synthetic", n_classes=self.n_classes)
-        rda_means, rda_covs = model.fit(samples_arr, labels_arr)
+        # fig, (ax1, ax2) = plt.subplots(1, 2)  
+        # ax1.plot(self.time_samples, samples_arr[:,0,:].T, alpha=0.5)
+        # ax1.set_xlabel("Time (s)")
+        # ax1.set_ylabel("Amplitude (uV)")
+        # ax2.plot(self.time_samples, samples_arr[:,1,:].T, alpha=0.5)
+        # ax2.set_xlabel("Time (s)")
+        # if results_dir is None:
+        #     results_dir = "results"
+        # plt.savefig(f"{results_dir}/Calibration_Samples.png")
+        # plt.close()
+        self.visualize_training_samples(samples_arr)     
+        samples_centered = np.zeros((self.n_classes * n_samples_per_class, self.dim))
+        for i_class in range(self.n_classes):
+            self.l_means_estimate[i_class] = np.mean(samples_arr[0, labels_arr == i_class], axis=0)
+            ind_ = i_class * n_samples_per_class
+            for i_sample in range(n_samples_per_class):
+                # Center the samples
+                samples_centered[ind_ + i_sample] = samples_arr[0, labels_arr == i_class][i_sample] - self.l_means_estimate[i_class]
+
+        for i_class in range(self.n_classes):    
+            self.l_covariances_estimate[i_class] = np.cov(samples_centered, rowvar=False)
+
+        # self.plot_means(self.l_means_estimate)
+        # model = ModifiedRdaModel(k_folds=10, pca_n_components=self.dim, data_type="synthetic", n_classes=self.n_classes)
+        # rda_means, rda_covs = model.fit(samples_arr, labels_arr)
         
         # Find the mean and covariance estimates after RDA
-        self.l_means_estimate = np.array(rda_means)
-        self.l_covariances_estimate = np.array(rda_covs)
+        # self.l_means_estimate = np.array(rda_means)
+        # self.l_covariances_estimate = np.array(rda_covs)
 
         # Visually check the means and covariances
         for i_class in range(self.n_classes):
@@ -439,20 +475,7 @@ class Simulation:
         plt.legend()
         plt.title("RDA means")
         plt.show()
-        breakpoint()
     
-        
-        # Save the visualization of calibration samples from Classes 0 and 1
-        fig, (ax1, ax2) = plt.subplots(1, 2)  
-        ax1.plot(self.time_samples, samples_arr[0].T, alpha=0.1)
-        ax1.set_xlabel("Time (s)")
-        ax1.set_ylabel("Amplitude (uV)")
-        ax2.plot(self.time_samples, samples_arr[1].T, alpha=0.1)
-        ax2.set_xlabel("Time (s)")
-        if results_dir is None:
-            results_dir = "results"
-        plt.savefig(f"{results_dir}/Calibration_Samples.png")
-        plt.close()
 
     def simulate(self, results_dir=None, update_toggle=True):
         # Show the initial clusters.
@@ -519,7 +542,7 @@ class Simulation:
 
 if __name__ == "__main__":
     alphabet= 'abcdefghijklmnopqrstuvwxyz<_'
-    target_phrase = "hello_world"
+    target_phrase = "h"
     # target_phrase = "earth day has always been a day that acknowledges our planet, " \
     # "which provides for us, and ways we can protect and preserve its beauty"
     target_phrase = target_phrase.replace(" ", "_")

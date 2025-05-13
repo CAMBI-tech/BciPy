@@ -41,6 +41,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
 
     model.pipeline[opt_el].lam = param[0]
     model.pipeline[opt_el].gam = param[1]
+    print(f"Optimized parameters: lambda={param[0]}, gamma={param[1]}")
 
     fold_x, fold_y = [], []
     sc_h, y_valid_h = [], []
@@ -60,8 +61,7 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             x_train = np.concatenate([fold_x[i] for i in list_train], axis=1)
             y_train = np.concatenate([fold_y[i] for i in list_train], axis=0)
             x_valid = fold_x[list_valid]
-            y_valid = fold_y[list_valid]        
-
+            y_valid = fold_y[list_valid]  
             model.fit(x_train, y_train)
             sc = model.transform(x_valid)
             
@@ -160,4 +160,5 @@ def cross_validation(x, y, model, opt_el=1, k_folds=10, split='uniform', n_class
     log.info('Starting Cross Validation !')
     arg_opt = nonlinear_opt(model, opt_el, x, y, op_type='cost_auc',
                             arg_op_type=[k_folds, split], n_classes=n_classes)
+
     return arg_opt

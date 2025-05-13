@@ -68,7 +68,14 @@ class RegularizedDiscriminantAnalysis:
         self.N_i = [np.sum(y == i) for i in self.class_i]
 
         # Class means
-        self.mean_i = [np.mean(x[np.where(y == i)[0]], axis=0) for i in self.class_i]
+        self.mean_i = [np.mean(x[y == i], axis=0) for i in self.class_i]
+
+        # import matplotlib.pyplot as plt
+        # for i_class in range(11):
+        #     plt.plot(range(len(self.mean_i[i_class])), self.mean_i[i_class], label=f"Class {i_class}")
+        #     plt.legend()
+        #     plt.title("RDA means")
+        #     plt.show()
 
         # Normalized x
         norm_vec = [x[np.where(y == self.class_i[i])[0]] - self.mean_i[i] for i in range(len(self.class_i))]
@@ -101,7 +108,7 @@ class RegularizedDiscriminantAnalysis:
                 parameters. Parameters should be a list instead of
                 individual elements for training purposes.
         """
-        # TODO: This is not suitable for multi-class parameter optimization
+
         self.gam = param[0]
         self.lam = param[1]
 

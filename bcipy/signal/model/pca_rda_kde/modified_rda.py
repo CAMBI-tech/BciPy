@@ -5,6 +5,7 @@ from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import (cost_cross_validation_auc, cross_validation)
 from bcipy.signal.model.pipeline import Pipeline
 from bcipy.signal.model.dimensionality_reduction import ChannelWisePrincipalComponentAnalysis
+from bcipy.signal.model.identity import Identity
 
 
 class ModifiedRdaModel():
@@ -40,7 +41,7 @@ class ModifiedRdaModel():
         if self.data_type == "synthetic":
             model = Pipeline(
                 [
-                    ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
+                    Identity(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
                     RegularizedDiscriminantAnalysis()
                 ]
             )
@@ -54,7 +55,6 @@ class ModifiedRdaModel():
                 ]
             )
             self.optimization_elements = 1
-
         # Find the optimal gamma + lambda values
         arg_cv = cross_validation(train_data, train_labels, model=model, opt_el=self.optimization_elements, 
                                   k_folds=self.k_folds, n_classes=self.n_classes)
@@ -68,6 +68,7 @@ class ModifiedRdaModel():
         self.auc = -tmp
         # After finding cross validation scores do one more round to learn the
         # final RDA model
+        
         model.fit(train_data, train_labels)
 
         self.model = model
