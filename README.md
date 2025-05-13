@@ -349,7 +349,7 @@ Ahani A, Moghadamfalahi M, Erdogmus D. Language-Model Assisted And Icon-based Co
 
 ## Offset Determination and Correction
 
-> [!CAUTION] System Synchronization
+> [!CAUTION]
 > Static offset determination and correction are critical steps before starting an experiment. BciPy uses LSL to acquire EEG data and Psychopy to present stimuli. The synchronization between the two systems is crucial for accurate data collection and analysis.
 
 #### What is a Static Offset?
