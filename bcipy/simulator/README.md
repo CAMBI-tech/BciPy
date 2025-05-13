@@ -1,4 +1,4 @@
-# RSVP Simulator
+# BciPy Simulator
 
 ## Overview
 
