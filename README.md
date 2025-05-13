@@ -3,19 +3,15 @@
 [![BciPy](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml/badge.svg)](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96e31da4b0554dae9db7a1356556b0d5)](https://app.codacy.com/gh/CAMBI-tech/BciPy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/CAMBI-tech/BciPy/fork)
-[![Follow on Twitter](https://img.shields.io/twitter/follow/cambi_tech?label=Follow&style=social)](https://twitter.com/cambi_tech)
-
 
 ![CAMBI_logo](./bcipy/static/images/gui/CAMBI_full_logo.png) 
 
-BciPy is a library for conducting Brain-Computer Interface experiments in Python. It is designed to be modular and extensible, allowing researchers to easily add new paradigms, models, and processing methods. The focus of BciPy is on paradigms for communication and control, including Rapid Serial Visual Presentation (RSVP) and Matrix Speller. 
+BciPy is a library for conducting Brain-Computer Interface experiments in Python. It is designed to be modular and extensible, allowing researchers to easily add new paradigms, models, and processing methods. The focus of BciPy is on paradigms for communication and control, including Rapid Serial Visual Presentation (RSVP) and Matrix Speller. See our official documentation including affiliations and more context information [here](https://bcipy.github.io/).
+
+BciPy is released open-source under the BSD-3 clause. Please refer to [LICENSE.md](LICENSE.md).
 
 
-See our official BciPy documentation including affiliations and more context information [here](https://bcipy.github.io/).
-
-BciPy is released open-source under the BSD-3 clause. Please refer to [LICENSE.md](LICENSE.md)
-
-*Please cite us when using!*
+**If you use BciPy in your research, please cite the following manuscript:**
 
 ```text
 Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken, M., & Oken, B. (2021). BciPy: brain–computer interface software in Python. Brain-Computer Interfaces, 1-18.
@@ -47,6 +43,13 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
   - [RSVPKeyboard](#rsvpkeyboard)
   - [Matrix Speller](#matrix-speller)
 - [Glossary](#glossary)
+- [Scientific Publications using BciPy](#scientific-publications-using-bcipy)
+  - [2025](#2025)
+  - [2024](#2024)
+  - [2023](#2023)
+  - [2022](#2022)
+  - [2021](#2021)
+  - [2020](#2020)
 - [Offset Determination and Correction](#offset-determination-and-correction)
   - [What is a Static Offset?](#what-is-a-static-offset)
   - [How to Determine the Offset](#how-to-determine-the-offset)
@@ -417,26 +420,40 @@ For more information on synchronization and timing, refer to the following docum
 
 ***Paradigm***: Display paradigm with unique properties and modes. Ex. Rapid-Serial Visual Presentation (RSVP), Matrix Speller, Steady-State Visual Evoked Potential (SSVEP).
 
+## Scientific Publications using BciPy
+
+### 2025
+- Memmott, T., Klee, D., Smedemark-Margulies, N., & Oken, B. (2025). Artifact filtering application to increase online parity in a communication BCI: progress toward use in daily-life. Frontiers in Human Neuroscience, 19, 1551214.
+- Peters, B., Celik, B., Gaines, D., Galvin-McLaughlin, D., Imbiriba, T., Kinsella, M., ... & Fried-Oken, M. (2025). RSVP keyboard with inquiry preview: mixed performance and user experience with an adaptive, multimodal typing interface combining EEG and switch input. Journal of neural engineering, 22(1), 016022.
+
+### 2024
+- Klee, D., Memmott, T., & Oken, B. (2024). The Effect of Jittered Stimulus Onset Interval on Electrophysiological Markers of Attention in a Brain–Computer Interface Rapid Serial Visual Presentation Paradigm. Signals, 5(1), 18-39.
+- Kocanaogullari, D. (2024). Detection and Assessment of Spatial Neglect Using a Novel Augmented Reality-Guided Eeg-Based Brain-Computer Interface (Doctoral dissertation, University of Pittsburgh).
+- Smedemark-Margulies, N. (2024). Reducing Calibration Effort for Brain-Computer Interfaces (Doctoral dissertation, Northeastern University).
+
+### 2023
+- Smedemark-Margulies, N., Celik, B., Imbiriba, T., Kocanaogullari, A., & Erdoğmuş, D. (2023, June). Recursive estimation of user intent from noninvasive electroencephalography using discriminative models. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) (pp. 1-5). IEEE.
+
+### 2022
+- Mak, J., Kocanaogullari, D., Huang, X., Kersey, J., Shih, M., Grattan, E. S., ... & Akcakaya, M. (2022). Detection of stroke-induced visual neglect and target response prediction using augmented reality and electroencephalography. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 30, 1840-1850.
+- Galvin-McLaughlin, D., Klee, D., Memmott, T., Peters, B., Wiedrick, J., Fried-Oken, M., ... & Dudy, S. (2022). Methodology and preliminary data on feasibility of a neurofeedback protocol to improve visual attention to letters in mild Alzheimer's disease. Contemporary Clinical Trials Communications, 28, 100950.
+- Klee, D., Memmott, T., Smedemark-Margulies, N., Celik, B., Erdogmus, D., & Oken, B. S. (2022). Target-related alpha attenuation in a brain-computer interface rapid serial visual presentation calibration. Frontiers in Human Neuroscience, 16, 882557.
+
+### 2021
+- Koçanaoğulları, A., Akcakaya, M., & Erdoğmuş, D. (2021). Stopping criterion design for recursive Bayesian classification: analysis and decision geometry. IEEE Transactions on Pattern Analysis and Machine Intelligence, 44(9), 5590-5601.
+
+### 2020
+- Koçanaogullari, A. (2020). Active Recursive Bayesian Classification (Querying and Stopping) for Event Related Potential Driven Brain Computer Interface Systems (Doctoral dissertation, Northeastern University).
+- Koçanaoğulları, A., Akçakaya, M., Oken, B., & Erdoğmuş, D. (2020, June). Optimal modality selection using information transfer rate for event related potential driven brain computer interfaces. In Proceedings of the 13th ACM International Conference on PErvasive Technologies Related to Assistive Environments (pp. 1-7).
+
 ## Contributions Welcome
 
-If you want to be added to the development team slack or have additional questions, please reach out to us at <support@cambi.tech>!
+If you want to be added to the development team Discord or have additional questions, please reach out to us at <support@cambi.tech>!
 
 ### Contribution Guidelines
 
-We follow and will enforce the contributor's covenant to foster a safe and inclusive environment for this open source software, please reference this link for more information: <https://www.contributor-covenant.org/>
+We follow and will enforce the code of conduct outlined [here](CODE_OF_CONDUCT.md). Please read it before contributing.
 
-We welcome all contributions to BciPy! Please follow the guidelines below:
-
-- All modules require tests and a demo.
-- All tests must pass to merge, even if they are seemingly unrelated to your work.
-- Use Spaces, not Tabs.
-- Use informative names for functions and classes.
-- Document the input and output of your functions / classes in the code. eg in-line commenting and typing.
-- Do not push IDE or other local configuration files.
-- All new modules or major functionality should be documented outside of the code with a README.md.
--- See README.md in repo or go to this site for inspiration: <https://github.com/matiassingers/awesome-readme>. Always use a Markdown interpreter before pushing.
-
-See this resource for examples: <http://docs.python-guide.org/en/latest/writing/style/>
 
 ### Contributors
 
