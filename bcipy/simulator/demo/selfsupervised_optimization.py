@@ -13,8 +13,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 from scipy.stats import multivariate_normal, entropy
 from datetime import datetime
-from bcipy.signal.model.pca_rda_kde.modified_rda import ModifiedRdaModel
-from sklearn.model_selection import train_test_split
+# from bcipy.signal.model.pca_rda_kde.modified_rda import ModifiedRdaModel
+# from sklearn.model_selection import train_test_split
 class Simulation:
     """
     Simulate the BCI experiment.
@@ -542,7 +542,7 @@ class Simulation:
 
 if __name__ == "__main__":
     alphabet= 'abcdefghijklmnopqrstuvwxyz<_'
-    target_phrase = "h"
+    target_phrase = "hello_world"
     # target_phrase = "earth day has always been a day that acknowledges our planet, " \
     # "which provides for us, and ways we can protect and preserve its beauty"
     target_phrase = target_phrase.replace(" ", "_")
