@@ -1,6 +1,10 @@
 import numpy as np
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME
 import bcipy.acquisition.devices as devices
+from sklearn.cross_decomposition import CCA
+from sklearn.preprocessing import StandardScaler
+#added for device spec using path
+from pathlib import Path
 
 class VEPSignalModel:
     """ Loads in VEP template and returns a probability distribution over the target boxes
@@ -89,8 +93,12 @@ class VEPSignalModel:
         self.n_samples = n_samples
 
     def predict(self, signal: np.ndarray) -> np.ndarray:
-        """Predicts probability distribution over target boxes given a signal
-           this returns a uniform distribution across all boxes right now.
+        """Predicts probability distribution over target boxes given a signal.
+
+        For each of the three trials of each box, (O1, Oz, O2) run a CCA between
+        the vep template and signal recieved by calculating the correlations.
+        After, take the average of all the channels for each boc and normalize
+        there score to sum to one.
 
         Parameters
         ----------
@@ -98,8 +106,45 @@ class VEPSignalModel:
 
         Returns
         ----------
-            np.ndarray: 1D array of length n_boxes with probabilities summing to 1.
+            np.ndarray: 1D array of length n_boxes with average correlations summing to 1.
         """
 
-        #Uniform distribution over boxes
-        return np.ones(self.n_boxes) / self.n_boxes
+        #Holds average correlation for each box
+        average_corr = []
+        testing_scaler = StandardScaler()
+        cca = CCA(n_components=1)
+
+        for box in range(self.n_boxes):
+            channel_correlations = []
+            for channel in range(self.n_channels):
+                template_signal = self.template[box, channel]
+                target_signal  = signal[channel]
+
+                #min_length = min(template_eeg.shape[0], testing_eeg.shape[0])
+                min_length = min(template_signal.shape[0], target_signal.shape[0])
+                #Shorten template/target to the first min_length sample and reshape according
+                template_window = template_signal[:min_length].reshape(-1, 1)
+                target_window = target_signal[:min_length].reshape(-1, 1)
+
+                #Normalized template data by shifting so that average value is exactly zero
+                #testing_eeg = testing_scaler.fit_transform(testing_eeg)
+                template_scaled = testing_scaler.fit_transform(template_window)
+                target_scaled = testing_scaler.fit_transform(target_window)
+
+                # A, B = cca.fit_transform(template_eeg, testing_eeg)
+                A, B = cca.fit_transform(template_scaled, target_scaled)
+                # corri = np.corrcoef(A, B, rowvar = False)[0, 1])
+                corr = np.corrcoef(A, B, rowvar=False)[0, 1]
+                channel_correlations.append(corr)
+
+            #After processing, compute the mean correlation for this box
+            average_corr.append(np.mean(channel_correlations))
+        #Convert list of box average_corrs to numpy array
+        average_corr = np.array(average_corr)
+        #Total fo rsum of all box scores (normalization)
+        total = np.sum(average_corr)
+        #Non-positive result like if correlations all equal 0 or negative
+        if total <= 0:
+            return np.ones(self.n_boxes) / self.n_boxes
+        #Box average_corr summed to one and returns an array of probabilities
+        return average_corr / total
