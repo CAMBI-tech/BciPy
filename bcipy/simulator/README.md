@@ -33,14 +33,15 @@ optional arguments:
 ```
 
 For example,
-`$ python bcipy/simulator -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+`$ bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
 
 #### Program Args
 
 - `i` : Interactive command line interface. Provide this flag by itself to be prompted for each parameter.
 - `gui`: A graphical user interface for configuring a simulation. This mode will output the command line arguments which can be used to repeat the simulation.
-- `d` : Raw data folders to be processed. One ore more values can be provided. Each session data folder should contain
-  _raw_data.csv_, _triggers.txt_, _parameters.json_. These files will be used to construct a data pool from which simulator will sample EEG and other device responses. The parameters file in each data folder will be used to check compatibility with the simulation/model parameters.
+- `d` : Raw data folders to be processed. Data folders should contain EEG responses to Copy Phrase tasks. Each session data folder should contain
+  _raw_data.csv_, _triggers.txt_, _parameters.json_.These files will be used to construct a data pool from which simulator will sample EEG. The parameters file in each data folder will be used to check compatibility with the simulation/model parameters.
 - `p` : path to the parameters.json file used to run the simulation. These parameters will be applied to
   all raw_data files when loading. This file can specify various aspects of the simulation, including the language model to be used, the text to be spelled, etc. Timing-related parameters should generally match the parameters file used for training the signal model(s).
 - `m`: Path to a pickled (.pkl) signal model. One or more models can be provided.
@@ -52,10 +53,11 @@ For example,
 
 #### Sim Output Details
 
-Output folders are generally located in the `data/simulator` directory, but can be configured per simulation. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time.
+Output folders are generally located in the `data/simulator` directory, but can be configured per simulation. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time (E.G -- "SIM_%m-%d-%Y_%H_%M_%S")
 
+At the top level of the output directory, the following files are created:
 - `parameters.json` captures params used for the simulation.
-- `sim.log` is a log file for the simulation; metrics will be output here.
+- `sim.log` is a log file for the overall simulation; metrics will be output here.
 - `summary_data.json` summarizes session data from each of the runs into a single data structure.
 - `metrics.png` boxplots for several metrics summarizing all simulation runs.
 
