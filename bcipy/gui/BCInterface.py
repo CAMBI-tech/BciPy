@@ -136,31 +136,35 @@ class BCInterface(BCIGui):
         data directory configured in the current parameters."""
         # if refresh is True, then we need to clear the list and add the default text
         if refresh:
-            self.user_input.clear()
-            self.user_input.addItem(BCInterface.default_text)
+            if self.user_input:
+                self.user_input.clear()
+                self.user_input.addItem(BCInterface.default_text)
 
         # load the users from the data directory and check if they have already been added to the dropdown
         users = load_users(self.parameters['data_save_loc'])
         for user in users:
             if user not in self.users:
-                self.user_input.addItem(user)
+                if self.user_input:
+                    self.user_input.addItem(user)
                 self.users.append(user)
 
     def update_experiment_list(self) -> None:
         """Updates the experiment_input combo box with a list of experiments based on the
         data directory configured in the current parameters."""
 
-        self.experiment_input.clear()
-        self.experiment_input.addItem(BCInterface.default_text)
-        self.experiment_input.addItems(self.load_experiments())
+        if self.experiment_input:
+            self.experiment_input.clear()
+            self.experiment_input.addItem(BCInterface.default_text)
+            self.experiment_input.addItems(self.load_experiments())
 
     def update_task_list(self) -> None:
         """Updates the task_input combo box with a list of tasks ids based on what
         is available in the Task Registry"""
 
-        self.task_input.clear()
-        self.task_input.addItem(BCInterface.default_text)
-        self.task_input.addItems(self.tasks)
+        if self.task_input:
+            self.task_input.clear()
+            self.task_input.addItem(BCInterface.default_text)
+            self.task_input.addItems(self.tasks)
 
     def build_inputs(self) -> None:
         """Build Inputs.
@@ -328,9 +332,12 @@ class BCInterface(BCIGui):
         """
 
         # Update based on current inputs
-        self.user = self.user_input.currentText()
-        self.experiment = self.experiment_input.currentText()
-        self.task = self.task_input.currentText()
+        if self.user_input:
+            self.user = self.user_input.currentText()
+        if self.experiment_input:
+            self.experiment = self.experiment_input.currentText()
+        if self.task_input:
+            self.task = self.task_input.currentText()
 
         # Check the set values are different than defaults
         try:

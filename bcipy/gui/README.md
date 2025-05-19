@@ -5,7 +5,7 @@ This module contains all GUI code used in BciPy. The base window class, BCIGui, 
 
 ## Dependencies
 -------------
-This project was written in wxPython version 4.0.4 and PyQt5 5.15.1. We are deprecating the wxPython UIs in future releases.
+This project was written in PyQt6.
 
 ## Project structure
 ---------------
@@ -30,4 +30,5 @@ Contributors:
 
 - Tab Memmott
 - Matthew Lawhead
+- Carson Reader
 - Dani Smektala

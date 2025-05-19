@@ -76,7 +76,7 @@ class SwitchGui(BCIGui):  # pragma: no cover
 
 
 def main(switch: Switch):  # pragma: no cover
-    """Creates a PyQt5 GUI with a single button in the middle. Performs the
+    """Creates a PyQt6 GUI with a single button in the middle. Performs the
     switch action when clicked."""
     gui = app(sys.argv)
     ex = SwitchGui(switch=switch,

@@ -22,7 +22,7 @@ def font(size: int = 16, font_family: str = 'Helvetica') -> QFont:
     return QFont(font_family, size, weight=0)
 
 
-def invalid_length(min=1, max=25) -> bool:
+def invalid_length(min=1, max=25) -> Callable[[str], bool]:
     """Invalid Length.
 
     Returns a function, which when passed a string will assert whether a string meets min/max conditions.
@@ -35,8 +35,7 @@ def contains_whitespaces(string: str) -> bool:
 
     Checks for the presence of whitespace in a string.
     """
-    return re.match(r'^(?=.*[\s])', string)
-
+    return bool(re.match(r'^(?=.*[\s])', string))
 
 def contains_special_characters(string: str,
                                 regex: str = '[^0-9a-zA-Z_]+') -> bool:
@@ -90,7 +89,7 @@ class PushButton(QPushButton):
 
     Custom Button to store unique identifiers which are required for coordinating
     events across multiple buttons."""
-    id = None
+    id: Optional[int] = None
 
     def get_id(self):
         if not self.id:
@@ -139,8 +138,8 @@ class MessageBox(QMessageBox):
     def __init__(self, *args, **kwargs):
         QMessageBox.__init__(self, *args, **kwargs)
 
-        self.timeout = 0
-        self.current = 0
+        self.timeout = 0.0
+        self.current = 0.0
 
     def showEvent(self, event: QShowEvent) -> None:
         """showEvent.
@@ -149,7 +148,7 @@ class MessageBox(QMessageBox):
         """
         if self.timeout > 0:
             # timeout is in seconds (multiply by 1000 to get ms)
-            QTimer().singleShot(self.timeout * 1000, self.close)
+            QTimer().singleShot(self.timeout * 1000.0, self.close)
         super(MessageBox, self).showEvent(event)
 
     def setTimeout(self, timeout: float) -> None:
@@ -307,16 +306,20 @@ class FormInput(QWidget):
         """Returns the value associated with the form input."""
         if self.control:
             return self.control.text()
-        return None
+        return ""
 
     def is_editable(self) -> bool:
         """Returns whether the input is editable."""
-        return self.editable_widget.isChecked()
+        if self.editable_widget:
+            return self.editable_widget.isChecked()
+        return False
 
     @property
     def editable(self) -> bool:
         """Returns whether the input is editable."""
-        return True if self.editable_widget.isChecked() else False
+        if self.editable_widget:
+            return self.editable_widget.isChecked()
+        return False
 
     def cast_value(self) -> Any:
         """Returns the value associated with the form input, cast to the correct type.
@@ -373,7 +376,7 @@ class IntegerInput(FormInput):
             spin_box.setValue(int(value))
         return spin_box
 
-    def cast_value(self) -> str:
+    def cast_value(self) -> Union[int, None]:
         """Override FormInput to return an integer value."""
         if self.control:
             return int(self.control.text())
@@ -390,13 +393,14 @@ class FloatInputProperties(NamedTuple):
     step: float = 0.1
 
 
-def float_input_properties(value: str) -> FloatInputProperties:
+def float_input_properties(value: float) -> FloatInputProperties:
     """Given a string representation of a float value, determine suitable
     properties for the float component used to input or update this value.
     """
     # Determine from the component if there is a reasonable min or max constraint
     dec = Decimal(str(value))
     _sign, _digits, exponent = dec.as_tuple()
+    exponent = int(exponent)
     if exponent > 0:
         return FloatInputProperties()
     return FloatInputProperties(decimals=abs(exponent), step=10**exponent)
@@ -415,7 +419,7 @@ class FloatInput(FormInput):
     def __init__(self, **kwargs):
         super(FloatInput, self).__init__(**kwargs)
 
-    def init_control(self, value):
+    def init_control(self, value: float):
         """Override FormInput to create a spinbox."""
         spin_box = QDoubleSpinBox()
 
@@ -434,7 +438,7 @@ class FloatInput(FormInput):
         """Override FormInput to return as a float."""
         if self.control:
             return float(self.control.text())
-        return None
+        return 0.0
 
 
 class BoolInput(FormInput):
@@ -498,6 +502,8 @@ class SelectionInput(FormInput):
 
     def init_control(self, value) -> QWidget:
         """Override to create a Combobox."""
+        if not self.options:
+            raise ValueError(f"options are required for {self.label}")
         return ComboBox(self.options, value)
 
 
@@ -742,12 +748,12 @@ class BCIGui(QWidget):
                             format='%(name)s - %(levelname)s - %(message)s')
         self.logger = logging
 
-        self.buttons = []
-        self.input_text = []
-        self.static_text = []
-        self.images = []
-        self.comboboxes = []
-        self.widgets = []
+        self.buttons: List[PushButton] = []
+        self.input_text: List[QLineEdit] = []
+        self.static_text: List[QLabel] = []
+        self.images: List[QLabel] = []
+        self.comboboxes: List[QComboBox] = []
+        self.widgets: List[QWidget] = []
 
         # set main window properties
         self.background_color = background_color
