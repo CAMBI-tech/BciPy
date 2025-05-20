@@ -4,13 +4,13 @@ from unittest.mock import Mock, call, patch
 
 from bcipy.acquisition.devices import DeviceSpec, DeviceStatus
 from bcipy.config import DEFAULT_DEVICE_SPEC_FILENAME as spec_name
+from bcipy.core.parameters import Parameters
 from bcipy.helpers.acquisition import (RAW_DATA_FILENAME, StreamType,
                                        active_content_types, init_acquisition,
                                        init_device, is_stream_type_active,
                                        max_inquiry_duration, parse_stream_type,
                                        raw_data_filename, server_spec,
                                        stream_types)
-from bcipy.core.parameters import Parameters
 
 
 class TestAcquisition(unittest.TestCase):

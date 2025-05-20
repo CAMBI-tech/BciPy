@@ -1,7 +1,8 @@
 import unittest
 
-from mockito import any, mock, when, unstub
 import psychopy
+from mockito import any, mock, unstub, when
+
 from bcipy.display.main import init_display_window
 
 

@@ -1,25 +1,24 @@
 # mypy: disable-error-code="assignment,var-annotated"
+import logging
+from typing import List, Tuple
+
 import numpy as np
 from sklearn.utils import resample
-from typing import List, Tuple
-import logging
 from tqdm import tqdm
 
-from bcipy.config import (TRIGGER_FILENAME, SESSION_LOG_FILENAME)
-from bcipy.helpers.acquisition import analysis_channels
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import SESSION_LOG_FILENAME, TRIGGER_FILENAME
+from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
 from bcipy.core.stimuli import update_inquiry_timing
 from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.acquisition import analysis_channels
 from bcipy.preferences import preferences
-from bcipy.signal.model.base_model import SignalModelMetadata
-from bcipy.signal.model.base_model import SignalModel
+from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
 from bcipy.signal.model.gaussian_mixture import GaussianProcess
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
-from bcipy.acquisition.devices import DeviceSpec
-from bcipy.core.parameters import Parameters
-
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 

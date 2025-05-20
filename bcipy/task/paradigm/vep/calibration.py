@@ -5,6 +5,8 @@ from typing import Any, Dict, Iterator, List, Optional
 from psychopy import visual  # type: ignore
 
 from bcipy.config import DEFAULT_FRAME_RATE, SESSION_LOG_FILENAME
+from bcipy.core.parameters import Parameters
+from bcipy.core.triggers import TriggerType
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -12,8 +14,6 @@ from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
-from bcipy.core.parameters import Parameters
-from bcipy.core.triggers import TriggerType
 from bcipy.task.calibration import BaseCalibrationTask, Inquiry
 from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries

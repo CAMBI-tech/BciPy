@@ -17,11 +17,11 @@ import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME)
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.visualization import visualize_erp
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
                            load_raw_data)
-from bcipy.core.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.process import get_default_transform
 
 if __name__ == '__main__':

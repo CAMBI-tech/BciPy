@@ -1,5 +1,7 @@
-from bcipy.core.stimuli import StimuliOrder, generate_calibration_inquiries, best_case_rsvp_inq_gen
 import numpy as np
+
+from bcipy.core.stimuli import (StimuliOrder, best_case_rsvp_inq_gen,
+                                generate_calibration_inquiries)
 
 
 def _demo_random_rsvp_inquiry_generator():

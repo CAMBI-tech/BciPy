@@ -8,8 +8,8 @@ from typing import Any, Dict
 
 from rich.progress import track
 
-from bcipy.io.load import load_json_parameters
 import bcipy.simulator.util.metrics as metrics
+from bcipy.io.load import load_json_parameters
 # pylint: disable=wildcard-import,unused-wildcard-import
 # flake8: noqa
 from bcipy.simulator.data.sampler import *

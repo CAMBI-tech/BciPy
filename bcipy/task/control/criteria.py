@@ -1,9 +1,11 @@
-import numpy as np
 import logging
-from typing import Dict, List
 from copy import copy
+from typing import Dict, List
+
+import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
+
 log = logging.getLogger(SESSION_LOG_FILENAME)
 
 

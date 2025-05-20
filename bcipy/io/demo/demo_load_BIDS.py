@@ -8,10 +8,11 @@ The BIDS directory should contain a dataset_description.json file and a
 participants.tsv file, along with the data files in the appropriate subdirectories.
 """
 
-from bcipy.io.convert import BIDS_to_MNE
-from bcipy.io.load import load_experimental_data
 import mne
 from mne.viz import plot_compare_evokeds
+
+from bcipy.io.convert import BIDS_to_MNE
+from bcipy.io.load import load_experimental_data
 
 # This script demonstrates how to load BIDS data using the BciPy library. This assumes that the data is
 # already in BIDS format (BV, EDF, or BDF, with the channels.tsv file) and that the BIDS directory is

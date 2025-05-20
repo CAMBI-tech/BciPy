@@ -1,11 +1,11 @@
-from dataclasses import dataclass
-from typing import Optional
-from bcipy.core.parameters import Parameters
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from enum import Enum
+from typing import Optional
 
-from bcipy.core.stimuli import play_sound
 from bcipy.config import STATIC_AUDIO_PATH
+from bcipy.core.parameters import Parameters
+from bcipy.core.stimuli import play_sound
 
 
 @dataclass

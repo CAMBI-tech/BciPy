@@ -2,8 +2,9 @@
 To start these will be 1:1 with tasks, but later this can be extended to represent training sequences, GUI popups etc"""
 
 from typing import List, Type
-from bcipy.task import Task
+
 from bcipy.config import TASK_SEPERATOR
+from bcipy.task import Task
 from bcipy.task.registry import TaskRegistry
 
 

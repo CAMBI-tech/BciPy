@@ -1,12 +1,12 @@
 # mypy: disable-error-code="return-value"
 from enum import Enum
+from typing import List, Tuple, Union
 
 from psychopy import core, visual
-from typing import Tuple, List, Union
 
+from bcipy.core.stimuli import resize_image
 from bcipy.feedback.feedback import Feedback
 from bcipy.helpers.clock import Clock
-from bcipy.core.stimuli import resize_image
 
 
 class FeedbackType(Enum):

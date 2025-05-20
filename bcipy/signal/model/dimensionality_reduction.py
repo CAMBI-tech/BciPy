@@ -1,6 +1,6 @@
 import logging
-
 from typing import Optional
+
 import numpy as np
 from sklearn.decomposition import PCA
 

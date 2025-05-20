@@ -1,5 +1,5 @@
-from bcipy.main import bci_main
 from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.main import bci_main
 
 parameter_location = DEFAULT_PARAMETERS_PATH  # Path to a valid BciPy parameters file
 user = 'test_demo_user'  # User ID

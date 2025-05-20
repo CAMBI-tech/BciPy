@@ -1,6 +1,5 @@
-from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 from bcipy.core.symbols import DEFAULT_SYMBOL_SET
-
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
 
 if __name__ == "__main__":
     # Load the default mixture model from lm_params.json

@@ -8,9 +8,9 @@ import numpy as np
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.parameters import Parameters
+from bcipy.core.stimuli import GazeReshaper, TrialReshaper
 from bcipy.display.main import ButtonPressMode
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.core.stimuli import TrialReshaper, GazeReshaper
 from bcipy.signal.model import SignalModel
 from bcipy.signal.process import extract_eye_info
 from bcipy.task.data import EvidenceType

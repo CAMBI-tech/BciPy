@@ -1,15 +1,15 @@
-import unittest
-import tempfile
 import shutil
+import tempfile
+import unittest
 from pathlib import Path
 
-from mockito import when, any, verify, unstub, mock
+from mockito import any, mock, unstub, verify, when
 
-from bcipy.helpers.visualization import visualize_session_data
-from bcipy.helpers import visualization
-from bcipy.core.raw_data import RawData
-from bcipy.io.load import load_json_parameters
 from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.core.raw_data import RawData
+from bcipy.helpers import visualization
+from bcipy.helpers.visualization import visualize_session_data
+from bcipy.io.load import load_json_parameters
 
 
 class TestVisualizeSessionData(unittest.TestCase):

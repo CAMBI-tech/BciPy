@@ -3,10 +3,9 @@ from itertools import cycle, islice, repeat
 from typing import Any, Iterator, List
 
 from bcipy.core.parameters import Parameters
-from bcipy.core.stimuli import (PhotoDiodeStimuli, get_fixation,
-                                jittered_timing)
-from bcipy.task.calibration import Inquiry
+from bcipy.core.stimuli import PhotoDiodeStimuli, get_fixation, jittered_timing
 from bcipy.task import TaskMode
+from bcipy.task.calibration import Inquiry
 from bcipy.task.paradigm.rsvp.calibration.calibration import \
     RSVPCalibrationTask
 

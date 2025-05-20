@@ -4,13 +4,12 @@ from abc import ABC
 from typing import List, Optional, Tuple
 
 from matplotlib import pyplot as plt
-
 from matplotlib.figure import Figure
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Image
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Flowable, KeepTogether
 from reportlab.lib.units import inch
+from reportlab.platypus import (Flowable, Image, KeepTogether, Paragraph,
+                                SimpleDocTemplate)
 
 from bcipy.config import BCIPY_FULL_LOGO_PATH
 from bcipy.signal.evaluate.artifact import ArtifactDetection

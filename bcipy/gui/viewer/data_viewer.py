@@ -4,28 +4,27 @@ from functools import partial
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
+import matplotlib
+import matplotlib.ticker as ticker
+import numpy as np
 from PyQt6.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
 
-import matplotlib
-import matplotlib.ticker as ticker
-import numpy as np
 matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 
-
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableProcess
+from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.core.raw_data import settings
 from bcipy.gui.main import static_text_control
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
-from bcipy.core.raw_data import settings
 from bcipy.signal.process.transform import Downsample, get_default_transform
 
 

@@ -1,13 +1,11 @@
 import unittest
 
 from bcipy.config import DEFAULT_EXPERIMENT_ID
+from bcipy.exceptions import (InvalidExperimentException,
+                              InvalidFieldException,
+                              UnregisteredExperimentException,
+                              UnregisteredFieldException)
 from bcipy.helpers.validate import validate_experiment, validate_experiments
-from bcipy.exceptions import (
-    InvalidExperimentException,
-    InvalidFieldException,
-    UnregisteredExperimentException,
-    UnregisteredFieldException,
-)
 
 
 class TestValidateExperiment(unittest.TestCase):

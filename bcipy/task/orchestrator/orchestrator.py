@@ -1,29 +1,23 @@
 # mypy: disable-error-code="arg-type, assignment"
 import errno
-import os
 import json
-import subprocess
-from datetime import datetime
-import random
 import logging
+import os
+import random
+import subprocess
 import time
+from datetime import datetime
 from logging import Logger
-from typing import List, Type, Optional
+from typing import List, Optional, Type
 
+from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID,
+                          MULTIPHRASE_FILENAME, PROTOCOL_FILENAME,
+                          PROTOCOL_LOG_FILENAME, SESSION_LOG_FILENAME)
 from bcipy.core.parameters import Parameters
-from bcipy.helpers.utils import get_system_info, configure_logger
-from bcipy.task import Task, TaskData, TaskMode
-from bcipy.config import (
-    DEFAULT_EXPERIMENT_ID,
-    DEFAULT_PARAMETERS_FILENAME,
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_USER_ID,
-    MULTIPHRASE_FILENAME,
-    PROTOCOL_FILENAME,
-    PROTOCOL_LOG_FILENAME,
-    SESSION_LOG_FILENAME,
-)
+from bcipy.helpers.utils import configure_logger, get_system_info
 from bcipy.io.load import load_json_parameters
+from bcipy.task import Task, TaskData, TaskMode
 
 
 class SessionOrchestrator:

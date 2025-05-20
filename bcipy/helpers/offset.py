@@ -1,23 +1,17 @@
-from typing import Any, List, Tuple
-from textwrap import wrap
 from pathlib import Path
+from textwrap import wrap
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.stats import normaltest
 
-from bcipy.io.load import load_raw_data, ask_directory, load_json_parameters
+from bcipy.config import (DEFAULT_PARAMETERS_FILENAME,
+                          DEFAULT_TRIGGER_CHANNEL_NAME, DIODE_TRIGGER,
+                          RAW_DATA_FILENAME, TRIGGER_FILENAME)
 from bcipy.core.raw_data import RawData
-from bcipy.core.triggers import trigger_decoder, TriggerType
-
-from bcipy.config import (
-    TRIGGER_FILENAME,
-    DIODE_TRIGGER,
-    RAW_DATA_FILENAME,
-    DEFAULT_TRIGGER_CHANNEL_NAME,
-    DEFAULT_PARAMETERS_FILENAME
-)
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.io.load import ask_directory, load_json_parameters, load_raw_data
 
 
 def sample_to_seconds(sample_rate: float, sample: int) -> float:

@@ -7,13 +7,12 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from mockito import any, mock, unstub, verify, when
 
-from mockito import any, mock, when, verify, unstub
-
-from bcipy.exceptions import BciPyCoreException
 from bcipy.core.raw_data import (RawData, RawDataReader, RawDataWriter,
-                                 load, sample_data, settings, write,
-                                 get_1020_channel_map, get_1020_channels)
+                                 get_1020_channel_map, get_1020_channels, load,
+                                 sample_data, settings, write)
+from bcipy.exceptions import BciPyCoreException
 
 
 class TestRawData(unittest.TestCase):

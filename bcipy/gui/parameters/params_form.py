@@ -11,10 +11,10 @@ from PyQt6.QtWidgets import (QApplication, QFileDialog, QHBoxLayout,
                              QPushButton, QScrollArea, QVBoxLayout, QWidget)
 
 from bcipy.config import BCIPY_ROOT, DEFAULT_PARAMETERS_PATH
+from bcipy.core.parameters import Parameters, changes_from_default
 from bcipy.gui.main import (BoolInput, DirectoryInput, FileInput, FloatInput,
                             FormInput, IntegerInput, RangeInput, SearchInput,
                             SelectionInput, TextInput, static_text_control)
-from bcipy.core.parameters import Parameters, changes_from_default
 
 
 class ParamsForm(QWidget):

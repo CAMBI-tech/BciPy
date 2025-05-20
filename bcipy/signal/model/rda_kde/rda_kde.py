@@ -3,14 +3,16 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
+
+from bcipy.core.stimuli import InquiryReshaper
+from bcipy.exceptions import SignalException
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
-from bcipy.signal.model.cross_validation import cost_cross_validation_auc, cross_validation
+from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,
+                                                 cross_validation)
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.exceptions import SignalException
-from bcipy.core.stimuli import InquiryReshaper
 
 
 class RdaKdeModel(SignalModel):

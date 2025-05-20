@@ -21,10 +21,11 @@ from pandas import Series
 from PIL import Image
 from psychopy import core
 
-from bcipy.config import DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION, SESSION_LOG_FILENAME
-from bcipy.exceptions import BciPyCoreException
+from bcipy.config import (DEFAULT_FIXATION_PATH, DEFAULT_TEXT_FIXATION,
+                          SESSION_LOG_FILENAME)
 from bcipy.core.list import grouper
 from bcipy.core.symbols import alphabet
+from bcipy.exceptions import BciPyCoreException
 
 # Prevents pillow from filling the console with debug info
 logging.getLogger('PIL').setLevel(logging.WARNING)

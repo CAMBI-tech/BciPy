@@ -1,8 +1,9 @@
 """Module for recording and loading application state and user preferences."""
 import json
 from pathlib import Path
-from typing import Optional, Any, Dict
-from bcipy.config import DEFAULT_ENCODING, PREFERENCES_PATH, BCIPY_ROOT
+from typing import Any, Dict, Optional
+
+from bcipy.config import BCIPY_ROOT, DEFAULT_ENCODING, PREFERENCES_PATH
 
 
 class Pref:
