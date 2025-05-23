@@ -382,7 +382,7 @@ class VEPDisplay(Display):
         are drawn in the order they are in the list as defined in self.vep.
         """
         self.static_clock.reset()
-        if target_box_index:
+        if target_box_index is not None:
             self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
         else:
             self.window.callOnFlip(self.add_timing, f'STIMULATE')
