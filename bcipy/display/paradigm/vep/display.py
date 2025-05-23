@@ -25,6 +25,9 @@ from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.symbols import BACKSPACE_CHAR
 from bcipy.helpers.save import save_vep_parameters
 
+from bcipy.language.model.ambiguous import AmbiguousLanguageModel
+from bcipy.language.main import ResponseType
+
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
     symbol: str
@@ -51,7 +54,7 @@ class VEPDisplay(Display):
                  trigger_type: str = 'text',
                  symbol_set: Optional[List[str]] = None,
                  flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
-                 should_prompt_target: bool = True,
+                 calibration_mode: bool = False,
                  frame_rate: Optional[float] = None,
                  mseq_length: Optional[int] = 127,
                  file_save: Optional[str] = None):
@@ -91,7 +94,7 @@ class VEPDisplay(Display):
         self.file_save = file_save or None
 
         self.stim_length = stimuli.stim_length
-        self.should_set_target = should_prompt_target
+        self.calibration_mode = calibration_mode
 
         self.symbol_set = symbol_set or alphabet()
         self.sort_order = self.symbol_set.index
@@ -141,38 +144,68 @@ class VEPDisplay(Display):
         self.box_border_width = 4
         self.text_boxes = self._build_text_boxes(box_config)
 
+        self.chosen_boxes = []
+
+        self.model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
+
         if self.file_save:
             save_vep_parameters(self.mseq_length, self.refresh_rate, self.file_save)
 
     @property
     def box_colors(self) -> List[str]:
         """Get the colors used for boxes"""
-        if self.should_set_target:
+        if self.calibration_mode:
             [_target_color, _fixation_color, *colors] = self.stimuli_colors
         else:
             [_fixation_color, *colors] = self.stimuli_colors
         return colors
-
+        
     def check_configuration(self):
         """Check that configured properties are consistent"""
         assert len(self.stimuli_pos) == self.vep_type, (
             f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}"
         )
+    
+    def get_top_predictions(self, context: str, group_sequence: List[str]) -> List[str]:
+        """Top two word predictions are generated from language model"""
+
+        # Ensure valid group_sequence
+        if not group_sequence:
+            return ["", ""]  #returns empty predictions to stop crash
+
+        try:
+            predictions = self.model.predict(list(context), list(group_sequence))
+
+            if not predictions:
+                return ["", ""]
+
+            #Retrieve only the predicted words
+            final_prediction = [word for word, _ in predictions]  
+
+            return final_prediction[:2] if len(final_prediction) >= 2 else final_prediction + [""]
+    
+        except Exception as e:
+            return ["", ""]
 
     def stim_properties(self) -> List[StimProps]:
         """Returns a tuple of (symbol, duration, and color) for each stimuli,
         including the target and fixation stim. Stimuli that represent VEP
         boxes will have a list of symbols."""
-        stim_num = len(self.stimuli_inquiry)
-        assert len(self.stimuli_colors
-                   ) == stim_num, "Each box should have its own color"
 
-        return [
-            StimProps(symbol=props[0], duration=props[1], color='white') for props in zip(
-                self.stimuli_inquiry,
-                expanded(list(self.stimuli_timing), length=stim_num),
-                self.stimuli_colors)
-        ]
+        if self.calibration_mode:
+            stim_num = len(self.stimuli_inquiry)
+            assert len(self.stimuli_colors) == stim_num, "Each box should have its own color"
+
+            return [
+                StimProps(symbol=props[0], duration=props[1], color='white') for props in zip(
+                    self.stimuli_inquiry,
+                    expanded(list(self.stimuli_timing), length=stim_num),
+                    self.stimuli_colors)
+            ]
+        else:
+            return [
+                StimProps(symbol=str(i), duration=self.stimuli_timing, color='white') for i in range(self.vep_type)
+            ]
 
     def box_index(self, stim_groups: List[StimProps], sym: str) -> int:
         """Box index for the given symbol"""
@@ -192,23 +225,25 @@ class VEPDisplay(Display):
         self._reset_text_boxes()
         self.reset_symbol_positions()
 
-        if self.should_set_target:
+        if self.calibration_mode:
             [target, _fixation, *stim] = self.stim_properties()
             if isinstance(target.symbol, str):
-                self.set_stimuli_colors(stim)
+                # self.set_stimuli_colors(stim)
                 self.set_target(target,
                                    target_box_index=self.box_index(
                                        stim, target.symbol))
         else:
             [_fixation, *stim] = self.stim_properties()
-            self.set_stimuli_colors(stim)
+            # self.set_stimuli_colors(stim)
 
         self.log_inquiry(stim)
         self.show_box_text(stim)
         core.wait(self.timing_prompt)
         self._reset_text_boxes()
-        self.stimulate(target_box_index=self.box_index(
-                                       stim, target.symbol))
+        if self.calibration_mode:
+            self.stimulate(target_box_index=self.box_index(stim, target.symbol))
+        else:
+            self.stimulate()
 
         # clear everything expect static stimuli
         self.draw_static()
@@ -266,7 +301,7 @@ class VEPDisplay(Display):
 
         # print("PROMPT")
 
-        self.set_stimuli_colors(stimuli)
+        # self.set_stimuli_colors(stimuli)
         self._set_inquiry(stimuli)
         
         self.window.callOnFlip(self.add_timing, "PROMPT")
@@ -320,15 +355,25 @@ class VEPDisplay(Display):
             for sym in group.symbol:
                 self.sti[sym].color = 'white'
 
+
+    def update_chosen_boxes(self, chosen_box_index: int) -> None:
+        """Update the list of chosen boxes"""
+
+        if chosen_box_index in [5, 6]:
+            self.chosen_boxes.clear()
+         #Only will store boxes 1-4
+        elif chosen_box_index in range(4):
+            self.chosen_boxes.append(str(chosen_box_index + 1))
+
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
         for i, box in enumerate(self.text_boxes):
-            if i == self.current_highlighted_box_index:
+            if self.calibration_mode and i == self.current_highlighted_box_index:
                 box.borderColor = 'green'
                 box.borderWidth = self.box_border_width + 10
             box.draw()
 
-    def stimulate(self, target_box_index: int) -> None:
+    def stimulate(self, target_box_index: Optional[int] = None) -> None:
         """
         This is the main display function of the VEP paradigm. It is
         responsible for drawing the flickering stimuli.
@@ -337,7 +382,10 @@ class VEPDisplay(Display):
         are drawn in the order they are in the list as defined in self.vep.
         """
         self.static_clock.reset()
-        self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
+        if target_box_index:
+            self.window.callOnFlip(self.add_timing, f'STIMULATE_{target_box_index}')
+        else:
+            self.window.callOnFlip(self.add_timing, f'STIMULATE')
         # print("STIMULATE")
         for frame in range(self.mseq_length):
             self.draw_boxes()
@@ -491,27 +539,43 @@ class VEPDisplay(Display):
             text_box.borderWidth = self.box_border_width
 
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
-        """Set the correct inquiry text for each text boxes.
-        """
+        """Set the correct inquiry text for each text box and ensure predictive words are displayed."""
+
         #box layout
         layout = [
             ['A', 'B', 'C', 'D', 'E'],
             ['F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'],
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
-            ['MODE   ', 'SWITCH'],
-            ['HER'],
-            ['MAN'],
-            [BACKSPACE_CHAR]
+            ['Mode', 'Switch'],
+            ['WORD'],
+            ['WORD'],
+            ['Backspace']
         ]
-    
+
+        if not self.calibration_mode:
+
+            # Get predictive text
+            top_predictions = self.get_top_predictions(
+                context=self.task_bar.spelled_text,
+                group_sequence=self.chosen_boxes
+            )
+
+            self.logger.info(f"Top predictions: {top_predictions}")
+
+            # Ensure predictions are displayed correctly
+            layout[5] = [top_predictions[0]] if top_predictions[0].strip() else [" "]
+            layout[6] = [top_predictions[1]] if top_predictions[1].strip() else [" "]
+
         for box_index, symbols in enumerate(layout):
             box = self.text_boxes[box_index]
             text = ' '.join(symbols)
             box.text = text
             box.color = 'white'
             box.borderColor = 'white'
+
         return self.text_boxes
+
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.

@@ -80,7 +80,9 @@ def make_task(
         return VEPCalibrationTask(display_window, daq, parameters, file_save)
     
     if task is TaskType.VEP_COPY_PHRASE:
-        return VEPCopyPhraseTask(display_window, daq, parameters, file_save)
+        return VEPCopyPhraseTask(
+            display_window, daq, parameters, file_save, signal_models,
+            language_model, fake=fake)
 
     raise TaskRegistryException(
         'The provided experiment type is not registered.')

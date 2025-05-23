@@ -166,5 +166,5 @@ def init_vep_display(parameters: Parameters, window: visual.Window,
                       symbol_set=symbol_set,
                       box_config=box_config,
                       flicker_rates=DEFAULT_FLICKER_RATES,
-                      should_prompt_target=True,
+                      calibration_mode=True,
                       file_save=file_save)

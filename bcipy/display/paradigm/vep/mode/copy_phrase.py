@@ -1,9 +1,9 @@
-from bcipy.display.paradigm.vep.copy_phrase_display import VEPDisplay
+from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.helpers.symbols import SPACE_CHAR
 
 
 class CopyPhraseDisplayVEP(VEPDisplay):
-    """Calibration Display."""
+    """Copy Phrase Display."""
 
     def __init__(
             self,
@@ -16,7 +16,7 @@ class CopyPhraseDisplayVEP(VEPDisplay):
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
             flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
-            should_prompt_target: bool = True,
+            calibration_mode: bool = False,
             frame_rate: Optional[float] = None):
 
         super().__init__(window,
@@ -28,5 +28,5 @@ class CopyPhraseDisplayVEP(VEPDisplay):
                          trigger_type=trigger_type,
                          symbol_set=symbol_set,
                          flicker_rates=flicker_rates,
-                         should_prompt_target=should_prompt_target,
+                         calibration_mode=calibration_mode,
                          frame_rate=frame_rate)

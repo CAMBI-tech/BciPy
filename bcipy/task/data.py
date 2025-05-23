@@ -20,6 +20,7 @@ class EvidenceType(Enum):
     """Enum of the supported evidence types used in the various spelling tasks."""
     LM = 'LM'  # Language Model
     ERP = 'ERP'  # Event-Related Potential using EEG signals
+    VEP = 'VEP'  # Visually-Evoked Potential using EEG signals
     BTN = 'BTN'  # Button
     EYE = 'EYE'  # Eyetracker
 

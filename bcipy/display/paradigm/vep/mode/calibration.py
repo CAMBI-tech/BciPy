@@ -16,7 +16,7 @@ class CalibrationDisplayVEP(VEPDisplay):
             trigger_type: str = 'text',
             symbol_set: Optional[List[str]] = None,
             flicker_rates: List[int] = DEFAULT_FLICKER_RATES,
-            should_prompt_target: bool = True,
+            calibration_mode: bool = True,
             frame_rate: Optional[float] = None):
 
         super().__init__(window,
@@ -28,5 +28,5 @@ class CalibrationDisplayVEP(VEPDisplay):
                          trigger_type=trigger_type,
                          symbol_set=symbol_set,
                          flicker_rates=flicker_rates,
-                         should_prompt_target=should_prompt_target,
+                         calibration_mode=calibration_mode,
                          frame_rate=frame_rate)

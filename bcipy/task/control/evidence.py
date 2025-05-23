@@ -8,9 +8,13 @@ import numpy as np
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.stimuli import TrialReshaper
+from bcipy.helpers.load import load_json_parameters
 from bcipy.signal.model import SignalModel
+from bcipy.signal.model.vep_signal_model import VEPSignalModel
 from bcipy.task.data import EvidenceType
 from bcipy.task.exceptions import MissingEvidenceEvaluator
+from bcipy.signal.process import (ERPTransformParams, get_default_transform)
+from bcipy.config import DEFAULT_PARAMETERS_PATH
 
 log = logging.getLogger(__name__)
 
@@ -111,6 +115,118 @@ class EEGEvaluator(EvidenceEvaluator):
         """
         data = self.preprocess(raw_data, times, target_info, window_length)
         return self.signal_model.predict(data, symbols, self.symbol_set)
+
+class VEPEvaluator:
+    """EvidenceEvaluator that extracts VEP target likelihoods from raw EEG data.
+    Does NOT implement the base EvidenceEvaluator class
+
+    Parameters
+    ----------
+        signal_model: vep signal model containing the CCA templates
+    """
+    consumes = ContentType.EEG
+    produces = EvidenceType.VEP
+
+    def __init__(self, signal_model: VEPSignalModel):
+
+        self.device_spec = signal_model.device_spec
+        assert ContentType(
+            self.device_spec.content_type
+        ) == self.consumes, "evaluator is not compatible with the given model"
+        self.signal_model = signal_model
+
+        self.channel_map = analysis_channels(self.device_spec.channels,
+                                             self.device_spec)
+        
+        parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+
+        transform_params = parameters.instantiate(ERPTransformParams)
+
+        self.transform = get_default_transform(
+            sample_rate_hz=self.device_spec.sample_rate,
+            notch_freq_hz=transform_params.notch_filter_frequency,
+            bandpass_low=transform_params.filter_low,
+            bandpass_high=transform_params.filter_high,
+            bandpass_order=transform_params.filter_order,
+            downsample_factor=transform_params.down_sampling_rate,
+        )
+
+    def reshape(self,
+                stim_time: float,
+                eeg_data: np.ndarray,
+                sample_rate: int,
+                offset: float = 0,
+                channel_map: Optional[List[int]] = None,
+                poststimulus_length: float = 0.5,
+                prestimulus_length: float = 0.0) -> np.ndarray:
+        """Extract trial data and labels.
+
+        Parameters
+        ----------
+            stim_time (float): Timestamp of stimulus event relative to start of data
+            eeg_data (np.ndarray): shape (channels, samples) preprocessed EEG data
+            sample_rate (int): sample rate of preprocessed EEG data
+            offset (float, optional): Any calculated or hypothesized offsets in timings.
+                Defaults to 0.
+            channel_map (List, optional): Describes which channels to include or discard.
+                Defaults to None; all channels will be used.
+            poststimulus_length (float, optional): [description]. Defaults to 0.5.
+
+        Returns
+        -------
+            trial_data (np.ndarray): shape (channels, trials, samples) reshaped data
+            labels (np.ndarray): integer label for each trial
+        """
+        # Remove the rows for channels that we are not interested in
+        if channel_map:
+            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
+
+        # Number of samples we are interested per trial
+        poststim_samples = int(poststimulus_length * sample_rate)
+        prestim_samples = int(prestimulus_length * sample_rate)
+
+        trigger = (stim_time + offset) * sample_rate
+
+        return eeg_data[:, trigger - prestim_samples : trigger + post_stimsamples]
+
+    def preprocess(self, raw_data: np.ndarray, stim_time: float,
+                   window_length: float) -> np.ndarray:
+        """Preprocess the inquiry data.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            stim_time - timestamps from the start of the stimulus
+            window_length - The length of the time the stimulus is presented
+        """
+        transformed_data, transform_sample_rate = self.transform(
+            raw_data, self.device_spec.sample_rate)
+
+        # The data from DAQ is assumed to have offsets applied
+        reshaped_data = self.reshape(trial_targetness_label=target_info,
+                                            stim_time=stim_time,
+                                            eeg_data=transformed_data,
+                                            sample_rate=transform_sample_rate,
+                                            channel_map=self.channel_map,
+                                            poststimulus_length=window_length)
+        return reshaped_data
+
+    # pylint: disable=arguments-differ
+    def evaluate(self, raw_data: np.ndarray, stim_time: float,
+                 window_length: float) -> np.ndarray:
+        """Evaluate the evidence.
+
+        Parameters
+        ----------
+            raw_data - C x L eeg data where C is number of channels and L is the
+                signal length
+            stim_time - The start time of the stimulus
+            window_length - The length of the time the stimulus is presented
+        """
+        data = self.preprocess(raw_data, stim_time, window_length)
+        return self.signal_model.predict(data)
 
 
 def get_evaluator(
