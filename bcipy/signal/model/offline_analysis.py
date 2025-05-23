@@ -207,8 +207,7 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     path_to_template = Path(data_folder) / vep_template_name
     #log.info(f"VEP template path - {path_to_template}")
     with open(path_to_template, 'w') as f:
-        for sym_i in range(1, highest_stim_number + 1):
-            stimulant_number = sym_i - 1
+        for sym_i in range(0, highest_stim_number + 1):
             vep_indexes = groups.get(str(sym_i), [])
 
             if vep_indexes:
@@ -232,9 +231,9 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
             else:
                 o1_str = oz_str = o2_str = ""
 
-            f.write(f"01_box{stimulant_number}: {o1_str}\n")
-            f.write(f"0z_box{stimulant_number}: {oz_str}\n")
-            f.write(f"02_box{stimulant_number}: {o2_str}\n\n") #extra seperating line for boxes
+            f.write(f"01_box{sym_i}: {o1_str}\n")
+            f.write(f"0z_box{sym_i}: {oz_str}\n")
+            f.write(f"02_box{sym_i}: {o2_str}\n\n") #extra seperating line for boxes
 
 
     #Template saved to CSV; no need to return template or figures
