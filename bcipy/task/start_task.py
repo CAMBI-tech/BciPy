@@ -21,6 +21,7 @@ from bcipy.task.task_registry import TaskType
 from bcipy.acquisition import ClientManager
 from bcipy.helpers.parameters import Parameters
 from bcipy.signal.model import SignalModel
+from bcipy.signal.model.vep_signal_model import VEPSignalModel
 from bcipy.language import LanguageModel
 
 
@@ -32,7 +33,8 @@ def make_task(
         file_save: str,
         signal_models: Optional[List[SignalModel]] = None,
         language_model: Optional[LanguageModel] = None,
-        fake: bool = True) -> Task:
+        fake: bool = True,
+        vep_signal_model: Optional[VEPSignalModel] = None) -> Task:
     """Creates a Task based on the provided parameters.
 
     Parameters:
@@ -81,7 +83,7 @@ def make_task(
     
     if task is TaskType.VEP_COPY_PHRASE:
         return VEPCopyPhraseTask(
-            display_window, daq, parameters, file_save, signal_models,
+            display_window, daq, parameters, file_save, vep_signal_model,
             language_model, fake=fake)
 
     raise TaskRegistryException(
@@ -96,7 +98,8 @@ def start_task(
         file_save: str,
         signal_models: Optional[List[SignalModel]] = None,
         language_model: Optional[LanguageModel] = None,
-        fake: bool = True) -> str:
+        fake: bool = True,
+        vep_signal_model: Optional[VEPSignalModel] = None) -> str:
     """Creates a Task and starts execution."""
     bcipy_task = make_task(
         display_window,
@@ -106,5 +109,6 @@ def start_task(
         file_save,
         signal_models,
         language_model,
-        fake)
+        fake,
+        vep_signal_model)
     return bcipy_task.execute()

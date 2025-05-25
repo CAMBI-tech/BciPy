@@ -1,9 +1,6 @@
 import subprocess
 import sys
 from typing import List
-import os
-import tkinter as tk
-from tkinter import filedialog
 
 
 from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
@@ -406,23 +403,6 @@ class BCInterface(BCIGui):
             command to bcipy main and subprocess.
         """
         if self.check_input() and not self.action_disabled():
-
-            if self.task == TaskType.VEP_COPY_PHRASE.label:
-                root = tk.Tk()
-                root.withdraw()
-                csv_path = filedialog.askopenfilename(
-                    title="Select Model",
-                    filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
-                )
-                root.destroy()
-
-                try:
-                    self.vep_model = VEPSignalModel(csv_path)
-                except Exception as e:
-                    return
-                else:
-                    print(f"Loaded VEP template from: {csv_path}")
-
             self.throw_alert_message(
                 title='BciPy Alert',
                 message='Task Starting ...',

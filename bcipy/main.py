@@ -2,6 +2,8 @@ import argparse
 import logging
 import multiprocessing
 from typing import List, Optional
+import tkinter as tk
+from tkinter import filedialog
 
 from psychopy import visual
 
@@ -22,6 +24,8 @@ from bcipy.helpers.validate import validate_bcipy_session, validate_experiment
 from bcipy.helpers.visualization import visualize_session_data
 from bcipy.task import TaskType
 from bcipy.task.start_task import start_task
+
+from bcipy.signal.model.vep_signal_model import VEPSignalModel
 
 log = logging.getLogger(__name__)
 
@@ -132,6 +136,7 @@ def execute_task(
         (bool): True if the task was successfully executed, False otherwise
     """
     signal_models = []
+    vep_signal_model = None
     language_model = None
 
     # Init EEG Model, if needed. Calibration Tasks Don't require probabilistic
@@ -139,13 +144,29 @@ def execute_task(
     if task not in TaskType.calibration_tasks():
         # Try loading in our signal_model and starting a langmodel(if enabled)
         if not fake:
-            try:
-                model_dir = parameters['signal_model_path']
-                signal_models = load_signal_models(directory=model_dir)
-                assert signal_models, f"No signal models found in {model_dir}"
-            except Exception as error:
-                log.exception(f'Cannot load signal model. Exiting. {error}')
-                raise error
+            if task == TaskType.VEP_COPY_PHRASE:
+                root = tk.Tk()
+                root.withdraw()
+                csv_path = filedialog.askopenfilename(
+                    title="Select Model",
+                    filetypes=[("CSV files", "*.csv"), ("All files", "*.*")]
+                )
+                root.destroy()
+                try:
+                    vep_signal_model = VEPSignalModel(csv_path)
+                except Exception as e:
+                    log.exception(f'Cannot load vep signal model. Exiting. {error}')
+                    raise error
+                else:
+                    print(f"Loaded VEP template from: {csv_path}")
+            else:
+                try:
+                    model_dir = parameters['signal_model_path']
+                    signal_models = load_signal_models(directory=model_dir)
+                    assert signal_models, f"No signal models found in {model_dir}"
+                except Exception as error:
+                    log.exception(f'Cannot load signal model. Exiting. {error}')
+                    raise error
 
         language_model = init_language_model(parameters)
 
@@ -168,7 +189,8 @@ def execute_task(
                    save_folder,
                    language_model=language_model,
                    signal_models=signal_models,
-                   fake=fake)
+                   fake=fake,
+                   vep_signal_model=vep_signal_model)
 
     # If exception, close all display and acquisition objects
     except Exception as e:
