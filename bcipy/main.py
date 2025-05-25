@@ -154,7 +154,7 @@ def execute_task(
                 root.destroy()
                 try:
                     vep_signal_model = VEPSignalModel(csv_path)
-                except Exception as e:
+                except Exception as error:
                     log.exception(f'Cannot load vep signal model. Exiting. {error}')
                     raise error
                 else:
