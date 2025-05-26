@@ -15,7 +15,7 @@ from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
+# from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
@@ -32,11 +32,13 @@ from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                     TriggerType, convert_timing_triggers,
                                     offset_label)
 from bcipy.language.main import LanguageModel
-from bcipy.signal.model import SignalModel
+from bcipy.language.model.ambiguous import AmbiguousLanguageModel
+from bcipy.language.main import ResponseType
+from bcipy.signal.model.vep_signal_model import VEPSignalModel
 from bcipy.task import Task
-from bcipy.task.control.evidence import (EvidenceEvaluator,
-                                         init_evidence_evaluator)
+from bcipy.task.control.evidence import VEPEvaluator
 from bcipy.task.data import EvidenceType, Inquiry, Session
+import numpy as np
 
 class Decision(NamedTuple):
     """Represents the result of evaluating evidence.
@@ -100,7 +102,7 @@ class VEPCopyPhraseTask(Task):
             daq: ClientManager,
             parameters: Parameters,
             file_save: str,
-            signal_models: List[SignalModel],
+            signal_model: VEPSignalModel,
             language_model: LanguageModel,
             fake: bool) -> None:
         super(VEPCopyPhraseTask, self).__init__()
@@ -130,11 +132,10 @@ class VEPCopyPhraseTask(Task):
 
         self.alp = alphabet(self.parameters)
 
-        self.evidence_evaluators = self.init_evidence_evaluators(signal_models)
+        self.evidence_evaluator = self.init_evidence_evaluator(signal_model)
 
         self.evidence_types = [EvidenceType.LM]
-        self.evidence_types.extend(
-            [evaluator.produces for evaluator in self.evidence_evaluators])
+        self.evidence_types.append(self.evidence_evaluator.produces)
 
         self.file_save = file_save
 
@@ -143,8 +144,8 @@ class VEPCopyPhraseTask(Task):
         self.copy_phrase = parameters['task_text']
 
         self.fake = fake
-        self.language_model = language_model
-        self.signal_model = signal_models[0] if signal_models else None
+        self.language_model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
+        self.signal_model = signal_model
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
         # self.feedback = VisualFeedback(
@@ -161,31 +162,24 @@ class VEPCopyPhraseTask(Task):
 
         self.vep = self.init_display()
 
-    def init_evidence_evaluators(self,
-                                 signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
+    def init_evidence_evaluator(self,
+                                signal_model: VEPSignalModel) -> VEPEvaluator:
         """Initializes the evidence evaluators from the provided signal models.
 
         Returns a list of evaluators for active devices. Raises an exception if
         more than one evaluator provides the same type of evidence.
         """
-        evidence_types = []
-        evaluators = []
-        for model in signal_models:
-            evaluator = init_evidence_evaluator(self.alp, model)
-            content_type = evaluator.consumes
-            evidence_type = evaluator.produces
-            if content_type in self.daq.active_device_content_types:
-                evaluators.append(evaluator)
-                if evidence_type in evidence_types:
-                    raise DuplicateModelEvidence(
-                        f"More than one model produces {evidence_type} evidence"
-                    )
-                evidence_types.append(evidence_type)
-            else:
-                self.logger.info(
-                    f"SignalModel not used: there is no active device of type: {content_type}"
-                )
-        return evaluators
+
+        evaluator = VEPEvaluator(signal_model)
+        content_type = evaluator.consumes
+        evidence_type = evaluator.produces
+        if content_type in self.daq.active_device_content_types:
+            return evaluator
+        else:
+            self.logger.info(
+                f"SignalModel not used: there is no active device of type: {content_type}"
+            )
+            return None
 
     def setup(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
@@ -202,7 +196,7 @@ class VEPCopyPhraseTask(Task):
             decision_threshold=self.parameters['decision_threshold'])
         self.write_session_data()
 
-        self.init_copy_phrase_task()
+        # self.init_copy_phrase_task()
 
     def init_display(self) -> VEPDisplay:
         """Initialize the display"""
@@ -218,26 +212,26 @@ class VEPCopyPhraseTask(Task):
             spelled_letters_count = 0
         return spelled_letters_count
 
-    def init_copy_phrase_task(self) -> None:
-        """Initialize the CopyPhraseWrapper.
+    # def init_copy_phrase_task(self) -> None:
+    #     """Initialize the CopyPhraseWrapper.
 
-        Returns:
-        --------
-        initialized CopyPhraseWrapper
-        """
+    #     Returns:
+    #     --------
+    #     initialized CopyPhraseWrapper
+    #     """
 
-        self.copy_phrase_task = CopyPhraseWrapper(
-            self.parameters['min_inq_len'],
-            self.parameters['max_inq_per_series'],
-            lmodel=self.language_model,
-            alp=self.alp,
-            evidence_names=self.evidence_types,
-            task_list=[(str(self.copy_phrase), self.spelled_text)],
-            is_txt_stim=self.parameters['is_txt_stim'],
-            stim_timing=[
-                self.parameters['time_fixation'], self.parameters['time_flash']
-            ],
-            stim_length=self.parameters['stim_length'])
+    #     self.copy_phrase_task = CopyPhraseWrapper(
+    #         self.parameters['min_inq_len'],
+    #         self.parameters['max_inq_per_series'],
+    #         lmodel=self.language_model,
+    #         alp=self.alp,
+    #         evidence_names=self.evidence_types,
+    #         task_list=[(str(self.copy_phrase), self.spelled_text)],
+    #         is_txt_stim=self.parameters['is_txt_stim'],
+    #         stim_timing=[
+    #             self.parameters['time_fixation'], self.parameters['time_flash']
+    #         ],
+    #         stim_length=self.parameters['stim_length'])
 
     def user_wants_to_continue(self) -> bool:
         """Check if user wants to continue or terminate.
@@ -325,6 +319,7 @@ class VEPCopyPhraseTask(Task):
             return False
 
         return True
+
     def execute(self) -> str:
         """Executes the task.
 
@@ -338,13 +333,17 @@ class VEPCopyPhraseTask(Task):
         self.wait()  # buffer for data processing
 
         while run and self.user_wants_to_continue():
+
+            self.vep.update_word_predictions(self.get_top_predictions())
+
             stim_times = self.present_inquiry()
 
             self.write_trigger_data(stim_times, self.first_run)
             self.wait()
 
-            evidence_types = self.add_evidence(stim_times)
-            decision = self.evaluate_evidence()
+            evidence = self.compute_device_evidence(stim_times)
+            # We only have a single type of evidence, so just use the first tuple in the list
+            decision = self.evaluate_evidence(evidence[0])
 
             data = self.new_data_record(stim_times,
                                         target_stimuli,
@@ -355,10 +354,10 @@ class VEPCopyPhraseTask(Task):
                                      save=True,
                                      decision_made=decision.decision_made)
 
-            if decision.decision_made:
+            # if decision.decision_made:
                 # self.show_feedback(decision.selection,
                 #                    (decision.selection == target_stimuli))
-                self.spelled_text = decision.spelled_text
+                # self.spelled_text = decision.spelled_text
                 # self.current_inquiry = self.next_inquiry()
 
             # else:
@@ -386,7 +385,7 @@ class VEPCopyPhraseTask(Task):
 
         return self.file_save
 
-    def evaluate_evidence(self) -> Decision:
+    def evaluate_evidence(self, evidence: Tuple[EvidenceType, List[float]]) -> Decision:
         """Uses the `copy_phrase_task` parameter to evaluate the provided
         evidence and attempt a decision.
 
@@ -399,54 +398,54 @@ class VEPCopyPhraseTask(Task):
                                                       self.next_target(),
                                                       self.spelled_text)
             # Reset the stoppage criteria by forcing the commit to a decision.
-            self.copy_phrase_task.decision_maker.do_series()
+            # self.copy_phrase_task.decision_maker.do_series()
             # In fake mode, only the LM is providing evidence, so the decision
             # made is the highest symbol predicted. Override this state
-            self.copy_phrase_task.decision_maker.update(spelled)
+            # self.copy_phrase_task.decision_maker.update(spelled)
 
             # In fake mode, all inquiries result in a selection.
-            return Decision(decision_made=True,
-                            selection=spelled[-1],
+            # TODO: Make this do something that makes sense
+            return Decision(selection=0,
                             spelled_text=spelled,
-                            new_inq_schedule=None)
+                            group_sequence=[0])
 
-        decision_made, new_sti = self.copy_phrase_task.decide()
-        spelled_text = self.copy_phrase_task.decision_maker.displayed_state
-        selection = ''
-        if decision_made:
-            selection = self.copy_phrase_task.decision_maker.last_selection
+        # decision_made, new_sti = self.copy_phrase_task.decide()
+        # spelled_text = self.copy_phrase_task.decision_maker.displayed_state
+        selection = np.argmax(evidence[1])
 
-        return Decision(decision_made, selection, spelled_text, new_sti)
+        self.vep.select(selection)
+        
+        return Decision(selection, spelled_text, new_sti)
 
-    def add_evidence(self, stim_times: List[List]) -> List[EvidenceType]:
-        """Add all evidence used to make a decision.
+    # def add_evidence(self, stim_times: List[List]) -> List[EvidenceType]:
+    #     """Add all evidence used to make a decision.
 
-        Evaluates evidence from various sources (button press, devices,
-        language model) and adds it to the CopyPhraseWrapper for evaluation.
+    #     Evaluates evidence from various sources (button press, devices,
+    #     language model) and adds it to the CopyPhraseWrapper for evaluation.
 
-        Parameters
-        ----------
-        - stim_times : list of stimuli returned from the display
+    #     Parameters
+    #     ----------
+    #     - stim_times : list of stimuli returned from the display
 
-        Returns
-        -------
-        list of evidence types added
+    #     Returns
+    #     -------
+    #     list of evidence types added
 
-        Modifies
-        --------
-        - self.copy_phrase_task
-        """
-        evidences = self.compute_device_evidence(stim_times)
+    #     Modifies
+    #     --------
+    #     - self.copy_phrase_task
+    #     """
+    #     evidences = self.compute_device_evidence(stim_times)
 
-        evidence_types = []
-        for evidence in evidences:
-            if evidence:
-                evidence_type, probs = evidence
-                evidence_types.append(evidence_type)
-                self.copy_phrase_task.add_evidence(evidence_type, probs)
-        if self.session.latest_series_is_empty():
-            evidence_types.append(EvidenceType.LM)
-        return evidence_types
+    #     evidence_types = []
+    #     for evidence in evidences:
+    #         if evidence:
+    #             evidence_type, probs = evidence
+    #             evidence_types.append(evidence_type)
+    #             self.copy_phrase_task.add_evidence(evidence_type, probs)
+    #     if self.session.latest_series_is_empty():
+    #         evidence_types.append(EvidenceType.LM)
+    #     return evidence_types
 
     def compute_device_evidence(
             self,
@@ -489,14 +488,11 @@ class VEPCopyPhraseTask(Task):
         #     triggers, labels)
 
         evidences = []
-        for evidence_evaluator in self.evidence_evaluators:
-            probs = evidence_evaluator.evaluate(
-                raw_data=device_data[evidence_evaluator.consumes],
-                symbols=letters,
-                times=times,
-                target_info=filtered_labels,
-                window_length=window_length)
-            evidences.append((evidence_evaluator.produces, probs))
+        probs = self.evidence_evaluator.evaluate(
+            raw_data=device_data[self.evidence_evaluator.consumes],
+            stim_time=inquiry_timing[0][1],
+            window_length=window_length)
+        evidences.append((self.evidence_evaluator.produces, probs))
 
         return evidences
 
@@ -515,6 +511,31 @@ class VEPCopyPhraseTask(Task):
         return [
             timing for timing in stim_times if timing[0] == "STIMULATE"
         ]
+
+    def get_top_predictions(self) -> List[str]:
+        """Top two word predictions are generated from language model"""
+
+        context = self.vep.task_bar.spelled_text
+        group_sequence = [str(i) for i in self.vep.chosen_boxes]
+
+        # Ensure valid group_sequence
+        if not group_sequence or len(group_sequence) == 0:
+            return ["", ""]  #returns empty predictions to stop crash
+
+        try:
+            predictions = self.language_model.predict(list(context), list(group_sequence))
+
+            if not predictions:
+                return ["", ""]
+
+            #Retrieve only the predicted words
+            final_prediction = [word for word, _ in predictions]
+
+            return final_prediction[:2] if len(final_prediction) >= 2 else final_prediction + [""]
+
+        except Exception as e:
+            return ["", ""]
+
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
         """Initializes a generator that returns inquiries to be presented."""
@@ -677,8 +698,8 @@ def _init_vep_display(parameters: Parameters, window: visual.Window,
         animation_seconds=parameters['time_vep_animation'])
 
     task_bar = CopyPhraseTaskBar(window,
-                                  task_text="",
-                                  spelled_text="",
+                                  task_text=parameters['task_text'],
+                                  spelled_text=parameters['task_text'][:parameters['spelled_letters_count']],
                                   colors=[parameters['task_color']],
                                   font=parameters['font'],
                                   height=parameters['task_height']+ 0.01)

@@ -25,8 +25,6 @@ from bcipy.helpers.triggers import _calibration_trigger
 from bcipy.helpers.symbols import BACKSPACE_CHAR
 from bcipy.helpers.save import save_vep_parameters
 
-from bcipy.language.model.ambiguous import AmbiguousLanguageModel
-from bcipy.language.main import ResponseType
 
 class StimTime(NamedTuple):
     """Represents the time that the given symbol was displayed"""
@@ -109,6 +107,10 @@ class VEPDisplay(Display):
             f"Symbol starting positions ({str(display_container.units)} units): {self.starting_positions}"
         )
 
+        # Language model word predictions
+        self.word1 = 'WORD'
+        self.word2 = 'WORD'
+
         self.starting_color = 'white'
         self.sti = self._build_inquiry_stimuli()
 
@@ -146,8 +148,6 @@ class VEPDisplay(Display):
 
         self.chosen_boxes = []
 
-        self.model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
-
         if self.file_save:
             save_vep_parameters(self.mseq_length, self.refresh_rate, self.file_save)
 
@@ -166,27 +166,6 @@ class VEPDisplay(Display):
             f"stimuli position {len(self.stimuli_pos)} must be the same length as vep type {self.vep_type}"
         )
     
-    def get_top_predictions(self, context: str, group_sequence: List[str]) -> List[str]:
-        """Top two word predictions are generated from language model"""
-
-        # Ensure valid group_sequence
-        if not group_sequence:
-            return ["", ""]  #returns empty predictions to stop crash
-
-        try:
-            predictions = self.model.predict(list(context), list(group_sequence))
-
-            if not predictions:
-                return ["", ""]
-
-            #Retrieve only the predicted words
-            final_prediction = [word for word, _ in predictions]  
-
-            return final_prediction[:2] if len(final_prediction) >= 2 else final_prediction + [""]
-    
-        except Exception as e:
-            return ["", ""]
-
     def stim_properties(self) -> List[StimProps]:
         """Returns a tuple of (symbol, duration, and color) for each stimuli,
         including the target and fixation stim. Stimuli that represent VEP
@@ -356,14 +335,48 @@ class VEPDisplay(Display):
                 self.sti[sym].color = 'white'
 
 
-    def update_chosen_boxes(self, chosen_box_index: int) -> None:
-        """Update the list of chosen boxes"""
+    def select(self, selection: int) -> None:
+        back_word = self.update_chosen_boxes(selection)
+        self.update_spelled_text(selection, back_word)
 
-        if chosen_box_index in [5, 6]:
-            self.chosen_boxes.clear()
-         #Only will store boxes 1-4
-        elif chosen_box_index in range(4):
+    def update_chosen_boxes(self, chosen_box_index: int) -> bool:
+        """Update the list of chosen boxes
+        
+        returns - True if a word should be backspaced"""
+        
+
+        # Store boxes 0-3
+        if chosen_box_index in range(4):
             self.chosen_boxes.append(str(chosen_box_index + 1))
+        # Reset boxes if word is chosen
+        elif chosen_box_index in [5, 6]:
+            self.chosen_boxes.clear()
+        # Backspace if able
+        elif chosen_box_index == 7:
+            if len(self.chosen_boxes) > 0:
+                self.chosen_boxes = self.chosen_boxes[:-1]
+            else:
+                return True
+
+        return False
+
+    def update_spelled_text(self, chosen_box_index: int, backspace_word: bool = False) -> None:
+        if chosen_box_index in [5, 6]:
+            words = [self.word1, self.word2]
+            word = words[chosen_box_index - 5]
+            # Append word to spelled text
+            spelled_words = self.task_bar.spelled_text.strip().split()
+            if spelled_words:
+                spelled_words.append(word)
+            self.task_bar.update(spelled_text=" ".join(spelled_words))
+
+        elif chosen_box_index == 7:
+            # Backspace last word
+            if backspace_word and hasattr(self.task_bar, "spelled_text") and self.task_bar.spelled_text:
+                spelled_words = self.task_bar.spelled_text.strip().split()
+                if spelled_words:
+                    spelled_words.pop()
+                self.task_bar.update(spelled_text=" ".join(spelled_words))
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""
@@ -548,24 +561,24 @@ class VEPDisplay(Display):
             ['N', 'O', 'P', 'Q', 'R'],
             ['S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'],
             ['Mode', 'Switch'],
-            ['WORD'],
-            ['WORD'],
+            [self.word1],
+            [self.word2],
             ['Backspace']
         ]
 
-        if not self.calibration_mode:
+        # if not self.calibration_mode:
 
-            # Get predictive text
-            top_predictions = self.get_top_predictions(
-                context=self.task_bar.spelled_text,
-                group_sequence=self.chosen_boxes
-            )
+            # # Get predictive text
+            # top_predictions = self.get_top_predictions(
+            #     context=self.task_bar.spelled_text,
+            #     group_sequence=self.chosen_boxes
+            # )
 
-            self.logger.info(f"Top predictions: {top_predictions}")
+            # self.logger.info(f"Top predictions: {top_predictions}")
 
-            # Ensure predictions are displayed correctly
-            layout[5] = [top_predictions[0]] if top_predictions[0].strip() else [" "]
-            layout[6] = [top_predictions[1]] if top_predictions[1].strip() else [" "]
+            # # Ensure predictions are displayed correctly
+            # layout[5] = [top_predictions[0]] if top_predictions[0].strip() else [" "]
+            # layout[6] = [top_predictions[1]] if top_predictions[1].strip() else [" "]
 
         for box_index, symbols in enumerate(layout):
             box = self.text_boxes[box_index]
@@ -576,6 +589,9 @@ class VEPDisplay(Display):
 
         return self.text_boxes
 
+    def update_word_predictions(self, predictions: List[str]) -> None:
+        self.word1 = predictions[0]
+        self.word2 = predictions[1]
 
     def wait_screen(self, message: str, color: str) -> None:
         """Wait Screen.

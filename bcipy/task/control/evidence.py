@@ -188,7 +188,9 @@ class VEPEvaluator:
 
         trigger = (stim_time + offset) * sample_rate
 
-        return eeg_data[:, trigger - prestim_samples : trigger + post_stimsamples]
+        # print(f"{np.shape(eeg_data)}")
+
+        return eeg_data[:, trigger - prestim_samples : trigger + poststim_samples]
 
     def preprocess(self, raw_data: np.ndarray, stim_time: float,
                    window_length: float) -> np.ndarray:
@@ -205,12 +207,11 @@ class VEPEvaluator:
             raw_data, self.device_spec.sample_rate)
 
         # The data from DAQ is assumed to have offsets applied
-        reshaped_data = self.reshape(trial_targetness_label=target_info,
-                                            stim_time=stim_time,
-                                            eeg_data=transformed_data,
-                                            sample_rate=transform_sample_rate,
-                                            channel_map=self.channel_map,
-                                            poststimulus_length=window_length)
+        reshaped_data = self.reshape(stim_time=stim_time,
+                                     eeg_data=transformed_data,
+                                     sample_rate=transform_sample_rate,
+                                     channel_map=self.channel_map,
+                                     poststimulus_length=window_length)
         return reshaped_data
 
     # pylint: disable=arguments-differ
