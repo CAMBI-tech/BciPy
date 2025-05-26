@@ -19,7 +19,7 @@ from bcipy.helpers.clock import Clock
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
 from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
-from bcipy.helpers.task import (construct_triggers, fake_copy_phrase_decision,
+from bcipy.helpers.task import (construct_triggers, fake_vep_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
                                 trial_complete_message)
@@ -75,8 +75,9 @@ class VEPCopyPhraseTask(Task):
         signal_models : list of trained signal models.
         language_model: object,
             trained language model.
-        fake : boolean, optional
+        fake : boolean, optional - OVERWRITTEN
             boolean to indicate whether this is a fake session or not.
+            this value is overwritten by parameters - fake_selection
     """
 
     TASK_NAME = 'VEP Copy Phrase Task'
@@ -143,7 +144,7 @@ class VEPCopyPhraseTask(Task):
         self.session_save_location = f"{self.file_save}/{SESSION_DATA_FILENAME}"
         self.copy_phrase = parameters['task_text']
 
-        self.fake = fake
+        self.fake = parameters['fake_selections']
         self.language_model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
         self.signal_model = signal_model
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
@@ -298,6 +299,9 @@ class VEPCopyPhraseTask(Task):
         should continue.
         """
         if self.copy_phrase == self.spelled_text:
+            self.vep.update_task_bar(self.spelled_text)
+            self.vep.draw_static()
+            self.window.flip()
             self.logger.info('Spelling complete')
             return False
 
@@ -327,7 +331,6 @@ class VEPCopyPhraseTask(Task):
         -------
         data save location (triggers.txt, session.json)
         """
-        print("EXECUTE")
         self.logger.info('Starting Copy Phrase Task!')
         run = True
         self.wait()  # buffer for data processing
@@ -342,17 +345,16 @@ class VEPCopyPhraseTask(Task):
             self.wait()
 
             evidence = self.compute_device_evidence(stim_times)
-            # We only have a single type of evidence, so just use the first tuple in the list
-            decision = self.evaluate_evidence(evidence[0])
+            decision = self.evaluate_evidence(evidence)
 
-            data = self.new_data_record(stim_times,
-                                        target_stimuli,
-                                        current_text=self.spelled_text,
-                                        decision=decision,
-                                        evidence_types=evidence_types)
-            self.update_session_data(data,
-                                     save=True,
-                                     decision_made=decision.decision_made)
+            # data = self.new_data_record(stim_times,
+            #                             target_stimuli,
+            #                             current_text=self.spelled_text,
+            #                             decision=decision,
+            #                             evidence_types=evidence_types)
+            # self.update_session_data(data,
+            #                          save=True,
+            #                          decision_made=decision.decision_made)
 
             # if decision.decision_made:
                 # self.show_feedback(decision.selection,
@@ -385,7 +387,7 @@ class VEPCopyPhraseTask(Task):
 
         return self.file_save
 
-    def evaluate_evidence(self, evidence: Tuple[EvidenceType, List[float]]) -> Decision:
+    def evaluate_evidence(self, evidence: List[Tuple[EvidenceType, List[float]]]) -> Decision:
         """Uses the `copy_phrase_task` parameter to evaluate the provided
         evidence and attempt a decision.
 
@@ -393,10 +395,10 @@ class VEPCopyPhraseTask(Task):
         --------
         - self.copy_phrase_task
         """
-        if self.fake:
-            _, spelled, _ = fake_copy_phrase_decision(self.copy_phrase,
-                                                      self.next_target(),
-                                                      self.spelled_text)
+        # if self.fake:
+        #     _, spelled, _ = fake_copy_phrase_decision(self.copy_phrase,
+                                                    #   self.next_target(),
+                                                    #   self.spelled_text)
             # Reset the stoppage criteria by forcing the commit to a decision.
             # self.copy_phrase_task.decision_maker.do_series()
             # In fake mode, only the LM is providing evidence, so the decision
@@ -405,17 +407,24 @@ class VEPCopyPhraseTask(Task):
 
             # In fake mode, all inquiries result in a selection.
             # TODO: Make this do something that makes sense
-            return Decision(selection=0,
-                            spelled_text=spelled,
-                            group_sequence=[0])
+            # return Decision(selection=0,
+            #                 spelled_text=spelled,
+            #                 group_sequence=[0])
 
         # decision_made, new_sti = self.copy_phrase_task.decide()
         # spelled_text = self.copy_phrase_task.decision_maker.displayed_state
-        selection = np.argmax(evidence[1])
+        if self.fake:
+            selection_options = ["ABCDE", "FGHIJKLM", "NOPQR", "STUVWXYZ", 
+                                 "Mode Switch", self.vep.word1, self.vep.word2, "Backspace"]
+            selection = fake_vep_decision(selection_options, self.vep.task_bar.task_text, self.vep.task_bar.spelled_text, self.vep.chosen_boxes)
+        else:
+            # We only have a single type of evidence, so just use the first tuple in the list
+            # Element 0 is the evidence type, element 1 is the evidence itself
+            selection = np.argmax(evidence[0][1])
 
-        self.vep.select(selection)
+        self.spelled_text, group_sequence = self.vep.select(selection)
         
-        return Decision(selection, spelled_text, new_sti)
+        return Decision(selection, self.spelled_text, group_sequence)
 
     # def add_evidence(self, stim_times: List[List]) -> List[EvidenceType]:
     #     """Add all evidence used to make a decision.

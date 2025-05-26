@@ -22,7 +22,7 @@ from bcipy.helpers.list import expanded
 from bcipy.helpers.stimuli import resize_image
 from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.triggers import _calibration_trigger
-from bcipy.helpers.symbols import BACKSPACE_CHAR
+from bcipy.helpers.symbols import SPACE_CHAR
 from bcipy.helpers.save import save_vep_parameters
 
 
@@ -290,7 +290,7 @@ class VEPDisplay(Display):
         self.draw_static()
 
         if self.chosen_boxes:
-            chosen_box_text = " ".join(self.chosen_boxes)
+            chosen_box_text = " ".join([str(a) for a in self.chosen_boxes])
         else:
             chosen_box_text = " "  
 
@@ -335,9 +335,16 @@ class VEPDisplay(Display):
                 self.sti[sym].color = 'white'
 
 
-    def select(self, selection: int) -> None:
+    def select(self, selection: int) -> Tuple[str, List[int]]:
+        """Update the chosen boxes and spelled text
+        
+        returns 
+            - spelled text after selection
+            - list of group selections after selection"""
         back_word = self.update_chosen_boxes(selection)
         self.update_spelled_text(selection, back_word)
+
+        return (self.task_bar.spelled_text, self.chosen_boxes)
 
     def update_chosen_boxes(self, chosen_box_index: int) -> bool:
         """Update the list of chosen boxes
@@ -347,7 +354,7 @@ class VEPDisplay(Display):
 
         # Store boxes 0-3
         if chosen_box_index in range(4):
-            self.chosen_boxes.append(str(chosen_box_index + 1))
+            self.chosen_boxes.append(chosen_box_index + 1)
         # Reset boxes if word is chosen
         elif chosen_box_index in [5, 6]:
             self.chosen_boxes.clear()
@@ -365,18 +372,24 @@ class VEPDisplay(Display):
             words = [self.word1, self.word2]
             word = words[chosen_box_index - 5]
             # Append word to spelled text
-            spelled_words = self.task_bar.spelled_text.strip().split()
-            if spelled_words:
+            spelled_words = self.task_bar.spelled_text.strip().split(SPACE_CHAR)
+            if spelled_words is not None:
+                spelled_words = [word for word in spelled_words if len(word) > 0]
                 spelled_words.append(word)
-            self.task_bar.update(spelled_text=" ".join(spelled_words))
+            else:
+                spelled_words = [word]
+                
+            spelled_text = SPACE_CHAR.join(spelled_words)
+            self.task_bar.update(spelled_text)
 
         elif chosen_box_index == 7:
             # Backspace last word
             if backspace_word and hasattr(self.task_bar, "spelled_text") and self.task_bar.spelled_text:
-                spelled_words = self.task_bar.spelled_text.strip().split()
-                if spelled_words:
+                spelled_words = self.task_bar.spelled_text.strip().split(SPACE_CHAR)
+                if spelled_words is not None:
                     spelled_words.pop()
-                self.task_bar.update(spelled_text=" ".join(spelled_words))
+                spelled_text = SPACE_CHAR.join(spelled_words)
+                self.task_bar.update(spelled_text)
 
     def draw_boxes(self) -> None:
         """Draw the text boxes under VEP stimuli."""

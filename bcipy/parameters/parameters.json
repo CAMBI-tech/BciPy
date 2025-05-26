@@ -7,6 +7,14 @@
     "recommended_values": "",
     "type": "bool"
   },
+  "fake_selections": {
+    "value": "true",
+    "section": "bci_config",
+    "readableName": "Fake VEP Selections On/Off",
+    "helpTip": "If 'true', VEP will always select the correct box, but it will still record the actual user EEG data",
+    "recommended_values": ["True", "False"],
+    "type": "bool"
+  },
   "acq_mode": {
     "value": "EEG",
     "section": "acq_config",

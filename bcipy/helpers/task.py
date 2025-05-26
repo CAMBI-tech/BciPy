@@ -12,6 +12,7 @@ from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE
 from bcipy.helpers.clock import Clock
 from bcipy.helpers.stimuli import get_fixation
 from bcipy.task.exceptions import InsufficientDataException
+from bcipy.helpers.symbols import SPACE_CHAR
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,46 @@ def fake_copy_phrase_decision(copy_phrase: str, target_letter: str, text_task: s
 
     return next_target_letter, text_task, run
 
+
+def fake_vep_decision(selection_options: List[str], task_text: str, spelled_text: str, group_sequence: List[int]) -> int:
+    task_words = task_text.strip().split(SPACE_CHAR)
+
+    spelled_words = spelled_text.strip().split(SPACE_CHAR)
+    spelled_words = [word for word in spelled_words if len(word) > 0]
+
+    for tup in zip(task_words, spelled_words):
+        if tup[0] != tup[1]:
+            return 7 # Backspace
+    
+    if len(spelled_words) == len(task_words):
+        return 0 # Phrase is actually complete
+
+    target_word = task_words[len(spelled_words)]
+
+    # Word options
+    if selection_options[5] == target_word:
+        return 5
+
+    if selection_options[6] == target_word:
+        return 6
+
+    if len(group_sequence) == len(target_word):
+        # LM doesn't predict word, use mode switch
+        return 4
+
+    for idx, group in enumerate(group_sequence):
+        target_letter = target_word[idx]
+        if target_letter not in selection_options[group - 1]:
+            # incorrect character
+            return 7
+    
+    target_letter = target_word[len(group_sequence)]
+    for i in range(4):
+        if target_letter in selection_options[i]:
+            return i
+
+    # Not sure if possible to get through here but just return 0 as default
+    return 0
 
 def calculate_stimulation_freq(flash_time: float) -> float:
     """Calculate Stimulation Frequency.
