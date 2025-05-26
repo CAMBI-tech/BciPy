@@ -298,7 +298,7 @@ class VEPDisplay(Display):
             win=self.window,
             text=chosen_box_text, 
             font=self.stimuli_font,
-            pos=(0, 0),
+            pos=(0, -0.1),
             height=0.2,
             color='white',
             colorSpace='rgb',
