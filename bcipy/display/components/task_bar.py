@@ -168,7 +168,7 @@ class CopyPhraseTaskBar(TaskBar):
         """Initialize the stimuli elements."""
 
         task = self.text_stim(text=self.task_text,
-                              pos=(self.layout.center[0] + 0.065, self.layout.center[1]),
+                              pos=(self.layout.center[0], self.layout.center[1]),
                               anchorVert='bottom')
 
         spelled = self.text_stim(text=self.displayed_text(),
