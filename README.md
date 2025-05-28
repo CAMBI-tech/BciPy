@@ -246,19 +246,12 @@ bcipy-sim --help
 
 ##### Options
 - `-d`: Path to the data folder.
-- `-p`: Path to the custom parameters file.
-- `-m`: Path to the trained model directory.
+- `-p`: Path to the custom parameters file. [optional]
+- `-m`: Path to the directory of trained model pickle files 
 - `-n`: Number of iterations to run.
 
 ```sh
-# Run the simulator with a specific data folder
-bcipy-sim -d path/to/data
-# Run the simulator with a custom parameters file
-bcipy-sim -p path/to/parameters.json
-# Run the simulator with a trained model directory
-bcipy-sim -m path/to/model.pkl
-# Run the simulator for a specific number of iterations
-bcipy-sim -n 100
+bcipy-sim -d path/to/data -p path/to/parameters.json -m path/to/model.pkl/ -n 5
 ```
 
 More comprehensive information can be found in the [Simulator Module README](./bcipy/simulator/README.md).
