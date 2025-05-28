@@ -56,9 +56,8 @@ class Simulation:
         self.vec_d = np.ones((self.n_classes, self.dim)) * 1e-3
         self.cov_mean = 5e-3
         self.l_means_true = self.generate_initial_means()
-        # self.l_covariances_true = self.generate_cov_matrix(self.vec_a, self.vec_d)
-        # self.l_covariances_true[0] = np.eye(self.dim) / (self.cov_mean * 2 * np.pi * 100)
-        self.l_covariances_true = np.array([np.eye(self.dim) / (self.cov_mean * 2 * np.pi * 400) for i_class in range(self.n_classes)])
+        self.l_covariances_true = np.array([np.eye(self.dim) / (self.cov_mean * 2 * np.pi * 400) 
+                                            for i_class in range(self.n_classes)])
         self.l_means_estimate = np.zeros_like(self.l_means_true)     # initialize, update with calibration
         self.l_covariances_estimate = np.zeros_like(self.l_covariances_true)
         self.parameter_prior = multivariate_normal.pdf(np.zeros(self.dim), np.zeros(self.dim), np.eye(self.dim))
@@ -226,16 +225,6 @@ class Simulation:
             axes[i_class].scatter(range(len(self.written_phrase)), kl_divergence[:, i_class], label=f" Class {i_class}")
             axes[i_class].legend(loc='center left', bbox_to_anchor=(1, 0.5))  
             axes[i_class].set_xticks
-        # set y ticks to be the same for all subplots
-        # max_kl = np.max(kl_divergence)
-        # for i_class in range(self.n_classes):
-        #     if i_class == self.n_classes - 1:
-        #         axes[i_class].set_yticks([0, max_kl])
-        #     else:
-        #         axes[i_class].set_yticks([max_kl])
-        #     axes[i_class].set_ylim(0, max_kl)
-            # axes[i_class].set_yticks([0, max_kl])
-            # axes[i_class].set_yticks(np.arange(0, max_kl, max_kl/2))
         fig.supxlabel("# of written letters")
         fig.supylabel("KL Divergence")
         if results_dir is None:
@@ -478,8 +467,6 @@ class Simulation:
     
 
     def simulate(self, results_dir=None, update_toggle=True):
-        # Show the initial clusters.
-        self.visualize_clusters(results_dir)
         kl_divergence = []
         # print("Initial parameters")
         # print("Means:", self.l_means_estimate, "Covariances:", self.l_covariances_estimate)
@@ -495,7 +482,6 @@ class Simulation:
                 # Generate inquiry.
                 inquiry = self.generate_inquiry()
                 self.inquiries[i_character].append(inquiry)
-
 
                 # Generate measurement.
                 # The following block checks in which position of the
@@ -530,8 +516,6 @@ class Simulation:
             # print("Means:", self.l_means_estimate, "Covariances:", self.l_covariances_estimate)
             kl_divergence.append(self.calculate_distribution_distance())
 
-        # Show the final clusters
-        self.visualize_clusters(results_dir)
         kl_divergence = np.array(kl_divergence)
         self.visualize_kl_divergence(kl_divergence, results_dir)
         # print("Target phrase:", self.target_phrase)
