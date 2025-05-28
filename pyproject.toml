@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Python Software for Brain-Computer Interface Development."
 readme = "README.md"
-requires-python = ">3.8,<3.14"
+requires-python = ">3.8,<3.11"
 classifiers = [
     'License :: Other/Proprietary License',
     'Topic :: Scientific/Engineering :: Human Machine Interfaces',
