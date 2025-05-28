@@ -1,20 +1,17 @@
 from pathlib import Path
-from bcipy.io.load import load_json_parameters, load_raw_data, load_experimental_data
-from bcipy.core.triggers import trigger_decoder, TriggerType
-from bcipy.config import (
-    BCIPY_ROOT,
-    DEFAULT_PARAMETERS_FILENAME,
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME)
 
 from bcipy.acquisition import devices
+from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.core.report import Report, SessionReportSection, SignalReportSection
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.visualization import visualize_erp
-from bcipy.signal.process import get_default_transform
+from bcipy.io.load import (load_experimental_data, load_json_parameters,
+                           load_raw_data)
 from bcipy.signal.evaluate.artifact import ArtifactDetection
-from bcipy.core.report import Report, SignalReportSection, SessionReportSection
-
+from bcipy.signal.process import get_default_transform
 
 if __name__ == "__main__":
     import argparse

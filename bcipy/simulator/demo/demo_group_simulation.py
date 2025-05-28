@@ -32,12 +32,13 @@ output_dir/
 The summary data at the simulation run level (summary_data.json) will be the the data used to compare across users, phrases, language models.
 
 """
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
+import bcipy.simulator.util.metrics as metrics
 from bcipy.io.load import load_json_parameters
 from bcipy.simulator.task.task_factory import TaskFactory
 from bcipy.simulator.task.task_runner import TaskRunner, init_simulation_dir
-import bcipy.simulator.util.metrics as metrics
 
 # Define the phrases, starting indeces, and language models to use for the simulation
 
@@ -175,9 +176,12 @@ def run_simulation(
 
 
 if __name__ == "__main__":
-    from bcipy.io.load import load_experimental_data
     from pathlib import Path
+
     from tqdm import tqdm
+
+    from bcipy.io.load import load_experimental_data
+
     # load experimental directory. This will have users/run/data
     data_dir = Path(load_experimental_data())
 

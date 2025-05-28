@@ -1,7 +1,7 @@
 """Functionality for reading and writing raw signal data."""
 import csv
 from io import TextIOWrapper
-from typing import List, Optional, TextIO, Tuple, Union, Any
+from typing import Any, List, Optional, TextIO, Tuple, Union
 
 import numpy as np
 import pandas as pd

@@ -1,15 +1,15 @@
-from typing import Any, Dict, Optional, List
+from typing import Any, Dict, List, Optional
 
 from psychopy import visual
 
+from bcipy.core.parameters import Parameters
 from bcipy.display import InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.matrix.display import MatrixDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.core.parameters import Parameters
-from bcipy.io.save import save_stimuli_position_info
 from bcipy.helpers.utils import get_screen_info
+from bcipy.io.save import save_stimuli_position_info
 from bcipy.task.calibration import BaseCalibrationTask
 
 

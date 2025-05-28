@@ -1,5 +1,5 @@
-from queue import Queue, Empty
 import itertools as it
+from queue import Empty, Queue
 
 
 class DataSource:

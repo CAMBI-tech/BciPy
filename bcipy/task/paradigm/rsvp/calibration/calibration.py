@@ -1,11 +1,11 @@
 from psychopy import core, visual
 
+from bcipy.core.parameters import Parameters
 from bcipy.display import Display, InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.core.parameters import Parameters
 from bcipy.task.calibration import BaseCalibrationTask
 
 

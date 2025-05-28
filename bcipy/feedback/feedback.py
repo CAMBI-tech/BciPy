@@ -1,4 +1,5 @@
 import logging
+
 from bcipy.config import SESSION_LOG_FILENAME
 
 REGISTERED_FEEDBACK_TYPES = ['sound', 'visual']

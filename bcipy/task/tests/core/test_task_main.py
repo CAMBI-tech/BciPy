@@ -1,4 +1,5 @@
 import unittest
+
 from bcipy.task import Task, TaskData, TaskMode
 
 

@@ -4,9 +4,9 @@ import json
 from pathlib import Path
 
 from bcipy.config import SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME
-from bcipy.gui.file_dialog import ask_directory
 from bcipy.core.session import (read_session, session_csv, session_data,
                                 session_db, session_excel)
+from bcipy.gui.file_dialog import ask_directory
 
 
 def main(data_dir: str):

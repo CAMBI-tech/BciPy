@@ -3,34 +3,19 @@
 # pylint: disable=E0611
 
 import sys
-
 from typing import List
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import (QHBoxLayout, QPushButton, QScrollArea,
+                             QVBoxLayout, QWidget)
 
-from bcipy.gui.main import (
-    AlertMessageType,
-    AlertMessageResponse,
-    AlertResponse,
-    MessageBox,
-    app,
-    BoolInput,
-    DirectoryInput,
-    FileInput,
-    FloatInput,
-    FormInput,
-    IntegerInput,
-    TextInput,
-)
 from bcipy.config import EXPERIMENT_DATA_FILENAME
-from bcipy.helpers.validate import validate_experiment, validate_field_data_written
+from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
+                            AlertResponse, BoolInput, DirectoryInput,
+                            FileInput, FloatInput, FormInput, IntegerInput,
+                            MessageBox, TextInput, app)
+from bcipy.helpers.validate import (validate_experiment,
+                                    validate_field_data_written)
 from bcipy.io.load import load_experiments, load_fields
 from bcipy.io.save import save_experiment_field_data
 
@@ -332,6 +317,7 @@ def start_experiment_field_collection_gui(
 def start_app() -> None:
     """Start Experiment Field Collection."""
     import argparse
+
     from bcipy.config import DEFAULT_EXPERIMENT_ID, EXPERIMENT_DATA_FILENAME
 
     parser = argparse.ArgumentParser()

@@ -6,6 +6,10 @@ from typing import (Any, Dict, Iterable, List, NamedTuple, Optional, Tuple,
 from psychopy import core, visual  # type: ignore
 
 import bcipy.display.components.layout as layout
+from bcipy.core.list import expanded
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import alphabet
+from bcipy.core.triggers import _calibration_trigger
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
 from bcipy.display.components.layout import scaled_size
@@ -17,10 +21,6 @@ from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
-from bcipy.core.list import expanded
-from bcipy.core.stimuli import resize_image
-from bcipy.core.symbols import alphabet
-from bcipy.core.triggers import _calibration_trigger
 
 
 class StimTime(NamedTuple):

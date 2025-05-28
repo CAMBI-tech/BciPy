@@ -1,6 +1,7 @@
 """Streams file data for the viewer"""
 import logging
 import time
+
 from bcipy.acquisition.util import StoppableThread
 from bcipy.config import SESSION_LOG_FILENAME
 from bcipy.core.raw_data import RawDataReader

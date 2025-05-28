@@ -1,10 +1,10 @@
-import numpy as np
+import logging
 
+import numpy as np
 import scipy.optimize
 from sklearn import metrics
-from bcipy.config import SESSION_LOG_FILENAME
 
-import logging
+from bcipy.config import SESSION_LOG_FILENAME
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 

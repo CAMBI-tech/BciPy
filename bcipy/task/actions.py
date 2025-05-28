@@ -1,31 +1,32 @@
 # mypy: disable-error-code="assignment,arg-type"
-import subprocess
-from typing import Any, Optional, List, Callable, Tuple
-import logging
-from pathlib import Path
 import glob
+import logging
+import subprocess
+from pathlib import Path
+from typing import Any, Callable, List, Optional, Tuple
 
-from bcipy.gui.bciui import run_bciui
 from matplotlib.figure import Figure
 
+from bcipy.acquisition import devices
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import (RAW_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
+from bcipy.core.report import (Report, ReportSection, SessionReportSection,
+                               SignalReportSection)
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.gui.bciui import run_bciui
+from bcipy.gui.experiments.ExperimentField import \
+    start_experiment_field_collection_gui
 from bcipy.gui.file_dialog import ask_directory
 from bcipy.gui.intertask_gui import IntertaskGUI
-from bcipy.gui.experiments.ExperimentField import start_experiment_field_collection_gui
-from bcipy.task import Task, TaskMode, TaskData
-from bcipy.core.triggers import trigger_decoder, TriggerType
-
-from bcipy.acquisition import devices
 from bcipy.helpers.acquisition import analysis_channels
-from bcipy.core.parameters import Parameters
-from bcipy.acquisition.devices import DeviceSpec
-from bcipy.io.load import load_raw_data
-from bcipy.core.raw_data import RawData
-from bcipy.signal.process import get_default_transform
-from bcipy.core.report import SignalReportSection, SessionReportSection, Report, ReportSection
-from bcipy.config import SESSION_LOG_FILENAME, RAW_DATA_FILENAME, TRIGGER_FILENAME
 from bcipy.helpers.visualization import visualize_erp
+from bcipy.io.load import load_raw_data
 from bcipy.signal.evaluate.artifact import ArtifactDetection
-
+from bcipy.signal.process import get_default_transform
+from bcipy.task import Task, TaskData, TaskMode
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 

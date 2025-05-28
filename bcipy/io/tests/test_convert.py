@@ -5,29 +5,21 @@ import tempfile
 import unittest
 from pathlib import Path
 from typing import Tuple, Union
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import mne
 
 import bcipy.acquisition.devices as devices
-import mne
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           RAW_DATA_FILENAME, TRIGGER_FILENAME)
-from bcipy.io.convert import (
-    archive_list,
-    compress,
-    ConvertFormat,
-    convert_to_bids,
-    convert_to_mne,
-    decompress,
-    norm_to_tobii,
-    tobii_to_norm,
-    convert_eyetracking_to_bids,
-    BIDS_to_MNE
-)
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData, sample_data, write
 from bcipy.core.triggers import MOCK_TRIGGER_DATA
+from bcipy.io.convert import (BIDS_to_MNE, ConvertFormat, archive_list,
+                              compress, convert_eyetracking_to_bids,
+                              convert_to_bids, convert_to_mne, decompress,
+                              norm_to_tobii, tobii_to_norm)
 from bcipy.signal.generator.generator import gen_random_data
-
 
 CHANNEL_NAMES = [
     'Fp1', 'Fp2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4',

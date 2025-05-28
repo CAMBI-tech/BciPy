@@ -1,6 +1,5 @@
-from bcipy.language.model.causal import CausalLanguageModelAdapter
 from bcipy.core.symbols import DEFAULT_SYMBOL_SET
-
+from bcipy.language.model.causal import CausalLanguageModelAdapter
 
 if __name__ == "__main__":
     lm = CausalLanguageModelAdapter(lang_model_name="figmtu/opt-350m-aac")

@@ -9,13 +9,11 @@ from time import localtime, strftime
 from typing import Any, Dict, List, Tuple, Union
 
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.config import (DEFAULT_ENCODING,
-                          DEFAULT_EXPERIMENT_ID,
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_ID,
                           DEFAULT_LM_PARAMETERS_FILENAME,
                           DEFAULT_LM_PARAMETERS_PATH,
                           DEFAULT_PARAMETERS_FILENAME,
-                          SIGNAL_MODEL_FILE_SUFFIX,
-                          STIMULI_POSITIONS_FILENAME)
+                          SIGNAL_MODEL_FILE_SUFFIX, STIMULI_POSITIONS_FILENAME)
 from bcipy.signal.model.base_model import SignalModel
 
 

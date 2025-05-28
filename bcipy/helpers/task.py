@@ -8,9 +8,10 @@ from psychopy import core, event, visual
 
 from bcipy.acquisition.multimodal import ClientManager, ContentType
 from bcipy.acquisition.record import Record
-from bcipy.config import MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE, SESSION_LOG_FILENAME
-from bcipy.helpers.clock import Clock
+from bcipy.config import (MAX_PAUSE_SECONDS, SESSION_COMPLETE_MESSAGE,
+                          SESSION_LOG_FILENAME)
 from bcipy.core.stimuli import get_fixation
+from bcipy.helpers.clock import Clock
 from bcipy.task.exceptions import InsufficientDataException
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
