@@ -1,3 +1,9 @@
+"""Module for loading BciPy data and configuration files.
+
+This module provides functions for loading various types of data used in BciPy,
+including parameters, experiments, signal models, and session data.
+"""
+
 # mypy: disable-error-code="arg-type, union-attr"
 import json
 import logging
@@ -6,7 +12,7 @@ import pickle
 from pathlib import Path
 from shutil import copyfile
 from time import localtime, strftime
-from typing import List, Optional, Union
+from typing import List, Optional, Union, Dict, Any
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
@@ -24,17 +30,14 @@ log = logging.getLogger(SESSION_LOG_FILENAME)
 
 def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
                     destination: Optional[str] = None) -> str:
-    """Creates a copy of the given configuration (parameters.json) to the
-    given directory and returns the path.
+    """Creates a copy of the parameters file in the specified directory.
 
-    Parameters:
-    -----------
-        path: str - optional path of parameters file to copy; used default if not provided.
-        destination: str - optional destination directory; default is the same
-          directory as the default parameters.
+    Args:
+        path: Path of parameters file to copy. Uses default if not provided.
+        destination: Destination directory. Uses default parameters directory if not provided.
+
     Returns:
-    --------
-        path to the new file.
+        str: Path to the new parameters file.
     """
     default_dir = str(Path(DEFAULT_PARAMETERS_PATH).parent)
 
@@ -46,35 +49,47 @@ def copy_parameters(path: str = DEFAULT_PARAMETERS_PATH,
     return path
 
 
-def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}') -> dict:
-    """Load Experiments.
+def load_experiments(path: str = f'{DEFAULT_EXPERIMENT_PATH}/{EXPERIMENT_FILENAME}') -> Dict[str, Dict[str, Any]]:
+    """Load experiment configurations from a JSON file.
 
-    PARAMETERS
-    ----------
-    :param: path: string path to the experiments file.
+    Args:
+        path: Path to the experiments configuration file.
 
-    Returns
-    -------
-        A dictionary of experiments, with the following format:
-            { name: { fields : {name: '', required: bool, anonymize: bool}, summary: '' } }
-
+    Returns:
+        dict: Dictionary of experiments with format:
+            {
+                name: {
+                    fields: {
+                        name: str,
+                        required: bool,
+                        anonymize: bool
+                    },
+                    summary: str
+                }
+            }
     """
     with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return json.load(json_file)
 
 
 def extract_mode(bcipy_data_directory: str) -> str:
-    """Extract Mode.
+    """Extract the task mode from a BciPy data save directory.
 
-    This method extracts the task mode from a BciPy data save directory. This is important for
-        trigger conversions and extracting targeteness.
+    This method determines the task mode (calibration or copy_phrase) based on
+    the directory name. Important for trigger conversions and extracting targetness.
 
-    *note*: this is not compatible with older versions of BciPy (pre 1.5.0) where
-        the tasks and modes were considered together using integers (1, 2, 3).
+    Note:
+        Not compatible with BciPy versions pre 1.5.0 where tasks and modes
+        were considered together using integers (1, 2, 3).
 
-    PARAMETERS
-    ----------
-    :param: bcipy_data_directory: string path to the data directory
+    Args:
+        bcipy_data_directory: Path to the data directory.
+
+    Returns:
+        str: The extracted mode ('calibration' or 'copy_phrase').
+
+    Raises:
+        BciPyCoreException: If no valid mode could be extracted.
     """
     directory = bcipy_data_directory.lower()
     if 'calibration' in directory:
@@ -84,36 +99,41 @@ def extract_mode(bcipy_data_directory: str) -> str:
     raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
 
 
-def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
-    """Load Fields.
+def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> Dict[str, Dict[str, str]]:
+    """Load field definitions from a JSON file.
 
-    PARAMETERS
-    ----------
-    :param: path: string path to the fields file.
+    Args:
+        path: Path to the fields configuration file.
 
-    Returns
-    -------
-        A dictionary of fields, with the following format:
+    Returns:
+        dict: Dictionary of fields with format:
             {
                 "field_name": {
-                    "help_text": "",
-                    "type": ""
+                    "help_text": str,
+                    "type": str
+                }
             }
-
     """
     with open(path, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return json.load(json_file)
 
 
-def load_experiment_fields(experiment: dict) -> list:
-    """Load Experiment Fields.
+def load_experiment_fields(experiment: Dict[str, Any]) -> List[str]:
+    """Extract field names from an experiment configuration.
 
-    {
-        'fields': [{}, {}],
-        'summary': ''
-    }
+    Args:
+        experiment: Dictionary containing experiment configuration with format:
+            {
+                'fields': [{field_dict}, {field_dict}],
+                'summary': str
+            }
 
-    Using the experiment dictionary, loop over the field keys and put them in a list.
+    Returns:
+        list: List of field names from the experiment configuration.
+
+    Raises:
+        InvalidExperimentException: If experiment format is incorrect.
+        TypeError: If experiment is not a dictionary.
     """
     if isinstance(experiment, dict):
         try:
@@ -126,51 +146,61 @@ def load_experiment_fields(experiment: dict) -> list:
 
 
 def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
-    """Load JSON Parameters.
+    """Load and parse parameters from a JSON file.
 
-    Given a path to a json of parameters, convert to a dictionary and optionally
-        cast the type.
+    Args:
+        path: Path to the parameters JSON file.
+        value_cast: Whether to cast values to their specified types.
 
-    Expects the following format:
-    "fake_data": {
-        "value": "true",
-        "section": "bci_config",
-        "name": "Fake Data Sessions",
-        "helpTip": "If true, fake data server used",
-        "recommended": "",
-        "editable": "true",
-        "type": "bool"
+    Returns:
+        Parameters: A Parameters object containing the loaded configuration.
+
+    Note:
+        Expected JSON format:
+        {
+            "parameter_name": {
+                "value": str,
+                "section": str,
+                "name": str,
+                "helpTip": str,
+                "recommended": str,
+                "editable": str,
+                "type": str
+            }
         }
-
-    PARAMETERS
-    ----------
-    :param: path: string path to the parameters file.
-    :param: value_case: True/False cast values to specified type.
-
-    Returns
-    -------
-        a Parameters object that behaves like a dict.
     """
     return Parameters(source=path, cast_values=value_cast)
 
 
-def load_experimental_data(message='', strict=False) -> str:
-    filename = ask_directory(prompt=message, strict=strict)  # show dialog box and return the path
+def load_experimental_data(message: str = '', strict: bool = False) -> str:
+    """Show a dialog to select an experimental data directory.
+
+    Args:
+        message: Optional prompt message for the dialog.
+        strict: Whether to enforce strict directory selection.
+
+    Returns:
+        str: Path to the selected directory.
+    """
+    filename = ask_directory(prompt=message, strict=strict)
     log.info("Loaded Experimental Data From: %s" % filename)
     return filename
 
 
 def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
-    """Load all signal models in a given directory.
+    """Load all signal models from a directory.
 
-    Models are assumed to have been written using bcipy.helpers.save.save_model
-    function and should be serialized as pickled files. Note that reading
-    pickled files is a potential security concern so only load from trusted
-    directories.
+    Models should have been saved using bcipy.helpers.save.save_model function
+    and are expected to be serialized as pickle files.
 
     Args:
-        dirname (str, optional): Location of pretrained models. If not
-            provided the user will be prompted for a location.
+        directory: Location of pretrained models. User will be prompted if not provided.
+
+    Returns:
+        list: List of loaded SignalModel instances.
+
+    Warning:
+        Reading pickled files is a potential security risk. Only load from trusted directories.
     """
     if not directory or Path(directory).is_file():
         directory = ask_directory()
@@ -189,11 +219,13 @@ def load_signal_models(directory: Optional[str] = None) -> List[SignalModel]:
 
 
 def choose_signal_models(device_types: List[str]) -> List[SignalModel]:
-    """Prompt the user to load a signal model for each provided device.
+    """Prompt user to load a signal model for each device type.
 
-    Parameters
-    ----------
-        device_types - list of device content types (ex. 'EEG')
+    Args:
+        device_types: List of device content types (e.g., ['EEG']).
+
+    Returns:
+        list: List of selected SignalModel instances.
     """
     return [
         model for model in map(choose_signal_model, set(device_types)) if model
