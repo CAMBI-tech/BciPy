@@ -1,9 +1,12 @@
-import unittest
 import subprocess
+import unittest
 
-from mockito import mock, when, verify, unstub
-from bcipy.task import actions, TaskData
-from bcipy.task.actions import CodeHookAction, OfflineAnalysisAction, ExperimentFieldCollectionAction
+from mockito import mock, unstub, verify, when
+
+from bcipy.task import TaskData, actions
+from bcipy.task.actions import (CodeHookAction,
+                                ExperimentFieldCollectionAction,
+                                OfflineAnalysisAction)
 
 
 class TestActions(unittest.TestCase):

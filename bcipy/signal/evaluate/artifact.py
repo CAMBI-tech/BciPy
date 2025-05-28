@@ -1,34 +1,27 @@
 # mypy: disable-error-code="assignment,arg-type"
+import logging
 import os
 from enum import Enum
-from pathlib import Path
-from typing import Union, List, Tuple, Optional
 from logging import getLogger
-import logging
-
-from bcipy.config import (
-    DEFAULT_PARAMETERS_FILENAME,
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME,
-    BCIPY_ROOT,
-    SESSION_LOG_FILENAME
-)
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.io.load import (
-    load_experimental_data,
-    load_json_parameters,
-    load_raw_data,
-)
-from bcipy.core.stimuli import mne_epochs
-from bcipy.io.convert import convert_to_mne
-from bcipy.core.raw_data import RawData
-from bcipy.signal.process import get_default_transform
-from bcipy.core.triggers import TriggerType, trigger_decoder
-import bcipy.acquisition.devices as devices
-from bcipy.acquisition.devices import DeviceSpec
+from pathlib import Path
+from typing import List, Optional, Tuple, Union
 
 import mne
+
+import bcipy.acquisition.devices as devices
+from bcipy.acquisition.devices import DeviceSpec
+from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          SESSION_LOG_FILENAME, TRIGGER_FILENAME)
+from bcipy.core.raw_data import RawData
+from bcipy.core.stimuli import mne_epochs
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.io.convert import convert_to_mne
+from bcipy.io.load import (load_experimental_data, load_json_parameters,
+                           load_raw_data)
+from bcipy.signal.process import get_default_transform
+
 mne.set_log_level('WARNING')
 log = getLogger(SESSION_LOG_FILENAME)
 

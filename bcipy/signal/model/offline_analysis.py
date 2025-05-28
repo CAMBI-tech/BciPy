@@ -5,33 +5,32 @@ from pathlib import Path
 from typing import List
 
 import numpy as np
-
 from sklearn.metrics import balanced_accuracy_score
 from sklearn.model_selection import train_test_split
 
 import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
-from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_PARAMETERS_PATH, DEFAULT_DEVICES_PATH,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
-from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
-from bcipy.io.load import (load_experimental_data, load_json_parameters,
-                           load_raw_data)
-from bcipy.gui.alert import confirm
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME, DEFAULT_DEVICES_PATH,
+                          DEFAULT_PARAMETERS_PATH, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.core.parameters import Parameters
-from bcipy.io.save import save_model
+from bcipy.core.raw_data import RawData
 from bcipy.core.stimuli import update_inquiry_timing
 from bcipy.core.symbols import alphabet
-from bcipy.core.raw_data import RawData
-from bcipy.helpers.utils import report_execution_time
 from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.gui.alert import confirm
+from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
+from bcipy.helpers.utils import report_execution_time
+from bcipy.io.load import (load_experimental_data, load_json_parameters,
+                           load_raw_data)
+from bcipy.io.save import save_model
 from bcipy.preferences import preferences
+from bcipy.signal.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 from bcipy.signal.model.base_model import SignalModel, SignalModelMetadata
-from bcipy.signal.model.gaussian_mixture import (GazeModelResolver)
+from bcipy.signal.model.gaussian_mixture import GazeModelResolver
 from bcipy.signal.model.pca_rda_kde import PcaRdaKdeModel
 from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
-from bcipy.signal.evaluate.fusion import calculate_eeg_gaze_fusion_acc
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")

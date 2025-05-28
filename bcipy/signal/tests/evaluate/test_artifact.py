@@ -1,7 +1,10 @@
 import unittest
-from mockito import when, mock, unstub
-from bcipy.signal.evaluate.artifact import ArtifactDetection, DefaultArtifactParameters, ArtifactType
+
+from mockito import mock, unstub, when
+
 from bcipy.signal.evaluate import artifact
+from bcipy.signal.evaluate.artifact import (ArtifactDetection, ArtifactType,
+                                            DefaultArtifactParameters)
 
 
 class TestArtifactDetection(unittest.TestCase):

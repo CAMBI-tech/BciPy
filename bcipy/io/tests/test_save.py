@@ -1,17 +1,15 @@
+import json
 import os
 import shutil
-import unittest
 import tempfile
-import json
+import unittest
 
-from bcipy.config import (
-    DEFAULT_PARAMETERS_PATH,
-    DEFAULT_PARAMETERS_FILENAME,
-    DEFAULT_EXPERIMENT_ID,
-    STIMULI_POSITIONS_FILENAME)
+from mockito import any, unstub, when
+
+from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_FILENAME,
+                          DEFAULT_PARAMETERS_PATH, STIMULI_POSITIONS_FILENAME)
 from bcipy.io import save
 from bcipy.io.save import init_save_data_structure, save_stimuli_position_info
-from mockito import any, unstub, when
 
 
 class TestSave(unittest.TestCase):

@@ -1,19 +1,12 @@
-from typing import Callable, Type
-from PyQt6.QtCore import pyqtSignal
-from PyQt6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
-    QHBoxLayout,
-    QPushButton,
-    QScrollArea,
-    QLayout,
-    QSizePolicy,
-    QMessageBox,
-    QApplication,
-)
-from typing import Optional, List
-from bcipy.config import BCIPY_ROOT
 import sys
+from typing import Callable, List, Optional, Type
+
+from PyQt6.QtCore import pyqtSignal
+from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QLayout, QMessageBox,
+                             QPushButton, QScrollArea, QSizePolicy,
+                             QVBoxLayout, QWidget)
+
+from bcipy.config import BCIPY_ROOT
 
 
 class BCIUI(QWidget):

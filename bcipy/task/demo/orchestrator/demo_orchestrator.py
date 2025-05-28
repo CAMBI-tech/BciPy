@@ -1,9 +1,11 @@
 from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.task.actions import (BciPyCalibrationReportAction, IntertaskAction,
+                                OfflineAnalysisAction)
 from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.task.actions import (OfflineAnalysisAction, IntertaskAction, BciPyCalibrationReportAction)
-from bcipy.task.paradigm.rsvp import RSVPCalibrationTask
 # from bcipy.task.paradigm.rsvp import RSVPCopyPhraseTask, RSVPTimingVerificationCalibration
 from bcipy.task.paradigm.matrix import MatrixCalibrationTask
+from bcipy.task.paradigm.rsvp import RSVPCalibrationTask
+
 # from bcipy.task.paradigm.matrix.timing_verification import MatrixTimingVerificationCalibration
 
 

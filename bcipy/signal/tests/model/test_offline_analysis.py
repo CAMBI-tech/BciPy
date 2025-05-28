@@ -1,15 +1,18 @@
 """Integration test of offline_analysis.py (slow)"""
-import unittest
-from pathlib import Path
-import pytest
+import gzip
+import random
+import re
 import shutil
 import tempfile
-import re
-import numpy as np
-import random
-import gzip
+import unittest
+from pathlib import Path
 
-from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
+import numpy as np
+import pytest
+
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.io.load import load_json_parameters
 from bcipy.signal.model.offline_analysis import offline_analysis
 

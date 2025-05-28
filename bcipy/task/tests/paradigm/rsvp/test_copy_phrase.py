@@ -13,11 +13,11 @@ from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import DEFAULT_ENCODING
-from bcipy.exceptions import TaskConfigurationException
-from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.core.parameters import Parameters
 from bcipy.core.stimuli import InquirySchedule
 from bcipy.core.triggers import TriggerHandler
+from bcipy.exceptions import TaskConfigurationException
+from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.task.data import EvidenceType, Session
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 

@@ -1,25 +1,21 @@
-import unittest
 import shutil
+import tempfile
+import unittest
 import zipfile
 from pathlib import Path
-import tempfile
+
 import pytest
-
 from matplotlib import pyplot as plt
+from mockito import unstub, verify, when
 
-from mockito import when, unstub, verify
-
-from bcipy.helpers.offset import (
-    calculate_latency,
-    sample_to_seconds,
-    extract_data_latency_calculation,
-    sample_rate_diffs,
-    lsl_timestamp_diffs
-)
-from bcipy.io.load import load_raw_data
-from bcipy.core.raw_data import RawData
-from bcipy.core.triggers import trigger_decoder, TriggerType
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.offset import (calculate_latency,
+                                  extract_data_latency_calculation,
+                                  lsl_timestamp_diffs, sample_rate_diffs,
+                                  sample_to_seconds)
+from bcipy.io.load import load_raw_data
 
 pwd = Path(__file__).absolute().parent
 input_folder = pwd / "resources/mock_offset/time_test_data/"

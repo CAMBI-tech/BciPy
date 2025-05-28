@@ -1,15 +1,15 @@
 import os
+import shutil
+import tempfile
 import unittest
 from unittest.mock import patch
-import tempfile
-import shutil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from reportlab.platypus import Paragraph, Image
-from reportlab.platypus import Flowable, KeepTogether
+from reportlab.platypus import Flowable, Image, KeepTogether, Paragraph
 
-from bcipy.core.report import Report, SessionReportSection, ReportSection, SignalReportSection
+from bcipy.core.report import (Report, ReportSection, SessionReportSection,
+                               SignalReportSection)
 
 
 class TestReport(unittest.TestCase):

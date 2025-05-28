@@ -1,10 +1,14 @@
 # pylint: disable=too-few-public-methods,no-self-use
 """Tests for datastream generator module"""
-from builtins import next
 import unittest
-from past.builtins import map, range
+from builtins import next
+
 from mock import mock_open, patch
-from bcipy.acquisition.datastream.generator import random_data_generator, file_data_generator, generator_with_args
+from past.builtins import map, range
+
+from bcipy.acquisition.datastream.generator import (file_data_generator,
+                                                    generator_with_args,
+                                                    random_data_generator)
 from bcipy.acquisition.util import mock_data
 
 

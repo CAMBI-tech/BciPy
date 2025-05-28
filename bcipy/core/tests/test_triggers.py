@@ -5,14 +5,13 @@ from unittest.mock import mock_open, patch
 import psychopy
 from mockito import any, mock, unstub, verify, when
 
-from bcipy.exceptions import BciPyCoreException
 from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                  TriggerType, _calibration_trigger,
                                  apply_offsets, exclude_types,
                                  find_starting_offset, offset_device,
                                  offset_label, read, read_data,
-                                 starting_offsets_by_device,
-                                 trigger_decoder)
+                                 starting_offsets_by_device, trigger_decoder)
+from bcipy.exceptions import BciPyCoreException
 
 
 class TestCalibrationTrigger(unittest.TestCase):

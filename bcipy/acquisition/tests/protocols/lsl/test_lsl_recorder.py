@@ -1,11 +1,11 @@
 """Tests for LslRecorder"""
+import logging
 import tempfile
 import time
 import unittest
 from pathlib import Path
 
 import pytest
-import logging
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.mock.eye_tracker_server import \

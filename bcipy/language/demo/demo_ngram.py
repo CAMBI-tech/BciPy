@@ -1,9 +1,9 @@
 # Basic sanity test of using KenLM to predict a sentence using a 12-gram character model.
 
-from bcipy.language.model.ngram import NGramLanguageModelAdapter
-from bcipy.core.symbols import DEFAULT_SYMBOL_SET
 from bcipy.config import LM_PATH
+from bcipy.core.symbols import DEFAULT_SYMBOL_SET
 from bcipy.exceptions import KenLMInstallationException
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
 
 try:
     import kenlm

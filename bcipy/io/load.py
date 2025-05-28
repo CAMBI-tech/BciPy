@@ -11,12 +11,11 @@ from typing import List, Optional, Union
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME,
-                          SIGNAL_MODEL_FILE_SUFFIX, SESSION_LOG_FILENAME)
-from bcipy.gui.file_dialog import ask_directory, ask_filename
-from bcipy.exceptions import (BciPyCoreException,
-                              InvalidExperimentException)
+                          SESSION_LOG_FILENAME, SIGNAL_MODEL_FILE_SUFFIX)
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
+from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
+from bcipy.gui.file_dialog import ask_directory, ask_filename
 from bcipy.preferences import preferences
 from bcipy.signal.model import SignalModel
 

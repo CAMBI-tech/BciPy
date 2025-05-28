@@ -1,7 +1,9 @@
 """Task bar component tests"""
 import unittest
-from unittest.mock import patch, Mock
-from bcipy.display.components.task_bar import TaskBar, CalibrationTaskBar, CopyPhraseTaskBar
+from unittest.mock import Mock, patch
+
+from bcipy.display.components.task_bar import (CalibrationTaskBar,
+                                               CopyPhraseTaskBar, TaskBar)
 
 
 class TestTaskBar(unittest.TestCase):

@@ -1,5 +1,6 @@
 """Tests for the RingBuffer data structure"""
 import unittest
+
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 
 

@@ -160,6 +160,9 @@ ignore = [
     "W504",
 ]
 
+[tool.isort]
+skip = [".gitignore"]
+
 [tool.pytest.ini]
 markers = "slow"
 

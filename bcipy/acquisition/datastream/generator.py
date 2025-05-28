@@ -1,6 +1,7 @@
 """Functions for generating mock data to be used for testing/development."""
 
-from typing import Optional, Generator, Callable
+from typing import Callable, Generator, Optional
+
 from past.builtins import range
 
 from bcipy.config import DEFAULT_ENCODING

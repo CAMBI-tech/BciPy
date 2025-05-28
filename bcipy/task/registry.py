@@ -1,6 +1,7 @@
 """Task Registry ; used to provide task options to the GUI and command line
 tools. User defined tasks can be added to the Registry."""
 from typing import Dict, List, Type
+
 from bcipy.task import Task
 
 
@@ -10,8 +11,8 @@ class TaskRegistry:
     def __init__(self):
         # Collects all non-abstract subclasses of Task. type ignore is used to work around a mypy bug
         # https://github.com/python/mypy/issues/3115
-        from bcipy.task.paradigm import vep, rsvp, matrix  # noqa
         from bcipy.task import actions  # noqa
+        from bcipy.task.paradigm import matrix, rsvp, vep  # noqa
 
         self.registry_dict = {}
         self.collect_subclasses(Task)  # type: ignore[type-abstract]

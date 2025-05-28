@@ -1,14 +1,14 @@
 import logging
 import string
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
-from bcipy.core.stimuli import InquirySchedule, inq_generator, StimuliOrder
-from bcipy.core.symbols import SPACE_CHAR, BACKSPACE_CHAR
-from bcipy.task.control.query import RandomStimuliAgent, StimuliAgent
+from bcipy.core.stimuli import InquirySchedule, StimuliOrder, inq_generator
+from bcipy.core.symbols import BACKSPACE_CHAR, SPACE_CHAR
 from bcipy.task.control.criteria import CriteriaEvaluator
+from bcipy.task.control.query import RandomStimuliAgent, StimuliAgent
 from bcipy.task.data import EvidenceType
 
 log = logging.getLogger(SESSION_LOG_FILENAME)

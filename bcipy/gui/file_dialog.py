@@ -6,8 +6,8 @@ from typing import Union
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
 
-from bcipy.preferences import preferences
 from bcipy.exceptions import BciPyCoreException
+from bcipy.preferences import preferences
 
 DEFAULT_FILE_TYPES = "All Files (*)"
 
