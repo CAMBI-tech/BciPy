@@ -12,7 +12,7 @@
     "section": "bci_config",
     "readableName": "Fake VEP Selections On/Off",
     "helpTip": "If 'true', VEP will always select the correct box, but it will still record the actual user EEG data",
-    "recommended_values": ["True", "False"],
+    "recommended_values": ["true", "false"],
     "type": "bool"
   },
   "acq_mode": {
@@ -685,6 +685,17 @@
     "helpTip": "Specifies the minimum probability assigned to the backspace character in the language model. Possible value range: 0.0-1.0. Default: 0.0",
     "recommended_values": "0.05",
     "type": "float"
+  },
+  "vep_completions": {
+    "value": "false",
+    "section":"lang_model_config",
+    "readableName": "VEP Word Completions",
+    "helpTip": "If 'true', VEP will offer word completions in addition to exact disambiguations",
+    "recommended_values": [
+      "true",
+      "false"
+    ],
+    "type": "bool"
   },
   "show_preview_inquiry": {
     "value": "false",

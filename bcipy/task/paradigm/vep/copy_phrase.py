@@ -18,7 +18,7 @@ from bcipy.helpers.clock import Clock
 # from bcipy.helpers.copy_phrase_wrapper import CopyPhraseWrapper
 from bcipy.helpers.parameters import Parameters
 from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet
+from bcipy.helpers.symbols import BACKSPACE_CHAR, alphabet, SPACE_CHAR
 from bcipy.helpers.task import (construct_triggers, fake_vep_decision,
                                 get_device_data_for_decision, get_user_input,
                                 relative_triggers, target_info,
@@ -145,7 +145,7 @@ class VEPCopyPhraseTask(Task):
         self.copy_phrase = parameters['task_text']
 
         self.fake = parameters['fake_selections']
-        self.language_model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet())
+        self.language_model = AmbiguousLanguageModel(response_type=ResponseType.WORD, symbol_set=alphabet(), completions=parameters['vep_completions'])
         self.signal_model = signal_model
         self.evidence_precision = DEFAULT_EVIDENCE_PRECISION
 
@@ -298,7 +298,7 @@ class VEPCopyPhraseTask(Task):
         """Returns True if experiment is currently within params and the task
         should continue.
         """
-        if self.copy_phrase == self.spelled_text:
+        if self.copy_phrase == self.spelled_text.strip(SPACE_CHAR):
             self.vep.update_task_bar(self.spelled_text)
             self.vep.draw_static()
             self.window.flip()
@@ -528,8 +528,11 @@ class VEPCopyPhraseTask(Task):
         group_sequence = [str(i) for i in self.vep.chosen_boxes]
 
         # Ensure valid group_sequence
-        if not group_sequence or len(group_sequence) == 0:
-            return ["", ""]  #returns empty predictions to stop crash
+        # if not group_sequence or len(group_sequence) == 0:
+            # return ["", ""]  #returns empty predictions to stop crash
+
+        if not group_sequence:
+            group_sequence = []
 
         try:
             predictions = self.language_model.predict(list(context), list(group_sequence))

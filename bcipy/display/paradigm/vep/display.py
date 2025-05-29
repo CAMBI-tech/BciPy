@@ -380,6 +380,8 @@ class VEPDisplay(Display):
                 spelled_words = [word]
                 
             spelled_text = SPACE_CHAR.join(spelled_words)
+            if len(spelled_text) > 0:
+                spelled_text += SPACE_CHAR
             self.task_bar.update(spelled_text)
 
         elif chosen_box_index == 7:
@@ -389,6 +391,8 @@ class VEPDisplay(Display):
                 if spelled_words is not None:
                     spelled_words.pop()
                 spelled_text = SPACE_CHAR.join(spelled_words)
+                if len(spelled_text) > 0:
+                    spelled_text += SPACE_CHAR
                 self.task_bar.update(spelled_text)
 
     def draw_boxes(self) -> None:
