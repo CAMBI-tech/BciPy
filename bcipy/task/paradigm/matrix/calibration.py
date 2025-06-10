@@ -1,3 +1,10 @@
+"""Matrix calibration task module.
+
+This module provides the Matrix calibration task implementation which performs
+Matrix stimulus inquiries to elicit ERPs. The task presents a matrix of stimuli
+and highlights them according to configured parameters.
+"""
+
 from typing import Any, Dict, List, Optional
 
 from psychopy import visual
@@ -16,29 +23,41 @@ from bcipy.task.calibration import BaseCalibrationTask
 class MatrixCalibrationTask(BaseCalibrationTask):
     """Matrix Calibration Task.
 
-    Calibration task performs an Matrix stimulus inquiry
-        to elicit an ERP. Parameters change the number of stimuli
-        (i.e. the subset of matrix) and for how long they will highlight.
-        Parameters also change color and text / image inputs.
+    This task performs Matrix stimulus inquiries to elicit ERPs by highlighting
+    elements in a matrix display. Parameters control the number of stimuli,
+    highlight duration, colors, and text/image inputs.
 
-    A task begins setting up variables --> initializing eeg -->
-        awaiting user input to start -->
-        setting up stimuli --> highlighting inquiries -->
-        saving data
+    Task flow:
+        1. Setup variables
+        2. Initialize EEG
+        3. Await user input
+        4. Setup stimuli
+        5. Perform highlighting inquiries
+        6. Save data
 
-    PARAMETERS:
-    ----------
-    parameters (dict)
-    file_save (str)
-    fake (bool)
-
+    Attributes:
+        name: Name of the task.
+        paradigm: Name of the paradigm.
+        parameters: Task configuration parameters.
+        file_save: Path for saving task data.
+        fake: Whether to run in fake (testing) mode.
+        window: PsychoPy window for display.
+        experiment_clock: Task timing clock.
+        display: Matrix display instance.
+        symbol_set: Set of symbols to display.
     """
+
     name = 'Matrix Calibration'
     paradigm = 'Matrix'
 
     @property
     def screen_info(self) -> Dict[str, Any]:
-        """Screen properties"""
+        """Get screen properties.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing screen size, refresh rate,
+                and units information.
+        """
         return {
             'screen_size_pixels': self.window.size.tolist(),
             'screen_hz': get_screen_info().rate,
@@ -46,22 +65,45 @@ class MatrixCalibrationTask(BaseCalibrationTask):
         }
 
     def init_display(self) -> MatrixDisplay:
-        """Initialize the display"""
+        """Initialize the matrix display.
+
+        Returns:
+            MatrixDisplay: Configured matrix display instance.
+        """
         return init_matrix_display(self.parameters, self.window,
                                    self.experiment_clock, self.symbol_set)
 
     def exit_display(self) -> None:
+        """Clean up display resources and save screenshot.
+
+        Raises:
+            AssertionError: If display is not a MatrixDisplay instance.
+        """
         assert isinstance(self.display, MatrixDisplay)
         self.display.capture_grid_screenshot(self.file_save)
         return super().exit_display()
 
     def cleanup(self) -> None:
+        """Perform cleanup operations and save stimuli position data.
+
+        Raises:
+            AssertionError: If display is not a MatrixDisplay instance.
+        """
         assert isinstance(self.display, MatrixDisplay)
         save_stimuli_position_info(self.display.stim_positions, self.file_save,
                                    self.screen_info)
         return super().cleanup()
 
     def session_task_data(self) -> Optional[Dict[str, Any]]:
+        """Get session task data.
+
+        Returns:
+            Optional[Dict[str, Any]]: Dictionary containing stimuli positions
+                and screen information.
+
+        Raises:
+            AssertionError: If display is not a MatrixDisplay instance.
+        """
         assert isinstance(self.display, MatrixDisplay)
         return {**self.display.stim_positions, **self.screen_info}
 
@@ -69,7 +111,17 @@ class MatrixCalibrationTask(BaseCalibrationTask):
 def init_matrix_display(parameters: Parameters, window: visual.Window,
                         experiment_clock: Clock,
                         symbol_set: List[str]) -> MatrixDisplay:
-    """Initialize the matrix display"""
+    """Initialize the matrix display with given parameters.
+
+    Args:
+        parameters: Task configuration parameters.
+        window: PsychoPy window for display.
+        experiment_clock: Task timing clock.
+        symbol_set: Set of symbols to display.
+
+    Returns:
+        MatrixDisplay: Configured matrix display instance.
+    """
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],

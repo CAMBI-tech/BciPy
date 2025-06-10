@@ -4,6 +4,7 @@ This module contains all custom exceptions used throughout the BciPy application
 Each exception is designed to provide specific error information for different
 components of the system.
 """
+from typing import Any
 
 
 class BciPyCoreException(Exception):

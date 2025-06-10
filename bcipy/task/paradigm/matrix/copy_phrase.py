@@ -1,4 +1,9 @@
-"""Defines the Copy Phrase Task which uses a Matrix display"""
+"""Matrix copy phrase task module.
+
+This module defines the Copy Phrase Task implementation using a Matrix display.
+The task allows users to copy a predefined phrase using a matrix-based interface.
+"""
+
 from psychopy import visual
 
 from bcipy.core.parameters import Parameters
@@ -14,22 +19,23 @@ from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
     """Matrix Copy Phrase Task.
 
-    Initializes and runs all needed code for executing a copy phrase task. A
-        phrase is set in parameters and necessary objects (daq, display) are
-        passed to this function.
+    This task allows users to copy a predefined phrase using a matrix-based
+    interface. The task initializes and runs all necessary components for
+    executing a copy phrase task.
 
-    Parameters
-    ----------
-        parameters : dict,
-            configuration details regarding the experiment. See parameters.json
-        file_save : str,
-            path location of where to save data from the session
-        fake : boolean, optional
-            boolean to indicate whether this is a fake session or not.
-    Returns
-    -------
-        TaskData
+    Attributes:
+        name: Name of the task.
+        paradigm: Name of the paradigm.
+        mode: Task execution mode.
+        parameters: Task configuration parameters.
+        file_save: Path for saving task data.
+        fake: Whether to run in fake (testing) mode.
+        window: PsychoPy window for display.
+        experiment_clock: Task timing clock.
+        spelled_text: Currently spelled text.
+        PARAMETERS_USED: List of parameter names used by this task.
     """
+
     name = 'Matrix Copy Phrase'
     paradigm = 'Matrix'
     mode = TaskMode.COPYPHRASE
@@ -100,7 +106,11 @@ class MatrixCopyPhraseTask(RSVPCopyPhraseTask):
     ]
 
     def init_display(self) -> MatrixDisplay:
-        """Initialize the Matrix display"""
+        """Initialize the Matrix display.
+
+        Returns:
+            MatrixDisplay: Configured matrix display instance.
+        """
         return init_display(self.parameters, self.window,
                             self.experiment_clock, self.spelled_text)
 
@@ -110,8 +120,17 @@ def init_display(
         win: visual.Window,
         experiment_clock: Clock,
         starting_spelled_text: str) -> MatrixDisplay:
-    """Constructs a new Matrix display"""
+    """Initialize a new Matrix display with given parameters.
 
+    Args:
+        parameters: Task configuration parameters.
+        win: PsychoPy window for display.
+        experiment_clock: Task timing clock.
+        starting_spelled_text: Initial text to display.
+
+    Returns:
+        MatrixDisplay: Configured matrix display instance.
+    """
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],

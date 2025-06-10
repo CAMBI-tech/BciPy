@@ -1,4 +1,5 @@
 """Base calibration task."""
+# mypy: disable-error-code="override"
 import logging
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple

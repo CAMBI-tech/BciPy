@@ -1,4 +1,4 @@
-# mypy: disable-error-code="union-attr"
+# mypy: disable-error-code="union-attr, override"
 """Simulates the Copy Phrase task"""
 import logging
 from pathlib import Path

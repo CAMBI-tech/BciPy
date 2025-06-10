@@ -1,4 +1,8 @@
-"""Module for functionality related to session-related data."""
+"""Module for functionality related to session-related data.
+
+This module provides classes and functions for managing BCI session data,
+including evidence types, inquiries, and session management.
+"""
 from collections import Counter
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
@@ -9,15 +13,25 @@ EVIDENCE_SUFFIX = "_evidence"
 def rounded(values: List[float], precision: int) -> List[float]:
     """Round the list of values to the given precision.
 
-    Parameters
-    ----------
-        values - values to round
+    Args:
+        values: Values to round.
+        precision: Number of decimal places to round to.
+
+    Returns:
+        List[float]: Rounded values.
     """
     return [round(value, precision) for value in values]
 
 
 class EvidenceType(Enum):
-    """Enum of the supported evidence types used in the various spelling tasks."""
+    """Enum of the supported evidence types used in the various spelling tasks.
+
+    Attributes:
+        LM: Language Model evidence.
+        ERP: Event-Related Potential using EEG signals.
+        BTN: Button press evidence.
+        EYE: Eye tracker evidence.
+    """
     LM = 'LM'  # Language Model
     ERP = 'ERP'  # Event-Related Potential using EEG signals
     BTN = 'BTN'  # Button
@@ -25,16 +39,22 @@ class EvidenceType(Enum):
 
     @classmethod
     def list(cls) -> List[str]:
-        """List of evidence types"""
+        """List of evidence types.
+
+        Returns:
+            List[str]: List of evidence type names.
+        """
         return [ev_type.name for ev_type in cls]
 
     @classmethod
     def deserialized(cls, serialized_name: str) -> 'EvidenceType':
         """Deserialized name of the given evidence type.
-        Parameters:
-            evidence_name - ex. 'lm_evidence'
+
+        Args:
+            serialized_name: Evidence name (ex. 'lm_evidence').
+
         Returns:
-            deserialized value: ex. EvidenceType.LM
+            EvidenceType: Deserialized value (ex. EvidenceType.LM).
         """
         if serialized_name == 'eeg_evidence':
             return EvidenceType.ERP
@@ -45,7 +65,11 @@ class EvidenceType(Enum):
 
     @property
     def serialized(self) -> str:
-        """Name used when serialized to a json file."""
+        """Name used when serialized to a json file.
+
+        Returns:
+            str: Serialized name of the evidence type.
+        """
         if self == EvidenceType.ERP:
             return 'eeg_evidence'
         return f'{self.name.lower()}{EVIDENCE_SUFFIX}'
@@ -54,19 +78,18 @@ class EvidenceType(Enum):
 class Inquiry:
     """Represents a sequence of stimuli.
 
-    Parameters:
-    ----------
-        stimuli - list of stimuli presented (letters, icons, etc)
-        timing - duration in seconds for each stimulus
-        target_info - targetness ('nontarget', 'target', etc) for each stimulus
-        target_letter - current letter that the user is attempting to spell
-        current_text - letters spelled so far
-        target_text - word or words the user is attempting to spell
-        next_display_state - text to be displayed after evaluating the current evidence
-        lm_evidence - language model evidence for each stimulus
-        eeg_evidence - eeg evidence for each stimulus
-        likelihood - combined likelihood for each stimulus
-        task_data - task-specific information about the inquiry that may be useful in training a model
+    Args:
+        stimuli: List of stimuli presented (letters, icons, etc).
+        timing: Duration in seconds for each stimulus.
+        triggers: List of (trigger_name, timestamp) tuples.
+        target_info: Targetness ('nontarget', 'target', etc) for each stimulus.
+        target_letter: Current letter that the user is attempting to spell.
+        current_text: Letters spelled so far.
+        target_text: Word or words the user is attempting to spell.
+        selection: Currently selected symbol.
+        next_display_state: Text to be displayed after evaluating evidence.
+        likelihood: Combined likelihood for each stimulus.
+        task_data: Task-specific information about the inquiry.
     """
 
     def __init__(self,
@@ -80,7 +103,7 @@ class Inquiry:
                  selection: Optional[str] = None,
                  next_display_state: Optional[str] = None,
                  likelihood: Optional[List[float]] = None,
-                 task_data: Optional[Dict] = None) -> None:
+                 task_data: Optional[Dict[str, Any]] = None) -> None:
         super().__init__()
         self.stimuli = stimuli
         self.timing = timing
@@ -100,37 +123,53 @@ class Inquiry:
 
     @property
     def lm_evidence(self) -> List[float]:
-        """Language model evidence"""
+        """Language model evidence.
+
+        Returns:
+            List[float]: Language model evidence values.
+        """
         return self.evidences.get(EvidenceType.LM, [])
 
     @property
     def eeg_evidence(self) -> List[float]:
-        """EEG evidence"""
+        """EEG evidence.
+
+        Returns:
+            List[float]: EEG evidence values.
+        """
         return self.evidences.get(EvidenceType.ERP, [])
 
     @property
     def decision_made(self) -> bool:
-        """Returns true if the result of the inquiry was a decision."""
+        """Returns true if the result of the inquiry was a decision.
+
+        Returns:
+            bool: True if a decision was made.
+        """
         return self.current_text != self.next_display_state
 
     @property
     def is_correct_decision(self) -> bool:
-        """Indicates whether the current selection was the target"""
+        """Indicates whether the current selection was the target.
+
+        Returns:
+            bool: True if selection matches target_letter.
+        """
         if self.selection and self.target_letter:
             return self.selection == self.target_letter
         return False
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Inquiry':
-        """Deserializes from a dict
+    def from_dict(cls, data: Dict[str, Any]) -> 'Inquiry':
+        """Deserializes from a dict.
 
-        Parameters:
-        ----------
-            data - a dict in the format of the data output by the as_dict
-                method.
+        Args:
+            data: A dict in the format of the data output by the as_dict method.
+
+        Returns:
+            Inquiry: New instance created from dict data.
         """
         # partition into evidence data and other data.
-
         evidences = {
             EvidenceType.deserialized(name): value
             for name, value in data.items() if name.endswith(EVIDENCE_SUFFIX)
@@ -148,9 +187,13 @@ class Inquiry:
         inquiry.evidences = evidences
         return inquiry
 
-    def as_dict(self) -> Dict:
-        """Dict representation"""
-        data: Dict = {
+    def as_dict(self) -> Dict[str, Any]:
+        """Dict representation.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing inquiry data.
+        """
+        data: Dict[str, Any] = {
             'stimuli': self.stimuli,
             'timing': self.timing,
             'triggers': self.triggers,
@@ -174,15 +217,18 @@ class Inquiry:
     def stim_evidence(self,
                       symbol_set: List[str],
                       n_most_likely: int = 5) -> Dict[str, Any]:
-        """Returns a dict of stim sequence data useful for debugging. Evidences
-        are paired with the appropriate symbol for easier visual
+        """Returns a dict of stim sequence data useful for debugging.
+
+        Evidences are paired with the appropriate symbol for easier visual
         scanning. Also, an additional attribute is provided to display the
         top n most likely symbols based on the current evidence.
 
-        Parameters:
-        -----------
-            symbol_set - list of stim in the same order as the evidences.
-            n_most_likely - number of most likely elements to include
+        Args:
+            symbol_set: List of stim in the same order as the evidences.
+            n_most_likely: Number of most likely elements to include.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing stimulus evidence data.
         """
         likelihood = dict(zip(symbol_set, self.format(self.likelihood)))
         data: Dict[str, Any] = {
@@ -199,9 +245,11 @@ class Inquiry:
     def format(self, evidence: List[float]) -> List[float]:
         """Format the evidence for output.
 
-        Parameters
-        ----------
-            evidence - list of evidence values
+        Args:
+            evidence: List of evidence values.
+
+        Returns:
+            List[float]: Formatted evidence values.
         """
         if self.precision:
             return rounded(evidence, self.precision)
@@ -209,7 +257,16 @@ class Inquiry:
 
 
 class Session:
-    """Represents a data collection session. Not all tasks record session data."""
+    """Represents a data collection session. Not all tasks record session data.
+
+    Args:
+        save_location: Location where session data will be saved.
+        symbol_set: List of possible symbols that can be presented.
+        task: Name of the task being performed.
+        mode: Mode of operation (e.g., 'RSVP').
+        decision_threshold: Threshold for making decisions.
+        task_data: Additional task-specific data.
+    """
 
     def __init__(self,
                  save_location: str,
@@ -232,24 +289,40 @@ class Session:
 
     @property
     def total_number_series(self) -> int:
-        """Total number of series that contain sequences."""
+        """Total number of series that contain sequences.
+
+        Returns:
+            int: Number of non-empty series.
+        """
         return len([lst for lst in self.series if lst])
 
     @property
     def total_number_decisions(self) -> int:
-        """Total number of series that ended in a decision."""
+        """Total number of series that ended in a decision.
+
+        Returns:
+            int: Number of completed series.
+        """
         # An alternate implementation would be to count the inquiries with
         # decision_made property of true.
         return len(self.series) - 1
 
     @property
     def total_inquiries(self) -> int:
-        """Total number of inquiries presented."""
+        """Total number of inquiries presented.
+
+        Returns:
+            int: Total number of inquiries.
+        """
         return sum([len(lst) for lst in self.series])
 
     @property
     def inquiries_per_selection(self) -> Optional[float]:
-        """Inquiries per selection"""
+        """Inquiries per selection.
+
+        Returns:
+            Optional[float]: Average inquiries per selection, or None if no selections.
+        """
         selections = self.total_number_decisions
         if selections == 0:
             return None
@@ -257,25 +330,32 @@ class Session:
 
     @property
     def all_inquiries(self) -> List[Inquiry]:
-        """List of all Inquiries for the whole session"""
+        """List of all Inquiries for the whole session.
+
+        Returns:
+            List[Inquiry]: All inquiries from non-empty series.
+        """
         return [inq for inquiries in self.series for inq in inquiries if inquiries]
 
     def has_evidence(self) -> bool:
-        """Tests whether any inquiries have evidence."""
+        """Tests whether any inquiries have evidence.
+
+        Returns:
+            bool: True if any inquiries have evidence.
+        """
         return any(inq.evidences for inq in self.all_inquiries)
 
     def add_series(self) -> None:
-        """Add another series unless the last one is empty"""
+        """Add another series unless the last one is empty."""
         if self.last_series():
             self.series.append([])
 
     def add_sequence(self, inquiry: Inquiry, new_series: bool = False) -> None:
-        """Append sequence information
+        """Append sequence information.
 
-        Parameters:
-        -----------
-            inquiry - data to append
-            new_series - a True value indicates that this is the first stim of
+        Args:
+            inquiry: Data to append.
+            new_series: A True value indicates that this is the first stim of
                 a new series.
         """
         if new_series:
@@ -283,23 +363,42 @@ class Session:
         self.last_series().append(inquiry)
 
     def last_series(self) -> List[Inquiry]:
-        """Returns the last series"""
+        """Returns the last series.
+
+        Returns:
+            List[Inquiry]: Last series of inquiries.
+        """
         return self.series[-1]
 
     def last_inquiry(self) -> Optional[Inquiry]:
-        """Returns the last inquiry of the last series."""
+        """Returns the last inquiry of the last series.
+
+        Returns:
+            Optional[Inquiry]: Last inquiry if it exists.
+        """
         series = self.last_series()
         if series:
             return series[-1]
         return None
 
     def latest_series_is_empty(self) -> bool:
-        """Whether the latest series has had any inquiries added to it."""
+        """Whether the latest series has had any inquiries added to it.
+
+        Returns:
+            bool: True if latest series is empty.
+        """
         return len(self.last_series()) == 0
 
     def as_dict(self,
                 evidence_only: bool = False) -> Dict[str, Any]:
-        """Dict representation"""
+        """Dict representation.
+
+        Args:
+            evidence_only: Whether to include only evidence-related data.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing session data.
+        """
         series_dict: Dict[str, Any] = {}
         for i, series in enumerate(self.series):
             if series:
@@ -339,13 +438,14 @@ class Session:
         return info
 
     @classmethod
-    def from_dict(cls, data: dict) -> 'Session':
+    def from_dict(cls, data: Dict[str, Any]) -> 'Session':
         """Deserialize from a dict.
 
-        Parameters:
-        ----------
-            data - a dict in the format of the data output by the as_dict
-                method.
+        Args:
+            data: A dict in the format of the data output by the as_dict method.
+
+        Returns:
+            Session: New session instance created from dict data.
         """
         session = cls(save_location=data['session'],
                       task=data['task'],

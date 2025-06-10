@@ -1,7 +1,7 @@
 import argparse
 import logging
 import multiprocessing
-from typing import Optional, Type, List, Dict, Any, Union
+from typing import Optional, Type
 
 from bcipy.config import CUSTOM_TASK_EXPERIMENT_ID, DEFAULT_PARAMETERS_PATH
 from bcipy.exceptions import BciPyCoreException
@@ -108,7 +108,7 @@ def bci_main(
 def bcipy_main() -> None:
     """Command line interface for running BciPy experiments and tasks.
 
-    This function provides a command line interface for running registered experiment 
+    This function provides a command line interface for running registered experiment
     tasks in BciPy. It handles argument parsing and delegates execution to bci_main.
 
     Args:

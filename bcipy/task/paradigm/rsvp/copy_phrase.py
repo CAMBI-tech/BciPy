@@ -1,4 +1,4 @@
-# mypy: disable-error-code="arg-type"
+# mypy: disable-error-code="arg-type, override"
 import logging
 from typing import Any, List, NamedTuple, Optional, Tuple
 

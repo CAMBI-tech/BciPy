@@ -1,4 +1,11 @@
 # mypy: disable-error-code="assignment"
+"""RSVP timing verification module.
+
+This module provides functionality for verifying display timing in RSVP tasks
+using photodiode stimuli. It alternates between solid and empty boxes that can
+be measured with a photodiode to ensure accurate stimulus presentation timing.
+"""
+
 from itertools import cycle, islice, repeat
 from typing import Any, Iterator, List
 
@@ -11,19 +18,20 @@ from bcipy.task.paradigm.rsvp.calibration.calibration import \
 
 
 class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
-    """RSVP Calibration Task.
+    """RSVP Timing Verification Task.
 
-    This task is used for verifying display timing by alternating solid and empty boxes. These
-        stimuli can be used with a photodiode to ensure accurate presentations.
+    This task verifies display timing by alternating solid and empty boxes.
+    The stimuli can be measured with a photodiode to ensure accurate
+    presentation timing.
 
-    Input:
-        parameters (Parameters)
-        file_save (str)
-        fake (bool)
-
-    Output:
-        TaskData
+    Attributes:
+        name: Name of the task.
+        mode: Task execution mode.
+        parameters: Task configuration parameters.
+        file_save: Path for saving task data.
+        fake: Whether to run in fake (testing) mode.
     """
+
     name = 'RSVP Timing Verification'
     mode = TaskMode.TIMING_VERIFICATION
 
@@ -32,6 +40,14 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
                  file_save: str,
                  fake: bool = False,
                  **kwargs: Any) -> None:
+        """Initialize the RSVP timing verification task.
+
+        Args:
+            parameters: Task configuration parameters.
+            file_save: Path for saving task data.
+            fake: Whether to run in fake (testing) mode.
+            **kwargs: Additional keyword arguments.
+        """
         parameters['rsvp_stim_height'] = 0.8
         parameters['rsvp_stim_pos_y'] = 0.0
         super(RSVPTimingVerificationCalibration,
@@ -39,10 +55,22 @@ class RSVPTimingVerificationCalibration(RSVPCalibrationTask):
 
     @property
     def symbol_set(self) -> List[str]:
-        """Symbols used in the calibration"""
+        """Get symbols used in the calibration.
+
+        Returns:
+            List[str]: List of photodiode stimuli symbols.
+        """
         return PhotoDiodeStimuli.list()
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
+        """Initialize the inquiry generator for timing verification.
+
+        The generator alternates between solid and empty boxes with specified
+        timing parameters. A fixation point is shown between stimuli.
+
+        Returns:
+            Iterator[Inquiry]: Generator yielding timing verification inquiries.
+        """
         params = self.parameters
 
         # alternate between solid and empty boxes

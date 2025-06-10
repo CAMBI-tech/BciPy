@@ -5,18 +5,15 @@ and application state between sessions using a JSON-based storage system.
 """
 import json
 from pathlib import Path
-from typing import Any, Dict, Optional, Type, TypeVar
+from typing import Any, Dict, Optional, Type
 
 from bcipy.config import BCIPY_ROOT, DEFAULT_ENCODING, PREFERENCES_PATH
-
-# Type variable for the descriptor owner class
-T = TypeVar('T')
 
 
 class Pref:
     """A descriptor class for managing preferences.
 
-    When a class attribute is initialized as a Pref, values will be stored and 
+    When a class attribute is initialized as a Pref, values will be stored and
     retrieved from an 'entries' dict initialized in the instance.
 
     For more information on descriptors, see:
@@ -39,7 +36,7 @@ class Pref:
         """
         self.name = name
 
-    def __get__(self, instance: Optional[T], owner: Optional[Type[T]] = None) -> Any:
+    def __get__(self, instance: Any, owner: Optional[Type[Any]] = None) -> Any:
         """Retrieve the value from the dict of entries.
 
         Args:
