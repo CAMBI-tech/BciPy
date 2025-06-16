@@ -70,5 +70,8 @@ offset:
 offset-recommend:
 	python bcipy/helpers/offset.py -r -p
 
-compile-gui:
-	pyinstaller bcipy/gui/BCInterface.py --onefile --noconsole -y --clean --name "BciPy" --collect-all bcipy --collect-all mne --collect-all mne_bids -i './bcipy/static/images/gui/cambi_fav.ico'
+build-api-docs:
+	sphinx-apidoc -f -o docs/reference/modules bcipy/
+
+serve-docs:
+	python -m http.server --directory docs/_build/html

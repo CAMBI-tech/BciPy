@@ -3,6 +3,7 @@ import logging
 from typing import Any
 
 import pylsl
+
 from bcipy.config import SESSION_LOG_FILENAME
 
 log = logging.getLogger(SESSION_LOG_FILENAME)

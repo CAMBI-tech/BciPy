@@ -1,6 +1,7 @@
 """Functionality related to clocks to keep track of time in experiments."""
 
 from typing import Callable
+
 from pylsl import local_clock
 
 

@@ -1,15 +1,11 @@
+import logging
 from typing import Callable, List
 
-from PyQt6.QtWidgets import (
-    QLabel,
-    QHBoxLayout,
-    QPushButton,
-    QProgressBar,
-    QApplication
-)
-from bcipy.gui.bciui import BCIUI, run_bciui
+from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QProgressBar,
+                             QPushButton)
+
 from bcipy.config import SESSION_LOG_FILENAME
-import logging
+from bcipy.gui.bciui import BCIUI, run_bciui
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 

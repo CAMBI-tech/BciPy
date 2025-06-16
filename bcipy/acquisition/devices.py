@@ -6,8 +6,8 @@ from enum import Enum, auto
 from pathlib import Path
 from typing import Dict, List, NamedTuple, Optional, Union
 
-from bcipy.config import DEFAULT_ENCODING, DEVICE_SPEC_PATH, SESSION_LOG_FILENAME
-
+from bcipy.config import (DEFAULT_ENCODING, DEVICE_SPEC_PATH,
+                          SESSION_LOG_FILENAME)
 
 IRREGULAR_RATE: int = 0
 DEFAULT_CONFIG = DEVICE_SPEC_PATH

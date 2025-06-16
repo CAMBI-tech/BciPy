@@ -1,11 +1,15 @@
-import unittest
-import numpy as np
 import math
-from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
-from bcipy.task.control.criteria import CriteriaEvaluator, \
-    MaxIterationsCriteria, MinIterationsCriteria, ProbThresholdCriteria
-from bcipy.task.control.query import NBestStimuliAgent
+import unittest
+
+import numpy as np
+
 from bcipy.core.symbols import alphabet
+from bcipy.task.control.criteria import (CriteriaEvaluator,
+                                         MaxIterationsCriteria,
+                                         MinIterationsCriteria,
+                                         ProbThresholdCriteria)
+from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
+from bcipy.task.control.query import NBestStimuliAgent
 
 
 class TestDecisionMaker(unittest.TestCase):

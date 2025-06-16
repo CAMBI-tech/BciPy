@@ -13,14 +13,15 @@ from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import COLOR_INDEX
-BLACK = COLOR_INDEX[0]
-WHITE = COLOR_INDEX[1]
-YELLOW = COLOR_INDEX[5]
-from bcipy.config import (DEFAULT_ENCODING,
-                          DEFAULT_PARAMETERS_FILENAME,
+
+from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
                           SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
 from bcipy.io.load import load_json_parameters
 from bcipy.task.data import Session
+
+BLACK = COLOR_INDEX[0]
+WHITE = COLOR_INDEX[1]
+YELLOW = COLOR_INDEX[5]
 
 
 def read_session(file_name: str = SESSION_DATA_FILENAME) -> Session:

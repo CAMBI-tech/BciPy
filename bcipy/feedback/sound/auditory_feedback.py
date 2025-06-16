@@ -1,6 +1,7 @@
-from bcipy.feedback.feedback import Feedback
-from psychopy import core
 import sounddevice as sd
+from psychopy import core
+
+from bcipy.feedback.feedback import Feedback
 
 
 class AuditoryFeedback(Feedback):

@@ -1,28 +1,19 @@
-from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QScrollArea,
-)
-from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton, run_bciui
-from bcipy.io.load import load_fields, load_experiments
-from bcipy.io.save import save_experiment_data
-from bcipy.config import (
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME,
-    BCIPY_ROOT,
-)
-from bcipy.task.registry import TaskRegistry
-import subprocess
-from bcipy.task.orchestrator.protocol import serialize_protocol
 import json
+import subprocess
+from typing import List, Optional
+
+from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QLineEdit,
+                             QPushButton, QScrollArea, QVBoxLayout)
+
+from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
+                          DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME)
+from bcipy.gui.bciui import (BCIUI, DynamicItem, DynamicList, SmallButton,
+                             run_bciui)
+from bcipy.io.load import load_experiments, load_fields
+from bcipy.io.save import save_experiment_data
+from bcipy.task.orchestrator.protocol import serialize_protocol
+from bcipy.task.registry import TaskRegistry
 
 
 class ExperimentRegistry(BCIUI):

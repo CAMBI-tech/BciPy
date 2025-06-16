@@ -39,5 +39,5 @@ bcipy/simulator/tests/resource/
 data/
 bids/
 !bcipy/simulator/data
-
+_build/
 *.spec

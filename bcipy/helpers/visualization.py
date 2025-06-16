@@ -9,7 +9,6 @@ import mne
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from matplotlib.figure import Figure
 from matplotlib.patches import Ellipse
 from mne import Epochs
@@ -17,16 +16,16 @@ from scipy import linalg
 
 import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
-                          DEFAULT_GAZE_IMAGE_PATH, RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME,
-                          DEFAULT_PARAMETERS_PATH)
-from bcipy.helpers.acquisition import analysis_channels
-from bcipy.io.convert import convert_to_mne
-from bcipy.io.load import choose_csv_file, load_raw_data, load_json_parameters
+                          DEFAULT_GAZE_IMAGE_PATH, DEFAULT_PARAMETERS_PATH,
+                          RAW_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.core.parameters import Parameters
 from bcipy.core.raw_data import RawData
 from bcipy.core.stimuli import mne_epochs
 from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.acquisition import analysis_channels
+from bcipy.io.convert import convert_to_mne
+from bcipy.io.load import choose_csv_file, load_json_parameters, load_raw_data
 from bcipy.signal.process import (Composition, ERPTransformParams,
                                   get_default_transform)
 

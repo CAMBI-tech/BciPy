@@ -1,23 +1,24 @@
 # mypy: disable-error-code="no-redef"
 """Functionality for converting the bcipy raw data output to other formats"""
+import glob
 import logging
 import os
 import tarfile
+from enum import Enum
 from typing import List, Optional, Tuple
-import glob
 
 import mne
-from enum import Enum
 from mne.io import RawArray
-from mne_bids import BIDSPath, write_raw_bids, find_matching_paths, read_raw_bids, get_entity_vals
+from mne_bids import (BIDSPath, find_matching_paths, get_entity_vals,
+                      read_raw_bids, write_raw_bids)
 from tqdm import tqdm
 
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.config import (RAW_DATA_FILENAME,
-                          TRIGGER_FILENAME, SESSION_LOG_FILENAME)
-from bcipy.io.load import load_raw_data
+from bcipy.config import (RAW_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME)
 from bcipy.core.raw_data import RawData, get_1020_channel_map
 from bcipy.core.triggers import trigger_decoder
+from bcipy.io.load import load_raw_data
 from bcipy.signal.process import Composition
 
 logger = logging.getLogger(SESSION_LOG_FILENAME)

@@ -1,15 +1,15 @@
 """Tests for CAUSAL Language Model"""
 
-import pytest
 import unittest
 from operator import itemgetter
 
-from bcipy.exceptions import InvalidSymbolSetException
-from bcipy.core.symbols import DEFAULT_SYMBOL_SET, BACKSPACE_CHAR, SPACE_CHAR
-from bcipy.language.model.causal import CausalLanguageModelAdapter
-from bcipy.language.main import CharacterLanguageModel
-
+import pytest
 from textslinger.exceptions import InvalidLanguageModelException
+
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET, SPACE_CHAR
+from bcipy.exceptions import InvalidSymbolSetException
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.causal import CausalLanguageModelAdapter
 
 
 @pytest.mark.slow

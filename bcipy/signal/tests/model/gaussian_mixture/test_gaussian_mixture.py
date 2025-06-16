@@ -1,10 +1,8 @@
 import unittest
 
-from bcipy.signal.model.gaussian_mixture import (
-    GaussianProcess,
-    GMIndividual,
-    GazeModelResolver
-)
+from bcipy.signal.model.gaussian_mixture import (GaussianProcess,
+                                                 GazeModelResolver,
+                                                 GMIndividual)
 
 
 class TestGazeModelResolver(unittest.TestCase):

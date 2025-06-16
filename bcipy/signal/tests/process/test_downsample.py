@@ -1,6 +1,8 @@
-from bcipy.signal.process import Downsample
-import numpy as np
 import unittest
+
+import numpy as np
+
+from bcipy.signal.process import Downsample
 
 
 class TestDownsample(unittest.TestCase):

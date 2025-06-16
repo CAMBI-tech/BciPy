@@ -1,12 +1,14 @@
-import unittest
-import logging
 import json
+import logging
+import unittest
+
 from mock import mock_open
-from mockito import any, mock, when, unstub, verify
-from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.task import Task, TaskData
+from mockito import any, mock, unstub, verify, when
+
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.io.load import load_json_parameters
+from bcipy.task import Task, TaskData
+from bcipy.task.orchestrator import SessionOrchestrator
 
 
 class TestSessionOrchestrator(unittest.TestCase):

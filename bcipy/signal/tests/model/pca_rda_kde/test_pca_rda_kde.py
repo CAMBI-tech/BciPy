@@ -8,10 +8,10 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
+from bcipy.core.symbols import alphabet
 from bcipy.exceptions import SignalException
 from bcipy.io.load import load_signal_models
 from bcipy.io.save import save_model
-from bcipy.core.symbols import alphabet
 from bcipy.signal.model import ModelEvaluationReport, PcaRdaKdeModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import cross_validation

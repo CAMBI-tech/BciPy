@@ -1,4 +1,6 @@
 """Base calibration task."""
+# mypy: disable-error-code="override"
+import logging
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
@@ -7,25 +9,24 @@ from psychopy.visual import Window
 
 import bcipy.task.data as session_data
 from bcipy.acquisition import ClientManager
-from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
-                          WAIT_SCREEN_MESSAGE, SESSION_LOG_FILENAME)
-from bcipy.helpers.acquisition import init_acquisition, LslDataServer
-from bcipy.display import init_display_window, Display
-from bcipy.helpers.clock import Clock
+from bcipy.config import (SESSION_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
 from bcipy.core.parameters import Parameters
-from bcipy.io.save import _save_session_related_data
 from bcipy.core.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
                                 TargetPositions,
                                 generate_calibration_inquiries)
 from bcipy.core.symbols import alphabet
-from bcipy.helpers.task import (get_user_input, pause_calibration,
-                                trial_complete_message)
 from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
                                  TriggerType, convert_timing_triggers,
                                  offset_label)
+from bcipy.display import Display, init_display_window
+from bcipy.helpers.acquisition import LslDataServer, init_acquisition
+from bcipy.helpers.clock import Clock
+from bcipy.helpers.task import (get_user_input, pause_calibration,
+                                trial_complete_message)
+from bcipy.io.save import _save_session_related_data
 from bcipy.task import Task, TaskData, TaskMode
 
-import logging
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 

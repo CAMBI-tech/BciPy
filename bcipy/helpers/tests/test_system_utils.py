@@ -1,15 +1,13 @@
-import unittest
-from bcipy.helpers.utils import (
-    is_connected,
-    is_battery_powered,
-    is_screen_refresh_rate_low,
-    get_screen_info,
-    ScreenInfo,
-)
 import socket
+import unittest
+
 import psutil
+from mockito import any, mock, verify, when
 from pyglet import canvas
-from mockito import any, when, mock, verify
+
+from bcipy.helpers.utils import (ScreenInfo, get_screen_info,
+                                 is_battery_powered, is_connected,
+                                 is_screen_refresh_rate_low)
 
 
 class TestSystemUtilsAlerts(unittest.TestCase):

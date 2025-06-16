@@ -4,10 +4,12 @@ To use at bcipy root,
 
     `python bcipy/io/demo/demo_convert.py -d "path://to/bcipy/data/folder"`
 """
-from typing import Optional, List
 from pathlib import Path
-from bcipy.io.convert import convert_to_bids, ConvertFormat, convert_eyetracking_to_bids
+from typing import List, Optional
+
 from bcipy.gui.file_dialog import ask_directory
+from bcipy.io.convert import (ConvertFormat, convert_eyetracking_to_bids,
+                              convert_to_bids)
 from bcipy.io.load import BciPySessionTaskData, load_bcipy_data
 
 EXCLUDED_TASKS = ['Report', 'Offline', 'Intertask', 'BAD']

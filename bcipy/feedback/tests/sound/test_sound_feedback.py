@@ -1,10 +1,9 @@
 import unittest
 
-from mockito import mock, when, unstub
+import sounddevice as sd
+from mockito import mock, unstub, when
 
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
-
-import sounddevice as sd
 
 
 class TestSoundFeedback(unittest.TestCase):

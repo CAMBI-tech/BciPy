@@ -10,12 +10,12 @@ from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 
+from bcipy.core.symbols import alphabet
 from bcipy.display.components.layout import (Layout, at_top, centered,
                                              envelope, height_units,
                                              scaled_size)
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
-from bcipy.core.symbols import alphabet
 
 
 def make_window():

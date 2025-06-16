@@ -1,17 +1,17 @@
 import pickle
+import warnings
+from enum import Enum
 from pathlib import Path
 from typing import List
-from enum import Enum
 
-from bcipy.exceptions import SignalException
-from bcipy.core.stimuli import GazeReshaper
-from bcipy.signal.model import SignalModel
-
-from sklearn.mixture import GaussianMixture
 import numpy as np
 import scipy.stats as stats
+from sklearn.mixture import GaussianMixture
 
-import warnings
+from bcipy.core.stimuli import GazeReshaper
+from bcipy.exceptions import SignalException
+from bcipy.signal.model import SignalModel
+
 warnings.filterwarnings("ignore")  # ignore DeprecationWarnings from tensorflow
 
 

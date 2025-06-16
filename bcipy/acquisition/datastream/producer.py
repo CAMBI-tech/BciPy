@@ -1,11 +1,11 @@
 """Code for mocking an EEG data stream. Code in this module produces data
 at a specified frequency."""
 import logging
-from builtins import next
-from queue import Queue
 import random
 import threading
 import time
+from builtins import next
+from queue import Queue
 
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.config import SESSION_LOG_FILENAME

@@ -11,15 +11,14 @@ from mockito import any, expect, unstub, when
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_EXPERIMENT_PATH,
                           DEFAULT_FIELD_PATH, DEFAULT_PARAMETERS_PATH,
                           EXPERIMENT_FILENAME, FIELD_FILENAME)
+from bcipy.core.parameters import Parameters
 from bcipy.exceptions import BciPyCoreException, InvalidExperimentException
 from bcipy.io.load import (choose_signal_model, choose_signal_models,
-                           copy_parameters, extract_mode,
+                           copy_parameters, extract_mode, load_bcipy_data,
                            load_experiment_fields, load_experiments,
-                           load_bcipy_data,
                            load_fields, load_json_parameters,
                            load_signal_model, load_users)
 from bcipy.io.tests.test_convert import create_bcipy_session_artifacts
-from bcipy.core.parameters import Parameters
 
 MOCK_EXPERIMENT = {
     "test": {

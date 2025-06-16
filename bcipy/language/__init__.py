@@ -1,4 +1,4 @@
-from .main import LanguageModel, CharacterLanguageModel, WordLanguageModel
+from .main import CharacterLanguageModel, LanguageModel, WordLanguageModel
 
 __all__ = [
     "LanguageModel",

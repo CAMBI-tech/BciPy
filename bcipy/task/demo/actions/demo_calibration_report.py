@@ -1,7 +1,8 @@
 import logging
-from bcipy.task.actions import BciPyCalibrationReportAction
+
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.io.load import load_json_parameters
+from bcipy.task.actions import BciPyCalibrationReportAction
 
 logging.basicConfig(level=logging.INFO)
 

@@ -1,7 +1,11 @@
 import unittest
-from bcipy.task.orchestrator.protocol import parse_protocol, serialize_protocol, validate_protocol_string
+
 from bcipy.task.actions import OfflineAnalysisAction
-from bcipy.task.paradigm.rsvp.calibration.calibration import RSVPCalibrationTask
+from bcipy.task.orchestrator.protocol import (parse_protocol,
+                                              serialize_protocol,
+                                              validate_protocol_string)
+from bcipy.task.paradigm.rsvp.calibration.calibration import \
+    RSVPCalibrationTask
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 
