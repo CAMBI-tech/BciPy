@@ -15,10 +15,25 @@ TIMESTAMP_COLUMN = 'timestamp'
 
 
 class RawData:
-    """Represents the raw data format used by BciPy. Used primarily for loading
-    a raw data file into memory."""
+    """Represents the raw data format used by BciPy.
+
+    This class is used primarily for loading a raw data file into memory. It provides
+    methods to access and manipulate the data in various formats.
+
+    Attributes:
+        daq_type (str): Type of data acquisition device.
+        sample_rate (int): Sample rate in Hz.
+        columns (List[str]): List of column names in the data.
+    """
 
     def __init__(self, daq_type: str, sample_rate: int, columns: List[str]) -> None:
+        """Initialize RawData.
+
+        Args:
+            daq_type (str): Type of data acquisition device.
+            sample_rate (int): Sample rate in Hz.
+            columns (List[str]): List of column names in the data.
+        """
         self.daq_type = daq_type
         self.sample_rate = sample_rate
         self.columns = columns
@@ -27,44 +42,70 @@ class RawData:
         self._rows: List[Any] = []
 
     @classmethod
-    def load(cls, filename: str):
+    def load(cls, filename: str) -> 'RawData':
         """Constructs a RawData object by deserializing the given file.
+
         All data will be read into memory. If you want to lazily read data one
         record at a time, use a RawDataReader.
 
-        Parameters
-        ----------
-        - filename : path to the csv file to read
+        Args:
+            filename (str): Path to the csv file to read.
+
+        Returns:
+            RawData: A new RawData instance containing the loaded data.
         """
         return load(filename)
 
     @property
     def rows(self) -> List[List]:
-        """Returns the data rows"""
+        """Returns the data rows.
+
+        Returns:
+            List[List]: List of data rows.
+        """
         return self._rows
 
     @rows.setter
     def rows(self, value: Any) -> None:
+        """Sets the data rows and invalidates the cached dataframe.
+
+        Args:
+            value (Any): New data rows to set.
+        """
         self._rows = value
         self._dataframe = None
 
     @property
     def channels(self) -> List[str]:
-        """Compute the list of channels. Channels are the numeric columns
-        excluding the timestamp column."""
+        """Compute the list of channels.
 
+        Channels are the numeric columns excluding the timestamp column.
+
+        Returns:
+            List[str]: List of channel names.
+        """
         # Start data slice at 1 to remove the timestamp column.
         return list(self.numeric_data.columns[1:])
 
     @property
     def numeric_data(self) -> pd.DataFrame:
-        """Data for columns with numeric data. This is usually comprised of the
-        timestamp column and device channels, excluding string triggers."""
+        """Data for columns with numeric data.
+
+        This is usually comprised of the timestamp column and device channels,
+        excluding string triggers.
+
+        Returns:
+            pd.DataFrame: DataFrame containing only numeric columns.
+        """
         return self.dataframe.select_dtypes(exclude=['object'])
 
     @property
     def channel_data(self) -> np.ndarray:
-        """Data for columns with numeric data, excluding the timestamp column."""
+        """Data for columns with numeric data, excluding the timestamp column.
+
+        Returns:
+            np.ndarray: Array of channel data with shape (channels, samples).
+        """
         numeric_data = self.numeric_data
 
         numeric_vals = numeric_data.values
@@ -79,12 +120,15 @@ class RawData:
         This will apply n tranformations to the data before returning. For an example Composition with
         EEG preprocessing, see bcipy.signal.get_default_transform().
 
-        Returns
-        ----------
-        data: C x N numpy array with samples where C is the number of channels and N
-        is number of time samples
-        fs: resulting sample rate if any transformations applied"""
+        Args:
+            transform (Optional[Composition]): Optional transformation to apply to the data.
 
+        Returns:
+            Tuple[np.ndarray, int]: A tuple containing:
+                - data: C x N numpy array with samples where C is the number of channels and N
+                  is number of time samples
+                - fs: resulting sample rate if any transformations applied
+        """
         data = self.channel_data
         fs = self.sample_rate
 
@@ -97,16 +141,22 @@ class RawData:
             self,
             channel_map: List[int],
             transform: Optional[Composition] = None) -> Tuple[np.ndarray, List[str], int]:
-        """By Channel Map.
+        """Returns channels with columns removed if index in list (channel_map) is zero.
 
-        Returns channels with columns removed if index in list (channel_map) is zero. The channel map must align
-        with the numeric channels read in as self.channels. We assume most trigger or other string columns are
-        removed, however some are numeric trigger columns from devices that will require filtering before returning
+        The channel map must align with the numeric channels read in as self.channels.
+        We assume most trigger or other string columns are removed, however some are
+        numeric trigger columns from devices that will require filtering before returning
         data. Other cases could be dropping bad channels before running further analyses.
 
-        Optionally, it can apply a BciPy Composition to the data before returning using the transform arg.
-        This will apply n tranformations to the data before returning. For an example Composition with
-        EEG preprocessing, see bcipy.signal.get_default_transform().
+        Args:
+            channel_map (List[int]): List of 1s and 0s indicating which channels to keep.
+            transform (Optional[Composition]): Optional transformation to apply to the data.
+
+        Returns:
+            Tuple[np.ndarray, List[str], int]: A tuple containing:
+                - data: Array of channel data with shape (channels, samples)
+                - channels: List of channel names
+                - fs: Sample rate
         """
         data, fs = self.by_channel(transform)
         channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
@@ -119,13 +169,26 @@ class RawData:
         """Apply Transform.
 
         Using data provided as an np.ndarray, call the Composition with self.sample_rate to apply
-            transformations to the data. This will return the transformed data and resulting sample rate.
+        transformations to the data. This will return the transformed data and resulting sample rate.
+
+        Args:
+            data (np.ndarray): Input data to transform.
+            transform (Composition): Transformation to apply.
+
+        Returns:
+            Tuple[np.ndarray, int]: A tuple containing:
+                - data: Transformed data
+                - fs: Resulting sample rate
         """
         return transform(data, self.sample_rate)
 
     @property
     def dataframe(self) -> pd.DataFrame:
-        """Returns a dataframe of the row data."""
+        """Returns a dataframe of the row data.
+
+        Returns:
+            pd.DataFrame: DataFrame containing all data.
+        """
         if self._dataframe is None:
             self._dataframe = pd.DataFrame(data=self.rows,
                                            columns=self.columns)
@@ -133,15 +196,24 @@ class RawData:
 
     @property
     def total_seconds(self) -> float:
-        """Total recorded seconds, defined as the diff between the first and
-        last timestamp."""
+        """Total recorded seconds.
+
+        Defined as the diff between the first and last timestamp.
+
+        Returns:
+            float: Total duration in seconds.
+        """
         frame = self.dataframe
         col = 'lsl_timestamp'
         return frame.iloc[-1][col] - frame.iloc[0][col]
 
     @property
     def total_samples(self) -> int:
-        """Number of samples recorded."""
+        """Number of samples recorded.
+
+        Returns:
+            int: Total number of samples.
+        """
         return int(self.dataframe.iloc[-1]['timestamp'])
 
     def query(self,
@@ -150,15 +222,13 @@ class RawData:
               column: str = 'lsl_timestamp') -> pd.DataFrame:
         """Query for a subset of data.
 
-        Pararameters
-        ------------
-            start - find records greater than or equal to this value
-            stop - find records less than or equal to this value
-            column - column to compare to the given start and stop values
+        Args:
+            start (Optional[float]): Find records greater than or equal to this value.
+            stop (Optional[float]): Find records less than or equal to this value.
+            column (str): Column to compare to the given start and stop values.
 
-        Returns
-        -------
-        Dataframe for the given slice of data
+        Returns:
+            pd.DataFrame: DataFrame for the given slice of data.
         """
         dataframe = self.dataframe
         start = start or dataframe.iloc[0][column]
@@ -169,24 +239,41 @@ class RawData:
     def append(self, row: list) -> None:
         """Append the given row of data.
 
-        Parameters
-        ----------
-        - row : row of data
+        Args:
+            row (list): Row of data to append.
         """
         assert len(row) == len(self.columns), "Wrong number of columns"
         self._rows.append(row)
         self._dataframe = None
 
     def __str__(self) -> str:
+        """String representation of RawData.
+
+        Returns:
+            str: String representation.
+        """
         return f"RawData({self.daq_type})"
 
     def __repr__(self) -> str:
+        """String representation of RawData.
+
+        Returns:
+            str: String representation.
+        """
         return f"RawData({self.daq_type})"
 
 
 def maybe_float(val: Any) -> Union[float, Any]:
-    """Attempt to convert the given value to float. If conversion fails return
-    as is."""
+    """Attempt to convert the given value to float.
+
+    If conversion fails return the value as is.
+
+    Args:
+        val (Any): Value to convert to float.
+
+    Returns:
+        Union[float, Any]: Float if conversion succeeds, original value otherwise.
+    """
     try:
         return float(val)
     except ValueError:
@@ -194,47 +281,73 @@ def maybe_float(val: Any) -> Union[float, Any]:
 
 
 class RawDataReader:
-    """Lazily reads raw data from a file. Intended to be used as a ContextManager
-    using Python's `with` keyword.
+    """Lazily reads raw data from a file.
+
+    Intended to be used as a ContextManager using Python's `with` keyword.
 
     Example usage:
+        ```
+        with RawDataReader(path) as reader:
+            print(f"Data from ${reader.daq_type}")
+            print(reader.columns)
+            for row in reader:
+                print(row)
+        ```
 
-    ```
-    with RawDataReader(path) as reader:
-        print(f"Data from ${reader.daq_type}")
-        print(reader.columns)
-        for row in reader:
-            print(row)
-    ```
-
-    Parameters
-    ----------
-    - file_path : path to the csv file
-    - convert_data : if True attempts to convert data values to floats;
-    default is False
+    Attributes:
+        file_path (str): Path to the csv file.
+        convert_data (bool): If True attempts to convert data values to floats.
+        daq_type (str): Type of data acquisition device.
+        sample_rate (int): Sample rate in Hz.
+        columns (List[str]): List of column names.
     """
     _file_obj: TextIOWrapper
 
     def __init__(self, file_path: str, convert_data: bool = False):
+        """Initialize RawDataReader.
+
+        Args:
+            file_path (str): Path to the csv file.
+            convert_data (bool, optional): If True attempts to convert data values to floats.
+                Defaults to False.
+        """
         self.file_path = file_path
         self.convert_data = convert_data
 
-    def __enter__(self):
+    def __enter__(self) -> 'RawDataReader':
+        """Enter the context manager.
+
+        Returns:
+            RawDataReader: Self.
+        """
         self._file_obj = open(self.file_path, mode="r", encoding=DEFAULT_ENCODING)
         self.daq_type, self.sample_rate = read_metadata(self._file_obj)
         self._reader = csv.reader(self._file_obj)
         self.columns = next(self._reader)
         return self
 
-    def __exit__(self, *args, **kwargs):
-        """Exit the context manager. Close resources"""
+    def __exit__(self, *args, **kwargs) -> None:
+        """Exit the context manager. Close resources."""
         if self._file_obj:
             self._file_obj.close()
 
-    def __iter__(self):
+    def __iter__(self) -> 'RawDataReader':
+        """Return self as iterator.
+
+        Returns:
+            RawDataReader: Self.
+        """
         return self
 
-    def __next__(self):
+    def __next__(self) -> List[Any]:
+        """Get next row of data.
+
+        Returns:
+            List[Any]: Next row of data.
+
+        Raises:
+            AssertionError: If reader is not initialized.
+        """
         assert self._reader, "Reader must be initialized"
         row = next(self._reader)
         if self.convert_data:
@@ -243,36 +356,46 @@ class RawDataReader:
 
 
 class RawDataWriter:
-    """Writes a raw data file one row at a time without storing the records
-    in memory. Intended to be used as a ContextManager using Python's `with`
-    keyword.
+    """Writes a raw data file one row at a time without storing the records in memory.
+
+    Intended to be used as a ContextManager using Python's `with` keyword.
 
     Example usage:
+        ```
+        with RawDataWriter(path, daq_type, sample_rate, columns) as writer:
+            for row in data:
+                writer.writerow(row)
+        ```
 
-    ```
-    with RawDataWriter(path, daq_type, sample_rate, columns) as writer:
-        for row in data:
-            writer.writerow(row)
-    ```
-
-    Parameters
-    ----------
-    - file_path : path to the csv file
-    - daq_type : name of device
-    - sample_rate : sample frequency in Hz
-    - columns : list of column names
+    Attributes:
+        file_path (str): Path to the csv file.
+        daq_type (str): Name of device.
+        sample_rate (float): Sample frequency in Hz.
+        columns (List[str]): List of column names.
     """
     _file_obj: TextIOWrapper
 
     def __init__(self, file_path: str, daq_type: str, sample_rate: float,
                  columns: List[str]) -> None:
+        """Initialize RawDataWriter.
+
+        Args:
+            file_path (str): Path to the csv file.
+            daq_type (str): Name of device.
+            sample_rate (float): Sample frequency in Hz.
+            columns (List[str]): List of column names.
+        """
         self.file_path = file_path
         self.daq_type = daq_type
         self.sample_rate = sample_rate
         self.columns = columns
 
-    def __enter__(self):
-        """Enter the context manager. Initializes the underlying data file."""
+    def __enter__(self) -> 'RawDataWriter':
+        """Enter the context manager. Initializes the underlying data file.
+
+        Returns:
+            RawDataWriter: Self.
+        """
         self._file_obj = open(self.file_path,
                               mode='w',
                               encoding=DEFAULT_ENCODING,
@@ -289,28 +412,47 @@ class RawDataWriter:
 
         return self
 
-    def __exit__(self, *args, **kwargs):
-        """Exit the context manager. Close resources"""
+    def __exit__(self, *args, **kwargs) -> None:
+        """Exit the context manager. Close resources."""
         self._file_obj.close()
 
     def writerow(self, row: List) -> None:
+        """Write a single row of data.
+
+        Args:
+            row (List): Row of data to write.
+
+        Raises:
+            AssertionError: If writer is not initialized or row has wrong number of columns.
+        """
         assert self._csv_writer, "Writer must be initialized"
         assert len(row) == len(self.columns), "Wrong number of columns"
         self._csv_writer.writerow(row)
 
     def writerows(self, rows: List[List]) -> None:
+        """Write multiple rows of data.
+
+        Args:
+            rows (List[List]): Rows of data to write.
+        """
         for row in rows:
             self.writerow(row)
 
 
 def load(filename: str) -> RawData:
     """Reads the file at the given path and initializes a RawData object.
+
     All data will be read into memory. If you want to lazily read data one
     record at a time, use a RawDataReader.
 
-    Parameters
-    ----------
-    - filename : path to the csv file to read
+    Args:
+        filename (str): Path to the csv file to read.
+
+    Returns:
+        RawData: A new RawData instance containing the loaded data.
+
+    Raises:
+        BciPyCoreException: If the file is not found.
     """
     # Loading all data from a csv is faster using pandas than using the
     # RawDataReader.
@@ -326,29 +468,27 @@ def load(filename: str) -> RawData:
 
 
 def read_metadata(file_obj: TextIO) -> Tuple[str, int]:
-    """Reads the metadata from an open raw data file and retuns the result as
-    a tuple. Increments the reader.
+    """Reads the metadata from an open raw data file and returns the result as a tuple.
 
-    Parameters
-    ----------
-    - file_obj : open TextIO object
+    Increments the reader.
 
-    Returns
-    -------
-    tuple of daq_type, sample_rate
+    Args:
+        file_obj (TextIO): Open TextIO object.
+
+    Returns:
+        Tuple[str, int]: Tuple of (daq_type, sample_rate).
     """
     daq_type = next(file_obj).strip().split(',')[1]
     sample_rate = int(float(next(file_obj).strip().split(",")[1]))
     return daq_type, sample_rate
 
 
-def write(data: RawData, filename: str):
+def write(data: RawData, filename: str) -> None:
     """Write the given raw data file.
 
-    Parameters
-    ----------
-    - data : raw data object to write
-    - filename : path to destination file.
+    Args:
+        data (RawData): Raw data object to write.
+        filename (str): Path to destination file.
     """
     with RawDataWriter(filename, data.daq_type, data.sample_rate,
                        data.columns) as writer:
@@ -357,17 +497,14 @@ def write(data: RawData, filename: str):
 
 
 def settings(filename: str) -> Tuple[str, float, List[str]]:
-    """Read the daq settings from the given data file
+    """Read the daq settings from the given data file.
 
-    Parameters
-    ----------
-    - filename : path to the raw data file (csv)
+    Args:
+        filename (str): Path to the raw data file (csv).
 
-    Returns
-    -------
-    tuple of (acquisition type, sample_rate, columns)
+    Returns:
+        Tuple[str, float, List[str]]: Tuple of (acquisition type, sample_rate, columns).
     """
-
     with RawDataReader(filename) as reader:
         return reader.daq_type, reader.sample_rate, reader.columns
 
@@ -377,15 +514,21 @@ def sample_data(rows: int = 1000,
                 daq_type: str = 'SampleDevice',
                 sample_rate: int = 256,
                 triggers: List[Tuple[float, str]] = []) -> RawData:
-    """Creates sample data to be written as a raw_data.csv file. The resulting data has
-    a column for the timestamp, one for each channel, and a TRG column.
+    """Creates sample data to be written as a raw_data.csv file.
 
-    - rows : number of sample rows to generate
-    - ch_names : list of channel names
-    - daq_type : metadata for the device name
-    - sample_rate : device sample rate in hz
-    - triggers : List of (timestamp, trigger_value) tuples to be inserted
-    in the data.
+    The resulting data has a column for the timestamp, one for each channel,
+    and a TRG column.
+
+    Args:
+        rows (int, optional): Number of sample rows to generate. Defaults to 1000.
+        ch_names (List[str], optional): List of channel names. Defaults to ['ch1', 'ch2', 'ch3'].
+        daq_type (str, optional): Metadata for the device name. Defaults to 'SampleDevice'.
+        sample_rate (int, optional): Device sample rate in hz. Defaults to 256.
+        triggers (List[Tuple[float, str]], optional): List of (timestamp, trigger_value) tuples
+            to be inserted in the data. Defaults to [].
+
+    Returns:
+        RawData: A new RawData instance containing the sample data.
     """
     channels = [name for name in ch_names if name != 'TRG']
     columns = [TIMESTAMP_COLUMN] + channels + ['TRG']
@@ -407,12 +550,12 @@ def sample_data(rows: int = 1000,
 def get_1020_channels() -> List[str]:
     """Returns the standard 10-20 channel names.
 
-    Note: The 10-20 system is a standard for EEG electrode placement. The following is not a complete list of all
-    possible channels, but the most common ones used in BCI research. This excludes the reference and ground channels.
+    Note: The 10-20 system is a standard for EEG electrode placement. The following
+    is not a complete list of all possible channels, but the most common ones used
+    in BCI research. This excludes the reference and ground channels.
 
-    Returns
-    -------
-    list of channel names
+    Returns:
+        List[str]: List of channel names.
     """
     return [
         'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8', 'T3', 'C3', 'Cz', 'C4',
@@ -424,13 +567,11 @@ def get_1020_channels() -> List[str]:
 def get_1020_channel_map(channels_name: List[str]) -> List[int]:
     """Returns a list of 1s and 0s indicating if the channel name is in the 10-20 system.
 
-    Parameters
-    ----------
-    channels_name : list of channel names
+    Args:
+        channels_name (List[str]): List of channel names.
 
-    Returns
-    -------
-    list of 1s and 0s indicating if the channel name is in the 10-20 system
+    Returns:
+        List[int]: List of 1s and 0s indicating if the channel name is in the 10-20 system.
     """
     valid_channels = get_1020_channels()
     return [1 if name in valid_channels else 0 for name in channels_name]

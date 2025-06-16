@@ -1,12 +1,17 @@
-
 class InvalidClockError(Exception):
-    def __init__(self, msg):
-        Exception.__init__(self, msg)
+    def __init__(self, msg: str):
+        """Initializes the InvalidClockError with a message.
+
+        Args:
+            msg (str): The error message.
+        """
+        super().__init__(msg)
 
 
 class UnsupportedContentType(Exception):
     """Error that occurs when attempting to collect data from a device with a
-    content type that is not yet supported by BciPy."""
+    content type that is not yet supported by BciPy.
+    """
 
 
 class InsufficientDataException(Exception):
