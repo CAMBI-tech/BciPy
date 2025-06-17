@@ -1,16 +1,18 @@
 """File dialog module.
 
 This module provides functionality for displaying file and directory selection
-dialogs in the BciPy GUI interface.
+dialogs in the BciPy GUI interface. It includes classes and functions for handling
+file and directory selection with customizable options and filters.
 """
 
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, Tuple
 
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
+from PyQt6.QtCore import QRect
 
 from bcipy.exceptions import BciPyCoreException
 from bcipy.preferences import preferences
@@ -27,8 +29,8 @@ class FileDialog(QWidget):
 
     Attributes:
         title (str): Window title.
-        width (int): Window width in pixels.
-        height (int): Window height in pixels.
+        window_width (int): Window width in pixels.
+        window_height (int): Window height in pixels.
         options (QFileDialog.Option): Dialog options.
     """
 
@@ -39,18 +41,29 @@ class FileDialog(QWidget):
         """
         super().__init__()
         self.title = 'File Dialog'
-        self.width: int = 640
-        self.height: int = 480
+        self.window_width = 640
+        self.window_height = 480
 
         # Center on screen
-        self.resize(self.width, self.height)
-        frame_geom = self.frameGeometry()
-        frame_geom.moveCenter(QtGui.QGuiApplication.primaryScreen().availableGeometry().center())
-        self.move(frame_geom.topLeft())
+        self.resize(self.window_width, self.window_height)
+        self._center_window()
 
         # The native dialog may prevent the selection from closing after a
         # directory is selected.
         self.options = QFileDialog.Option.DontUseNativeDialog
+
+    def _center_window(self) -> None:
+        """Center the window on the primary screen.
+        
+        This method calculates the center position of the primary screen and
+        moves the window to that position.
+        """
+        frame_geom = self.frameGeometry()
+        screen = QtGui.QGuiApplication.primaryScreen()
+        if screen:
+            center_point = screen.availableGeometry().center()
+            frame_geom.moveCenter(center_point)
+            self.move(frame_geom.topLeft())
 
     def ask_file(self,
                  file_types: str = DEFAULT_FILE_TYPES,
@@ -123,10 +136,7 @@ def ask_filename(
     path = Path(filename)
     if filename and path.is_file():
         preferences.last_directory = str(path.parent)
-
-        # Alternatively, we could use `app.closeAllWindows()`
         app.quit()
-
         return filename
 
     if strict:
@@ -154,7 +164,6 @@ def ask_directory(prompt: str = "Select Directory", strict: bool = False) -> Uni
         Updates the last_directory preference if a directory is selected.
     """
     app = QApplication(sys.argv)
-
     dialog = FileDialog()
     directory = ''
     if preferences.last_directory:
@@ -162,10 +171,7 @@ def ask_directory(prompt: str = "Select Directory", strict: bool = False) -> Uni
     name = dialog.ask_directory(directory, prompt=prompt)
     if name and Path(name).is_dir():
         preferences.last_directory = name
-
-        # Alternatively, we could use `app.closeAllWindows()`
         app.quit()
-
         return name
 
     if strict:
