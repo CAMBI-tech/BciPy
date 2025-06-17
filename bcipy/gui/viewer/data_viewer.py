@@ -92,14 +92,14 @@ class FixedHeightHBox(QWidget):
 
     def __init__(self, height: int = 30):
         super().__init__()
-        self.layout = QHBoxLayout()
+        self.layout = QHBoxLayout() # type: ignore
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
         self.setFixedHeight(height)
 
     def addWidget(self, widget: QWidget):
         """Add the given widget to the layout"""
-        self.layout.addWidget(widget)
+        self.layout.addWidget(widget) # type: ignore
 
 
 class ChannelControls(QWidget):
@@ -630,7 +630,7 @@ def file_data(path: str
     """
     # read metadata
     name, freq, channels = settings(path)
-    queue = Queue()
+    queue: Queue = Queue()
     streamer = FileStreamer(path, queue)
     data_source = QueueDataSource(queue)
     device_spec = DeviceSpec(name=name, channels=channels, sample_rate=freq)
@@ -676,7 +676,7 @@ def main(data_file: str,
         display_monitor = non_primary_screens[0]
         monitor = display_monitor.geometry()
     else:
-        monitor = app.primaryScreen().geometry()
+        monitor = app.primaryScreen().geometry() # type: ignore
 
     # increase height to 90% of monitor height and preserve aspect ratio.
     new_height = int(monitor.height() * 0.9)
