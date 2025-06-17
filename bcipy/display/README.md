@@ -1,6 +1,6 @@
 ﻿# Display Module
 
-The Display module is a core component of BciPy that handles all visual presentation logic for BCI tasks. It provides a flexible and configurable framework for creating and managing visual stimuli, with precise timing control and synchronization capabilities.
+The Display module is a core component of BciPy that handles all visual presentation logic for BCI tasks. It provides a flexible and configurable framework for creating and managing visual stimuli, with precise timing control and synchronization capabilities. Please note that the VEPDisplay is still in progress. Please use with discretion!
 
 ## Structure
 
@@ -10,6 +10,7 @@ The module is organized into several key components:
 - `paradigm/`: BCI paradigm-specific display implementations
   - `rsvp/`: RSVP Keyboard display components
   - `matrix/`: Matrix Speller display components
+  - `vep/`:  *WIP* Visual Evoked Potetinal display components.
 - `components/`: Reusable display components
 - `tests/`: Unit and integration tests
 - `demo/`: Example implementations and usage
@@ -149,10 +150,10 @@ toward a mental prosthesis utilizing event-related brain potentials.
 Electroencephalography and clinical Neurophysiology, 70(6), 510-523.
 ```
 
-
 ## Support
 
 For issues, questions, or contributions:
+
 - Open an issue on GitHub
 - Check existing documentation
 - Review test examples

@@ -1,7 +1,13 @@
+"""File dialog module.
+
+This module provides functionality for displaying file and directory selection
+dialogs in the BciPy GUI interface.
+"""
+
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
 from pathlib import Path
-from typing import Union
+from typing import Union, Optional
 
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
@@ -9,17 +15,32 @@ from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
 from bcipy.exceptions import BciPyCoreException
 from bcipy.preferences import preferences
 
-DEFAULT_FILE_TYPES = "All Files (*)"
+DEFAULT_FILE_TYPES: str = "All Files (*)"
 
 
 class FileDialog(QWidget):
-    """GUI window that prompts the user to select a file."""
+    """GUI window that prompts the user to select a file or directory.
 
-    def __init__(self):
+    This class provides a file dialog interface for selecting files and directories
+    in the BciPy GUI. It supports both file and directory selection with customizable
+    options and filters.
+
+    Attributes:
+        title (str): Window title.
+        width (int): Window width in pixels.
+        height (int): Window height in pixels.
+        options (QFileDialog.Option): Dialog options.
+    """
+
+    def __init__(self) -> None:
+        """Initialize the file dialog window.
+
+        Sets up the window properties and centers it on the screen.
+        """
         super().__init__()
         self.title = 'File Dialog'
-        self.width = 640
-        self.height = 480
+        self.width: int = 640
+        self.height: int = 480
 
         # Center on screen
         self.resize(self.width, self.height)
@@ -35,10 +56,15 @@ class FileDialog(QWidget):
                  file_types: str = DEFAULT_FILE_TYPES,
                  directory: str = "",
                  prompt: str = "Select File") -> str:
-        """Opens a file dialog window.
-        Returns
-        -------
-        path or None
+        """Open a file selection dialog window.
+
+        Args:
+            file_types (str, optional): File type filters. Defaults to DEFAULT_FILE_TYPES.
+            directory (str, optional): Initial directory. Defaults to "".
+            prompt (str, optional): Dialog prompt message. Defaults to "Select File".
+
+        Returns:
+            str: Selected file path or empty string if cancelled.
         """
         filename, _ = QFileDialog.getOpenFileName(self,
                                                   caption=prompt,
@@ -48,11 +74,14 @@ class FileDialog(QWidget):
         return filename
 
     def ask_directory(self, directory: str = "", prompt: str = "Select Directory") -> str:
-        """Opens a dialog window to select a directory.
+        """Open a directory selection dialog window.
 
-        Returns
-        -------
-        path or None
+        Args:
+            directory (str, optional): Initial directory. Defaults to "".
+            prompt (str, optional): Dialog prompt message. Defaults to "Select Directory".
+
+        Returns:
+            str: Selected directory path or empty string if cancelled.
         """
         return QFileDialog.getExistingDirectory(self,
                                                 prompt,
@@ -67,18 +96,23 @@ def ask_filename(
         strict: bool = False) -> Union[str, BciPyCoreException]:
     """Prompt for a file using a GUI.
 
-    Parameters
-    ----------
-    - file_types : optional file type filters; Examples: 'Text files (*.txt)'
-    or 'Image files (*.jpg *.gif)' or '*.csv;;*.pkl'
-    - directory : optional directory
-    - prompt : optional prompt message to display to users
-    - strict : optional flag to raise an exception if the user cancels the dialog. Default is False.
-        If False, an empty string is returned.
+    This function creates a file selection dialog and handles the user's selection.
+    It can optionally raise an exception if no file is selected.
 
-    Returns
-    -------
-    path to file or raises an exception if the user cancels the dialog.
+    Args:
+        file_types (str, optional): File type filters. Examples: 'Text files (*.txt)'
+            or 'Image files (*.jpg *.gif)' or '*.csv;;*.pkl'. Defaults to DEFAULT_FILE_TYPES.
+        directory (str, optional): Initial directory. Defaults to "".
+        prompt (str, optional): Dialog prompt message. Defaults to "Select File".
+        strict (bool, optional): If True, raises an exception when no file is selected.
+            If False, returns an empty string. Defaults to False.
+
+    Returns:
+        Union[str, BciPyCoreException]: Selected file path or empty string if cancelled.
+            Raises BciPyCoreException if strict=True and no file is selected.
+
+    Note:
+        Updates the last_directory preference if a file is selected.
     """
     app = QApplication(sys.argv)
     dialog = FileDialog()
@@ -104,15 +138,20 @@ def ask_filename(
 def ask_directory(prompt: str = "Select Directory", strict: bool = False) -> Union[str, BciPyCoreException]:
     """Prompt for a directory using a GUI.
 
-    Parameters
-    ----------
-    prompt : optional prompt message to display to users
-    strict : optional flag to raise an exception if the user cancels the dialog. Default is False.
-        If False, an empty string is returned.
+    This function creates a directory selection dialog and handles the user's selection.
+    It can optionally raise an exception if no directory is selected.
 
-    Returns
-    -------
-    path to directory or raises an exception if the user cancels the dialog.
+    Args:
+        prompt (str, optional): Dialog prompt message. Defaults to "Select Directory".
+        strict (bool, optional): If True, raises an exception when no directory is selected.
+            If False, returns an empty string. Defaults to False.
+
+    Returns:
+        Union[str, BciPyCoreException]: Selected directory path or empty string if cancelled.
+            Raises BciPyCoreException if strict=True and no directory is selected.
+
+    Note:
+        Updates the last_directory preference if a directory is selected.
     """
     app = QApplication(sys.argv)
 
