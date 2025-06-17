@@ -1,11 +1,21 @@
 # mypy: disable-error-code="override"
-"""Defines common functionality for GUI layouts."""
+"""Defines common functionality for GUI layouts.
+
+This module provides classes and functions for managing layout and positioning
+of GUI elements in the BciPy system. It includes utilities for alignment,
+scaling, and positioning of components within containers.
+"""
 from enum import Enum
-from typing import List, Optional, Protocol, Tuple
+from typing import List, Optional, Protocol, Tuple, Union
 
 
 class Container(Protocol):
-    """Protocol for an enclosing container with units and size."""
+    """Protocol for an enclosing container with units and size.
+
+    Attributes:
+        size (Tuple[float, float]): Size of the container as (width, height).
+        units (str): Units used for measurements (e.g., 'norm', 'height').
+    """
     size: Tuple[float, float]
     units: str
 
@@ -18,7 +28,11 @@ DEFAULT_BOTTOM = -1.0
 
 
 class Alignment(Enum):
-    """Specifies how elements should be aligned spatially"""
+    """Specifies how elements should be aligned spatially.
+
+    This enum defines the possible alignment options for positioning elements
+    within a container.
+    """
     CENTERED = 1
     LEFT = 2
     RIGHT = 3
@@ -26,49 +40,104 @@ class Alignment(Enum):
     BOTTOM = 5
 
     @classmethod
-    def horizontal(cls):
-        """Subset used for horizontal alignment"""
+    def horizontal(cls) -> List['Alignment']:
+        """Get subset used for horizontal alignment.
+
+        Returns:
+            List[Alignment]: List of horizontal alignment options.
+        """
         return [Alignment.CENTERED, Alignment.LEFT, Alignment.RIGHT]
 
     @classmethod
-    def vertical(cls):
-        """Subset used for vertical alignment"""
+    def vertical(cls) -> List['Alignment']:
+        """Get subset used for vertical alignment.
+
+        Returns:
+            List[Alignment]: List of vertical alignment options.
+        """
         return [Alignment.CENTERED, Alignment.TOP, Alignment.BOTTOM]
 
 
 # Positioning functions
 def above(y_coordinate: float, amount: float) -> float:
-    """Returns a new y_coordinate value that is above the provided value
-    by the given amount."""
+    """Returns a new y_coordinate value that is above the provided value.
+
+    Args:
+        y_coordinate (float): Base y-coordinate.
+        amount (float): Distance to move upward.
+
+    Returns:
+        float: New y-coordinate value.
+
+    Raises:
+        AssertionError: If amount is negative.
+    """
     assert amount >= 0, 'Amount must be positive'
     return y_coordinate + amount
 
 
 def below(y_coordinate: float, amount: float) -> float:
-    """Returns a new y_coordinate value that is below the provided value
-    by the given amount."""
+    """Returns a new y_coordinate value that is below the provided value.
+
+    Args:
+        y_coordinate (float): Base y-coordinate.
+        amount (float): Distance to move downward.
+
+    Returns:
+        float: New y-coordinate value.
+
+    Raises:
+        AssertionError: If amount is negative.
+    """
     assert amount >= 0, 'Amount must be positive'
     return y_coordinate - amount
 
 
 def right_of(x_coordinate: float, amount: float) -> float:
-    """Returns a new x_coordinate value that is to the right of the
-    provided value by the given amount."""
+    """Returns a new x_coordinate value that is to the right of the provided value.
+
+    Args:
+        x_coordinate (float): Base x-coordinate.
+        amount (float): Distance to move right.
+
+    Returns:
+        float: New x-coordinate value.
+
+    Raises:
+        AssertionError: If amount is negative.
+    """
     assert amount >= 0, 'Amount must be positive'
     return x_coordinate + amount
 
 
 def left_of(x_coordinate: float, amount: float) -> float:
-    """Returns a new x_coordinate value that is to the left of the
-    provided value by the given amount."""
+    """Returns a new x_coordinate value that is to the left of the provided value.
+
+    Args:
+        x_coordinate (float): Base x-coordinate.
+        amount (float): Distance to move left.
+
+    Returns:
+        float: New x-coordinate value.
+
+    Raises:
+        AssertionError: If amount is negative.
+    """
     assert amount >= 0, 'Amount must be positive'
     return x_coordinate - amount
 
 
 def envelope(pos: Tuple[float, float],
              size: Tuple[float, float]) -> List[Tuple[float, float]]:
-    """Compute the vertices for the envelope of a shape centered at pos with
-    the given size."""
+    """Compute the vertices for the envelope of a shape.
+
+    Args:
+        pos (Tuple[float, float]): Center position of the shape.
+        size (Tuple[float, float]): Size of the shape as (width, height).
+
+    Returns:
+        List[Tuple[float, float]]: List of vertices defining the shape's envelope.
+    """
     width, height = size
     half_w = width / 2
     half_h = height / 2
@@ -81,8 +150,16 @@ def envelope(pos: Tuple[float, float],
 def scaled_size(height: float,
                 window_size: Tuple[float, float],
                 units: str = 'norm') -> Tuple[float, float]:
-    """Scales the provided height value to reflect the aspect ratio of a
-    visual.Window. Used for creating squared stimulus. Returns (w,h) tuple"""
+    """Scales the provided height value to reflect the aspect ratio of a window.
+
+    Args:
+        height (float): Height value to scale.
+        window_size (Tuple[float, float]): Window dimensions as (width, height).
+        units (str): Units to use for scaling. Defaults to 'norm'.
+
+    Returns:
+        Tuple[float, float]: Scaled size as (width, height).
+    """
     if units == 'height':
         width = height
         return (width, height)
@@ -95,8 +172,16 @@ def scaled_size(height: float,
 def scaled_height(width: float,
                   window_size: Tuple[float, float],
                   units: str = 'norm') -> float:
-    """Given a width, find the equivalent height scaled to the aspect ratio of
-    a window with the given size"""
+    """Given a width, find the equivalent height scaled to the aspect ratio.
+
+    Args:
+        width (float): Width value to scale.
+        window_size (Tuple[float, float]): Window dimensions as (width, height).
+        units (str): Units to use for scaling. Defaults to 'norm'.
+
+    Returns:
+        float: Scaled height value.
+    """
     if units == 'height':
         return width
     win_width, win_height = window_size
@@ -105,24 +190,56 @@ def scaled_height(width: float,
 
 def scaled_width(height: float,
                  window_size: Tuple[float, float],
-                 units: str = 'norm'):
-    """Given a height, find the equivalent width scaled to the aspect ratio of
-    a window with the given size"""
+                 units: str = 'norm') -> float:
+    """Given a height, find the equivalent width scaled to the aspect ratio.
+
+    Args:
+        height (float): Height value to scale.
+        window_size (Tuple[float, float]): Window dimensions as (width, height).
+        units (str): Units to use for scaling. Defaults to 'norm'.
+
+    Returns:
+        float: Scaled width value.
+    """
     width, _height = scaled_size(height, window_size, units)
     return width
 
 
 class Layout(Container):
     """Class with methods for positioning elements within a parent container.
+
+    This class provides functionality for managing the layout and positioning
+    of GUI elements within a container, including methods for resizing and
+    alignment.
+
+    Attributes:
+        units (str): Units used for measurements (e.g., 'norm', 'height').
+        parent (Optional[Container]): Parent container if any.
+        top (float): Top boundary position.
+        left (float): Left boundary position.
+        bottom (float): Bottom boundary position.
+        right (float): Right boundary position.
     """
 
-    def __init__(self,
-                 parent: Optional[Container] = None,
-                 left: float = DEFAULT_LEFT,
-                 top: float = DEFAULT_TOP,
-                 right: float = DEFAULT_RIGHT,
-                 bottom: float = DEFAULT_BOTTOM,
-                 units: str = "norm"):
+    def __init__(
+        self,
+        parent: Optional[Container] = None,
+        left: float = DEFAULT_LEFT,
+        top: float = DEFAULT_TOP,
+        right: float = DEFAULT_RIGHT,
+        bottom: float = DEFAULT_BOTTOM,
+        units: str = "norm"
+    ) -> None:
+        """Initialize the Layout.
+
+        Args:
+            parent (Optional[Container]): Parent container. Defaults to None.
+            left (float): Left boundary position. Defaults to DEFAULT_LEFT.
+            top (float): Top boundary position. Defaults to DEFAULT_TOP.
+            right (float): Right boundary position. Defaults to DEFAULT_RIGHT.
+            bottom (float): Bottom boundary position. Defaults to DEFAULT_BOTTOM.
+            units (str): Units to use. Defaults to "norm".
+        """
         self.units: str = units
         self.parent = parent
         self.top = top
@@ -131,8 +248,12 @@ class Layout(Container):
         self.right = right
         self.check_invariants()
 
-    def check_invariants(self):
-        """Check that all invariants hold true."""
+    def check_invariants(self) -> None:
+        """Check that all invariants hold true.
+
+        Raises:
+            AssertionError: If any invariant is violated.
+        """
         # https://psychopy.org/general/units.html#units
         assert self.units in ['height',
                               'norm'], "Units must be 'height' or 'norm'"
@@ -162,8 +283,17 @@ class Layout(Container):
                 1], "Height must be greater than 0 and fit within the parent height."
 
     def scaled_size(self, height: float) -> Tuple[float, float]:
-        """Returns the (w,h) value scaled to reflect the aspect ratio of a
-        visual.Window. Used for creating squared stimulus"""
+        """Returns the (w,h) value scaled to reflect the aspect ratio.
+
+        Args:
+            height (float): Height value to scale.
+
+        Returns:
+            Tuple[float, float]: Scaled size as (width, height).
+
+        Raises:
+            AssertionError: If parent is not configured.
+        """
         if self.units == 'height':
             width = height
             return (width, height)
@@ -172,52 +302,92 @@ class Layout(Container):
 
     @property
     def size(self) -> Tuple[float, float]:
-        """Layout size."""
+        """Get the layout size.
+
+        Returns:
+            Tuple[float, float]: Size as (width, height).
+        """
         return (self.width, self.height)
 
     @property
     def width(self) -> float:
-        """Width in norm units of this component."""
+        """Get the width in norm units of this component.
+
+        Returns:
+            float: Width value.
+        """
         return self.right - self.left
 
     @property
     def height(self) -> float:
-        """Height in norm units of this component."""
+        """Get the height in norm units of this component.
+
+        Returns:
+            float: Height value.
+        """
         return self.top - self.bottom
 
     @property
     def left_top(self) -> Tuple[float, float]:
-        """Top left position"""
+        """Get the top left position.
+
+        Returns:
+            Tuple[float, float]: Position as (x, y).
+        """
         return (self.left, self.top)
 
     @property
     def right_bottom(self) -> Tuple[float, float]:
-        """Bottom right position"""
+        """Get the bottom right position.
+
+        Returns:
+            Tuple[float, float]: Position as (x, y).
+        """
         return (self.right, self.bottom)
 
     @property
     def horizontal_middle(self) -> float:
-        """x-axis value in norm units for the midpoint of this component"""
+        """Get the x-axis value for the midpoint of this component.
+
+        Returns:
+            float: X-coordinate of the midpoint.
+        """
         return (self.left + self.right) / 2
 
     @property
     def vertical_middle(self) -> float:
-        """x-axis value in norm units for the midpoint of this component."""
+        """Get the y-axis value for the midpoint of this component.
+
+        Returns:
+            float: Y-coordinate of the midpoint.
+        """
         return (self.top + self.bottom) / 2
 
     @property
     def center(self) -> Tuple[float, float]:
-        """Center point of the component in norm units. Returns a (x,y) tuple."""
+        """Get the center point of the component.
+
+        Returns:
+            Tuple[float, float]: Center position as (x, y).
+        """
         return (self.horizontal_middle, self.vertical_middle)
 
     @property
     def left_middle(self) -> Tuple[float, float]:
-        """Point centered on the left-most edge."""
+        """Get the point centered on the left-most edge.
+
+        Returns:
+            Tuple[float, float]: Position as (x, y).
+        """
         return (self.left, self.vertical_middle)
 
     @property
     def right_middle(self) -> Tuple[float, float]:
-        """Point centered on the right-most edge."""
+        """Get the point centered on the right-most edge.
+
+        Returns:
+            Tuple[float, float]: Position as (x, y).
+        """
         return (self.right, self.vertical_middle)
 
     def resize_width(self,
@@ -225,10 +395,13 @@ class Layout(Container):
                      alignment: Alignment = Alignment.CENTERED) -> None:
         """Adjust the width of the current layout.
 
-        Parameters
-        ----------
-            width_pct - percentage of the current width
-            alignment - specifies how the remaining width should be aligned.
+        Args:
+            width_pct (float): Percentage of the current width.
+            alignment (Alignment): Specifies how the remaining width should be aligned.
+                Defaults to Alignment.CENTERED.
+
+        Raises:
+            AssertionError: If width_pct is not positive or alignment is invalid.
         """
         assert 0 < width_pct, 'width_pct must be greater than 0'
         assert alignment in Alignment.horizontal()
@@ -256,10 +429,13 @@ class Layout(Container):
                       alignment: Alignment = Alignment.CENTERED) -> None:
         """Adjust the height of the current layout.
 
-        Parameters
-        ----------
-            height_pct - percentage of the current width
-            alignment - specifies how the remaining width should be aligned.
+        Args:
+            height_pct (float): Percentage of the current height.
+            alignment (Alignment): Specifies how the remaining height should be aligned.
+                Defaults to Alignment.CENTERED.
+
+        Raises:
+            AssertionError: If height_pct is not positive or alignment is invalid.
         """
         assert 0 < height_pct, 'height_pct must be greater than 0'
         assert alignment in Alignment.vertical()
@@ -286,12 +462,14 @@ class Layout(Container):
 
 # Factory functions
 def at_top(parent: Container, height: float) -> Layout:
-    """Constructs a layout of a given height that spans the full width of the
-    window and is positioned at the top.
+    """Constructs a layout of a given height that spans the full width of the window.
 
-    Parameters
-    ----------
-        height - value in 'norm' units
+    Args:
+        parent (Container): Parent container.
+        height (float): Height value in 'norm' units.
+
+    Returns:
+        Layout: New layout instance positioned at the top.
     """
     top = DEFAULT_TOP
     return Layout(parent=parent,
@@ -302,8 +480,15 @@ def at_top(parent: Container, height: float) -> Layout:
 
 
 def at_bottom(parent: Container, height: float) -> Layout:
-    """Constructs a layout of a given height that spans the full width of the
-    window and is positioned at the bottom"""
+    """Constructs a layout of a given height that spans the full width of the window.
+
+    Args:
+        parent (Container): Parent container.
+        height (float): Height value in 'norm' units.
+
+    Returns:
+        Layout: New layout instance positioned at the bottom.
+    """
     bottom = DEFAULT_BOTTOM
     return Layout(parent=parent,
                   left=DEFAULT_LEFT,
@@ -315,17 +500,17 @@ def at_bottom(parent: Container, height: float) -> Layout:
 def centered(parent: Optional[Container] = None,
              width_pct: float = 1.0,
              height_pct: float = 1.0) -> Layout:
-    """Constructs a layout that is centered on the screen. Default size is
-    fullscreen but optional parameters can be used to adjust the width and
-    height.
+    """Constructs a layout that is centered on the screen.
 
-    Parameters
-    ----------
-        parent - optional parent
-        width_pct - optional; sets the width to a given percentage of
-          fullscreen.
-        height_pct - optional; sets the height to a given percentage of
-          fullscreen.
+    Args:
+        parent (Optional[Container]): Optional parent container.
+        width_pct (float): Optional; sets the width to a given percentage of fullscreen.
+            Defaults to 1.0.
+        height_pct (float): Optional; sets the height to a given percentage of fullscreen.
+            Defaults to 1.0.
+
+    Returns:
+        Layout: New centered layout instance.
     """
     container = Layout(parent=parent)
     container.resize_width(width_pct, alignment=Alignment.CENTERED)
@@ -334,8 +519,14 @@ def centered(parent: Optional[Container] = None,
 
 
 def from_envelope(verts: List[Tuple[float, float]]) -> Layout:
-    """Constructs a layout from a list of vertices which comprise a shape's
-    envelope."""
+    """Constructs a layout from a list of vertices which comprise a shape's envelope.
+
+    Args:
+        verts (List[Tuple[float, float]]): List of vertices defining the shape's envelope.
+
+    Returns:
+        Layout: New layout instance based on the envelope.
+    """
     x_coords, y_coords = zip(*verts)
     return Layout(left=min(x_coords),
                   top=max(y_coords),
@@ -344,13 +535,19 @@ def from_envelope(verts: List[Tuple[float, float]]) -> Layout:
 
 
 def height_units(window_size: Tuple[float, float]) -> Layout:
-    """Constructs a layout with height units using the given Window
-    dimensions
+    """Constructs a layout with height units using the given Window dimensions.
 
-    for an aspect ratio of 4:3
-    4 widths / 3 height = 1.333
-    1.333 / 2 = 0.667
-    so, left is -0.667 and right is 0.667
+    Args:
+        window_size (Tuple[float, float]): Window dimensions as (width, height).
+
+    Returns:
+        Layout: New layout instance using height units.
+
+    Note:
+        For an aspect ratio of 4:3:
+        4 widths / 3 height = 1.333
+        1.333 / 2 = 0.667
+        so, left is -0.667 and right is 0.667
     """
     win_width, win_height = window_size
     right = (win_width / win_height) / 2
