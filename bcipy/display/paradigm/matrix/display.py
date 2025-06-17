@@ -1,6 +1,12 @@
-"""Display for presenting stimuli in a grid."""
+"""Display for presenting stimuli in a grid.
+
+This module provides functionality for displaying and managing matrix-style stimuli
+presentations, commonly used in BCI paradigms. It handles the layout, timing, and
+animation of stimuli in a grid format.
+"""
+
 import logging
-from typing import Dict, List, NamedTuple, Optional, Tuple
+from typing import Dict, List, NamedTuple, Optional, Tuple, Any, Callable
 
 from psychopy import core, visual
 
@@ -19,7 +25,13 @@ logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
 class SymbolDuration(NamedTuple):
-    """Represents a symbol and its associated duration to display"""
+    """Represents a symbol and its associated duration to display.
+    
+    Attributes:
+        symbol (str): The symbol to display.
+        duration (float): Duration in seconds to display the symbol.
+        color (str): Color to display the symbol in. Defaults to 'white'.
+    """
     symbol: str
     duration: float
     color: str = 'white'
@@ -30,59 +42,82 @@ class MatrixDisplay(Display):
 
     Animates display objects in matrix grid common to any Matrix task.
 
-    NOTE: The following are recommended parameter values for matrix experiments:
+    Attributes:
+        window (visual.Window): PsychoPy window for display.
+        stimuli_inquiry (List[str]): List of stimuli to present.
+        stimuli_timing (List[float]): List of timing values for each stimulus.
+        stimuli_colors (List[str]): List of colors for each stimulus.
+        stimuli_font (str): Font to use for text stimuli.
+        symbol_set (Optional[List[str]]): Set of symbols to display.
+        sort_order (Callable[[str], int]): Function to determine symbol order.
+        grid_stimuli_height (float): Height of grid stimuli.
+        positions (Dict[int, Tuple[float, float]]): Positions for each symbol.
+        grid_color (str): Default color for grid elements.
+        start_opacity (float): Initial opacity for grid elements.
+        highlight_opacity (float): Opacity for highlighted elements.
+        full_grid_opacity (float): Opacity for full grid display.
+        first_run (bool): Whether this is the first run.
+        first_stim_time (Optional[float]): Time of first stimulus.
+        trigger_type (str): Type of trigger to use.
+        _timing (List[Tuple[str, float]]): List of timing information.
+        experiment_clock (core.Clock): Clock for timing.
+        task_bar (TaskBar): Task bar component.
+        info_text (List[visual.TextStim]): Information text components.
+        stim_registry (Dict[str, visual.TextStim]): Registry of stimuli.
+        should_prompt_target (bool): Whether to prompt for target.
+        preview_params (Optional[PreviewParams]): Preview configuration.
+        preview_button_handler (Optional[Any]): Handler for preview buttons.
+        preview_accepted (bool): Whether preview was accepted.
 
-    time_fixation: 2
-    stim_pos_x: -0.6
-    stim_pos_y: 0.4
-    stim_height: 0.17
+    Note:
+        The following are recommended parameter values for matrix experiments:
+        - time_fixation: 2
+        - stim_pos_x: -0.6
+        - stim_pos_y: 0.4
+        - stim_height: 0.17
     """
 
-    def __init__(self,
-                 window: visual.Window,
-                 experiment_clock: core.Clock,
-                 stimuli: StimuliProperties,
-                 task_bar: TaskBar,
-                 info: InformationProperties,
-                 rows: int = 5,
-                 columns: int = 6,
-                 width_pct: float = 0.75,
-                 height_pct: float = 0.8,
-                 trigger_type: str = 'text',
-                 symbol_set: Optional[List[str]] = alphabet(),
-                 should_prompt_target: bool = True,
-                 preview_config: Optional[PreviewParams] = None):
+    def __init__(
+        self,
+        window: visual.Window,
+        experiment_clock: core.Clock,
+        stimuli: StimuliProperties,
+        task_bar: TaskBar,
+        info: InformationProperties,
+        rows: int = 5,
+        columns: int = 6,
+        width_pct: float = 0.75,
+        height_pct: float = 0.8,
+        trigger_type: str = 'text',
+        symbol_set: Optional[List[str]] = alphabet(),
+        should_prompt_target: bool = True,
+        preview_config: Optional[PreviewParams] = None
+    ) -> None:
         """Initialize Matrix display parameters and objects.
 
-        PARAMETERS:
-        ----------
-        # Experiment
-        window(visual.Window): PsychoPy Window
-        experiment_clock(core.Clock): Clock used to timestamp display onsets
-
-        # Stimuli
-        stimuli(StimuliProperties): attributes used for inquiries
-
-        # Task
-        task_bar(TaskBar): used for task tracking. Ex. 1/100
-
-        # Info
-        info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
-
-        trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
-            task. This will be used to reconcile timing differences between acquisition and the display.
-        symbol_set default = none : subset of stimuli to be highlighted during an inquiry
-        should_prompt_target(bool): when True prompts for the target symbol. Assumes that this is
-            the first symbol of each inquiry. For example: [target, fixation, *stim].
-        sort_order - optional function to define the position index for each
-            symbol. Using a custom function it is possible to skip a position.
-        preview_config - optional configuration for previewing inquiries
+        Args:
+            window (visual.Window): PsychoPy Window.
+            experiment_clock (core.Clock): Clock used to timestamp display onsets.
+            stimuli (StimuliProperties): Attributes used for inquiries.
+            task_bar (TaskBar): Used for task tracking. Ex. 1/100.
+            info (InformationProperties): Attributes to display informational stimuli.
+            rows (int): Number of rows in the matrix. Defaults to 5.
+            columns (int): Number of columns in the matrix. Defaults to 6.
+            width_pct (float): Width percentage of the display. Defaults to 0.75.
+            height_pct (float): Height percentage of the display. Defaults to 0.8.
+            trigger_type (str): Defines the calibration trigger type. Defaults to 'text'.
+            symbol_set (Optional[List[str]]): Subset of stimuli to be highlighted.
+                Defaults to alphabet().
+            should_prompt_target (bool): When True prompts for the target symbol.
+                Defaults to True.
+            preview_config (Optional[PreviewParams]): Configuration for previewing inquiries.
+                Defaults to None.
         """
         self.window = window
 
-        self.stimuli_inquiry = []
-        self.stimuli_timing = []
-        self.stimuli_colors = []
+        self.stimuli_inquiry: List[str] = []
+        self.stimuli_timing: List[float] = []
+        self.stimuli_colors: List[str] = []
         self.stimuli_font = stimuli.stim_font
 
         assert stimuli.is_txt_stim, "Matrix display is a text only display"
@@ -92,9 +127,11 @@ class MatrixDisplay(Display):
         # Set position and parameters for grid of alphabet
         self.grid_stimuli_height = stimuli.stim_height
 
-        display_container = layout.centered(parent=window,
-                                            width_pct=width_pct,
-                                            height_pct=height_pct)
+        display_container = layout.centered(
+            parent=window,
+            width_pct=width_pct,
+            height_pct=height_pct
+        )
         self.positions = symbol_positions(
             display_container, rows, columns, symbol_set)
 
@@ -107,7 +144,7 @@ class MatrixDisplay(Display):
         self.first_run = True
         self.first_stim_time = None
         self.trigger_type = trigger_type
-        self._timing = []
+        self._timing: List[Tuple[str, float]] = []
 
         self.experiment_clock = experiment_clock
 
@@ -127,10 +164,23 @@ class MatrixDisplay(Display):
         )
         logger.info(f"Matrix center position: {display_container.center}")
 
-    def build_sort_order(self, stimuli: StimuliProperties) -> List[str]:
-        """Build the symbol set for the display."""
+    def build_sort_order(self, stimuli: StimuliProperties) -> Callable[[str], int]:
+        """Build the symbol set for the display.
+
+        Args:
+            stimuli (StimuliProperties): Properties containing layout information.
+
+        Returns:
+            Callable[[str], int]: Function that returns the index for a given symbol.
+
+        Raises:
+            ValueError: If layout or symbol set is not recognized.
+        """
         if stimuli.layout == 'ALP':
-            return self.symbol_set.index
+            if self.symbol_set:
+                return self.symbol_set.index
+            else:
+                raise ValueError(f'Symbol set not defined')
         elif stimuli.layout == 'QWERTY':
             logger.info('Using QWERTY layout')
             return qwerty_order()
@@ -142,7 +192,14 @@ class MatrixDisplay(Display):
 
     @property
     def stim_positions(self) -> Dict[str, Tuple[float, float]]:
-        """Returns a dict with the position for each stim"""
+        """Get positions for each stimulus.
+
+        Returns:
+            Dict[str, Tuple[float, float]]: Dictionary mapping symbols to positions.
+
+        Raises:
+            AssertionError: If stim_registry is not initialized.
+        """
         assert self.stim_registry, "stim_registry not yet initialized"
         return {
             sym: tuple(stim.pos)
@@ -151,13 +208,18 @@ class MatrixDisplay(Display):
 
     @property
     def preview_enabled(self) -> bool:
-        """Should the inquiry preview be enabled."""
-        return self.preview_params and self.preview_params.show_preview_inquiry
+        """Check if inquiry preview should be enabled.
+
+        Returns:
+            bool: True if preview is enabled, False otherwise.
+        """
+        return bool(self.preview_params and self.preview_params.show_preview_inquiry)
 
     def capture_grid_screenshot(self, file_path: str) -> None:
-        """Capture Grid Screenshot.
+        """Capture a screenshot of the current display.
 
-        Capture a screenshot of the current display and save it to the specified filename.
+        Args:
+            file_path (str): Path where to save the screenshot.
         """
         # draw the grid and flip the window
         self.draw_grid(opacity=self.full_grid_opacity)
@@ -171,47 +233,58 @@ class MatrixDisplay(Display):
         capture.save(f'{file_path}/{MATRIX_IMAGE_FILENAME}')
         self.task_bar.current_index = tmp_task_bar
 
-    def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
+    def schedule_to(self, stimuli: List[str], timing: List[float], colors: Optional[List[str]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
 
         Args:
-                stimuli(list[string]): list of stimuli text / name
-                timing(list[float]): list of timings of stimuli
-                colors(list[string]): list of colors
+            stimuli (List[str]): List of stimuli text / name.
+            timing (List[float]): List of timings of stimuli.
+            colors (Optional[List[str]]): List of colors. Defaults to None.
+
+        Raises:
+            AssertionError: If lengths of stimuli and timing don't match,
+                or if colors are provided but lengths don't match.
         """
-        assert len(stimuli) == len(
-            timing), "each stimuli must have a timing value"
+        assert len(stimuli) == len(timing), "each stimuli must have a timing value"
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
         if colors:
-            assert len(stimuli) == len(
-                colors), "each stimuli must have a color"
+            assert len(stimuli) == len(colors), "each stimuli must have a color"
             self.stimuli_colors = colors
         else:
             self.stimuli_colors = [self.grid_color] * len(stimuli)
 
     def symbol_durations(self) -> List[SymbolDuration]:
-        """Symbols associated with their duration for the currently configured
-        stimuli_inquiry."""
+        """Get symbols associated with their duration for the currently configured stimuli_inquiry.
+
+        Returns:
+            List[SymbolDuration]: List of symbol durations.
+        """
         return [
             SymbolDuration(*sti) for sti in zip(
                 self.stimuli_inquiry, self.stimuli_timing, self.stimuli_colors)
         ]
 
-    def add_timing(self, stimuli: str, stamp: Optional[float] = None):
+    def add_timing(self, stimuli: str, stamp: Optional[float] = None) -> None:
         """Add a new timing entry using the stimuli as a label.
 
-        Useful as a callback function to register a marker at the time it is
-        first displayed."""
+        Args:
+            stimuli (str): Label for the timing entry.
+            stamp (Optional[float]): Timestamp. If None, uses current time.
+        """
         stamp = stamp or self.experiment_clock.getTime()
         self._timing.append((stimuli, stamp))
 
-    def reset_timing(self):
+    def reset_timing(self) -> None:
         """Reset the trigger timing."""
         self._timing = []
 
     def do_inquiry(self) -> List[Tuple[str, float]]:
-        """Animates an inquiry of stimuli and returns a list of stimuli trigger timing."""
+        """Animate an inquiry of stimuli and return timing information.
+
+        Returns:
+            List[Tuple[str, float]]: List of stimuli trigger timing.
+        """
         self.preview_accepted = True
         self.reset_timing()
         symbol_durations = self.symbol_durations()
@@ -234,36 +307,44 @@ class MatrixDisplay(Display):
         return self._timing
 
     def build_grid(self) -> Dict[str, visual.TextStim]:
-        """Build the text stimuli to populate the grid."""
+        """Build the text stimuli to populate the grid.
 
+        Returns:
+            Dict[str, visual.TextStim]: Dictionary mapping symbols to text stimuli.
+        """
         grid = {}
-        for sym in self.symbol_set:
-            pos_index = self.sort_order(sym)
-            pos = self.positions[pos_index]
-            grid[sym] = visual.TextStim(win=self.window,
-                                        font=self.stimuli_font,
-                                        text=sym,
-                                        color=self.grid_color,
-                                        opacity=self.start_opacity,
-                                        pos=pos,
-                                        height=self.grid_stimuli_height)
+        if self.symbol_set:
+            for sym in self.symbol_set:
+                pos_index = self.sort_order(sym)
+                pos = self.positions[pos_index]
+                grid[sym] = visual.TextStim(
+                    win=self.window,
+                    font=self.stimuli_font,
+                    text=sym,
+                    color=self.grid_color,
+                    opacity=self.start_opacity,
+                    pos=pos,
+                    height=self.grid_stimuli_height
+                )
         return grid
 
-    def draw_grid(self,
-                  opacity: float = 1,
-                  color: Optional[str] = 'white',
-                  highlight: Optional[List[str]] = None,
-                  highlight_color: Optional[str] = None):
+    def draw_grid(
+        self,
+        opacity: float = 1,
+        color: Optional[str] = 'white',
+        highlight: Optional[List[str]] = None,
+        highlight_color: Optional[str] = None
+    ) -> None:
         """Draw the grid.
 
-        Parameters
-        ----------
-            opacity - opacity for each item in the matrix
-            color - optional color for each item in the matrix
-            highlight - optional list of stim labels to be highlighted
-                (rendered using the highlight_opacity).
-            highlight_color - optional color to use for rendering the
-              highlighted stim.
+        Args:
+            opacity (float): Opacity for each item in the matrix. Defaults to 1.
+            color (Optional[str]): Optional color for each item in the matrix.
+                Defaults to 'white'.
+            highlight (Optional[List[str]]): Optional list of stim labels to be highlighted.
+                Defaults to None.
+            highlight_color (Optional[str]): Optional color to use for rendering the
+                highlighted stim. Defaults to None.
         """
         for symbol, stim in self.stim_registry.items():
             should_highlight = highlight and (symbol in highlight)
@@ -273,32 +354,32 @@ class MatrixDisplay(Display):
                           if highlight_color and should_highlight else color)
             stim.draw()
 
-    def prompt_target(self, target: SymbolDuration) -> float:
-        """Present the target for the configured length of time. Records the
-        stimuli timing information.
+    def prompt_target(self, target: SymbolDuration) -> None:
+        """Present the target for the configured length of time.
 
-        Parameters
-        ----------
-            target - (symbol, duration) tuple
+        Args:
+            target (SymbolDuration): Target symbol and its duration.
         """
         # register any timing and marker callbacks
         self.window.callOnFlip(self.add_timing, target.symbol)
-        self.draw(grid_opacity=self.start_opacity,
-                  duration=target.duration,
-                  highlight=[target.symbol],
-                  highlight_color=target.color)
+        self.draw(
+            grid_opacity=self.start_opacity,
+            duration=target.duration,
+            highlight=[target.symbol],
+            highlight_color=target.color
+        )
 
     def preview_inquiry(self, stimuli: List[SymbolDuration]) -> bool:
-        """"Preview the inquiry and handle any button presses.
-        Parameters
-        ----------
-            stimuli - list of stimuli to highlight (will be flashed in next inquiry)
+        """Preview the inquiry and handle any button presses.
 
-        Returns
-        -------
-            boolean indicating whether the participant would like to proceed
-                with the inquiry (True) or reject the inquiry (False) and
-                go on to the next one.
+        Args:
+            stimuli (List[SymbolDuration]): List of stimuli to highlight.
+
+        Returns:
+            bool: True if participant wants to proceed, False to reject.
+
+        Raises:
+            AssertionError: If preview is not enabled or button handler not initialized.
         """
         assert self.preview_enabled, "Preview feature not enabled."
         assert self.preview_button_handler, "Button handler must be initialized"
@@ -312,90 +393,115 @@ class MatrixDisplay(Display):
         if handler.has_response():
             self.add_timing(handler.response_label, handler.response_timestamp)
 
-        self.draw(grid_opacity=self.start_opacity,
-                  duration=self.preview_params.preview_inquiry_isi)
+        if self.preview_params:
+            self.draw(
+                grid_opacity=self.start_opacity,
+                duration=self.preview_params.preview_inquiry_isi
+            )
         return handler.accept_result()
 
     def draw_preview(self, stimuli: List[SymbolDuration]) -> None:
-        """Draw the inquiry preview by highlighting all of the symbols in the
-        list."""
-        self.draw(grid_opacity=self.start_opacity,
-                  highlight=[stim.symbol for stim in stimuli])
+        """Draw the inquiry preview by highlighting all of the symbols in the list.
 
-    def draw(self,
-             grid_opacity: float,
-             grid_color: Optional[str] = None,
-             duration: Optional[float] = None,
-             highlight: Optional[List[str]] = None,
-             highlight_color: Optional[str] = None):
+        Args:
+            stimuli (List[SymbolDuration]): List of stimuli to highlight.
+        """
+        self.draw(
+            grid_opacity=self.start_opacity,
+            highlight=[stim.symbol for stim in stimuli]
+        )
+
+    def draw(
+        self,
+        grid_opacity: float,
+        grid_color: Optional[str] = None,
+        duration: Optional[float] = None,
+        highlight: Optional[List[str]] = None,
+        highlight_color: Optional[str] = None
+    ) -> None:
         """Draw all screen elements and flip the window.
 
-        Parameters
-        ----------
-            grid_opacity - opacity value to use on all grid symbols
-            grid_color - optional color to use for all grid symbols
-            duration - optional seconds to wait after flipping the window.
-            highlight - optional list of symbols to highlight in the grid.
-            highlight_color - optional color to use for rendering the
-              highlighted stim.
+        Args:
+            grid_opacity (float): Opacity value to use on all grid symbols.
+            grid_color (Optional[str]): Optional color to use for all grid symbols.
+                Defaults to None.
+            duration (Optional[float]): Optional seconds to wait after flipping the window.
+                Defaults to None.
+            highlight (Optional[List[str]]): Optional list of symbols to highlight in the grid.
+                Defaults to None.
+            highlight_color (Optional[str]): Optional color to use for rendering the
+                highlighted stim. Defaults to None.
         """
-        self.draw_grid(opacity=grid_opacity,
-                       color=grid_color or self.grid_color,
-                       highlight=highlight,
-                       highlight_color=highlight_color)
+        self.draw_grid(
+            opacity=grid_opacity,
+            color=grid_color or self.grid_color,
+            highlight=highlight,
+            highlight_color=highlight_color
+        )
         self.draw_components()
         self.window.flip()
         if duration:
             core.wait(duration)
 
-    def animate_scp(self, fixation: SymbolDuration,
-                    stimuli: List[SymbolDuration]) -> None:
+    def animate_scp(self, fixation: SymbolDuration, stimuli: List[SymbolDuration]) -> None:
         """Animate the given stimuli using single character presentation.
 
-        Flashes each stimuli in stimuli_inquiry for their respective flash
-        times and records the timing information.
+        Args:
+            fixation (SymbolDuration): Fixation symbol and duration.
+            stimuli (List[SymbolDuration]): List of stimuli to animate.
         """
-
         # Flashing the grid at full opacity is considered fixation.
         self.window.callOnFlip(self.add_timing, fixation.symbol)
-        self.draw(grid_opacity=self.full_grid_opacity,
-                  grid_color=(fixation.color if self.should_prompt_target else
-                              self.grid_color),
-                  duration=fixation.duration / 2)
-        self.draw(grid_opacity=self.start_opacity,
-                  duration=fixation.duration / 2)
+        self.draw(
+            grid_opacity=self.full_grid_opacity,
+            grid_color=(fixation.color if self.should_prompt_target else
+                        self.grid_color),
+            duration=fixation.duration / 2
+        )
+        self.draw(
+            grid_opacity=self.start_opacity,
+            duration=fixation.duration / 2
+        )
 
         for stim in stimuli:
             self.window.callOnFlip(self.add_timing, stim.symbol)
-            self.draw(grid_opacity=self.start_opacity,
-                      duration=stim.duration,
-                      highlight=[stim.symbol],
-                      highlight_color=stim.color)
+            self.draw(
+                grid_opacity=self.start_opacity,
+                duration=stim.duration,
+                highlight=[stim.symbol],
+                highlight_color=stim.color
+            )
         self.draw(self.start_opacity)
 
     def wait_screen(self, message: str, message_color: str) -> None:
-        """Wait Screen.
+        """Display a wait screen with a message.
 
-        Define what happens on the screen when a user pauses a session.
+        Args:
+            message (str): Message to display.
+            message_color (str): Color of the message.
         """
         self.draw_components()
 
         # Construct the wait message
-        wait_message = visual.TextStim(win=self.window,
-                                       font=self.stimuli_font,
-                                       text=message,
-                                       height=.1,
-                                       color=message_color,
-                                       pos=(0, -.5),
-                                       wrapWidth=2)
+        wait_message = visual.TextStim(
+            win=self.window,
+            font=self.stimuli_font,
+            text=message,
+            height=.1,
+            color=message_color,
+            pos=(0, -.5),
+            wrapWidth=2
+        )
 
         # try adding the BciPy logo to the wait screen
         try:
-            wait_logo = visual.ImageStim(self.window,
-                                         image=BCIPY_LOGO_PATH,
-                                         pos=(0, .25),
-                                         mask=None,
-                                         ori=0.0)
+            wait_logo = visual.ImageStim(
+                self.window,
+                image=BCIPY_LOGO_PATH,
+                pos=(0, .25),
+                mask=None,
+                ori=0.0
+            )
             wait_logo.size = resize_image(BCIPY_LOGO_PATH, self.window.size, 1)
             wait_logo.draw()
 
@@ -422,29 +528,29 @@ class MatrixDisplay(Display):
             info.draw()
 
     def update_task_bar(self, text: str = '') -> None:
-        """Update Task.
+        """Update task related display items.
 
-        Update any task related display items not related to the inquiry. Ex. stimuli count 1/200.
-
-        PARAMETERS:
-
-        text: text for task
+        Args:
+            text (str): Text for task. Defaults to ''.
         """
         if self.task_bar:
             self.task_bar.update(text)
 
     def _trigger_pulse(self) -> None:
-        """Trigger Pulse.
+        """Send a calibration trigger pulse.
 
         This method uses a calibration trigger to determine any functional
-            offsets needed for operation with this display. By setting the first_stim_time and searching for the
-            same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
-            beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
-            correction may be required.
+        offsets needed for operation with this display. By setting the first_stim_time
+        and searching for the same stimuli output to the marker stream, the offsets
+        between these processes can be reconciled at the beginning of an experiment.
+        If drift is detected in your experiment, more frequent pulses and offset
+        correction may be required.
         """
-        calibration_time = _calibration_trigger(self.experiment_clock,
-                                                trigger_type=self.trigger_type,
-                                                display=self.window)
+        calibration_time = _calibration_trigger(
+            self.experiment_clock,
+            trigger_type=self.trigger_type,
+            display=self.window
+        )
 
         # set the first stim time if not present and first_run to False
         if not self.first_stim_time:

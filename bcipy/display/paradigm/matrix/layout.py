@@ -1,4 +1,10 @@
-"""Functions for calculating matrix layouts"""
+"""Functions for calculating matrix layouts.
+
+This module provides functionality for calculating and managing the layout of symbols
+in a matrix-style grid format, commonly used in BCI paradigms. It handles the
+positioning and spacing of elements based on window dimensions and layout requirements.
+"""
+
 from typing import List, Optional, Tuple
 
 from bcipy.display.components.layout import (Layout, above, below, left_of,
@@ -6,26 +12,35 @@ from bcipy.display.components.layout import (Layout, above, below, left_of,
                                              scaled_width)
 
 
-def symbol_positions(container: Layout,
-                     rows: int,
-                     columns: int,
-                     symbol_set: List[str],
-                     max_spacing: Optional[float] = None) -> List[Tuple[float, float]]:
-    """Compute the positions for arranging a number of symbols in a grid
-    layout.
+def symbol_positions(
+    container: Layout,
+    rows: int,
+    columns: int,
+    symbol_set: List[str],
+    max_spacing: Optional[float] = None
+) -> List[Tuple[float, float]]:
+    """Compute the positions for arranging a number of symbols in a grid layout.
 
-    Parameters
-    ----------
-        container - container in which the grid should be placed; must have a
+    This function calculates the positions for placing symbols in a grid format,
+    taking into account window dimensions, aspect ratio, and spacing requirements.
+    The grid is centered in the container and positions are returned in row-major order.
+
+    Args:
+        container (Layout): Container in which the grid should be placed; must have a
             visual.Window parent, which is used to determine the aspect ratio.
-        rows - number of rows in the grid
-        columns - number of columns in the grid
-        symbol_set - list of symbols to place in the grid
-        max_spacing - optional max spacing (in layout units) in the height
-            direction; width will be normalized to this value if provided
-    Returns
-    -------
-        list of (x,y) tuples with (rows * columns) positions in row,col order
+        rows (int): Number of rows in the grid.
+        columns (int): Number of columns in the grid.
+        symbol_set (List[str]): List of symbols to place in the grid.
+        max_spacing (Optional[float]): Optional max spacing (in layout units) in the height
+            direction; width will be normalized to this value if provided. Defaults to None.
+
+    Returns:
+        List[Tuple[float, float]]: List of (x,y) tuples with (rows * columns) positions
+            in row-major order.
+
+    Raises:
+        AssertionError: If container has no parent, if rows or columns are less than 1,
+            or if there are not enough positions for all symbols.
     """
     assert container.parent, "Container must have a parent"
     assert rows >= 1 and columns >= 1, "There must be at least one row and one column"

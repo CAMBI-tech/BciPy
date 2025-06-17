@@ -5,7 +5,7 @@ It includes abstract base classes and concrete implementations for different typ
 of button press handling strategies.
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional, Type, Tuple, Any
+from typing import List, Optional, Type, Any
 
 from psychopy import event
 from psychopy.core import CountdownTimer

@@ -4,7 +4,6 @@ This module provides the RSVP (Rapid Serial Visual Presentation) calibration tas
 implementation which performs stimulus inquiries to elicit ERPs. The task presents
 stimuli in rapid succession with configurable timing and appearance parameters.
 """
-
 from psychopy import core, visual
 
 from bcipy.core.parameters import Parameters
@@ -32,18 +31,18 @@ class RSVPCalibrationTask(BaseCalibrationTask):
         6. Save data
 
     Attributes:
-        name: Name of the task.
-        paradigm: Name of the paradigm.
-        parameters: Task configuration parameters.
-        file_save: Path for saving task data.
-        fake: Whether to run in fake (testing) mode.
-        window: PsychoPy window for display.
-        static_clock: Clock for static timing.
-        experiment_clock: Clock for experiment timing.
+        name (str): Name of the task.
+        paradigm (str): Name of the paradigm.
+        parameters (Parameters): Task configuration parameters.
+        file_save (str): Path for saving task data.
+        fake (bool): Whether to run in fake (testing) mode.
+        window (visual.Window): PsychoPy window for display.
+        static_clock (core.StaticPeriod): Clock for static timing.
+        experiment_clock (Clock): Clock for experiment timing.
     """
 
-    name = 'RSVP Calibration'
-    paradigm = 'RSVP'
+    name: str = 'RSVP Calibration'
+    paradigm: str = 'RSVP'
 
     def init_display(self) -> Display:
         """Initialize the RSVP display.
@@ -57,16 +56,17 @@ class RSVPCalibrationTask(BaseCalibrationTask):
 
 
 def init_calibration_display_task(
-        parameters: Parameters, window: visual.Window,
+        parameters: Parameters,
+        window: visual.Window,
         static_clock: core.StaticPeriod,
         experiment_clock: Clock) -> CalibrationDisplay:
     """Initialize the RSVP calibration display.
 
     Args:
-        parameters: Task configuration parameters.
-        window: PsychoPy window for display.
-        static_clock: Clock for static timing.
-        experiment_clock: Clock for experiment timing.
+        parameters (Parameters): Task configuration parameters.
+        window (visual.Window): PsychoPy window for display.
+        static_clock (core.StaticPeriod): Clock for static timing.
+        experiment_clock (Clock): Clock for experiment timing.
 
     Returns:
         CalibrationDisplay: Configured RSVP calibration display instance.

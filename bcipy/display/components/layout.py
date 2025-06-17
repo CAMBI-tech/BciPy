@@ -6,7 +6,7 @@ of GUI elements in the BciPy system. It includes utilities for alignment,
 scaling, and positioning of components within containers.
 """
 from enum import Enum
-from typing import List, Optional, Protocol, Tuple, Union
+from typing import List, Optional, Protocol, Tuple
 
 
 class Container(Protocol):

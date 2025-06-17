@@ -6,7 +6,7 @@ The matrix display presents a list of symbols in a grid format. Grid items are e
 
 A matrix display needs a psychopy Window, core.Clock, and configuration for the stimuli (StimuliProperties), task_bar (TaskBar), and information elements (InformationProperties).
 
-```
+```python
 from psychopy import core
 
 import bcipy.display.components.layout as layout
@@ -45,7 +45,7 @@ The number of rows and columns can be specified by using the provided parameters
 
 When using a task, the `matrix_rows` and `matrix_columns` parameters are used for customization.
 
-```
+```python
 matrix_display = MatrixDisplay(win,
                                experiment_clock,
                                stim_properties,
@@ -55,14 +55,13 @@ matrix_display = MatrixDisplay(win,
                                columns=7)
 ```
 
-
 ## Layout
 
 Symbol positions are calculated when the display is initialized. The grid will be centered within the window. By default the grid will take up 75% of the width, and 80% of the height, or whichever is smaller depending on the aspect ratio of your monitor. These values can be adjusted by provided a width_pct and height_pct parameter.
 
 When using a task, the `matrix_width` parameter is used for customization.
 
-```
+```python
 # determine matrix height based on the size of the task_bar
 matrix_height_pct = 1 - (2 * task_bar.height_pct)
 matrix_display = MatrixDisplay(win,
@@ -93,7 +92,7 @@ You may need to do some trial and error to determine the best matrix configurati
 
 For tasks which use the matrix display, the following parameters are recommended:
 
-```
+```python
     time_fixation: 2
     stim_height: 0.17
     task_height: 0.1
