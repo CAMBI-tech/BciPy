@@ -37,6 +37,7 @@ def contains_whitespaces(string: str) -> bool:
     """
     return bool(re.match(r'^(?=.*[\s])', string))
 
+
 def contains_special_characters(string: str,
                                 regex: str = '[^0-9a-zA-Z_]+') -> bool:
     """Contains Special Characters.

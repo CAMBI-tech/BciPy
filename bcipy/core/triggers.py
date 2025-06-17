@@ -1,7 +1,7 @@
 import logging
 import os
 from enum import Enum
-from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 

@@ -6,7 +6,7 @@ import threading
 import time
 from builtins import next
 from queue import Queue
-from typing import Any, Callable, Generator, Iterator, Optional
+from typing import Any, Iterator, Optional
 
 from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.config import SESSION_LOG_FILENAME
