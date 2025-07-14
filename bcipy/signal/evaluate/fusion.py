@@ -301,9 +301,16 @@ def calculate_eeg_gaze_fusion_acc(
         counter_gaze = 0
         counter_eeg = 0
         counter_fusion = 0
+        counter_test_samples = len(gaze_data_test)
         for test_idx, test_data in enumerate(gaze_data_test):
             numerator_gaze_list = []
             diff_list = []
+            # skip the analysis for this data point if there is no training example from the symbol:
+            if time_average_per_symbol[gaze_test_labels[test_idx]] == []:
+                counter_test_samples -= 1
+                print(f"Skipping the test case with symbol {gaze_test_labels[test_idx]}, no training data available.")
+                continue
+
             for idx, sym in enumerate(symbol_set):
                 # skip if there is no training example from the symbol
                 if time_average_per_symbol[sym] == []:
@@ -318,8 +325,7 @@ def calculate_eeg_gaze_fusion_acc(
                     numerator_gaze_list.append(numerator)
                     unnormalized_log_likelihood_gaze = numerator - denominator_gaze
                     gaze_log_likelihoods[test_idx, idx] = unnormalized_log_likelihood_gaze
-            normalized_posterior_gaze_only = np.exp(
-                gaze_log_likelihoods[test_idx, :]) / np.sum(np.exp(gaze_log_likelihoods[test_idx, :]))
+            normalized_posterior_gaze_only = gaze_log_likelihoods[test_idx, :] - np.log(np.sum(np.exp(gaze_log_likelihoods[test_idx, :])))
             # Find the max likelihood:
             max_like_gaze = np.argmax(normalized_posterior_gaze_only)
 
@@ -370,9 +376,9 @@ def calculate_eeg_gaze_fusion_acc(
             if posterior.any() == np.nan:
                 break
 
-        eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg / len(test_indices)))
-        gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze / len(test_indices)))
-        fusion_acc_in_iteration = float("{:.3f}".format(counter_fusion / len(test_indices)))
+        eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg / counter_test_samples))
+        gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze / counter_test_samples))
+        fusion_acc_in_iteration = float("{:.3f}".format(counter_fusion / counter_test_samples))
         eeg_acc.append(eeg_acc_in_iteration)
         gaze_acc.append(gaze_acc_in_iteration)
         fusion_acc.append(fusion_acc_in_iteration)

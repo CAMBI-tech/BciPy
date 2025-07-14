@@ -490,6 +490,9 @@ def offline_analysis(
             )
 
             log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+            log.info(f"Average EEG model accuracy: {round(np.mean(eeg_acc), 3)}")
+            log.info(f"Average Gaze model accuracy: {round(np.mean(gaze_acc), 3)}")
+            log.info(f"Average Fusion model accuracy: {round(np.mean(fusion_acc), 3)}")
             # The average gaze model accuracy:
             avg_testing_acc_gaze = round(np.mean(gaze_acc), 3)
 
