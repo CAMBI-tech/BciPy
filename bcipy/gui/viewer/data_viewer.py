@@ -639,7 +639,7 @@ def file_data(path: str
     return (data_source, device_spec, streamer)
 
 
-def main(data_file: str,
+def main(data_file: Optional[str],
          seconds: int,
          refresh: int,
          yscale: int,
