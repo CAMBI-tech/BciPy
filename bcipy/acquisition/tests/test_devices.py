@@ -26,7 +26,7 @@ class TestDeviceSpecs(unittest.TestCase):
         dsi = supported['DSI-24']
         self.assertEqual('EEG', dsi.content_type)
 
-        self.assertEqual(len(devices.with_content_type('EEG')), 4)
+        self.assertEqual(len(devices.with_content_type('EEG')), 5)
 
     def test_load_from_config(self):
         """Should be able to load a list of supported devices from a
@@ -142,7 +142,7 @@ class TestDeviceSpecs(unittest.TestCase):
         """DeviceSpec should require minimal information with default values."""
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3'],
-                                  sample_rate=256.0)
+                                  sample_rate=256)
         self.assertEqual(3, spec.channel_count)
         self.assertEqual('EEG', spec.content_type)
         self.assertEqual(devices.DeviceStatus.ACTIVE, spec.status)
@@ -151,7 +151,7 @@ class TestDeviceSpecs(unittest.TestCase):
         """DeviceSpec should have a list of channels used for analysis."""
         spec = devices.DeviceSpec(name='TestDevice',
                                   channels=['C1', 'C2', 'C3', 'TRG'],
-                                  sample_rate=256.0,
+                                  sample_rate=256,
                                   excluded_from_analysis=['TRG'])
 
         self.assertEqual(['C1', 'C2', 'C3'], spec.analysis_channels)
@@ -160,7 +160,7 @@ class TestDeviceSpecs(unittest.TestCase):
 
         spec2 = devices.DeviceSpec(name='Device2',
                                    channels=['C1', 'C2', 'C3', 'TRG'],
-                                   sample_rate=256.0,
+                                   sample_rate=256,
                                    excluded_from_analysis=['C1', 'TRG'])
         self.assertEqual(['C2', 'C3'], spec2.analysis_channels)
 
@@ -178,7 +178,7 @@ class TestDeviceSpecs(unittest.TestCase):
                                        'name': 'C4',
                                        'label': 'TRG'
                                    }],
-                                   sample_rate=256.0,
+                                   sample_rate=256,
                                    excluded_from_analysis=['ch1', 'TRG'])
         self.assertEqual(['ch2', 'ch3'], spec3.analysis_channels)
 
@@ -192,7 +192,7 @@ class TestDeviceSpecs(unittest.TestCase):
         with self.assertRaises(AssertionError):
             devices.DeviceSpec(name='Mouse',
                                channels=['Btn1', 'Btn2'],
-                               sample_rate=-100.0,
+                               sample_rate=-100,
                                content_type='Markers')
 
     def test_data_type(self):
@@ -239,7 +239,7 @@ class TestDeviceSpecs(unittest.TestCase):
             'type': None,
             'units': None
         }]
-        sample_rate = 256.0
+        sample_rate = 256
         content_type = 'EEG'
         spec = devices.DeviceSpec(name=device_name,
                                   channels=channels,
@@ -290,7 +290,7 @@ class TestDeviceSpecs(unittest.TestCase):
                  content_type="EEG",
                  description="My Device",
                  channels=["a", "b", "c"],
-                 sample_rate=100.0,
+                 sample_rate=100,
                  status=str(devices.DeviceStatus.PASSIVE),
                  static_offset=offset)
         ]

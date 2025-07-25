@@ -25,7 +25,8 @@ def destutter(items: List[Any], key: Callable = lambda x: x) -> List:
     return deduped
 
 
-def grouper(iterable: Any, chunk_size: int, incomplete: str = "fill", fillvalue: Optional[Any] = None) -> Union[Iterator[Tuple], Iterator[Any]]:
+def grouper(iterable: Any, chunk_size: int, incomplete: str = "fill",
+            fillvalue: Optional[Any] = None) -> Union[Iterator[Tuple], Iterator[Any]]:
     """Collect data into non-overlapping fixed-length chunks or blocks.
 
     Args:

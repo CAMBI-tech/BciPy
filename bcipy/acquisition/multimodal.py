@@ -66,9 +66,9 @@ class ClientManager():
             to use for dispatching calls to an `LslClient`. Defaults to `ContentType.EEG`.
     """
 
-    inlet: Any = None # To satisfy mypy, as ClientManager can act as an LslAcquisitionClient
+    inlet: Any = None  # To satisfy mypy, as ClientManager can act as an LslAcquisitionClient
 
-    def __init__(self, default_content_type: ContentType = ContentType.EEG) -> None: # type: ignore
+    def __init__(self, default_content_type: ContentType = ContentType.EEG) -> None:  # type: ignore
         self._clients: Dict[ContentType, LslAcquisitionClient] = {}
         self.default_content_type = default_content_type
 
@@ -85,7 +85,7 @@ class ClientManager():
     @property
     def device_specs(self) -> List[DeviceSpec]:
         """Returns a list of `DeviceSpec` objects for all the clients."""
-        return [client.device_spec for client in self.clients if client.device_spec] # type: ignore
+        return [client.device_spec for client in self.clients if client.device_spec]  # type: ignore
 
     @property
     def device_content_types(self) -> List[ContentType]:
@@ -107,13 +107,13 @@ class ClientManager():
         """Returns the default client."""
         return self.get_client(self.default_content_type)
 
-    def add_client(self, client: LslAcquisitionClient) -> None: # type: ignore
+    def add_client(self, client: LslAcquisitionClient) -> None:  # type: ignore
         """Adds the given client to the manager.
 
         Args:
             client (LslAcquisitionClient): The client instance to add.
         """
-        content_type = ContentType(client.device_spec.content_type) # type: ignore
+        content_type = ContentType(client.device_spec.content_type)  # type: ignore
         self._clients[content_type] = client
 
     def get_client(
@@ -129,13 +129,13 @@ class ClientManager():
         """
         return self._clients.get(content_type, None)
 
-    def start_acquisition(self) -> None: # type: ignore
+    def start_acquisition(self) -> None:  # type: ignore
         """Starts data acquisition for all clients."""
         for client in self.clients:
-            logger.info(f"Connecting to {client.device_spec.name}...") # type: ignore
+            logger.info(f"Connecting to {client.device_spec.name}...")  # type: ignore
             client.start_acquisition()
 
-    def stop_acquisition(self) -> None: # type: ignore
+    def stop_acquisition(self) -> None:  # type: ignore
         """Stops data acquisition for all clients."""
         logger.info("Stopping acquisition...")
         for client in self.clients:
@@ -185,7 +185,7 @@ class ClientManager():
                     count = round(seconds * client.device_spec.sample_rate)
                     logger.info(f'Need {count} records for processing {name} data')
                     output[content_type] = client.get_data(start=adjusted_start,
-                                                        limit=count)
+                                                           limit=count)
                     data_count = len(output[content_type])
                     if strict and data_count < count:
                         msg = f'Needed {count} {name} records but received {data_count}'
@@ -195,13 +195,13 @@ class ClientManager():
                     # Markers have an IRREGULAR_RATE.
                     logger.info(f'Querying {name} data')
                     output[content_type] = client.get_data(start=adjusted_start,
-                                                        end=adjusted_start + seconds)
+                                                           end=adjusted_start + seconds)
                     logger.info(f"Received {len(output[content_type])} records.")
             else:
                 logger.error(f"No client and device spec found for content type: {content_type.name}")
         return output
 
-    def cleanup(self) -> None: # type: ignore
+    def cleanup(self) -> None:  # type: ignore
         """Performs any necessary cleanup tasks for all managed clients."""
         for client in self.clients:
             client.cleanup()

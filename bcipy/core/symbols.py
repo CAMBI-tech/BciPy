@@ -7,7 +7,8 @@ SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'
 
 
-def alphabet(parameters: Optional[Any] = None, include_path: bool = True, backspace: str = BACKSPACE_CHAR, space: str = SPACE_CHAR) -> List[str]:
+def alphabet(parameters: Optional[Any] = None, include_path: bool = True,
+             backspace: str = BACKSPACE_CHAR, space: str = SPACE_CHAR) -> List[str]:
     """Standardizes and returns the alphabet symbols used in BciPy.
 
     The symbols can either be text (uppercase ASCII letters, backspace, and space)

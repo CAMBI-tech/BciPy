@@ -1,7 +1,7 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
 from multiprocessing import Queue
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 
 import pandas as pd
 from pylsl import StreamInlet, local_clock, resolve_byprop

@@ -33,7 +33,7 @@ def read_session(file_name: str = SESSION_DATA_FILENAME) -> Session:
     """Read session data from a JSON file.
 
     Args:
-        file_name (str, optional): Path to the session data file. 
+        file_name (str, optional): Path to the session data file.
             Defaults to SESSION_DATA_FILENAME.
 
     Returns:
@@ -237,10 +237,10 @@ def session_csv(session: Session, csv_file: str = 'session.csv') -> None:
             csv_writer.writerow(record)
 
 
-def write_row(excel_sheet: Worksheet, 
-              rownum: int, 
-              data: Union[EvidenceRecord, List[Any]], 
-              background: Optional[PatternFill] = None, 
+def write_row(excel_sheet: Worksheet,
+              rownum: int,
+              data: Union[EvidenceRecord, List[Any]],
+              background: Optional[PatternFill] = None,
               border: Optional[Border] = None) -> None:
     """Write a row to an Excel spreadsheet.
 

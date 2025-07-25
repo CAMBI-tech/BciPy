@@ -1,5 +1,5 @@
 """Utility functions for connecting to an LSL Stream"""
-from typing import List, Optional
+from typing import Optional
 
 from pylsl import StreamInfo, resolve_stream
 

@@ -103,4 +103,3 @@ class NullMarkerWriter(MarkerWriter):
     def cleanup(self):
         """Overrides the abstract method to do nothing."""
         pass
-

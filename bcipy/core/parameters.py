@@ -306,7 +306,7 @@ class Parameters(dict):
             Parameters: A new `Parameters` instance with the same parameters.
         """
         params = Parameters(source=None, cast_values=self.cast_values)
-        params.load(super().copy()) # type: ignore
+        params.load(super().copy())  # type: ignore
         return params
 
     def load(self, data: Dict[str, Dict[str, Any]]) -> None:
@@ -327,7 +327,7 @@ class Parameters(dict):
             with codecsopen(self.source, 'r',
                             encoding=DEFAULT_ENCODING) as json_file:
                 data = load(json_file)
-                self.load(data) # type: ignore
+                self.load(data)  # type: ignore
 
     def check_valid_entry(self, entry_name: str, entry: Dict[str, Any]) -> None:
         """Checks if the given entry is valid. Raises an exception unless the entry is formatted as expected."
@@ -399,9 +399,9 @@ class Parameters(dict):
         source_directory, source_name = self.source_location()
         location = directory if directory else source_directory
         filename = name if name else source_name
-        path = Path(location, filename) # type: ignore
+        path = Path(location, filename)  # type: ignore
         with open(path, 'w', encoding=DEFAULT_ENCODING) as json_file:
-            dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2) # type: ignore
+            dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)  # type: ignore
         return str(path)
 
     def add_missing_items(self, parameters: 'Parameters') -> bool:
