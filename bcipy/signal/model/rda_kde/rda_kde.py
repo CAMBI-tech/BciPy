@@ -43,7 +43,8 @@ class RdaKdeModel(SignalModel):
         model = Pipeline([MockPCA(), RegularizedDiscriminantAnalysis()])
 
         # Find the optimal gamma + lambda values
-        arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
+        arg_cv = cross_validation(
+            train_data, train_labels, model=model, k_folds=self.k_folds)
 
         # Get the AUC using those optimized gamma + lambda
         rda_index = 1  # the index in the pipeline
@@ -92,7 +93,8 @@ class RdaKdeModel(SignalModel):
             ModelEvaluationReport: stores AUC
         """
         if not self._ready_to_predict:
-            raise SignalException("must use model.fit() before model.evaluate()")
+            raise SignalException(
+                "must use model.fit() before model.evaluate()")
 
         tmp_model = Pipeline([self.model.pipeline[0], self.model.pipeline[1]])
 
@@ -105,8 +107,7 @@ class RdaKdeModel(SignalModel):
         return ModelEvaluationReport(auc)
 
     def predict(self, data: np.array, inquiry: List[str], symbol_set: List[str]) -> np.array:
-        """
-        For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
+        """For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
         Rather than just computing an update p(e|l=+) for the seen symbol and p(e|l=-) for all unseen symbols,
         we compute a likelihood ratio p(e | l=+) / p(e | l=-) to update the seen symbol, and all other symbols
         can receive a multiplicative update of 1.
@@ -124,18 +125,22 @@ class RdaKdeModel(SignalModel):
         """
 
         if not self._ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict()")
+            raise SignalException(
+                "must use model.fit() before model.predict()")
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
         log_likelihoods = self.model.transform(data)
-        subset_likelihood_ratios = np.exp(log_likelihoods[:, 1] - log_likelihoods[:, 0])
+        subset_likelihood_ratios = np.exp(
+            log_likelihoods[:, 1] - log_likelihoods[:, 0])
         # Restrict multiplicative updates to a reasonable range
-        subset_likelihood_ratios = np.clip(subset_likelihood_ratios, self.min, self.max)
+        subset_likelihood_ratios = np.clip(
+            subset_likelihood_ratios, self.min, self.max)
 
         # Apply likelihood ratios to entire symbol set.
         likelihood_ratios = np.ones(len(symbol_set))
         for idx in range(len(subset_likelihood_ratios)):
-            likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
+            likelihood_ratios[symbol_set.index(
+                inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios
 
     def predict_proba(self, data: np.array) -> np.array:
@@ -146,7 +151,8 @@ class RdaKdeModel(SignalModel):
                 probability for the two labels.
         """
         if not self._ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict_proba()")
+            raise SignalException(
+                "must use model.fit() before model.predict_proba()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
         #

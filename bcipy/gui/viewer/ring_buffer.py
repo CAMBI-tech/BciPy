@@ -54,7 +54,8 @@ class RingBuffer:
         assert size_max > 0
         self.empty_value = empty_value
         self.max = size_max
-        self.data: List[Any] = [empty_value] * size_max if pre_allocated else []
+        self.data: List[Any] = [empty_value] * \
+            size_max if pre_allocated else []
         self.cur = 0
         self.full = False
         self.pre_allocated = pre_allocated

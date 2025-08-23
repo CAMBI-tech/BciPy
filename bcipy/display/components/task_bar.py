@@ -5,7 +5,7 @@ It includes base task bar functionality and specialized implementations for diff
 types of tasks like calibration and copy phrase tasks.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from psychopy import visual
 from psychopy.visual.basevisual import BaseVisualStim

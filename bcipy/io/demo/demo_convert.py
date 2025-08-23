@@ -54,7 +54,8 @@ def load_historical_bcipy_data(directory: str, experiment_id: str) -> List[BciPy
                 extracted_task_time = task_run.name.split('_')[7]
 
             # add the tasks to the list with the time as the key
-            run_tasks[extracted_task_time] = [task_run, f'{extracted_task_paradigm}{extracted_task_mode}']
+            run_tasks[extracted_task_time] = [
+                task_run, f'{extracted_task_paradigm}{extracted_task_mode}']
 
         # sort the tasks by time
         sorted_tasks = sorted(run_tasks.items())
@@ -88,7 +89,8 @@ def convert_experiment_to_bids(
         experiment_id=experiment_id)
 
     # Use for data post-2.0rc4
-    experiment_data = load_bcipy_data(directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
+    experiment_data = load_bcipy_data(
+        directory, experiment_id, excluded_tasks=EXCLUDED_TASKS)
 
     if not output_dir:
         output_dir = directory
@@ -120,8 +122,10 @@ def convert_experiment_to_bids(
                         task_name=data.task_name
                     )
                 except Exception as e:
-                    print(f"Error converting eye tracker data for {data.path} - {e}")
-                    errors.append(f"Error converting eye tracker data for {data.path}")
+                    print(
+                        f"Error converting eye tracker data for {data.path} - {e}")
+                    errors.append(
+                        f"Error converting eye tracker data for {data.path}")
 
         except Exception as e:
             print(f"Error converting {data.path} - {e}")
@@ -131,7 +135,8 @@ def convert_experiment_to_bids(
     if errors:
         print(f"Errors converting the following data: {errors}")
 
-    print(f"\nData converted to BIDS format in {output_dir}/bids_{experiment_id}/")
+    print(
+        f"\nData converted to BIDS format in {output_dir}/bids_{experiment_id}/")
     print("--------------------")
 
 
@@ -162,7 +167,8 @@ if __name__ == '__main__':
 
     path = args.directory
     if not path:
-        path = ask_directory("Select the directory with data to be converted", strict=True)
+        path = ask_directory(
+            "Select the directory with data to be converted", strict=True)
 
     # convert a study to BIDS format
     convert_experiment_to_bids(

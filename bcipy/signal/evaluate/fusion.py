@@ -52,10 +52,12 @@ def calculate_eeg_gaze_fusion_acc(
         gaze_acc: accuracy of the gaze model only
         fusion_acc: accuracy of the fusion
     """
-    logger.info(f"Calculating EEG [{eeg_model.name}] and Gaze [{gaze_model.name}] model fusion accuracy.")
+    logger.info(
+        f"Calculating EEG [{eeg_model.name}] and Gaze [{gaze_model.name}] model fusion accuracy.")
     # Extract relevant session information from parameters file
     trial_window = parameters.get("trial_window", (0.0, 0.5))
-    window_length = trial_window[1] - trial_window[0]  # eeg window length, in seconds
+    # eeg window length, in seconds
+    window_length = trial_window[1] - trial_window[0]
 
     prestim_length = parameters.get("prestim_length")
     trials_per_inquiry = parameters.get("stim_length")
@@ -64,7 +66,8 @@ def calculate_eeg_gaze_fusion_acc(
     buffer = int(parameters.get("task_buffer_length") / 2)
 
     # Get signal filtering information
-    transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
+    transform_params: ERPTransformParams = parameters.instantiate(
+        ERPTransformParams)
     downsample_rate = transform_params.down_sampling_rate
     static_offset = device_spec_eeg.static_offset
 
@@ -119,10 +122,12 @@ def calculate_eeg_gaze_fusion_acc(
     target_symbols = [trigger_symbols[idx]
                       for idx, targetness in enumerate(trigger_targetness_gaze) if targetness == 'prompt']
     total_len = trials_per_inquiry + 1    # inquiry length + the prompt symbol
-    inq_start = trigger_timing_gaze[1::total_len]  # inquiry start times, exluding prompt and fixation
+    # inquiry start times, exluding prompt and fixation
+    inq_start = trigger_timing_gaze[1::total_len]
 
     # update the trigger timing list to account for the initial trial window
-    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+    corrected_trigger_timing = [timing + trial_window[0]
+                                for timing in trigger_timing]
 
     erp_data, _fs_eeg = eeg_data.by_channel()
     trajectory_data, _fs_eye = gaze_data.by_channel()
@@ -153,18 +158,24 @@ def calculate_eeg_gaze_fusion_acc(
     )
 
     # More EEG preprocessing:
-    eeg_inquiries, fs = filter_inquiries(eeg_inquiries, default_transform, eeg_sample_rate)
-    eeg_inquiry_timing = update_inquiry_timing(eeg_inquiry_timing, downsample_rate)
+    eeg_inquiries, fs = filter_inquiries(
+        eeg_inquiries, default_transform, eeg_sample_rate)
+    eeg_inquiry_timing = update_inquiry_timing(
+        eeg_inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
 
     # More gaze preprocessing:
-    inquiry_length = gaze_inquiries_list[0].shape[1]  # number of time samples in each inquiry
+    # number of time samples in each inquiry
+    inquiry_length = gaze_inquiries_list[0].shape[1]
     predefined_dimensions = 4  # left_x, left_y, right_x, right_y
-    preprocessed_gaze_data = np.zeros((len(gaze_inquiries_list), predefined_dimensions, inquiry_length))
+    preprocessed_gaze_data = np.zeros(
+        (len(gaze_inquiries_list), predefined_dimensions, inquiry_length))
     # Extract left_x, left_y, right_x, right_y for each inquiry
     for j in range(len(gaze_inquiries_list)):
-        left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_list[j])
-        preprocessed_gaze_data[j] = np.concatenate((left_eye.T, right_eye.T,), axis=0)
+        left_eye, right_eye, _, _, _, _ = extract_eye_info(
+            gaze_inquiries_list[j])
+        preprocessed_gaze_data[j] = np.concatenate(
+            (left_eye.T, right_eye.T,), axis=0)
 
     preprocessed_gaze_dict = {i: [] for i in symbol_set}
     for i in symbol_set:
@@ -172,8 +183,10 @@ def calculate_eeg_gaze_fusion_acc(
         if len(gaze_inquiries_dict[i]) == 0:
             continue
         for j in range(len(gaze_inquiries_dict[i])):
-            left_eye, right_eye, _, _, _, _ = extract_eye_info(gaze_inquiries_dict[i][j])
-            preprocessed_gaze_dict[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(
+                gaze_inquiries_dict[i][j])
+            preprocessed_gaze_dict[i].append(
+                (np.concatenate((left_eye.T, right_eye.T), axis=0)))
         preprocessed_gaze_dict[i] = np.array(preprocessed_gaze_dict[i])
 
     # Find the time averages for each symbol:
@@ -195,12 +208,14 @@ def calculate_eeg_gaze_fusion_acc(
                     preprocessed_gaze_dict[sym][j],
                     temp))  # Delta_t = X_t - mu
         centralized_data_dict[sym] = np.array(centralized_data_dict[sym])
-        time_average_per_symbol[sym] = np.mean(np.array(time_average_per_symbol[sym]), axis=0)
+        time_average_per_symbol[sym] = np.mean(
+            np.array(time_average_per_symbol[sym]), axis=0)
 
     # Take the time average of the gaze data:
     centralized_gaze_data = np.zeros_like(preprocessed_gaze_data)
     for i, (_, sym) in enumerate(zip(preprocessed_gaze_data, target_symbols)):
-        centralized_gaze_data[i] = gaze_model.subtract_mean(preprocessed_gaze_data[i], time_average_per_symbol[sym])
+        centralized_gaze_data[i] = gaze_model.subtract_mean(
+            preprocessed_gaze_data[i], time_average_per_symbol[sym])
 
     """
     Calculate the accuracy of the fusion of EEG and Gaze models. Use the number of iterations to change bootstraping.
@@ -217,10 +232,13 @@ def calculate_eeg_gaze_fusion_acc(
         bar_format="{l_bar}{bar}| {n_fmt}/{total_fmt} [est. {remaining}][ela. {elapsed}]\n",
         colour='MAGENTA')
     for _progress in progress_bar:
-        progress_bar.set_description(f"Running iteration {_progress + 1}/{n_iterations}")
+        progress_bar.set_description(
+            f"Running iteration {_progress + 1}/{n_iterations}")
         # Pick a train and test dataset (that consists of non-train elements) until test dataset is not empty:
-        train_indices = resample(list(range(selection_length)), replace=True, n_samples=100)
-        test_indices = np.array([x for x in list(range(selection_length)) if x not in train_indices])
+        train_indices = resample(
+            list(range(selection_length)), replace=True, n_samples=100)
+        test_indices = np.array(
+            [x for x in list(range(selection_length)) if x not in train_indices])
         if len(test_indices) == 0:
             break
 
@@ -254,7 +272,8 @@ def calculate_eeg_gaze_fusion_acc(
         # extract train and test indices for gaze data:
         centralized_gaze_data_train = centralized_gaze_data[train_indices]
         # gaze_train_labels = np.array([target_symbols[i] for i in train_indices])
-        gaze_data_test = preprocessed_gaze_data[test_indices]         # test set is NOT centralized
+        # test set is NOT centralized
+        gaze_data_test = preprocessed_gaze_data[test_indices]
         gaze_test_labels = np.array([target_symbols[i] for i in test_indices])
         # generate a tuple that matches the index of the symbol with the symbol itself:
         symbol_to_index = {symbol: i for i, symbol in enumerate(symbol_set)}
@@ -283,14 +302,17 @@ def calculate_eeg_gaze_fusion_acc(
         except BaseException:
             # Singular matrix, using pseudo-inverse instead
             eps = 10e-3  # add a small value to the diagonal to make the matrix invertible
-            inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
+            inv_cov_matrix = np.linalg.inv(
+                cov_matrix + np.eye(len(cov_matrix)) * eps)
             # inv_cov_matrix = np.linalg.pinv(cov_matrix + np.eye(len(cov_matrix))*eps)
         denominator_gaze = 0
 
         # Given the test data, compute the log likelihood ratios for each symbol,
         # from eeg and gaze models:
-        eeg_log_likelihoods = np.zeros((len(gaze_data_test), (len(symbol_set))))
-        gaze_log_likelihoods = np.zeros((len(gaze_data_test), (len(symbol_set))))
+        eeg_log_likelihoods = np.zeros(
+            (len(gaze_data_test), (len(symbol_set))))
+        gaze_log_likelihoods = np.zeros(
+            (len(gaze_data_test), (len(symbol_set))))
 
         # Save the max posterior and the second max posterior for each test point:
         target_posteriors_gaze = np.zeros((len(gaze_data_test), 2))
@@ -306,23 +328,29 @@ def calculate_eeg_gaze_fusion_acc(
             for idx, sym in enumerate(symbol_set):
                 # skip if there is no training example from the symbol
                 if time_average_per_symbol[sym] == []:
-                    gaze_log_likelihoods[test_idx, idx] = -100000  # set a very small value
+                    gaze_log_likelihoods[test_idx, idx] = - \
+                        100000  # set a very small value
                 else:
-                    central_data = gaze_model.subtract_mean(test_data, time_average_per_symbol[sym])
-                    flattened_data = central_data.reshape((inquiry_length * predefined_dimensions,))
+                    central_data = gaze_model.subtract_mean(
+                        test_data, time_average_per_symbol[sym])
+                    flattened_data = central_data.reshape(
+                        (inquiry_length * predefined_dimensions,))
                     flattened_data *= units
                     diff = flattened_data - reshaped_mean
                     diff_list.append(diff)
-                    numerator = -np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
+                    numerator = - \
+                        np.dot(diff.T, np.dot(inv_cov_matrix, diff)) / 2
                     numerator_gaze_list.append(numerator)
                     unnormalized_log_likelihood_gaze = numerator - denominator_gaze
-                    gaze_log_likelihoods[test_idx, idx] = unnormalized_log_likelihood_gaze
+                    gaze_log_likelihoods[test_idx,
+                                         idx] = unnormalized_log_likelihood_gaze
             normalized_posterior_gaze_only = np.exp(
                 gaze_log_likelihoods[test_idx, :]) / np.sum(np.exp(gaze_log_likelihoods[test_idx, :]))
             # Find the max likelihood:
             max_like_gaze = np.argmax(normalized_posterior_gaze_only)
 
-            posterior_of_true_label_gaze = normalized_posterior_gaze_only[symbol_to_index[gaze_test_labels[test_idx]]]
+            posterior_of_true_label_gaze = normalized_posterior_gaze_only[
+                symbol_to_index[gaze_test_labels[test_idx]]]
             top_competitor_gaze = np.sort(normalized_posterior_gaze_only)[-2]
             target_posteriors_gaze[test_idx, 0] = posterior_of_true_label_gaze
             target_posteriors_gaze[test_idx, 1] = top_competitor_gaze
@@ -335,7 +363,8 @@ def calculate_eeg_gaze_fusion_acc(
             end = (test_idx + 1) * trials_per_inquiry
             eeg_tst_data = preprocessed_test_eeg[:, start:end, :]
             inq_sym = inquiry_symbols_test[start: end]
-            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(eeg_tst_data, inq_sym, symbol_set)
+            eeg_likelihood_ratios = eeg_model.compute_likelihood_ratio(
+                eeg_tst_data, inq_sym, symbol_set)
             unnormalized_log_likelihood_eeg = np.log(eeg_likelihood_ratios)
             eeg_log_likelihoods[test_idx, :] = unnormalized_log_likelihood_eeg
             normalized_posterior_eeg_only = np.exp(
@@ -343,7 +372,8 @@ def calculate_eeg_gaze_fusion_acc(
 
             max_like_eeg = np.argmax(normalized_posterior_eeg_only)
             top_competitor_eeg = np.sort(normalized_posterior_eeg_only)[-2]
-            posterior_of_true_label_eeg = normalized_posterior_eeg_only[symbol_to_index[gaze_test_labels[test_idx]]]
+            posterior_of_true_label_eeg = normalized_posterior_eeg_only[
+                symbol_to_index[gaze_test_labels[test_idx]]]
 
             target_posteriors_eeg[test_idx, 0] = posterior_of_true_label_eeg
             target_posteriors_eeg[test_idx, 1] = top_competitor_eeg
@@ -351,7 +381,8 @@ def calculate_eeg_gaze_fusion_acc(
                 counter_eeg += 1
 
             # Bayesian fusion update and decision making:
-            log_unnormalized_posterior = np.log(eeg_likelihood_ratios) + gaze_log_likelihoods[test_idx, :]
+            log_unnormalized_posterior = np.log(
+                eeg_likelihood_ratios) + gaze_log_likelihoods[test_idx, :]
             unnormalized_posterior = np.exp(log_unnormalized_posterior)
             denominator = np.sum(unnormalized_posterior)
             posterior = unnormalized_posterior / denominator  # normalized posterior
@@ -360,7 +391,8 @@ def calculate_eeg_gaze_fusion_acc(
             top_competitor_fusion = np.sort(log_posterior)[-2]
             posterior_of_true_label_fusion = posterior[symbol_to_index[gaze_test_labels[test_idx]]]
 
-            target_posteriors_fusion[test_idx, 0] = posterior_of_true_label_fusion
+            target_posteriors_fusion[test_idx,
+                                     0] = posterior_of_true_label_fusion
             target_posteriors_fusion[test_idx, 1] = top_competitor_fusion
             if symbol_set[max_posterior] == gaze_test_labels[test_idx]:
                 counter_fusion += 1
@@ -369,9 +401,12 @@ def calculate_eeg_gaze_fusion_acc(
             if posterior.any() == np.nan:
                 break
 
-        eeg_acc_in_iteration = float("{:.3f}".format(counter_eeg / len(test_indices)))
-        gaze_acc_in_iteration = float("{:.3f}".format(counter_gaze / len(test_indices)))
-        fusion_acc_in_iteration = float("{:.3f}".format(counter_fusion / len(test_indices)))
+        eeg_acc_in_iteration = float(
+            "{:.3f}".format(counter_eeg / len(test_indices)))
+        gaze_acc_in_iteration = float(
+            "{:.3f}".format(counter_gaze / len(test_indices)))
+        fusion_acc_in_iteration = float(
+            "{:.3f}".format(counter_fusion / len(test_indices)))
         eeg_acc.append(eeg_acc_in_iteration)
         gaze_acc.append(gaze_acc_in_iteration)
         fusion_acc.append(fusion_acc_in_iteration)

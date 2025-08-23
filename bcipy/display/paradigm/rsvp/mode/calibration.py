@@ -9,10 +9,10 @@ from typing import Optional
 from psychopy import core, visual
 
 from bcipy.core.symbols import SPACE_CHAR
-from bcipy.display.paradigm.rsvp.display import RSVPDisplay
-from bcipy.display.components.task_bar import TaskBar
 from bcipy.display import InformationProperties, StimuliProperties
+from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams
+from bcipy.display.paradigm.rsvp.display import RSVPDisplay
 
 
 class CalibrationDisplay(RSVPDisplay):

@@ -7,7 +7,7 @@ make a decision based on the accumulated data.
 
 import logging
 from copy import copy
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 
@@ -91,7 +91,8 @@ class MinIterationsCriteria(DecisionCriteria):
             bool: True if current iterations < minimum required, False otherwise.
         """
         current_inq = len(series['list_sti'])
-        log.info(f"Checking min iterations; current iteration is {current_inq}")
+        log.info(
+            f"Checking min iterations; current iteration is {current_inq}")
         return current_inq < self.min_num_inq
 
 

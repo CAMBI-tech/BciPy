@@ -49,7 +49,8 @@ def validate_protocol_string(protocol: str) -> None:
     """
     for protocol_item in protocol.split(TASK_SEPERATOR):
         if protocol_item.strip() not in TaskRegistry().list():
-            raise ValueError(f"Invalid task '{protocol_item}' name in protocol string.")
+            raise ValueError(
+                f"Invalid task '{protocol_item}' name in protocol string.")
 
 
 def serialize_protocol(tasks: List[Type[Task]]) -> str:

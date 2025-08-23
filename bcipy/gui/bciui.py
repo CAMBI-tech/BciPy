@@ -6,7 +6,7 @@ lists, and utility functions for common UI operations.
 """
 
 import sys
-from typing import Callable, List, Optional, Type, Any, Dict
+from typing import Any, Callable, Dict, List, Optional, Type
 
 from PyQt6.QtCore import pyqtSignal
 from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QLayout, QMessageBox,

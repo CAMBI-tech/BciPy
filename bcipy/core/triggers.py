@@ -1,3 +1,8 @@
+"""Trigger utilities for BciPy core.
+
+This module provides classes and functions for managing triggers and calibration events in BciPy experiments.
+"""
+
 import logging
 import os
 from enum import Enum
@@ -130,9 +135,11 @@ def _calibration_trigger(
             pos=(-.5, -.5),
             mask=None,
             ori=0.0)
-        calibration_box.size = resize_image(CALIBRATION_IMAGE_PATH, display.size, 0.75)
+        calibration_box.size = resize_image(
+            CALIBRATION_IMAGE_PATH, display.size, 0.75)
 
-        display.callOnFlip(trigger_callback.callback, experiment_clock, trigger_name)
+        display.callOnFlip(trigger_callback.callback,
+                           experiment_clock, trigger_name)
         if on_trigger is not None:
             display.callOnFlip(on_trigger, trigger_name)
 
@@ -490,7 +497,8 @@ class TriggerHandler:
             Exception: If the file already exists.
         """
         self.path = path
-        self.file_name = f'{file_name}.txt' if not file_name.endswith('.txt') else file_name
+        self.file_name = f'{file_name}.txt' if not file_name.endswith(
+            '.txt') else file_name
         self.flush = flush
         self.triggers: List[Trigger] = []
         self.file_path = f'{self.path}/{self.file_name}'
@@ -512,7 +520,8 @@ class TriggerHandler:
         File writes in the format "label, targetness, time".
         """
         for trigger in self.triggers:
-            self.file.write(f'{trigger.label} {trigger.type.value} {trigger.time}\n')
+            self.file.write(
+                f'{trigger.label} {trigger.type.value} {trigger.time}\n')
 
         self.triggers = []
 

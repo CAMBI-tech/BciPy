@@ -6,7 +6,7 @@ animation of stimuli in a grid format.
 """
 
 import logging
-from typing import Dict, List, NamedTuple, Optional, Tuple, Any, Callable
+from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
 
 from psychopy import core, visual
 
@@ -26,7 +26,7 @@ logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 class SymbolDuration(NamedTuple):
     """Represents a symbol and its associated duration to display.
-    
+
     Attributes:
         symbol (str): The symbol to display.
         duration (float): Duration in seconds to display the symbol.
@@ -180,7 +180,7 @@ class MatrixDisplay(Display):
             if self.symbol_set:
                 return self.symbol_set.index
             else:
-                raise ValueError(f'Symbol set not defined')
+                raise ValueError('Symbol set not defined')
         elif stimuli.layout == 'QWERTY':
             logger.info('Using QWERTY layout')
             return qwerty_order()
@@ -245,11 +245,13 @@ class MatrixDisplay(Display):
             AssertionError: If lengths of stimuli and timing don't match,
                 or if colors are provided but lengths don't match.
         """
-        assert len(stimuli) == len(timing), "each stimuli must have a timing value"
+        assert len(stimuli) == len(
+            timing), "each stimuli must have a timing value"
         self.stimuli_inquiry = stimuli
         self.stimuli_timing = timing
         if colors:
-            assert len(stimuli) == len(colors), "each stimuli must have a color"
+            assert len(stimuli) == len(
+                colors), "each stimuli must have a color"
             self.stimuli_colors = colors
         else:
             self.stimuli_colors = [self.grid_color] * len(stimuli)

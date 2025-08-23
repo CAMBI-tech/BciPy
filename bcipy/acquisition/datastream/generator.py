@@ -1,6 +1,6 @@
 """Functions for generating mock data to be used for testing/development."""
 
-from typing import Callable, Generator, List, Optional, TextIO, Any
+from typing import Any, Callable, Generator, List, Optional, TextIO
 
 from past.builtins import range
 

@@ -11,9 +11,10 @@ import re
 import sys
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
+from typing import (Any, Callable, List, NamedTuple, Optional, Tuple, Union,
+                    cast)
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSlot, QObject
+from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSlot
 from PyQt6.QtGui import QFont, QPixmap, QShowEvent, QWheelEvent
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
@@ -1034,8 +1035,10 @@ class ScrollableFrame(QWidget):
 
         # create the scrollable are
         self.frame = QScrollArea()
-        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.frame.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.frame.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.frame.setWidgetResizable(True)
         self.frame.setFixedWidth(self._width)
         self.setFixedHeight(self._height)

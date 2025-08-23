@@ -97,7 +97,8 @@ def extract_mode(bcipy_data_directory: str) -> str:
         return 'calibration'
     elif 'copy' in directory:
         return 'copy_phrase'
-    raise BciPyCoreException(f'No valid mode could be extracted from [{directory}]')
+    raise BciPyCoreException(
+        f'No valid mode could be extracted from [{directory}]')
 
 
 def load_fields(path: str = f'{DEFAULT_FIELD_PATH}/{FIELD_FILENAME}') -> dict:
@@ -143,7 +144,8 @@ def load_experiment_fields(experiment: dict) -> list:
             raise InvalidExperimentException(
                 'Experiment is not formatted correctly. It should be passed as a dictionary with the fields and'
                 f' summary keys. Fields is a list of dictionaries. Summary is a string. \n experiment=[{experiment}]')
-    raise TypeError('Unsupported experiment type. It should be passed as a dictionary with the fields and summary keys')
+    raise TypeError(
+        'Unsupported experiment type. It should be passed as a dictionary with the fields and summary keys')
 
 
 def load_json_parameters(path: str, value_cast: bool = False) -> Parameters:
@@ -409,7 +411,8 @@ class BciPySessionTaskData:
 
         self.user_id = user_id
         self.experiment_id = experiment_id.replace('_', '')
-        self.session_id = f'0{str(session_id)}' if session_id < 10 else str(session_id)
+        self.session_id = f'0{str(session_id)}' if session_id < 10 else str(
+            session_id)
         self.date_time = date_time
         self.date = date
         self.run = f'0{str(run)}' if run < 10 else str(run)
@@ -515,7 +518,8 @@ class BciPyCollection:
         Returns:
             list: List of experiment IDs.
         """
-        experiments = [experiment.split('/')[-1] for experiment in self.experiment_paths]
+        experiments = [experiment.split('/')[-1]
+                       for experiment in self.experiment_paths]
         # remove duplicates from the list
         return list(set(experiments))
 
@@ -537,7 +541,8 @@ class BciPyCollection:
         Returns:
             list: List of timestamps.
         """
-        date_times = [date_time.split('/')[-1] for date_time in self.date_time_paths]
+        date_times = [date_time.split('/')[-1]
+                      for date_time in self.date_time_paths]
         # remove duplicates from the list
         return list(set(date_times))
 
@@ -581,7 +586,8 @@ class BciPyCollection:
         """
         user_paths = fast_scandir(self.data_directory, return_path=True)
         if self.user_id_filter:
-            self.user_paths = [user for user in user_paths if self.user_id_filter in user]
+            self.user_paths = [
+                user for user in user_paths if self.user_id_filter in user]
         else:
             self.user_paths = user_paths
 
@@ -596,7 +602,8 @@ class BciPyCollection:
         for user in self.user_paths:
             data_paths = fast_scandir(user, return_path=True)
             if self.date_filter:
-                self.date_paths.extend([data for data in data_paths if self.date_filter in data])
+                self.date_paths.extend(
+                    [data for data in data_paths if self.date_filter in data])
             else:
                 self.date_paths.extend(data_paths)
 
@@ -611,7 +618,8 @@ class BciPyCollection:
         for date in self.date_paths:
             experiment_paths = fast_scandir(date, return_path=True)
             if self.experiment_id_filter:
-                self.experiment_paths.extend([data for data in experiment_paths if self.experiment_id_filter in data])
+                self.experiment_paths.extend(
+                    [data for data in experiment_paths if self.experiment_id_filter in data])
             else:
                 self.experiment_paths.extend(experiment_paths)
 
@@ -626,7 +634,8 @@ class BciPyCollection:
         for experiment in self.experiment_paths:
             data_paths = fast_scandir(experiment, return_path=True)
             if self.date_time_filter:
-                self.date_time_paths.extend([data for data in data_paths if self.date_time_filter in data])
+                self.date_time_paths.extend(
+                    [data for data in data_paths if self.date_time_filter in data])
             else:
                 self.date_time_paths.extend(data_paths)
 

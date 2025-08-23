@@ -95,7 +95,8 @@ def init_save_data_structure(data_save_path: str,
 
     copyfile(parameters, Path(save_directory, DEFAULT_PARAMETERS_FILENAME))
 
-    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
+    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(
+        save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
 
     return save_directory
 

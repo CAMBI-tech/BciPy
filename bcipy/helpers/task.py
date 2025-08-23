@@ -156,7 +156,8 @@ def get_data_for_decision(inquiry_timing: List[Tuple[str, float]],
                 for text, timing in inquiry_timing]
 
     # Define the amount of data required for any processing to occur.
-    data_limit = round((time2 - time1 + poststim) * daq.device_spec.sample_rate)
+    data_limit = round((time2 - time1 + poststim) *
+                       daq.device_spec.sample_rate)
     log.info(f'Need {data_limit} records for processing')
 
     # Query for raw data
@@ -350,7 +351,8 @@ def pause_on_wait_screen(window, message, color) -> bool:
 
     elapsed_seconds = time.time() - pause_start
     if elapsed_seconds >= MAX_PAUSE_SECONDS:
-        log.info(f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
+        log.info(
+            f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
         return False
     if keys[0] == 'escape':
         return False

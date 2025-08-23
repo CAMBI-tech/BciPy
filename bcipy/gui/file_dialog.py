@@ -8,11 +8,11 @@ file and directory selection with customizable options and filters.
 # pylint: disable=no-name-in-module,missing-docstring,too-few-public-methods
 import sys
 from pathlib import Path
-from typing import Union, Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from PyQt6 import QtGui
-from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
 from PyQt6.QtCore import QRect
+from PyQt6.QtWidgets import QApplication, QFileDialog, QWidget
 
 from bcipy.exceptions import BciPyCoreException
 from bcipy.preferences import preferences
@@ -54,7 +54,7 @@ class FileDialog(QWidget):
 
     def _center_window(self) -> None:
         """Center the window on the primary screen.
-        
+
         This method calculates the center position of the primary screen and
         moves the window to that position.
         """

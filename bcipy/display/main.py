@@ -7,7 +7,7 @@ and utilities for creating and managing visual stimuli in BCI paradigms.
 # mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union, Dict
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
 

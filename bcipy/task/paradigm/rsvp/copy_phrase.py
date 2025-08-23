@@ -178,8 +178,10 @@ class RSVPCopyPhraseTask(Task):
         self.button_press_error_prob = parameters['preview_inquiry_error_prob']
 
         self.signal_model = self.signal_models[0] if self.signal_models else None
-        self.evidence_evaluators = self.init_evidence_evaluators(self.signal_models)
-        self.evidence_types = self.init_evidence_types(self.signal_models, self.evidence_evaluators)
+        self.evidence_evaluators = self.init_evidence_evaluators(
+            self.signal_models)
+        self.evidence_types = self.init_evidence_types(
+            self.signal_models, self.evidence_evaluators)
 
         self.file_save = file_save
         self.save_session_every_inquiry = True
@@ -318,7 +320,8 @@ class RSVPCopyPhraseTask(Task):
     def set(self) -> None:
         """Initialize/reset parameters used in the execute run loop."""
 
-        self.spelled_text = str(self.copy_phrase[0: self.starting_spelled_letters()])
+        self.spelled_text = str(
+            self.copy_phrase[0: self.starting_spelled_letters()])
         self.last_selection = ""
         self.inq_counter = 0
         self.session = Session(
@@ -364,13 +367,15 @@ class RSVPCopyPhraseTask(Task):
         # ensure all required parameters are provided
         for param in RSVPCopyPhraseTask.PARAMETERS_USED:
             if param not in self.parameters:
-                raise TaskConfigurationException(f"parameter '{param}' is required")
+                raise TaskConfigurationException(
+                    f"parameter '{param}' is required")
 
         # ensure data / query parameters are set correctly
         buffer_len = self.parameters["task_buffer_length"]
         prestim = self.parameters["prestim_length"]
         poststim = (
-            self.parameters["trial_window"][1] - self.parameters["trial_window"][0]
+            self.parameters["trial_window"][1] -
+            self.parameters["trial_window"][0]
         )
         if buffer_len < prestim:
             raise TaskConfigurationException(
@@ -841,7 +846,8 @@ class RSVPCopyPhraseTask(Task):
         self.rsvp.update_task_bar(text=self.spelled_text)
 
         # Say Goodbye!
-        self.rsvp.info_text = trial_complete_message(self.window, self.parameters)
+        self.rsvp.info_text = trial_complete_message(
+            self.window, self.parameters)
         self.rsvp.draw_static()
         self.window.flip()
 
@@ -911,9 +917,11 @@ class RSVPCopyPhraseTask(Task):
             for content_type, client in self.daq.clients_by_type.items():
                 label = offset_label(content_type.name)
                 time = (
-                    client.offset(self.rsvp.first_stim_time) - self.rsvp.first_stim_time
+                    client.offset(self.rsvp.first_stim_time) -
+                    self.rsvp.first_stim_time
                 )
-                offset_triggers.append(Trigger(label, TriggerType.OFFSET, time))
+                offset_triggers.append(
+                    Trigger(label, TriggerType.OFFSET, time))
             self.trigger_handler.add_triggers(offset_triggers)
 
         triggers = convert_timing_triggers(
@@ -975,16 +983,19 @@ class TaskSummary:
     def as_dict(self) -> dict:
         """Computes the task summary data to append to the session."""
 
-        selections = [inq for inq in self.session.all_inquiries if inq.selection]
+        selections = [
+            inq for inq in self.session.all_inquiries if inq.selection]
         correct = [inq for inq in selections if inq.is_correct_decision]
         incorrect = [inq for inq in selections if not inq.is_correct_decision]
 
         # Note that SPACE is considered a symbol
-        correct_symbols = [inq for inq in correct if inq.selection != BACKSPACE_CHAR]
+        correct_symbols = [
+            inq for inq in correct if inq.selection != BACKSPACE_CHAR]
 
         btn_presses = self.btn_press_count()
         sel_count = len(selections)
-        switch_per_selection = (btn_presses / sel_count) if sel_count > 0 else 0
+        switch_per_selection = (
+            btn_presses / sel_count) if sel_count > 0 else 0
         accuracy = (len(correct) / sel_count) if sel_count > 0 else 0
 
         # Note that minutes includes startup time and any breaks.
@@ -1034,7 +1045,8 @@ class TaskSummary:
                 logger.info("Could not compute switch_response_time")
                 return None
 
-        response_times = [keypress.time - preview.time for preview, keypress in pairs]
+        response_times = [keypress.time -
+                          preview.time for preview, keypress in pairs]
         count = len(response_times)
         return sum(response_times) / count if count > 0 else None
 
@@ -1066,7 +1078,8 @@ def _init_copy_phrase_display(
     )
     stimuli = StimuliProperties(
         stim_font=parameters["font"],
-        stim_pos=(parameters["rsvp_stim_pos_x"], parameters["rsvp_stim_pos_y"]),
+        stim_pos=(parameters["rsvp_stim_pos_x"],
+                  parameters["rsvp_stim_pos_y"]),
         stim_height=parameters["rsvp_stim_height"],
         stim_inquiry=["A"] * parameters["stim_length"],
         stim_colors=[parameters["stim_color"]] * parameters["stim_length"],

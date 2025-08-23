@@ -113,7 +113,8 @@ class ClientManager():
         Args:
             client (LslAcquisitionClient): The client instance to add.
         """
-        content_type = ContentType(client.device_spec.content_type)  # type: ignore
+        content_type = ContentType(
+            client.device_spec.content_type)  # type: ignore
         self._clients[content_type] = client
 
     def get_client(
@@ -132,7 +133,8 @@ class ClientManager():
     def start_acquisition(self) -> None:  # type: ignore
         """Starts data acquisition for all clients."""
         for client in self.clients:
-            logger.info(f"Connecting to {client.device_spec.name}...")  # type: ignore
+            # type: ignore
+            logger.info(f"Connecting to {client.device_spec.name}...")
             client.start_acquisition()
 
     def stop_acquisition(self) -> None:  # type: ignore
@@ -183,7 +185,8 @@ class ClientManager():
                 adjusted_start = start + client.device_spec.static_offset
                 if client.device_spec.sample_rate > 0:
                     count = round(seconds * client.device_spec.sample_rate)
-                    logger.info(f'Need {count} records for processing {name} data')
+                    logger.info(
+                        f'Need {count} records for processing {name} data')
                     output[content_type] = client.get_data(start=adjusted_start,
                                                            limit=count)
                     data_count = len(output[content_type])
@@ -196,9 +199,11 @@ class ClientManager():
                     logger.info(f'Querying {name} data')
                     output[content_type] = client.get_data(start=adjusted_start,
                                                            end=adjusted_start + seconds)
-                    logger.info(f"Received {len(output[content_type])} records.")
+                    logger.info(
+                        f"Received {len(output[content_type])} records.")
             else:
-                logger.error(f"No client and device spec found for content type: {content_type.name}")
+                logger.error(
+                    f"No client and device spec found for content type: {content_type.name}")
         return output
 
     def cleanup(self) -> None:  # type: ignore

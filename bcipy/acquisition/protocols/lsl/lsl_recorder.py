@@ -3,7 +3,7 @@ import logging
 import time
 from multiprocessing import Queue
 from pathlib import Path
-from typing import List, Optional, Any
+from typing import Any, List, Optional
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 

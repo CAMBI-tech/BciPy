@@ -20,7 +20,8 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
         cls.gpt2_model = CausalLanguageModelAdapter(lang_model_name="gpt2")
         cls.gpt2_model.set_symbol_set(DEFAULT_SYMBOL_SET)
 
-        cls.opt_model = CausalLanguageModelAdapter(lang_model_name="facebook/opt-125m")
+        cls.opt_model = CausalLanguageModelAdapter(
+            lang_model_name="facebook/opt-125m")
         cls.opt_model.set_symbol_set(DEFAULT_SYMBOL_SET)
 
     @pytest.mark.slow
@@ -59,7 +60,8 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
     def test_invalid_model_path(self):
         """Test that the proper exception is thrown if given an invalid lm_path"""
         with self.assertRaises(InvalidLanguageModelException):
-            lm = CausalLanguageModelAdapter(lang_model_name="gpt2", lm_path="./phonypath/")
+            lm = CausalLanguageModelAdapter(
+                lang_model_name="gpt2", lm_path="./phonypath/")
             lm.set_symbol_set(DEFAULT_SYMBOL_SET)
 
     def test_non_mutable_evidence(self):
@@ -173,7 +175,8 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
 
     def test_gpt2_phrase(self):
         """Test that a phrase can be used for input with gpt2 model"""
-        symbol_probs = self.gpt2_model.predict_character(list("does_it_make_sen"))
+        symbol_probs = self.gpt2_model.predict_character(
+            list("does_it_make_sen"))
         most_likely_sym, _prob = sorted(symbol_probs,
                                         key=itemgetter(1),
                                         reverse=True)[0]
@@ -181,7 +184,8 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
 
     def test_opt_phrase(self):
         """Test that a phrase can be used for input with Facebook opt model"""
-        symbol_probs = self.opt_model.predict_character(list("does_it_make_sen"))
+        symbol_probs = self.opt_model.predict_character(
+            list("does_it_make_sen"))
         most_likely_sym, _prob = sorted(symbol_probs,
                                         key=itemgetter(1),
                                         reverse=True)[0]
@@ -205,14 +209,18 @@ class TestCausalLanguageModelAdapter(unittest.TestCase):
 
     def test_gpt2_nonzero_prob(self):
         """Test that all letters in the alphabet have nonzero probability except for backspace"""
-        symbol_probs = self.gpt2_model.predict_character(list("does_it_make_sens"))
-        prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
+        symbol_probs = self.gpt2_model.predict_character(
+            list("does_it_make_sens"))
+        prob_values = [item[1]
+                       for item in symbol_probs if item[0] != BACKSPACE_CHAR]
         for value in prob_values:
             self.assertTrue(value > 0)
 
     def test_opt_nonzero_prob(self):
         """Test that all letters in the alphabet have nonzero probability except for backspace"""
-        symbol_probs = self.opt_model.predict_character(list("does_it_make_sens"))
-        prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
+        symbol_probs = self.opt_model.predict_character(
+            list("does_it_make_sens"))
+        prob_values = [item[1]
+                       for item in symbol_probs if item[0] != BACKSPACE_CHAR]
         for value in prob_values:
             self.assertTrue(value > 0)

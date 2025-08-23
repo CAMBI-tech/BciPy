@@ -57,7 +57,8 @@ if __name__ == "__main__":
     # file zebras.txt: 1 sentences, 14 words, 0 OOVs
     # 0 zeroprobs, logprob= -15.2391 ppl= 10.374 ppl1= 12.260
     sentence = "i <sp> l i k e <sp> z e b r a s ."
-    print(f"Sentence '{sentence}', logprob = {model.score(sentence, bos=True, eos=True):.4f}\n")
+    print(
+        f"Sentence '{sentence}', logprob = {model.score(sentence, bos=True, eos=True):.4f}\n")
 
     # Stateful query going one token at-a-time
     # We'll flip flop between two state objects, one is the input and the other is the output
@@ -76,7 +77,8 @@ if __name__ == "__main__":
             score = model.BaseScore(state, token, state2)
         else:
             score = model.BaseScore(state2, token, state)
-        print(f"p( {token} | {prev} ...) = {pow(10, score):.6f} [ {score:.6f} ]")
+        print(
+            f"p( {token} | {prev} ...) = {pow(10, score):.6f} [ {score:.6f} ]")
         accum += score
         prev = token
     print(f"sum logprob = {accum:.4f}")

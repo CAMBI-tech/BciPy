@@ -5,7 +5,7 @@ in BciPy experiments, showing progress and allowing users to control task flow.
 """
 
 import logging
-from typing import Callable, List, Optional
+from typing import Callable, List
 
 from PyQt6.QtWidgets import (QApplication, QHBoxLayout, QLabel, QProgressBar,
                              QPushButton)
@@ -68,7 +68,8 @@ class IntertaskGUI(BCIUI):
             QLabel(f"({self.task_progress}/{self.total_tasks})")
         )
         self.progress = QProgressBar()
-        self.progress.setValue(int(self.task_progress / self.total_tasks * 100))
+        self.progress.setValue(
+            int(self.task_progress / self.total_tasks * 100))
         self.progress.setTextVisible(False)
         progress_container.addWidget(self.progress)
         self.contents.addLayout(progress_container)
@@ -98,7 +99,8 @@ class IntertaskGUI(BCIUI):
         Calls the exit callback and quits the application.
         """
         # This should exit Task executions
-        logger.info(f"Stopping Tasks... user requested. Using callback: {self.callback}")
+        logger.info(
+            f"Stopping Tasks... user requested. Using callback: {self.callback}")
         self.callback()
         self.quit()
         logger.info("Tasks Stopped")
@@ -119,6 +121,8 @@ class IntertaskGUI(BCIUI):
 
 
 if __name__ == "__main__":
-    tasks = ["RSVP Calibration", "IntertaskAction", "Matrix Calibration", "IntertaskAction"]
+    tasks = ["RSVP Calibration", "IntertaskAction",
+             "Matrix Calibration", "IntertaskAction"]
 
-    run_bciui(IntertaskGUI, tasks=tasks, next_task_index=1, exit_callback=lambda: print("Stopping orchestrator"))
+    run_bciui(IntertaskGUI, tasks=tasks, next_task_index=1,
+              exit_callback=lambda: print("Stopping orchestrator"))

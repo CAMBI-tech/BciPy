@@ -11,16 +11,16 @@ Note:
     mode should be separated from each other carefully.
 """
 
-from typing import Optional, Any
+from typing import Optional
 
-from psychopy import visual, core
+from psychopy import core, visual
 
 from bcipy.core.stimuli import resize_image
 from bcipy.core.symbols import SPACE_CHAR
-from bcipy.display.paradigm.rsvp.display import BCIPY_LOGO_PATH, RSVPDisplay
-from bcipy.display.components.task_bar import TaskBar
 from bcipy.display import InformationProperties, StimuliProperties
+from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams
+from bcipy.display.paradigm.rsvp.display import BCIPY_LOGO_PATH, RSVPDisplay
 
 
 class CopyPhraseDisplay(RSVPDisplay):
@@ -131,7 +131,8 @@ class CopyPhraseDisplay(RSVPDisplay):
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            self.logger.exception(
+                f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
         # Draw and flip the screen.

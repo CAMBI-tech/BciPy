@@ -30,9 +30,7 @@ class SwitchModel(SignalModel):
         self.error_prob = error_prob
 
     def fit(self, training_data: np.ndarray, training_labels: np.ndarray):
-        """
-        @override
-        """
+        """@override"""
         return self
 
     def evaluate(self, test_data: np.ndarray, test_labels: np.ndarray):
@@ -45,8 +43,7 @@ class SwitchModel(SignalModel):
 
     def compute_likelihood_ratio(self, data: np.array, inquiry: List[str],
                                  symbol_set: List[str]) -> np.array:
-        """
-        For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
+        """For each trial in `data`, compute a likelihood ratio to update that symbol's probability.
 
         Args:
             data (np.array): button press data data a single element of 0 or 1; shape (1,)

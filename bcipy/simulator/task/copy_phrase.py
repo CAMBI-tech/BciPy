@@ -37,7 +37,8 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
     try:
         return EvidenceType(evidence_type)
     except ValueError:
-        raise ValueError(f"Unsupported evidence type: {evidence_type}. Supported types: {EvidenceType.list()}")
+        raise ValueError(
+            f"Unsupported evidence type: {evidence_type}. Supported types: {EvidenceType.list()}")
 
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):

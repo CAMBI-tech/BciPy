@@ -8,7 +8,7 @@ import logging
 import subprocess
 import sys
 from dataclasses import dataclass
-from typing import List, Optional, Dict, Any, Tuple, Callable
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from bcipy.config import (BCIPY_ROOT, DEFAULT_PARAMETERS_PATH,
                           PROTOCOL_LOG_FILENAME, STATIC_IMAGES_PATH)
@@ -95,7 +95,8 @@ class BCInterface(BCIGui):
         """
         super(BCInterface, self).__init__(*args, **kwargs)
         self.parameter_location = DEFAULT_PARAMETERS_PATH
-        self.parameters = load_json_parameters(self.parameter_location, value_cast=True)
+        self.parameters = load_json_parameters(
+            self.parameter_location, value_cast=True)
 
         # Input fields
         self.user_input = None
@@ -158,7 +159,8 @@ class BCInterface(BCIGui):
         # Edit button
         self.add_button(
             message='Edit',
-            position=[self.ui_config.padding + self.ui_config.btn_width + 10, 450],
+            position=[self.ui_config.padding +
+                      self.ui_config.btn_width + 10, 450],
             size=[self.ui_config.btn_width, self.ui_config.btn_height],
             background_color='LightCoral',
             text_color='black',
@@ -166,7 +168,8 @@ class BCInterface(BCIGui):
             action=self.edit_parameters)
 
         # Train button
-        btn_auc_x = self.ui_config.padding + (self.ui_config.btn_width * 2) + 20
+        btn_auc_x = self.ui_config.padding + \
+            (self.ui_config.btn_width * 2) + 20
         self.add_button(
             message='Train',
             position=(btn_auc_x, 450),
@@ -348,7 +351,8 @@ class BCInterface(BCIGui):
             path (str): Path to the parameters file.
         """
         self.parameter_location = path
-        self.parameters = load_json_parameters(self.parameter_location, value_cast=True)
+        self.parameters = load_json_parameters(
+            self.parameter_location, value_cast=True)
         self.update_user_list(refresh=False)
 
     def select_parameters(self) -> None:
@@ -356,7 +360,7 @@ class BCInterface(BCIGui):
         response = self.get_filename_dialog(
             message='Select parameters file',
             file_type='JSON files (*.json)')
-        
+
         if not response:
             return
 
@@ -365,7 +369,8 @@ class BCInterface(BCIGui):
 
     def _handle_outdated_parameters(self) -> None:
         """Handle outdated parameter files by prompting for updates."""
-        default_parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+        default_parameters = load_json_parameters(
+            DEFAULT_PARAMETERS_PATH, value_cast=True)
         if not self.parameters.add_missing_items(default_parameters):
             return
 

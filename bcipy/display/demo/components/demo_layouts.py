@@ -267,7 +267,8 @@ def demo_matrix_positions(win: visual.Window):
     symbols = alphabet()
 
     norm_layout = centered(parent=win, width_pct=0.7, height_pct=0.75)
-    positions = symbol_positions(norm_layout, symbol_set=symbols, rows=5, columns=6)
+    positions = symbol_positions(
+        norm_layout, symbol_set=symbols, rows=5, columns=6)
 
     for sym, pos in zip(symbols, positions):
         stim = visual.TextStim(win,

@@ -102,7 +102,8 @@ def run_simulation(
     -------
     The simulation results will be saved in the output directory defined by OUTPUT_DIR.
     """
-    print(f"Running simulation for {user} with phrase {phrase} and language model {language_model}")
+    print(
+        f"Running simulation for {user} with phrase {phrase} and language model {language_model}")
 
     model_path = None
     params_path = None
@@ -120,7 +121,8 @@ def run_simulation(
                         model_path = pkl_file
                         break
         if not model_path:
-            raise FileNotFoundError(f"Could not find a model file in {mode_calibration_dir}")
+            raise FileNotFoundError(
+                f"Could not find a model file in {mode_calibration_dir}")
     else:
         model_path = signal_model_path
 
@@ -132,7 +134,8 @@ def run_simulation(
 
     # update the parameters with the new phrase, starting index, and language model
     phrase_length = len(phrase) - starting_index
-    print(f"Processing {user}:{phrase}:{language_model} of phrase length: {phrase_length}")
+    print(
+        f"Processing {user}:{phrase}:{language_model} of phrase length: {phrase_length}")
     parameters["task_text"] = phrase
     parameters["spelled_letters_count"] = starting_index
     parameters["lang_model_type"] = language_model
@@ -140,7 +143,8 @@ def run_simulation(
     # Below are task constraints that impact typing speed and letter selection. Here we use criteria based on phrase length
     #  and some sensible defaults.
     parameters["max_inq_len"] = phrase_length * 8
-    parameters["max_selections"] = phrase_length * 2  # This should be 2 * the length of the phrase to type
+    # This should be 2 * the length of the phrase to type
+    parameters["max_selections"] = phrase_length * 2
     parameters["min_inq_per_series"] = 1
     parameters["max_inq_per_series"] = 8
     parameters["backspace_always_shown"] = True
@@ -148,11 +152,14 @@ def run_simulation(
     parameters["lm_backspace_prob"] = 0.03571
     # signal model decision threshold for letter selection
     parameters["decision_threshold"] = 0.8
-    parameters["max_minutes"] = 120  # This is not used in the simulation. But we set it high to avoid any issues.
-    parameters["max_incorrect"] = int(phrase_length / 2)  # This should be half the length of the phrase to type
+    # This is not used in the simulation. But we set it high to avoid any issues.
+    parameters["max_minutes"] = 120
+    # This should be half the length of the phrase to type
+    parameters["max_incorrect"] = int(phrase_length / 2)
 
     # get the correct list of source directories from the data directory
-    source_dirs = [str(file) for file in data_dir.iterdir() if file.is_dir() and DATA_PATTERN in file.name]
+    source_dirs = [str(file) for file in data_dir.iterdir()
+                   if file.is_dir() and DATA_PATTERN in file.name]
     if not source_dirs:
         raise FileNotFoundError(f"Could not find a data directory for {user}")
 
@@ -171,7 +178,8 @@ def run_simulation(
         runner.run()
         metrics.report(sim_dir)
     except Exception as e:
-        print(f"Error running simulation for {user} with phrase {phrase} and language model {language_model}")
+        print(
+            f"Error running simulation for {user} with phrase {phrase} and language model {language_model}")
         print(e)
 
 
@@ -201,6 +209,7 @@ if __name__ == "__main__":
             progress_bar.set_description(f"Processing {user.name}")
             for phrase, starting_index in PHRASES:
                 for language_model in LANGUAGE_MODELS:
-                    run_simulation(user, user.name, phrase, starting_index, language_model)
+                    run_simulation(user, user.name, phrase,
+                                   starting_index, language_model)
 
     progress_bar.close()

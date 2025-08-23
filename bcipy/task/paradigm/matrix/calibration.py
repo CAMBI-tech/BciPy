@@ -130,7 +130,8 @@ def init_matrix_display(parameters: Parameters, window: visual.Window,
         info_text=[parameters['info_text']],
     )
     stimuli = StimuliProperties(stim_font=parameters['font'],
-                                stim_pos=(parameters['matrix_stim_pos_x'], parameters['matrix_stim_pos_y']),
+                                stim_pos=(
+                                    parameters['matrix_stim_pos_x'], parameters['matrix_stim_pos_y']),
                                 stim_height=parameters['matrix_stim_height'],
                                 stim_inquiry=[''] * parameters['stim_length'],
                                 stim_colors=[parameters['stim_color']] *

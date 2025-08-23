@@ -159,9 +159,11 @@ class RawData:
                 - fs: Sample rate
         """
         data, fs = self.by_channel(transform)
-        channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+        channels_to_remove = [idx for idx,
+                              value in enumerate(channel_map) if value == 0]
         data = np.delete(data, channels_to_remove, axis=0)
-        channels: List[str] = np.delete(self.channels, channels_to_remove, axis=0).tolist()
+        channels: List[str] = np.delete(
+            self.channels, channels_to_remove, axis=0).tolist()
 
         return data, channels, fs
 
@@ -320,7 +322,8 @@ class RawDataReader:
         Returns:
             RawDataReader: Self.
         """
-        self._file_obj = open(self.file_path, mode="r", encoding=DEFAULT_ENCODING)
+        self._file_obj = open(self.file_path, mode="r",
+                              encoding=DEFAULT_ENCODING)
         self.daq_type, self.sample_rate = read_metadata(self._file_obj)
         self._reader = csv.reader(self._file_obj)
         self.columns = next(self._reader)
@@ -464,7 +467,8 @@ def load(filename: str) -> RawData:
             data.rows = dataframe.values.tolist()
             return data
     except FileNotFoundError:
-        raise BciPyCoreException(f"\nError loading BciPy RawData. Valid data not found at: {filename}")
+        raise BciPyCoreException(
+            f"\nError loading BciPy RawData. Valid data not found at: {filename}")
 
 
 def read_metadata(file_obj: TextIO) -> Tuple[str, int]:

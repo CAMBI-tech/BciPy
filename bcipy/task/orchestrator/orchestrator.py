@@ -14,7 +14,7 @@ import subprocess
 import time
 from datetime import datetime
 from logging import Logger
-from typing import List, Optional, Type, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Type
 
 from bcipy.config import (DEFAULT_EXPERIMENT_ID, DEFAULT_PARAMETERS_FILENAME,
                           DEFAULT_PARAMETERS_PATH, DEFAULT_USER_ID,
@@ -78,7 +78,8 @@ class SessionOrchestrator:
         """
         self.parameters_path = parameters_path
         if not parameters:
-            self.parameters = load_json_parameters(parameters_path, value_cast=True)
+            self.parameters = load_json_parameters(
+                parameters_path, value_cast=True)
         else:
             # This allows for the parameters to be passed in directly and modified before executions
             self.parameters = parameters
@@ -96,11 +97,13 @@ class SessionOrchestrator:
         self.tasks: List[Type[Task]] = []
         self.task_names: List[str] = []
         self.session_data: List[TaskData] = []
-        self.save_folder = self._init_orchestrator_save_folder(self.parameters["data_save_loc"])
+        self.save_folder = self._init_orchestrator_save_folder(
+            self.parameters["data_save_loc"])
         self.logger = self._init_orchestrator_logger(self.save_folder)
 
         self.alert = alert
-        self.logger.info("Alerts are on") if self.alert else self.logger.info("Alerts are off")
+        self.logger.info("Alerts are on") if self.alert else self.logger.info(
+            "Alerts are off")
         self.visualize = visualize
         self.progress: int = 0
 
@@ -181,14 +184,16 @@ class SessionOrchestrator:
             self.logger.error(msg)
             raise Exception(msg)
 
-        self.logger.info(f"Session Orchestrator executing tasks in order: {self.task_names}")
+        self.logger.info(
+            f"Session Orchestrator executing tasks in order: {self.task_names}")
         for task in self.tasks:
             self.progress += 1
             if task.mode == TaskMode.COPYPHRASE:
                 self.set_next_phrase()
             try:
                 # initialize the task save folder and logger
-                self.logger.info(f"Initializing task {self.progress}/{len(self.tasks)} {task.name}")
+                self.logger.info(
+                    f"Initializing task {self.progress}/{len(self.tasks)} {task.name}")
                 data_save_location = self._init_task_save_folder(task)
                 self._init_task_logger(data_save_location)
 
@@ -221,13 +226,15 @@ class SessionOrchestrator:
                     if self.visualize:
                         # Visualize session data and fail silently if it errors
                         try:
-                            self.logger.info(f"Visualizing session data. Saving to {data_save_location}")
+                            self.logger.info(
+                                f"Visualizing session data. Saving to {data_save_location}")
                             subprocess.run(
                                 f'bcipy-erp-viz -s "{data_save_location}" '
                                 f'--parameters "{self.parameters_path}" --show --save',
                                 shell=True)
                         except Exception as e:
-                            self.logger.info(f'Error visualizing session data: {e}')
+                            self.logger.info(
+                                f'Error visualizing session data: {e}')
 
                 initialized_task = None
 
@@ -294,7 +301,8 @@ class SessionOrchestrator:
                 the directory already existing.
         """
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        save_directory = self.save_folder + f'{task.name.replace(" ", "_")}_{timestamp}/'
+        save_directory = self.save_folder + \
+            f'{task.name.replace(" ", "_")}_{timestamp}/'
         try:
             # make a directory to save task data to
             os.makedirs(save_directory)
@@ -312,7 +320,8 @@ class SessionOrchestrator:
                     "type": "str",
                 }
             )
-            self.parameters.save(save_directory, name=DEFAULT_PARAMETERS_FILENAME)
+            self.parameters.save(
+                save_directory, name=DEFAULT_PARAMETERS_FILENAME)
 
         except OSError as error:
             # If the error is anything other than file existing, raise an error

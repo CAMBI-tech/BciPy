@@ -7,7 +7,7 @@ import logging
 import os
 import sqlite3
 from dataclasses import dataclass, fields
-from typing import Any, Dict, List, Optional, Union, Iterator
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import openpyxl
 from openpyxl.chart import BarChart, Reference
@@ -17,7 +17,8 @@ from openpyxl.styles.colors import COLOR_INDEX
 from openpyxl.worksheet.worksheet import Worksheet
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
-                          SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME, SESSION_LOG_FILENAME)
+                          SESSION_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          SESSION_SUMMARY_FILENAME)
 from bcipy.io.load import load_json_parameters
 from bcipy.task.data import Session
 
@@ -179,7 +180,8 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
                         eye=evidence.get('eye_evidence', {}).get(stim, ''),
                         btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
-                        inq_position=stimuli.index(stim) if stim in stimuli else None,
+                        inq_position=stimuli.index(
+                            stim) if stim in stimuli else None,
                         is_target=int(inquiry.target_letter == stim),
                         presented=int(stim in stimuli),
                         above_threshold=int(evidence['likelihood'][stim] >

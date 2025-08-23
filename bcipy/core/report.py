@@ -1,7 +1,7 @@
 # mypy: disable-error-code="union-attr"
 import io
 from abc import ABC
-from typing import List, Optional, Tuple, Any, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 from matplotlib import pyplot as plt
 from matplotlib.figure import Figure
@@ -116,7 +116,8 @@ class SignalReportSection(ReportSection):
 
         if self.artifact.voltage_annotations:
             voltage_artifacts = f'<b>Voltage Artifacts:</b> {len(self.artifact.voltage_annotations)}'
-            voltage_section = Paragraph(voltage_artifacts, self.style['BodyText'])
+            voltage_section = Paragraph(
+                voltage_artifacts, self.style['BodyText'])
             artifact_report.append(voltage_section)
 
             # create a heatmap with the onset values of the voltage artifacts
@@ -259,7 +260,8 @@ class SessionReportSection(ReportSection):
         Returns:
             Paragraph: A reportlab Paragraph containing the section header.
         """
-        header = Paragraph(f'<u>{self.session_name}</u>', self.style['Heading3'])
+        header = Paragraph(
+            f'<u>{self.session_name}</u>', self.style['Heading3'])
         return header
 
 
@@ -348,7 +350,8 @@ class Report:
         Raises:
             AssertionError: If called after other elements have been added.
         """
-        assert len(self.elements) < 1, "The report header should be constructed before other elements"
+        assert len(
+            self.elements) < 1, "The report header should be constructed before other elements"
         report_title = Paragraph('BciPy Report', self.styles['Title'])
         logo = Image(BCIPY_FULL_LOGO_PATH, hAlign='LEFT', width=170, height=50)
         report_title.hAlign = 'CENTER'

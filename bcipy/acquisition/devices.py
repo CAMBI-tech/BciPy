@@ -4,7 +4,7 @@ import json
 import logging
 from enum import Enum, auto
 from pathlib import Path
-from typing import Dict, List, NamedTuple, Optional, Union, Any
+from typing import Any, Dict, List, NamedTuple, Optional, Union
 
 from bcipy.config import (DEFAULT_ENCODING, DEVICE_SPEC_PATH,
                           SESSION_LOG_FILENAME)
@@ -134,7 +134,8 @@ class DeviceSpec:
         assert data_type in SUPPORTED_DATA_TYPES
 
         self.name: str = name
-        self.channel_specs: List[ChannelSpec] = [channel_spec(ch) for ch in channels]
+        self.channel_specs: List[ChannelSpec] = [
+            channel_spec(ch) for ch in channels]
         self.sample_rate: int = int(sample_rate)
         self.content_type: str = content_type
         self.description: str = description or name
@@ -244,7 +245,8 @@ def make_device_spec(config: Dict[str, Any]) -> DeviceSpec:
                       description=config['description'],
                       excluded_from_analysis=config.get(
                           'excluded_from_analysis', []),
-                      status=DeviceStatus.from_str(config.get('status', default_status)),
+                      status=DeviceStatus.from_str(
+                          config.get('status', default_status)),
                       static_offset=config.get('static_offset', DEFAULT_STATIC_OFFSET))
 
 

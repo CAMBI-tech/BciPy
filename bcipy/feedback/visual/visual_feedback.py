@@ -6,7 +6,7 @@ visual-based feedback mechanisms using PsychoPy for stimulus presentation.
 
 # mypy: disable-error-code="return-value"
 from enum import Enum
-from typing import List, Tuple, Union, Dict, Any
+from typing import Any, Dict, List, Tuple, Union
 
 from psychopy import core, visual
 
@@ -170,4 +170,5 @@ class VisualFeedback(Feedback):
                 height=self.height_stim,
                 pos=pos,
                 color=fill_color)
-        raise ValueError(f'VisualFeedback asked to create a stimulus type=[{stimuli_type}] that is not supported.')
+        raise ValueError(
+            f'VisualFeedback asked to create a stimulus type=[{stimuli_type}] that is not supported.')

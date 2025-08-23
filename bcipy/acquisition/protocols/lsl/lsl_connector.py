@@ -2,7 +2,7 @@
 """Defines the driver for the Device for communicating with
 LabStreamingLayer (LSL)."""
 import logging
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import pylsl
 

@@ -1,7 +1,7 @@
 """Defines helper methods and variables related to input symbols"""
 import os
 from string import ascii_uppercase
-from typing import Callable, List, Optional, Any
+from typing import Any, Callable, List, Optional
 
 SPACE_CHAR = '_'
 BACKSPACE_CHAR = '<'

@@ -188,7 +188,8 @@ class ExperimentFieldCollection(QWidget):
             )
 
     def write_save_data(self) -> None:
-        save_experiment_field_data(self.save_data, self.save_path, self.file_name)
+        save_experiment_field_data(
+            self.save_data, self.save_path, self.file_name)
         self.throw_alert_message(
             title="Success",
             message=(
@@ -219,7 +220,8 @@ class ExperimentFieldCollection(QWidget):
         if message_response is AlertMessageResponse.OTE:
             msg.setStandardButtons(AlertResponse.OK.value)
         elif message_response is AlertMessageResponse.OCE:
-            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
+            msg.setStandardButtons(
+                AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
         return msg.exec()
 
@@ -261,7 +263,8 @@ class MainPanel(QWidget):
         vbox = QVBoxLayout()
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.form_panel.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -349,7 +352,8 @@ def start_app() -> None:
     )
 
     args = parser.parse_args()
-    start_experiment_field_collection_gui(args.experiment, args.path, args.filename, args.validate)
+    start_experiment_field_collection_gui(
+        args.experiment, args.path, args.filename, args.validate)
     sys.exit()
 
 

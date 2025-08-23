@@ -7,7 +7,7 @@ for stimulus presentation, timing control, and inquiry management.
 
 import logging
 import os.path as path
-from typing import List, Optional, Tuple, Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from psychopy import core, visual
 
@@ -317,7 +317,7 @@ class RSVPDisplay(Display):
             current_stim['time_to_present'] = self.stimuli_timing[idx]
 
             this_stimuli_size = (self.size_list_sti[idx] if self.size_list_sti
-                               else self.stimuli_height)
+                                 else self.stimuli_height)
 
             if stim.endswith('.png'):
                 current_stim['sti'] = self._create_stimulus(
@@ -330,7 +330,8 @@ class RSVPDisplay(Display):
                 current_stim['sti_label'] = path.splitext(
                     path.basename(stim))[0]
             else:
-                current_stim['sti'] = self._create_stimulus(mode='text', height=this_stimuli_size)
+                current_stim['sti'] = self._create_stimulus(
+                    mode='text', height=this_stimuli_size)
                 txt = stim
                 current_stim['sti'].text = txt if txt != SPACE_CHAR else self.space_char
                 current_stim['sti'].color = self.stimuli_colors[idx]
@@ -348,7 +349,8 @@ class RSVPDisplay(Display):
                         new_text_width = (
                             self.window.size[1] / monitor_height) * (
                                 monitor_width / monitor_height)
-                    new_text_height = (text_height * new_text_width) / text_width
+                    new_text_height = (
+                        text_height * new_text_width) / text_width
                     current_stim['sti'].height = new_text_height
             stim_info.append(current_stim)
         return stim_info
@@ -397,7 +399,8 @@ class RSVPDisplay(Display):
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            self.logger.exception(
+                f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
         wait_message.draw()
@@ -475,4 +478,5 @@ class RSVPDisplay(Display):
                 editable=False,
             )
         else:
-            raise ValueError(f'RSVPDisplay asked to create a stimulus type=[{mode}] that is not supported.')
+            raise ValueError(
+                f'RSVPDisplay asked to create a stimulus type=[{mode}] that is not supported.')

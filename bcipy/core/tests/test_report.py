@@ -61,7 +61,8 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.sections, [report_section])
         another_report_section = SessionReportSection(summary=summary)
         report.add(another_report_section)
-        self.assertEqual(report.sections, [report_section, another_report_section])
+        self.assertEqual(report.sections, [
+                         report_section, another_report_section])
 
     def test_save(self):
         report = Report(self.temp_dir)
@@ -69,12 +70,14 @@ class TestReport(unittest.TestCase):
         report_section = SessionReportSection(summary)
         report.add(report_section)
         report.save()
-        self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.temp_dir, report.name)))
 
     def test_save_no_sections(self):
         report = Report(self.temp_dir)
         report.save()
-        self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.temp_dir, report.name)))
 
     def test_complile_adds_section_and_header(self):
         report = Report(self.temp_dir)

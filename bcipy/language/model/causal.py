@@ -38,8 +38,10 @@ class CausalLanguageModelAdapter(LanguageModelAdapter):
 
         causal_params = self.parameters['causal']
 
-        self.beam_width = beam_width or int(causal_params['beam_width']['value'])
-        self.max_completed = max_completed or int(causal_params['max_completed']['value'])
+        self.beam_width = beam_width or int(
+            causal_params['beam_width']['value'])
+        self.max_completed = max_completed or int(
+            causal_params['max_completed']['value'])
 
         # We optionally load the model from a local directory, but if this is not
         # specified, we load a Hugging Face model

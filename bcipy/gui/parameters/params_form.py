@@ -250,8 +250,10 @@ class ParamsChanges(QWidget):
         self.layout = QVBoxLayout()
 
         self.changes_area = QScrollArea()
-        self.changes_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.changes_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.changes_area.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.changes_area.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.changes_area.setWidgetResizable(True)
         self.changes_area.setWidget(self.change_items)
         self.changes_area.setVisible(not self.collapsed)
@@ -334,8 +336,10 @@ class MainPanel(QWidget):
         vbox.addLayout(self.changes_panel)
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.form_panel.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.form_panel.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.form_panel.setWidgetResizable(True)
         self.form_panel.setFixedWidth(self.size[0])
         self.form_panel.setWidget(self.form)

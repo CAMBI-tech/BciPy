@@ -5,7 +5,7 @@ import logging
 import time
 import uuid
 from queue import Empty, Queue
-from typing import Generator, Optional, Tuple, List
+from typing import Generator, List, Optional, Tuple
 
 from pylsl import StreamInfo, StreamOutlet
 
@@ -56,7 +56,8 @@ class LslDataServer(StoppableThread):
         super(LslDataServer, self).__init__()
 
         self.device_spec = device_spec
-        self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
+        self.generator = generator or random_data_generator(
+            channel_count=device_spec.channel_count)
 
         log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
@@ -206,8 +207,10 @@ def main() -> None:
                         help="file containing data to be streamed; "
                         "if missing, random data will be served.")
     parser.add_argument('-m', '--markers', action="store_true", default=False)
-    parser.add_argument('-n', '--name', default='DSI-24', help='Name of the device spec to mock.')
-    parser.add_argument('-c', '--chunk_size', default=0, type=int, help='Chunk size')
+    parser.add_argument('-n', '--name', default='DSI-24',
+                        help='Name of the device spec to mock.')
+    parser.add_argument('-c', '--chunk_size', default=0,
+                        type=int, help='Chunk size')
     args = parser.parse_args()
 
     if args.filename:

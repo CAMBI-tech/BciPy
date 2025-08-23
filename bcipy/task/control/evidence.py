@@ -7,7 +7,7 @@ of evidence evaluation based on the input data type and desired output evidence 
 
 # mypy: disable-error-code="override"
 import logging
-from typing import List, Optional, Type, Any
+from typing import Any, List, Optional, Type
 
 import numpy as np
 
@@ -260,7 +260,8 @@ class GazeEvaluator(EvidenceEvaluator):
 
         # Extract left and right eye from all channels. Remove/replace nan values
         left_eye, right_eye, _, _, _, _ = extract_eye_info(data_all_channels)
-        reshaped_data = np.vstack((np.array(left_eye).T, np.array(right_eye).T))
+        reshaped_data = np.vstack(
+            (np.array(left_eye).T, np.array(right_eye).T))
 
         return reshaped_data
 

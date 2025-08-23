@@ -39,7 +39,8 @@ class TestSoundFeedback(unittest.TestCase):
             self.sound, self.fs)
 
         self.assertTrue(isinstance(resp, list))
-        self.assertEqual(resp[0], [self.auditory_feedback.feedback_timestamp_label, timestamp])
+        self.assertEqual(
+            resp[0], [self.auditory_feedback.feedback_timestamp_label, timestamp])
 
 
 if __name__ == '__main__':

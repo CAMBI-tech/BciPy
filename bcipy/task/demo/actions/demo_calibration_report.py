@@ -9,7 +9,8 @@ logging.basicConfig(level=logging.INFO)
 
 if __name__ == '__main__':
     import argparse
-    parser = argparse.ArgumentParser(description='Generate a calibration report from a session data file.')
+    parser = argparse.ArgumentParser(
+        description='Generate a calibration report from a session data file.')
     # Add the arguments: parameters and protocol
     parser.add_argument(
         '--parameters',
@@ -31,6 +32,7 @@ if __name__ == '__main__':
 
         The protocol path is the path to the directory containing the calibration sessions.
     """
-    action = BciPyCalibrationReportAction(parameters=parameters, save_path='.', protocol_path=args.protocol)
+    action = BciPyCalibrationReportAction(
+        parameters=parameters, save_path='.', protocol_path=args.protocol)
     print('Generating Report.')
     task_data = action.execute()

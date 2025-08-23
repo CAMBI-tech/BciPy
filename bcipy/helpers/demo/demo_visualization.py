@@ -86,7 +86,8 @@ if __name__ == '__main__':
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{path}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        exclusion=[TriggerType.PREVIEW,
+                   TriggerType.EVENT, TriggerType.FIXATION],
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 

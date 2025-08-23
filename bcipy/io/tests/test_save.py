@@ -99,11 +99,14 @@ class TestSaveStimuliPositions(unittest.TestCase):
         shutil.rmtree(self.save_directory)
 
     def test_save_stimuli_position_info_writes_json(self):
-        save_stimuli_position_info(self.stimuli_positions, self.save_directory, self.screen_info)
-        self.assertTrue(os.path.isfile(os.path.join(self.save_directory, self.filename)))
+        save_stimuli_position_info(
+            self.stimuli_positions, self.save_directory, self.screen_info)
+        self.assertTrue(os.path.isfile(
+            os.path.join(self.save_directory, self.filename)))
 
     def test_save_stimuli_position_info_writes_correct_json(self):
-        save_stimuli_position_info(self.stimuli_positions, self.save_directory, self.screen_info)
+        save_stimuli_position_info(
+            self.stimuli_positions, self.save_directory, self.screen_info)
         # load the json file
         with open(os.path.join(self.save_directory, self.filename)) as f:
             data = json.load(f)

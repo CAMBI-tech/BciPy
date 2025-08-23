@@ -216,7 +216,8 @@ class CopyPhraseWrapper:
                 prob_dist = self.conjugator.update_and_fuse(
                     {EvidenceType.LM: np.array(prior)})
             except Exception as fusion_error:
-                log.exception(f'Error fusing language model evidence!: {fusion_error}')
+                log.exception(
+                    f'Error fusing language model evidence!: {fusion_error}')
                 raise BciPyCoreException(fusion_error) from fusion_error
 
             # Get decision maker to give us back some decisions and stimuli

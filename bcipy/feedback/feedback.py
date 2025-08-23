@@ -7,10 +7,11 @@ mechanisms (sound, visual, etc.).
 
 import logging
 from abc import ABC, abstractmethod
-from typing import List, Any
 from enum import Enum
+from typing import Any, List
 
 from bcipy.config import SESSION_LOG_FILENAME
+
 
 class FeedbackType(Enum):
     VIS = 'Visual'
@@ -19,12 +20,12 @@ class FeedbackType(Enum):
     @classmethod
     def list(cls) -> List[str]:
         """Return a list of all available feedback types.
-        
+
         Returns:
             List[str]: List of feedback type values
         """
         return [feedback_type.value for feedback_type in cls]
-    
+
 
 class StimuliType(Enum):
     TEXT = 'Text'
@@ -33,7 +34,7 @@ class StimuliType(Enum):
     @classmethod
     def list(cls) -> List[str]:
         """Return a list of all available stimuli types.
-        
+
         Returns:
             List[str]: List of stimuli type values
         """

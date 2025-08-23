@@ -1,3 +1,8 @@
+"""Main entry point for BciPy application.
+
+This module provides the main function to initialize and run a BCI task or experiment.
+"""
+
 import argparse
 import logging
 import multiprocessing

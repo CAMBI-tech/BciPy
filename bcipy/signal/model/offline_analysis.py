@@ -33,7 +33,8 @@ from bcipy.signal.process import (ERPTransformParams, extract_eye_info,
                                   filter_inquiries, get_default_transform)
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
-logging.basicConfig(level=logging.INFO, format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
+logging.basicConfig(level=logging.INFO,
+                    format="[%(threadName)-9s][%(asctime)s][%(name)s][%(levelname)s]: %(message)s")
 
 
 def subset_data(data: np.ndarray, labels: np.ndarray, test_size: float, random_state: int = 0, swap_axes: bool = True):
@@ -150,12 +151,14 @@ def analyze_erp(
     )
 
     # update the trigger timing list to account for the initial trial window
-    corrected_trigger_timing = [timing + trial_window[0] for timing in trigger_timing]
+    corrected_trigger_timing = [timing + trial_window[0]
+                                for timing in trigger_timing]
 
     # Channel map can be checked from raw_data.csv file or the devices.json located in the acquisition module
     # The timestamp column [0] is already excluded.
     channel_map = analysis_channels(channels, device_spec)
-    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    channels_used = [channels[i]
+                     for i, keep in enumerate(channel_map) if keep == 1]
     log.info(f'Channels used in analysis: {channels_used}')
 
     data, fs = erp_data.by_channel()
@@ -175,7 +178,8 @@ def analyze_erp(
     inquiries, fs = filter_inquiries(inquiries, default_transform, sample_rate)
     inquiry_timing = update_inquiry_timing(inquiry_timing, downsample_rate)
     trial_duration_samples = int(window_length * fs)
-    data = model.reshaper.extract_trials(inquiries, trial_duration_samples, inquiry_timing)
+    data = model.reshaper.extract_trials(
+        inquiries, trial_duration_samples, inquiry_timing)
 
     # define the training classes using integers, where 0=nontargets/1=targets
     labels = inquiry_labels.flatten().tolist()
@@ -196,7 +200,8 @@ def analyze_erp(
     try:
         # Using an 80/20 split, report on balanced accuracy
         if estimate_balanced_acc:
-            train_data, test_data, train_labels, test_labels = subset_data(data, labels, test_size=0.2)
+            train_data, test_data, train_labels, test_labels = subset_data(
+                data, labels, test_size=0.2)
             dummy_model = PcaRdaKdeModel(k_folds=k_folds)
             dummy_model.fit(train_data, train_labels)
             probs = dummy_model.predict_proba(test_data)
@@ -209,7 +214,8 @@ def analyze_erp(
     except Exception as e:
         log.error(f"Error calculating balanced accuracy: {e}")
 
-    save_model(model, Path(data_folder, f"model_{device_spec.content_type.lower()}_{model.auc:0.4f}.pkl"))
+    save_model(model, Path(
+        data_folder, f"model_{device_spec.content_type.lower()}_{model.auc:0.4f}.pkl"))
     preferences.signal_model_directory = data_folder
 
     if save_figures or show_figures:
@@ -259,13 +265,15 @@ def analyze_gaze(
     sample_rate = gaze_data.sample_rate
 
     flash_time = parameters.get("time_flash")  # duration of each stimulus
-    stim_length = parameters.get("stim_length")  # number of stimuli per inquiry
+    # number of stimuli per inquiry
+    stim_length = parameters.get("stim_length")
 
     log.info(f"Channels read from csv: {channels}")
     log.info(f"Device type: {type_amp}, fs={sample_rate}")
     channel_map = analysis_channels(channels, device_spec)
 
-    channels_used = [channels[i] for i, keep in enumerate(channel_map) if keep == 1]
+    channels_used = [channels[i]
+                     for i, keep in enumerate(channel_map) if keep == 1]
     log.info(f'Channels used in analysis: {channels_used}')
 
     data, _fs = gaze_data.by_channel()
@@ -287,10 +295,12 @@ def analyze_gaze(
     )
     ''' Trigger_timing includes PROMPT and excludes FIXATION '''
 
-    target_symbols = trigger_symbols[0::stim_length + 1]  # target symbols are the PROMPT triggers
+    # target symbols are the PROMPT triggers
+    target_symbols = trigger_symbols[0::stim_length + 1]
     # Use trigger_timing to generate time windows for each letter flashing
     # Take every 10th trigger as the start point of timing.
-    inq_start = trigger_timing[1::stim_length + 1]  # start of each inquiry (here we jump over prompts)
+    # start of each inquiry (here we jump over prompts)
+    inq_start = trigger_timing[1::stim_length + 1]
 
     # Extract the inquiries dictionary with keys as target symbols and values as inquiry windows:
     inquiries_dict, inquiries_list, _ = model.reshaper(
@@ -304,13 +314,16 @@ def analyze_gaze(
     )
 
     # Apply preprocessing:
-    inquiry_length = inquiries_list[0].shape[1]  # number of time samples in each inquiry
+    # number of time samples in each inquiry
+    inquiry_length = inquiries_list[0].shape[1]
     predefined_dimensions = 4  # left_x, left_y, right_x, right_y
-    preprocessed_array = np.zeros((len(inquiries_list), predefined_dimensions, inquiry_length))
+    preprocessed_array = np.zeros(
+        (len(inquiries_list), predefined_dimensions, inquiry_length))
     # Extract left_x, left_y, right_x, right_y for each inquiry
     for j in range(len(inquiries_list)):
         left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_list[j])
-        preprocessed_array[j] = np.concatenate((left_eye.T, right_eye.T,), axis=0)
+        preprocessed_array[j] = np.concatenate(
+            (left_eye.T, right_eye.T,), axis=0)
 
     preprocessed_data = {i: [] for i in symbol_set}
     for i in symbol_set:
@@ -319,8 +332,10 @@ def analyze_gaze(
             continue
 
         for j in range(len(inquiries_dict[i])):
-            left_eye, right_eye, _, _, _, _ = extract_eye_info(inquiries_dict[i][j])
-            preprocessed_data[i].append((np.concatenate((left_eye.T, right_eye.T), axis=0)))
+            left_eye, right_eye, _, _, _, _ = extract_eye_info(
+                inquiries_dict[i][j])
+            preprocessed_data[i].append(
+                (np.concatenate((left_eye.T, right_eye.T), axis=0)))
             # Inquiries x All Dimensions (left_x, left_y, right_x, right_y) x Time
         preprocessed_data[i] = np.array(preprocessed_data[i])
 
@@ -362,7 +377,8 @@ def analyze_gaze(
         # Split the data into train and test sets & fit the model:
         centralized_gaze_data = np.zeros_like(preprocessed_array)
         for i, (_, sym) in enumerate(zip(preprocessed_array, target_symbols)):
-            centralized_gaze_data[i] = model.subtract_mean(preprocessed_array[i], time_average[sym])
+            centralized_gaze_data[i] = model.subtract_mean(
+                preprocessed_array[i], time_average[sym])
         reshaped_data = centralized_gaze_data.reshape(
             (len(centralized_gaze_data), inquiry_length * predefined_dimensions))
 
@@ -451,7 +467,8 @@ def offline_analysis(
                       if spec.is_active)
     active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
                              for device_spec in active_devices)
-    data_file_paths = [str(path) for path in active_raw_data_paths if path.exists()]
+    data_file_paths = [str(path)
+                       for path in active_raw_data_paths if path.exists()]
 
     num_devices = len(data_file_paths)
     assert num_devices >= 1 and num_devices < 3, (
@@ -488,7 +505,8 @@ def offline_analysis(
                 n_iterations=n_iterations,
             )
 
-            log.info(f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
+            log.info(
+                f"EEG Accuracy: {eeg_acc}, Gaze Accuracy: {gaze_acc}, Fusion Accuracy: {fusion_acc}")
             # The average gaze model accuracy:
             avg_testing_acc_gaze = round(np.mean(gaze_acc), 3)
 
@@ -556,9 +574,12 @@ def main():
         "--parameters_file",
         default=DEFAULT_PARAMETERS_PATH,
         help="Path to the BciPy parameters file.")
-    parser.add_argument("-s", "--save_figures", action="store_true", help="Save figures after training.")
-    parser.add_argument("-v", "--show_figures", action="store_true", help="Show figures after training.")
-    parser.add_argument("-i", "--iterations", type=int, default=10, help="Number of iterations for fusion analysis.")
+    parser.add_argument("-s", "--save_figures",
+                        action="store_true", help="Save figures after training.")
+    parser.add_argument("-v", "--show_figures",
+                        action="store_true", help="Show figures after training.")
+    parser.add_argument("-i", "--iterations", type=int, default=10,
+                        help="Number of iterations for fusion analysis.")
     parser.add_argument(
         "--alert",
         dest="alert",

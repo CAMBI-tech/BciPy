@@ -34,7 +34,8 @@ class Trial(NamedTuple):
     inquiry_pos: int
     symbol: str
     target: int
-    eeg: np.ndarray  # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
+    # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
+    eeg: np.ndarray
 
     def __str__(self):
         fields = [

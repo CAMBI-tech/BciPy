@@ -1,6 +1,6 @@
 """Utility functions for list processing."""
 from itertools import zip_longest
-from typing import Any, Callable, List, Optional, Union, Iterator, Tuple
+from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
 
 def destutter(items: List[Any], key: Callable = lambda x: x) -> List:

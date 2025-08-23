@@ -38,7 +38,8 @@ class TestOffset(unittest.TestCase):
             remove_pre_fixation=False,
             exclusion=[TriggerType.FIXATION],
             device_type='EEG')
-        self.triggers = list(zip(trigger_label, trigger_targetness, trigger_time))
+        self.triggers = list(
+            zip(trigger_label, trigger_targetness, trigger_time))
         self.diode_channel = 'TRG'
         self.stim_number = 10
 
@@ -62,7 +63,8 @@ class TestOffset(unittest.TestCase):
     def test_extract_data_latency_calculation(self):
         static_offset = 0.0
         recommend = False
-        resp = extract_data_latency_calculation(self.tmp_dir, recommend, static_offset)
+        resp = extract_data_latency_calculation(
+            self.tmp_dir, recommend, static_offset)
         self.assertIsInstance(resp[0], RawData)
         self.assertEqual(resp[1], self.triggers)
         self.assertEqual(resp[2], static_offset)
@@ -70,7 +72,8 @@ class TestOffset(unittest.TestCase):
     def test_extract_data_latency_calculation_resets_static_offset_on_recommend(self):
         static_offset = 1.0
         recommend = True
-        resp = extract_data_latency_calculation(self.tmp_dir, recommend, static_offset)
+        resp = extract_data_latency_calculation(
+            self.tmp_dir, recommend, static_offset)
         self.assertIsInstance(resp[0], RawData)
         self.assertEqual(resp[1], self.triggers)
         self.assertNotEqual(resp[2], static_offset)

@@ -7,7 +7,7 @@ including the abstract base Task class and supporting data structures.
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 
 from bcipy.config import STATIC_AUDIO_PATH
 from bcipy.core.parameters import Parameters
@@ -97,8 +97,10 @@ class Task(ABC):
             AssertionError: If name or mode attributes are not defined.
         """
         super(Task, self).__init__()
-        assert getattr(self, 'name', None) is not None, "Task must have a `name` attribute defined"
-        assert getattr(self, 'mode', None) is not None, "Task must have a `mode` attribute defined"
+        assert getattr(
+            self, 'name', None) is not None, "Task must have a `name` attribute defined"
+        assert getattr(
+            self, 'mode', None) is not None, "Task must have a `mode` attribute defined"
 
     @abstractmethod
     def execute(self) -> TaskData:
@@ -142,4 +144,5 @@ class Task(ABC):
         Plays the configured alert sound file to notify the user.
         The sound file is specified in the task parameters.
         """
-        play_sound(f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")
+        play_sound(
+            f"{STATIC_AUDIO_PATH}/{self.parameters['alert_sound_file']}")

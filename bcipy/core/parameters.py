@@ -4,7 +4,7 @@ from collections import abc
 from json import dump, load
 from pathlib import Path
 from re import fullmatch
-from typing import Any, Dict, NamedTuple, Optional, Tuple, Union, List
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Union
 
 from bcipy.config import DEFAULT_ENCODING, DEFAULT_PARAMETERS_PATH
 
@@ -401,7 +401,8 @@ class Parameters(dict):
         filename = name if name else source_name
         path = Path(location, filename)  # type: ignore
         with open(path, 'w', encoding=DEFAULT_ENCODING) as json_file:
-            dump(dict(self.entries()), json_file, ensure_ascii=False, indent=2)  # type: ignore
+            dump(dict(self.entries()), json_file,
+                 ensure_ascii=False, indent=2)  # type: ignore
         return str(path)
 
     def add_missing_items(self, parameters: 'Parameters') -> bool:

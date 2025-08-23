@@ -69,9 +69,3 @@ offset:
 
 offset-recommend:
 	python bcipy/helpers/offset.py -r -p
-
-build-api-docs:
-	sphinx-apidoc -f -o docs/reference/modules bcipy/
-
-serve-docs:
-	python -m http.server --directory docs/_build/html

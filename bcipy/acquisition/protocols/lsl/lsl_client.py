@@ -1,7 +1,7 @@
 """DataAcquisitionClient for LabStreamingLayer data sources."""
 import logging
 from multiprocessing import Queue
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 from pylsl import StreamInlet, local_clock, resolve_byprop
@@ -201,9 +201,11 @@ class LslAcquisitionClient:
         Stops the `LslRecordingThread` if active, closes the LSL `StreamInlet`,
         and clears the internal buffer.
         """
-        logger.info(f"Stopping Acquisition from {self.device_spec.name} ...")  # type: ignore
+        logger.info(
+            f"Stopping Acquisition from {self.device_spec.name} ...")  # type: ignore
         if self.recorder:
-            logger.info(f"Closing  {self.device_spec.name} data recorder")  # type: ignore
+            # type: ignore
+            logger.info(f"Closing  {self.device_spec.name} data recorder")
             self.recorder.stop()
             self.recorder.join()
         if self.inlet:
@@ -348,7 +350,8 @@ class LslAcquisitionClient:
         samples, timestamps = self.inlet.pull_chunk(  # type: ignore
             timeout=0.0, max_samples=self.max_samples)
         count = len(samples)
-        logger.debug(f"\t-> received {count} samples: {time_range(timestamps)}")
+        logger.debug(
+            f"\t-> received {count} samples: {time_range(timestamps)}")
         for sample, stamp in zip(samples, timestamps):
             self.buffer.append(Record(sample, stamp))  # type: ignore
         return count

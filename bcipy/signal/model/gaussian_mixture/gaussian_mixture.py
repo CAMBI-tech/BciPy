@@ -85,16 +85,19 @@ class GaussianProcess(SignalModel):
     def evaluate_likelihood(self, data: np.ndarray, symbols: List[str],
                             symbol_set: List[str]) -> np.ndarray:
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.evaluate_likelihood()")
+            raise SignalException(
+                "must use model.fit() before model.evaluate_likelihood()")
 
         gaze_log_likelihoods = np.zeros((len(symbol_set)))
         # Clip the pre-saved centralized data to the length of our test data
         cent_data = self.centralized_data[:, :, :data.shape[1]]
-        reshaped_data = cent_data.reshape((len(cent_data), data.shape[0] * data.shape[1]))
+        reshaped_data = cent_data.reshape(
+            (len(cent_data), data.shape[0] * data.shape[1]))
         cov_matrix = np.cov(reshaped_data, rowvar=False)
         reshaped_mean = np.mean(reshaped_data, axis=0)
         eps = 10e-1  # add a small value to the diagonal to make the cov matrix invertible
-        inv_cov_matrix = np.linalg.inv(cov_matrix + np.eye(len(cov_matrix)) * eps)
+        inv_cov_matrix = np.linalg.inv(
+            cov_matrix + np.eye(len(cov_matrix)) * eps)
 
         for idx, sym in enumerate(symbol_set):
             if self.time_average[sym] == []:
@@ -179,7 +182,8 @@ class GMIndividual(SignalModel):
         self.ready_to_predict = False
 
     def fit(self, train_data: np.ndarray):
-        model = GaussianMixture(n_components=self.num_components, random_state=self.random_state, init_params='kmeans')
+        model = GaussianMixture(n_components=self.num_components,
+                                random_state=self.random_state, init_params='kmeans')
         model.fit(train_data)
         self.model = model
 
@@ -202,7 +206,8 @@ class GMIndividual(SignalModel):
         --------
         accuracy_per_symbol: accuracy per symbol
         '''
-        accuracy_per_symbol = np.sum(predictions == true_labels) / len(predictions) * 100
+        accuracy_per_symbol = np.sum(
+            predictions == true_labels) / len(predictions) * 100
         self.acc = accuracy_per_symbol
         return accuracy_per_symbol
 
@@ -242,7 +247,8 @@ class GMIndividual(SignalModel):
         '''
         data_length, _ = test_data.shape
 
-        likelihoods = np.zeros((data_length, self.num_components), dtype=object)
+        likelihoods = np.zeros(
+            (data_length, self.num_components), dtype=object)
 
         # Find the likelihoods by insterting the test data into the pdf of each component
         for i in range(data_length):
@@ -250,17 +256,20 @@ class GMIndividual(SignalModel):
                 mu = self.means[k]
                 sigma = self.covs[k]
 
-                likelihoods[i, k] = stats.multivariate_normal.pdf(test_data[i], mu, sigma)
+                likelihoods[i, k] = stats.multivariate_normal.pdf(
+                    test_data[i], mu, sigma)
 
         return likelihoods
 
     def evaluate_likelihood(self, data: np.ndarray, symbols: List[str],
                             symbol_set: List[str]) -> np.ndarray:
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.evaluate_likelihood()")
+            raise SignalException(
+                "must use model.fit() before model.evaluate_likelihood()")
 
         data_length, _ = data.shape
-        likelihoods = np.zeros((data_length, self.num_components), dtype=object)
+        likelihoods = np.zeros(
+            (data_length, self.num_components), dtype=object)
 
         # Find the likelihoods by insterting the test data into the pdf of each component
         for i in range(data_length):
@@ -268,7 +277,8 @@ class GMIndividual(SignalModel):
                 mu = self.means[k]
                 sigma = self.covs[k]
 
-                likelihoods[i, k] = stats.multivariate_normal.pdf(data[i], mu, sigma)
+                likelihoods[i, k] = stats.multivariate_normal.pdf(
+                    data[i], mu, sigma)
 
         return likelihoods
 

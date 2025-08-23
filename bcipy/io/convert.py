@@ -89,7 +89,8 @@ def convert_to_bids(
         try:
             os.mkdir(output_dir)
         except OSError as e:
-            raise OSError(f"Failed to create output directory={output_dir}") from e
+            raise OSError(
+                f"Failed to create output directory={output_dir}") from e
     if format not in ConvertFormat.all():
         raise ValueError(f"Unsupported format={format}")
     if line_frequency not in [50, 60]:
@@ -190,16 +191,20 @@ def convert_eyetracking_to_bids(
     """
     # check that the raw data path exists
     if not os.path.exists(raw_data_path):
-        raise FileNotFoundError(f"Raw eye tracking data path={raw_data_path} does not exist")
+        raise FileNotFoundError(
+            f"Raw eye tracking data path={raw_data_path} does not exist")
 
     if not os.path.exists(output_dir):
-        raise FileNotFoundError(f"Output directory={output_dir} does not exist")
+        raise FileNotFoundError(
+            f"Output directory={output_dir} does not exist")
 
     found_files = glob.glob(f"{raw_data_path}/eyetracker*.csv")
     if len(found_files) == 0:
-        raise FileNotFoundError(f"No raw eye tracking data found in directory={raw_data_path}")
+        raise FileNotFoundError(
+            f"No raw eye tracking data found in directory={raw_data_path}")
     if len(found_files) > 1:
-        raise ValueError(f"Multiple raw eye tracking data files found in directory={raw_data_path}")
+        raise ValueError(
+            f"Multiple raw eye tracking data files found in directory={raw_data_path}")
 
     eye_tracking_file = found_files[0]
     logger.info(f"Found raw eye tracking data file={eye_tracking_file}")
@@ -405,7 +410,8 @@ def convert_to_mne(
         # if remove_system_channels is True, exclude the system and trigger channels (last two channels)
         if remove_system_channels:
             channel_map = [1] * (len(raw_data.channels) - 2)
-            channel_map.extend([0, 0])  # exclude the system and trigger channels
+            # exclude the system and trigger channels
+            channel_map.extend([0, 0])
         else:
             channel_map = [1] * len(raw_data.channels)
 
@@ -413,7 +419,8 @@ def convert_to_mne(
 
     # if no channel types provided, assume all channels are eeg
     if not channel_types:
-        logger.warning("No channel types provided. Assuming all channels are EEG.")
+        logger.warning(
+            "No channel types provided. Assuming all channels are EEG.")
         channel_types = ['eeg'] * len(channels)
 
     # check that number of channel types matches number of channels in the case custom channel types are provided
@@ -470,8 +477,10 @@ def norm_to_tobii(norm_units: Tuple[float, float]) -> Tuple[float, float]:
         and (1, 1) the lower right corner.
     """
     # check that the coordinates are within the bounds of the screen
-    assert norm_units[0] >= -1 and norm_units[0] <= 1, "X coordinate must be between -1 and 1"
-    assert norm_units[1] >= -1 and norm_units[1] <= 1, "Y coordinate must be between -1 and 1"
+    assert norm_units[0] >= - \
+        1 and norm_units[0] <= 1, "X coordinate must be between -1 and 1"
+    assert norm_units[1] >= - \
+        1 and norm_units[1] <= 1, "Y coordinate must be between -1 and 1"
 
     # convert PsychoPy norm units to Tobii units
     tobii_x = (norm_units[0] / 2) + 0.5
@@ -505,7 +514,8 @@ def BIDS_to_MNE(
     """
     # Check if the BIDS root path exists
     if not os.path.exists(bids_root_path):
-        raise FileNotFoundError(f"BIDS root path '{bids_root_path}' does not exist.")
+        raise FileNotFoundError(
+            f"BIDS root path '{bids_root_path}' does not exist.")
     logger.info(f"Searching for BIDS data in '{bids_root_path}'...")
 
     # Get the sessions from the BIDS root path using the session label (e.g., 'ses' or 'session')
@@ -521,12 +531,14 @@ def BIDS_to_MNE(
         tasks=task_name,
     )
     if not bid_paths:
-        raise FileNotFoundError(f"No matching BIDS files found in '{bids_root_path}'.")
+        raise FileNotFoundError(
+            f"No matching BIDS files found in '{bids_root_path}'.")
 
     raw_data = []
     for bid_path in bid_paths:
         if task_name and bid_path.task != task_name:
-            logger.debug(f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
+            logger.debug(
+                f"Skipping file '{bid_path}' due to task name [{task_name}] mismatch.")
             continue
 
         logger.info(f"Reading BIDS file: {bid_path}")

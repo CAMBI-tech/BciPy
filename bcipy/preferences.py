@@ -28,7 +28,7 @@ class Pref:
         self.name: Optional[str] = None
 
     def __set_name__(self, owner: Type[Any], name: str) -> None:
-        """Called when the class assigns a Pref to a class attribute.
+        """Assign the Pref descriptor to a class attribute.
 
         Args:
             owner: The class that owns this descriptor.
@@ -37,7 +37,7 @@ class Pref:
         self.name = name
 
     def __get__(self, instance: Any, owner: Optional[Type[Any]] = None) -> Any:
-        """Retrieve the value from the dict of entries.
+        """Return the value from the dict of entries.
 
         Args:
             instance: The instance that this descriptor is accessed from.

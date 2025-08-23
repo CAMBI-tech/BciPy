@@ -7,14 +7,12 @@ from typing import Callable, Dict, List, Optional, Tuple
 import matplotlib
 import matplotlib.ticker as ticker
 import numpy as np
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
-
-matplotlib.use('Qt5Agg')
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
 
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableProcess
@@ -26,6 +24,8 @@ from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
 from bcipy.signal.process.transform import Downsample, get_default_transform
+
+matplotlib.use('Qt5Agg')
 
 
 def filters(
@@ -92,14 +92,14 @@ class FixedHeightHBox(QWidget):
 
     def __init__(self, height: int = 30):
         super().__init__()
-        self.layout = QHBoxLayout() # type: ignore
+        self.layout = QHBoxLayout()  # type: ignore
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
         self.setFixedHeight(height)
 
     def addWidget(self, widget: QWidget):
         """Add the given widget to the layout"""
-        self.layout.addWidget(widget) # type: ignore
+        self.layout.addWidget(widget)  # type: ignore
 
 
 class ChannelControls(QWidget):
@@ -676,7 +676,7 @@ def main(data_file: Optional[str],
         display_monitor = non_primary_screens[0]
         monitor = display_monitor.geometry()
     else:
-        monitor = app.primaryScreen().geometry() # type: ignore
+        monitor = app.primaryScreen().geometry()  # type: ignore
 
     # increase height to 90% of monitor height and preserve aspect ratio.
     new_height = int(monitor.height() * 0.9)

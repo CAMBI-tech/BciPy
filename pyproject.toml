@@ -69,6 +69,7 @@ dev = [
     "coverage>=7.0",
     "flake8==5.0.4",
     "Flake8-pyproject==1.2.3",
+    "flake8-docstrings==1.7.0",
     "mypy==1.13",
     "lxml",
     "mock",
@@ -149,8 +150,16 @@ max_line_length = 120
 application_import_names = "bcipy"
 
 ignore = [
+    "D100",
+    "D105",
+    "D107",
+    "D202",
+    "D204",
     "D205",
     "D400",
+    "D401",
+    "D403",
+    "D412",
     "F841",
     "F821",
     "E402",
@@ -158,6 +167,13 @@ ignore = [
     "C901",
     "W503",
     "W504",
+]
+exclude = [
+    "tests",
+    "__init__.py",
+    "demo",
+    "signal", # TODO: Remove when fixed
+    "gui",
 ]
 
 [tool.isort]

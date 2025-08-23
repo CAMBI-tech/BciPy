@@ -11,7 +11,7 @@ log = logging.getLogger(SESSION_LOG_FILENAME)
 
 def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
                               split='uniform'):
-    """ Minimize cost of the overall -AUC.
+    """Minimize cost of the overall -AUC.
         Cost function: given a particular architecture (model). Fits the
         parameters to the folds with leave one fold out procedure. Calculates
         scores for the validation fold. Concatenates all calculated scores
@@ -31,7 +31,8 @@ def cost_cross_validation_auc(model, opt_el, x, y, param, k_folds=10,
             -auc(float): negative AUC value for current setup
             sc_h(ndarray[float]): scores computed for each validation fold
             y_valid_h(ndarray[int]): labels of the scores for each validation fold
-                y_valid_h[i] is basically the label for sc_h[i] """
+                y_valid_h[i] is basically the label for sc_h[i]
+    """
 
     num_samples = x.shape[1]
     fold_len = np.floor(float(num_samples) / k_folds)

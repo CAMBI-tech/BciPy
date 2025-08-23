@@ -4,9 +4,10 @@ This module provides auditory feedback functionality for BciPy, implementing
 sound-based feedback mechanisms using sounddevice for audio playback.
 """
 
+from typing import Any, Dict, List, Optional, Tuple, Union
+
 import sounddevice as sd
 from psychopy import core
-from typing import Dict, List, Optional, Tuple, Any, Union
 
 from bcipy.feedback.feedback import Feedback, FeedbackType
 
@@ -47,7 +48,7 @@ class AuditoryFeedback(Feedback):
         self.clock = clock
 
     def administer(self, sound: Union[List[float], List[List[float]]], fs: int,
-                  assertion: Optional[Any] = None) -> List[List[Union[str, float]]]:
+                   assertion: Optional[Any] = None) -> List[List[Union[str, float]]]:
         """Administer auditory feedback.
 
         Plays the provided sound and records the timing of the feedback.

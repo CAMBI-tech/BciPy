@@ -31,7 +31,8 @@ class QueryFilter(NamedTuple):
         origin = get_origin(field_type)
         if origin:
             options = get_args(field_type)
-            is_correct_type = any(isinstance(self.value, ftype) for ftype in options)
+            is_correct_type = any(isinstance(self.value, ftype)
+                                  for ftype in options)
         else:
             is_correct_type = isinstance(self.value, field_type)
 

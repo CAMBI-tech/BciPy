@@ -15,12 +15,14 @@ class TestSystemUtilsAlerts(unittest.TestCase):
     def test_is_connected_true(self):
         """Test that a computer connected to the internet returns True."""
         mock_conn = mock()
-        when(socket).create_connection(address=any, timeout=any).thenReturn(mock_conn)
+        when(socket).create_connection(
+            address=any, timeout=any).thenReturn(mock_conn)
         self.assertTrue(is_connected())
 
     def test_is_connected_false(self):
         """Test that a computer not connected to the internet returns False."""
-        when(socket).create_connection(address=any, timeout=any).thenRaise(OSError)
+        when(socket).create_connection(
+            address=any, timeout=any).thenRaise(OSError)
         self.assertFalse(is_connected())
 
     def test_is_battery_powered_true(self):

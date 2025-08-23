@@ -94,7 +94,8 @@ class TestGenerator(unittest.TestCase):
         with patch('bcipy.acquisition.datastream.generator.open',
                    mock_open(read_data=test_data), create=True):
 
-            gen = file_data_generator(filename='foo', header_row=1, channel_count=2)
+            gen = file_data_generator(
+                filename='foo', header_row=1, channel_count=2)
             generated_data = [next(gen) for _ in range(row_count)]
 
             for i, row in enumerate(generated_data):
@@ -163,7 +164,8 @@ class TestGenerator(unittest.TestCase):
         self.assertEqual(1, next(gen2))
         self.assertEqual(3, next(gen1))
 
-        new_rand_gen = generator_with_args(random_data_generator, channel_count=10)
+        new_rand_gen = generator_with_args(
+            random_data_generator, channel_count=10)
         gen3 = new_rand_gen()
         data = next(gen3)
         self.assertEqual(10, len(data))

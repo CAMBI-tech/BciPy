@@ -175,7 +175,8 @@ class DecisionMaker:
         self.inquiry_counter = 0
 
         self.stopping_evaluator = stopping_evaluator
-        self.stimuli_agent = stimuli_agent or RandomStimuliAgent(alphabet=self.alphabet)
+        self.stimuli_agent = stimuli_agent or RandomStimuliAgent(
+            alphabet=self.alphabet)
         self.last_selection = ''
 
         # Items shown in every inquiry

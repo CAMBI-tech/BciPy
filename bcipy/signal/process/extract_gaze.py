@@ -4,7 +4,7 @@ from bcipy.exceptions import SignalException
 
 
 def extract_eye_info(data):
-    """"Rearrange the dimensions of gaze inquiry data and reshape it to num_channels x num_samples
+    """Rearrange the dimensions of gaze inquiry data and reshape it to num_channels x num_samples
     Extract Left and Right Eye info from data. Remove all blinks, do necessary preprocessing.
     The data is extracted according to the channel map:
     ['device_ts, 'system_ts', 'left_x', 'left_y', 'left_pupil', 'right_x', 'right_y', 'right_pupil']
@@ -16,7 +16,6 @@ def extract_eye_info(data):
         left_eye (np.ndarray), left_pupil (List(float))
         right_eye (np.ndarray), right_pupil (List(float))
     """
-
     # Extract samples from channels
     lx = data[2, :]
     ly = data[3, :]

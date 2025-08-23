@@ -210,7 +210,8 @@ class IntertaskAction(Task):
         self.save_folder = save_path
         self.parameters = parameters
         assert progress is not None and tasks is not None, "Either progress or tasks must be provided"
-        self.next_task_index = progress  # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        # progress is 1-indexed, tasks is 0-indexed so we can use the same index
+        self.next_task_index = progress
         assert self.next_task_index >= 0, "Progress must be greater than 1 "
         self.tasks = tasks
         self.task_name = self.tasks[self.next_task_index].name
@@ -285,7 +286,8 @@ class ExperimentFieldCollectionAction(Task):
         logger.info(
             f"Collecting experiment field data for experiment {self.experiment_id} in save folder {self.save_folder}"
         )
-        start_experiment_field_collection_gui(self.experiment_id, self.save_folder)
+        start_experiment_field_collection_gui(
+            self.experiment_id, self.save_folder)
         return TaskData(
             save_path=self.save_folder,
             task_dict={
@@ -380,14 +382,17 @@ class BciPyCalibrationReportAction(Task):
                     task_name = path_data_dir.parts[-1].split('_')[0]
                     data_directories.append(path_data_dir)
                     # For each calibration directory, attempt to load the raw data
-                    signal_report_section = self.create_signal_report(path_data_dir)
-                    session_report = self.create_session_report(path_data_dir, task_name)
+                    signal_report_section = self.create_signal_report(
+                        path_data_dir)
+                    session_report = self.create_session_report(
+                        path_data_dir, task_name)
                     self.report_sections.append(session_report)
                     self.report.add(session_report)
                     self.report_sections.append(signal_report_section)
                     self.report.add(signal_report_section)
             if data_directories:
-                logger.info(f"Saving report generated from: {self.protocol_path}")
+                logger.info(
+                    f"Saving report generated from: {self.protocol_path}")
             else:
                 logger.info(f"No data found in {self.protocol_path}")
 
@@ -433,8 +438,10 @@ class BciPyCalibrationReportAction(Task):
 
         triggers = self.get_triggers(data_dir)
         # get figure handles
-        figure_handles = self.get_figure_handles(raw_data, channel_map, triggers)
-        artifact_detector = self.get_artifact_detector(raw_data, device_spec, triggers)
+        figure_handles = self.get_figure_handles(
+            raw_data, channel_map, triggers)
+        artifact_detector = self.get_artifact_detector(
+            raw_data, device_spec, triggers)
         return SignalReportSection(figure_handles, artifact_detector)
 
     def create_session_report(self, data_dir: Path, task_name: str) -> SessionReportSection:

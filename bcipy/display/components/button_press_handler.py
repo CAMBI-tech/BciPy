@@ -5,7 +5,7 @@ It includes abstract base classes and concrete implementations for different typ
 of button press handling strategies.
 """
 from abc import ABC, abstractmethod
-from typing import List, Optional, Type, Any
+from typing import Any, List, Optional, Type
 
 from psychopy import event
 from psychopy.core import CountdownTimer
@@ -75,7 +75,7 @@ class ButtonPressHandler(ABC):
 
     def _reset(self) -> None:
         """Reset any existing events and timers.
-        
+
         This method clears any existing keyboard events, resets the timer,
         and clears the current response.
         """
@@ -86,7 +86,7 @@ class ButtonPressHandler(ABC):
 
     def await_response(self) -> None:
         """Wait for a button response for a maximum number of seconds.
-        
+
         Wait period could end early if the class determines that some other
         criteria have been met (such as an acceptable response).
         """
@@ -104,7 +104,7 @@ class ButtonPressHandler(ABC):
 
     def _check_key_press(self) -> None:
         """Check for any key press events and set the latest as the response.
-        
+
         This method updates the response attribute with the latest key press
         information if a valid key press is detected.
         """

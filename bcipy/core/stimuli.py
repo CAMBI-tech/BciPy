@@ -176,7 +176,8 @@ class InquiryReshaper:
         """
         if channel_map:
             # Remove the channels that we are not interested in
-            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            channels_to_remove = [idx for idx,
+                                  value in enumerate(channel_map) if value == 0]
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         n_inquiry = len(timing_info) // trials_per_inquiry
@@ -184,15 +185,18 @@ class InquiryReshaper:
         prestimulus_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
+        triggers = list(
+            map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # First, find the longest inquiry in this experiment
         # We'll add or remove a few samples from all other inquiries, to match this length
         def get_inquiry_len(inq_trigs):
             return inq_trigs[-1] - inq_trigs[0]
 
-        longest_inquiry = max(grouper(triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
-        num_samples_per_inq = get_inquiry_len(longest_inquiry) + trial_duration_samples
+        longest_inquiry = max(grouper(
+            triggers, trials_per_inquiry, fillvalue='x'), key=lambda xy: get_inquiry_len(xy))
+        num_samples_per_inq = get_inquiry_len(
+            longest_inquiry) + trial_duration_samples
         buffer_samples = int(transformation_buffer * sample_rate)
 
         # Label for every inquiry
@@ -201,7 +205,8 @@ class InquiryReshaper:
         )  # maybe this can be configurable? return either class indexes or labels ('nontarget' etc)
         reshaped_data, reshaped_trigger_timing = [], []
         for inquiry_idx, trials_within_inquiry in enumerate(
-            grouper(zip(trial_targetness_label, triggers), trials_per_inquiry, fillvalue='x')
+            grouper(zip(trial_targetness_label, triggers),
+                    trials_per_inquiry, fillvalue='x')
         ):
             first_trigger = trials_within_inquiry[0][1]
 
@@ -212,7 +217,8 @@ class InquiryReshaper:
 
                 # If prestimulus buffer is used, we add it here so that trigger timings will
                 # still line up with trial onset
-                trial_triggers.append((trigger - first_trigger) + prestimulus_samples)
+                trial_triggers.append(
+                    (trigger - first_trigger) + prestimulus_samples)
             reshaped_trigger_timing.append(trial_triggers)
             start = first_trigger - prestimulus_samples
             stop = first_trigger + num_samples_per_inq + buffer_samples
@@ -318,7 +324,8 @@ class GazeReshaper:
         # A better way of handling this buffer would be subtracting the flash time of the
         # second symbol from the first symbol, which gives a more accurate representation of
         # "stimulus duration".
-        window_length = (stimulus_duration + buffer) * num_stimuli_per_inquiry   # in seconds
+        window_length = (stimulus_duration + buffer) * \
+            num_stimuli_per_inquiry   # in seconds
 
         reshaped_data = []
         # Merge the inquiries if they have the same target letter:
@@ -386,7 +393,8 @@ class TrialReshaper(Reshaper):
         """
         # Remove the channels that we are not interested in
         if channel_map:
-            channels_to_remove = [idx for idx, value in enumerate(channel_map) if value == 0]
+            channels_to_remove = [idx for idx,
+                                  value in enumerate(channel_map) if value == 0]
             eeg_data = np.delete(eeg_data, channels_to_remove, axis=0)
 
         # Number of samples we are interested per trial
@@ -394,7 +402,8 @@ class TrialReshaper(Reshaper):
         prestim_samples = int(prestimulus_length * sample_rate)
 
         # triggers in seconds are mapped to triggers in number of samples.
-        triggers = list(map(lambda x: int((x + offset) * sample_rate), timing_info))
+        triggers = list(
+            map(lambda x: int((x + offset) * sample_rate), timing_info))
 
         # Label for every trial in 0 or 1
         targetness_labels = np.zeros(len(triggers), dtype=np.longlong)
@@ -404,7 +413,8 @@ class TrialReshaper(Reshaper):
                 targetness_labels[trial_idx] = 1
 
             # For every channel append filtered channel data to trials
-            reshaped_trials.append(eeg_data[:, trigger - prestim_samples: trigger + poststim_samples])
+            reshaped_trials.append(
+                eeg_data[:, trigger - prestim_samples: trigger + poststim_samples])
 
         return np.stack(reshaped_trials, 1), targetness_labels
 
@@ -449,7 +459,8 @@ def mne_epochs(mne_data: RawArray,
     """
     old_annotations = mne_data.annotations
     if trigger_timing and trigger_labels:
-        new_annotations = Annotations(trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
+        new_annotations = Annotations(
+            trigger_timing, [trial_length] * len(trigger_timing), trigger_labels)
         all_annotations = new_annotations + old_annotations
     else:
         all_annotations = old_annotations
@@ -471,7 +482,8 @@ def mne_epochs(mne_data: RawArray,
         baseline=baseline,
         tmax=trial_length,
         tmin=tmin,
-        proj=False,  # apply SSP projection to data. Defaults to True in Epochs.
+        # apply SSP projection to data. Defaults to True in Epochs.
+        proj=False,
         reject_by_annotation=reject_by_annotation,
         preload=preload)
 
@@ -509,7 +521,6 @@ def inq_generator(query: List[str],
     Returns:
         InquirySchedule: Scheduled inquiries with samples, timing, and color.
     """
-
     if stim_order == StimuliOrder.ALPHABETICAL:
         query = alphabetize(query)
     else:
@@ -520,18 +531,14 @@ def inq_generator(query: List[str],
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
     for _ in range(inquiry_count):
-
         # append a fixation cross. if not text, append path to image fixation
         sample = [get_fixation(is_txt)]
-
         # construct the sample from the query
         sample += [i for i in query]
         samples.append(sample)
-
         times.append([timing[i] for i in range(len(timing) - 1)])
         base_timing = timing[-1]
         times[-1] += jittered_timing(base_timing, stim_jitter, stim_length)
-
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
@@ -553,17 +560,15 @@ def best_selection(selection_elements: list,
     Returns:
         list: Elements from selection_elements with the best values.
     """
-
     always_included = always_included or []
     # pick the top n items sorted by value in decreasing order
     elem_val = dict(zip(selection_elements, val))
-    best = sorted(selection_elements, key=elem_val.get, reverse=True)[0:len_query]
-
+    best = sorted(selection_elements, key=elem_val.get,
+                  reverse=True)[0:len_query]
     replacements = [
         item for item in always_included
         if item not in best and item in selection_elements
     ][0:len_query]
-
     if replacements:
         best[-len(replacements):] = replacements
     return best
@@ -594,42 +599,33 @@ def best_case_rsvp_inq_gen(alp: list,
     Returns:
         InquirySchedule: Scheduled inquiries with samples, timing, and color.
     """
-
     if len(alp) != len(session_stimuli):
         raise BciPyCoreException((
             f'Missing information about alphabet.'
             f'len(alp):{len(alp)} and len(session_stimuli):{len(session_stimuli)} should be same!'))
-
     if inq_constants and not set(inq_constants).issubset(alp):
         raise BciPyCoreException('Inquiry constants must be alphabet items.')
-
     # query for the best selection
     query = best_selection(
         alp,
         session_stimuli,
         stim_length,
         inq_constants)
-
     if stim_order == StimuliOrder.ALPHABETICAL:
         query = alphabetize(query)
     else:
         random.shuffle(query)
-
     # Init some lists to construct our stimuli with
     samples, times, colors = [], [], []
     for _ in range(stim_number):
-
         # append a fixation cross. if not text, append path to image fixation
         sample = [get_fixation(is_txt)]
-
         # construct the sample from the query
         sample += [i for i in query]
         samples.append(sample)
-
         # append timing
         times.append([timing[i] for i in range(len(timing) - 1)] +
                      [timing[-1]] * stim_length)
-
         # append colors
         colors.append([color[i] for i in range(len(color) - 1)] +
                       [color[-1]] * stim_length)
@@ -673,7 +669,6 @@ def generate_calibration_inquiries(
     ) == 3, "timing must include values for [target, fixation, stimuli]"
     time_target, time_fixation, time_stim = timing
     fixation = get_fixation(is_txt)
-
     target_indexes = generate_target_positions(inquiry_count, stim_per_inquiry,
                                                percentage_without_target,
                                                target_positions)
@@ -695,15 +690,12 @@ def generate_calibration_inquiries(
                                 next_targets=targets,
                                 last_target=target)
         samples.append([target, fixation, *inquiry])
-
     times = [[
         time_target, time_fixation,
         *generate_inquiry_stim_timing(time_stim, stim_per_inquiry, jitter)
     ] for _ in range(inquiry_count)]
-
     inquiry_colors = color[0:2] + [color[-1]] * stim_per_inquiry
     colors = [inquiry_colors for _ in range(inquiry_count)]
-
     return InquirySchedule(samples, times, colors)
 
 
@@ -756,14 +748,11 @@ def inquiry_stats(inquiries: List[List[str]],
     Returns:
         Dict[str, Dict[str, float]]: Dictionary with stats for target and nontarget symbols.
     """
-
     target_stats = dict(
         Series(Counter(inquiry_target_counts(inquiries, symbols))).describe())
-
     nontarget_stats = dict(
         Series(Counter(inquiry_nontarget_counts(inquiries,
                                                 symbols))).describe())
-
     return {
         'target_symbols': target_stats,
         'nontarget_symbols': nontarget_stats
@@ -947,32 +936,24 @@ def distributed_target_positions(inquiry_count: int, stim_per_inquiry: int,
     Returns:
         list: Targets array of target indexes to be chosen.
     """
-
     targets = []
-
     # find number of target and no_target inquiries
     target_count, no_target_count = compute_counts(inquiry_count,
                                                    percentage_without_target)
-
     # find number each target position is repeated, and remaining number
     num_pos = (int)(target_count / stim_per_inquiry)
     num_rem_pos = (target_count % stim_per_inquiry)
-
     # add correct number of None's for nontarget inquiries
     targets = [NO_TARGET_INDEX] * no_target_count
-
     # add distributed list of target positions
     targets.extend(list(range(stim_per_inquiry)) * num_pos)
-
     # pick leftover positions randomly
     rem_pos = list(range(stim_per_inquiry))
     random.shuffle(rem_pos)
     rem_pos = rem_pos[0:num_rem_pos]
     targets.extend(rem_pos)
-
     # shuffle targets
     random.shuffle(targets)
-
     return targets
 
 
@@ -990,7 +971,6 @@ def random_target_positions(inquiry_count: int, stim_per_inquiry: int,
     """
     target_count, no_target_count = compute_counts(inquiry_count,
                                                    percentage_without_target)
-
     target_indexes = [NO_TARGET_INDEX] * no_target_count
     target_indexes.extend(
         random.choices(range(stim_per_inquiry), k=target_count))
@@ -1012,7 +992,6 @@ def generate_targets(symbols: List[str], inquiry_count: int,
     """
     target_count, no_target_count = compute_counts(inquiry_count,
                                                    percentage_without_target)
-
     # each symbol should appear at least once
     symbol_count = int(target_count / len(symbols)) or 1
     targets = symbols * symbol_count
@@ -1047,7 +1026,6 @@ def get_task_info(experiment_length: int, task_color: str) -> Tuple[List[str], L
     Returns:
         Tuple[List[str], List[str]]: Tuple of task text and color arrays.
     """
-
     # Do list comprehensions to get the arrays for the task we need.
     task_text_list = ['%s/%s' % (stim + 1, experiment_length)
                       for stim in range(experiment_length)]
@@ -1114,24 +1092,20 @@ def play_sound(sound_file_path: str,
     Returns:
         list: Timing information for sound triggers.
     """
-
     try:
         # load in the sound file and wait some time before playing
         data, fs = sf.read(sound_file_path, dtype=dtype)
         core.wait(sound_load_buffer_time)
-
     except Exception as e:
         error_message = f'Sound file could not be found or initialized. \n Exception={e}'
         log.exception(error_message)
         raise BciPyCoreException(error_message)
-
     #  if timing is wanted, get trigger timing for this sound stimuli
     if track_timing:
         # if there is a timing callback for sound, evoke it
         if sound_callback is not None:
             sound_callback(experiment_clock, trigger_name)
         timing.append([trigger_name, experiment_clock.getTime()])
-
     # play our loaded sound and wait for some time before it's finished
     # NOTE: there is a measurable delay for calling sd.play. (~ 0.1 seconds;
     # which I believe happens prior to the sound playing).
@@ -1143,7 +1117,7 @@ def play_sound(sound_file_path: str,
 
 
 def soundfiles(directory: str) -> Iterator[str]:
-    """Cycle through sound files (.wav) in a directory and return the path to the next sound file on each iteration.
+    """Return an iterator cycling through .wav files in a directory.
 
     Args:
         directory (str): Path to the directory containing .wav files.

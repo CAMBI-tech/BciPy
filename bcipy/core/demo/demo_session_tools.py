@@ -48,6 +48,7 @@ if __name__ == "__main__":
         if args.csv:
             session_csv(session, csv_file=str(Path(path, "session.csv")))
         if args.charts:
-            session_excel(session, excel_file=str(Path(path, SESSION_SUMMARY_FILENAME)))
+            session_excel(session, excel_file=str(
+                Path(path, SESSION_SUMMARY_FILENAME)))
     else:
         main(path)
