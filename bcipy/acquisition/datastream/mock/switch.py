@@ -71,8 +71,7 @@ class SwitchGui(BCIGui):  # pragma: no cover
         self.switch: Switch = switch
 
     def build_buttons(self) -> None:
-        """Build all buttons necessary for the UI.
-        """
+        """Build all buttons necessary for the UI."""
         self.add_button(message='Click!',
                         position=[100, 75],
                         size=[50, 50],

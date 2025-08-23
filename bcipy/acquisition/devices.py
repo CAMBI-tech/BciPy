@@ -1,5 +1,5 @@
-"""Functionality for loading and querying configuration for supported hardware
-devices."""
+"""Functionality for loading and querying configuration for supported hardware devices."""
+
 import json
 import logging
 from enum import Enum, auto

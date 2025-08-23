@@ -49,16 +49,13 @@ def has_target(triggers: List[Trigger]) -> bool:
 
 def time_range(inquiry_triggers: List[Trigger],
                time_flash: float) -> Tuple[float, float]:
-    """Given a list of triggers for a given inquiry, determine the start and
-    end timestamps of that inquiry."""
+    """Given a list of triggers for a given inquiry, determine the start and end timestamps of that inquiry."""
     return (inquiry_triggers[0].time, inquiry_triggers[-1].time + time_flash)
 
 
 def inquiry_windows(trigger_path: Path,
                     time_flash: float) -> List[Tuple[float, float]]:
-    """Returns a list of (inquiry_start, inquiry_stop) timestamp pairs for
-    all inquiries in the trigger file."""
-
+    """Returns a list of (inquiry_start, inquiry_stop) timestamp pairs for all inquiries in the trigger file."""
     return [
         time_range(inq_triggers, time_flash)
         for inq_triggers in partition_triggers(trigger_path)
@@ -67,8 +64,7 @@ def inquiry_windows(trigger_path: Path,
 
 def should_press_switch(inquiry_triggers: List[Trigger],
                         button_press_mode: ButtonPressMode) -> bool:
-    """Determine if a marker should be written for the given inquiry
-    depending on the presence of a target and the button press mode."""
+    """Determine if a marker should be written for the given inquiry depending on the presence of a target and the button press mode."""
     return (button_press_mode == ButtonPressMode.ACCEPT
             and has_target(inquiry_triggers)) or (
                 button_press_mode == ButtonPressMode.REJECT

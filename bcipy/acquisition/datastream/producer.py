@@ -1,5 +1,5 @@
-"""Code for mocking an EEG data stream. Code in this module produces data
-at a specified frequency."""
+"""Code for mocking an EEG data stream. Code in this module produces data at a specified frequency."""
+
 import logging
 import random
 import threading

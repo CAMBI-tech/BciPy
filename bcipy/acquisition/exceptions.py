@@ -1,4 +1,6 @@
 class InvalidClockError(Exception):
+    """Exception raised for invalid clock operations in acquisition."""
+
     def __init__(self, msg: str):
         """Initializes the InvalidClockError with a message.
 

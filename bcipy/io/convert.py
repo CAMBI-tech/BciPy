@@ -27,6 +27,7 @@ FILE_LENGTH_LIMIT = 150
 
 
 class ConvertFormat(Enum):
+    """Enumeration of supported data conversion formats for BciPy raw data output."""
 
     BV = 'BrainVision'
     EDF = 'EDF'
@@ -34,14 +35,17 @@ class ConvertFormat(Enum):
     EEGLAB = 'EEGLAB'
 
     def __str__(self):
+        """Return the string representation of the format."""
         return self.value
 
     @staticmethod
     def all():
+        """Return a list of all ConvertFormat enum members."""
         return [format for format in ConvertFormat]
 
     @staticmethod
     def values():
+        """Return a list of all ConvertFormat values as strings."""
         return [format.value for format in ConvertFormat]
 
 

@@ -203,6 +203,7 @@ class RSVPCopyPhraseTask(Task):
             parameters: Parameters,
             data_save_location: str,
             fake: bool = False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+        """Set up acquisition and return client manager, data servers, and display."""
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
@@ -214,9 +215,11 @@ class RSVPCopyPhraseTask(Task):
         return daq, servers, display
 
     def get_language_model(self) -> LanguageModel:
+        """Return the initialized language model."""
         return init_language_model(self.parameters)
 
     def get_signal_models(self) -> Optional[List[SignalModel]]:
+        """Return the list of signal models, or an empty list if fake."""
         if not self.fake:
             try:
                 signal_models = choose_signal_models(
@@ -229,6 +232,7 @@ class RSVPCopyPhraseTask(Task):
         return []
 
     def cleanup(self):
+        """Clean up resources and save session data."""
         self.exit_display()
         self.write_offset_trigger()
         self.save_session_data()
@@ -258,6 +262,7 @@ class RSVPCopyPhraseTask(Task):
                 logger.exception(str(e))
 
     def save_session_data(self) -> None:
+        """Save the session data and summary to disk."""
         self.session.task_summary = TaskSummary(
             self.session,
             self.parameters["show_preview_inquiry"],
@@ -305,6 +310,7 @@ class RSVPCopyPhraseTask(Task):
             self, signal_models: List[SignalModel],
             evidence_evaluators: List[EvidenceEvaluator]
     ) -> List[EvidenceType]:
+        """Initialize evidence types for the simulation."""
         evidence_types = [EvidenceType.LM]
         evidence_types.extend(
             [evaluator.produces for evaluator in evidence_evaluators])
@@ -1013,9 +1019,7 @@ class TaskSummary:
         }
 
     def btn_press_count(self) -> int:
-        """Compute the number of times the switch was activated. Returns 0 if
-        inquiry preview mode was off or mode was preview-only."""
-
+        """Compute the number of times the switch was activated. Returns 0 if inquiry preview mode was off or mode was preview-only."""
         if not self.show_preview or self.preview_mode == 0:
             return 0
 

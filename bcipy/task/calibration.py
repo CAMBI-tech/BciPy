@@ -127,6 +127,7 @@ class BaseCalibrationTask(Task):
             parameters: Parameters,
             data_save_location: str,
             fake: bool = False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+        """Set up acquisition and return client manager, data servers, and window."""
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
@@ -214,7 +215,7 @@ class BaseCalibrationTask(Task):
                                     task_data=self.session_task_data())
 
     def session_task_data(self) -> Optional[Dict[str, Any]]:
-        """"Task-specific session data"""
+        """Task-specific session data."""
         return None
 
     def trigger_type(self,
@@ -347,8 +348,7 @@ class BaseCalibrationTask(Task):
             convert_timing_triggers(timing, timing[0][0], self.trigger_type))
 
     def write_offset_trigger(self) -> None:
-        """Append an offset value to the end of the trigger file.
-        """
+        """Append an offset value to the end of the trigger file."""
         # To help support future refactoring or use of lsl timestamps only
         # we write only the sample offset here.
         triggers = []

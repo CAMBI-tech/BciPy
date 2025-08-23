@@ -13,6 +13,7 @@ class TargetNontargetSampler(Sampler):
     """Sampler that that queries based on target/non-target label."""
 
     def sample(self, state: SimState) -> List[Trial]:
+        """Sample trials for each symbol in the display alphabet, labeling as target or non-target."""
         sample_rows = []
         for symbol in state.display_alphabet:
             filters = self.query_filters(

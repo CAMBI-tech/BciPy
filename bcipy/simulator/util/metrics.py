@@ -168,8 +168,7 @@ def plot_results(df: pd.DataFrame,
 
 
 def report(sim_dir: str, show_plots: bool = False) -> None:
-    """Summarize the data, write as a JSON file, and output a summary to
-    the top level log file."""
+    """Summarize the data, write as a JSON file, and output a summary to the top level log file."""
     summary = summarize(sim_dir)
     save_json_data(summary, sim_dir, SUMMARY_DATA_FILE_NAME)
 

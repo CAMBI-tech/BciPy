@@ -7,9 +7,7 @@ from bcipy.language.model.adapter import LanguageModelAdapter
 
 
 class MixtureLanguageModelAdapter(LanguageModelAdapter):
-    """
-        Character language model that mixes any combination of other models
-    """
+    """Character language model that mixes any combination of other models."""
 
     supported_lm_types = MixtureLanguageModel.supported_lm_types
 

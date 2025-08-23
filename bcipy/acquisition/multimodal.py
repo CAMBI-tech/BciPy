@@ -89,14 +89,12 @@ class ClientManager():
 
     @property
     def device_content_types(self) -> List[ContentType]:
-        """Returns a list of `ContentType` enums provided by the configured devices.
-        """
+        """Returns a list of `ContentType` enums provided by the configured devices."""
         return list(self._clients.keys())
 
     @property
     def active_device_content_types(self) -> List[ContentType]:
-        """Returns a list of `ContentType` enums provided by the active configured
-        devices."""
+        """Returns a list of `ContentType` enums provided by the active configured devices."""
         return [
             content_type for content_type, client in self._clients.items()
             if client.device_spec and client.device_spec.is_active  # type: ignore

@@ -32,7 +32,6 @@ def update_latest_params(parameters: Parameters) -> None:
 class TaskFactory:
     """Constructs the hierarchy of objects necessary for initializing a task.
 
-
     Parameters
     ----------
         parameters : Parameters
@@ -82,7 +81,8 @@ class TaskFactory:
     def log_state(self):
         """Log configured objects of interest. This should be done after the
         sim directory has been created and TOP_LEVEL_LOGGER has been configured,
-        which may happen some time after object construction."""
+        which may happen some time after object construction.
+        """
         logger.debug("Language model:")
         logger.debug(f"\t{repr(self.language_model)}")
         logger.debug("Models -> Samplers:")

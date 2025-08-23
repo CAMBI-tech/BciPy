@@ -428,8 +428,7 @@ def get_evaluator(
 
 def find_matching_evaluator(
         signal_model: SignalModel) -> Type[EvidenceEvaluator]:
-    """Find the first EvidenceEvaluator compatible with the given signal
-    model."""
+    """Find the first EvidenceEvaluator compatible with the given signal model."""
     content_type = ContentType(signal_model.metadata.device_spec.content_type)
     # Metadata may provide an EvidenceType with a model so the same data source can
     # be used to produce multiple types of evidence (ex. alpha)
@@ -440,7 +439,6 @@ def find_matching_evaluator(
             evidence_type = EvidenceType(model_output.upper())
         except ValueError:
             log.error(f"Unsupported evidence type: {model_output}")
-
     return get_evaluator(content_type, evidence_type)
 
 
@@ -448,7 +446,6 @@ def init_evidence_evaluator(
         symbol_set: List[str],
         signal_model: SignalModel,
         parameters: Optional[Parameters] = None) -> EvidenceEvaluator:
-    """Find an EvidenceEvaluator that matches the given signal_model and
-    initialize it."""
+    """Find an EvidenceEvaluator that matches the given signal_model and initialize it."""
     evaluator_class = find_matching_evaluator(signal_model)
     return evaluator_class(symbol_set, signal_model, parameters)

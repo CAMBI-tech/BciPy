@@ -1,6 +1,6 @@
 # mypy: disable-error-code="misc"
-"""Data server that streams EEG data over a LabStreamingLayer StreamOutlet
-using pylsl."""
+"""Data server that streams EEG data over a LabStreamingLayer StreamOutlet using pylsl."""
+
 import logging
 import time
 import uuid

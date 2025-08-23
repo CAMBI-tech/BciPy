@@ -4,7 +4,7 @@ This module provides auditory feedback functionality for BciPy, implementing
 sound-based feedback mechanisms using sounddevice for audio playback.
 """
 
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 import sounddevice as sd
 from psychopy import core

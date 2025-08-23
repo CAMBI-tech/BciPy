@@ -47,7 +47,8 @@ class QueryFilter(NamedTuple):
 class DataEngine(ABC):
     """Abstract class for an object that loads data from one or more sources,
     processes the data using a provided processor, and provides an interface
-    for querying the processed data."""
+    for querying the processed data.
+    """
 
     def load(self):
         """Load data from sources."""

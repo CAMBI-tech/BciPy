@@ -1,6 +1,5 @@
-# pylint: disable=fixme
-"""Defines the driver for the Device for communicating with
-LabStreamingLayer (LSL)."""
+"""Defines the driver for the Device for communicating with LabStreamingLayer (LSL)."""
+
 import logging
 from typing import Any, Dict, List, Optional, Tuple
 

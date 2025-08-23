@@ -14,6 +14,8 @@ from bcipy.config import SESSION_LOG_FILENAME
 
 
 class FeedbackType(Enum):
+    """Enumeration of feedback types supported by BciPy (Visual, Audio)."""
+
     VIS = 'Visual'
     AUD = 'Audio'
 
@@ -28,6 +30,8 @@ class FeedbackType(Enum):
 
 
 class StimuliType(Enum):
+    """Enumeration of stimuli types supported by BciPy (Text, Image)."""
+
     TEXT = 'Text'
     IMAGE = 'Image'
 

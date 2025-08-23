@@ -1,5 +1,7 @@
 """Task that will replay sessions to compare model predictions on that data.
-Used for testing if changes to a model result in more easily differentiated signals."""
+Used for testing if changes to a model result in more easily differentiated signals.
+"""
+
 import argparse
 import logging
 from pathlib import Path

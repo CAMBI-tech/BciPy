@@ -80,7 +80,7 @@ class EvidenceFusion:
         return likelihood
 
     def reset_history(self) -> None:
-        """ Clears evidence history """
+        """Clears evidence history."""
         for value in self.evidence_history.values():
             del value[:]
         self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)

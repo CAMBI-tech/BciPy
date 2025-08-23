@@ -34,7 +34,8 @@ def format_samples(sample_rows: List[Trial]) -> str:
 
 class Sampler(ABC):
     """Represents a strategy for sampling signal model data from a DataEngine
-    comprised of signal data from one or more data collection sessions."""
+    comprised of signal data from one or more data collection sessions.
+    """
 
     def __init__(self, data_engine: RawDataEngine):
         self.data_engine: RawDataEngine = data_engine

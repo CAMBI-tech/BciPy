@@ -43,7 +43,8 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     """CopyPhraseTask that simulates user interactions by sampling data
-    from a DataSampler."""
+    from a DataSampler.
+    """
 
     name = "Simulator Copy Phrase"
     paradigm = "RSVP"
@@ -84,6 +85,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
+        """Initialize evidence evaluators for the simulation (returns empty list)."""
         # Evidence will be sampled so we don't need to evaluate raw data.
         return []
 
@@ -91,21 +93,25 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             self, signal_models: List[SignalModel],
             evidence_evaluators: List[EvidenceEvaluator]
     ) -> List[EvidenceType]:
+        """Initialize evidence types for the simulation."""
         evidence_types = set(
             [get_evidence_type(model) for model in self.signal_models])
         return [EvidenceType.LM, *evidence_types]
 
     def init_display(self) -> Display:
+        """Initialize the display for the simulation (returns NullDisplay)."""
         return NullDisplay()
 
     def init_acquisition(self) -> ClientManager:
-        """Override to do nothing"""
+        """Override to do nothing."""
         return NullDAQ()
 
     def init_feedback(self) -> Optional[VisualFeedback]:
+        """Initialize feedback for the simulation (returns None)."""
         return None
 
     def user_wants_to_continue(self) -> bool:
+        """Always continue for simulation purposes."""
         return True
 
     def wait(self, seconds: Optional[float] = None) -> None:
@@ -114,8 +120,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     def present_inquiry(
         self, inquiry_schedule: InquirySchedule
     ) -> Tuple[List[Tuple[str, float]], bool]:
-        """Override ; returns empty timing info; always proceed for inquiry
-        preview"""
+        """Override; returns empty timing info; always proceed for inquiry preview."""
         return [], True
 
     def show_feedback(self, selection: str, correct: bool = True) -> None:
@@ -123,12 +128,14 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def compute_button_press_evidence(
             self, proceed: bool) -> Optional[Tuple[EvidenceType, List[float]]]:
+        """Compute button press evidence for simulation (returns None)."""
         return None
 
     def compute_device_evidence(
             self,
             stim_times: List[List],
             proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
+        """Compute device evidence for simulation."""
 
         current_state = self.get_sim_state()
         self.logger.debug("Computing evidence with sim_state:")
@@ -150,6 +157,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
         return evidences
 
     def cleanup(self):
+        """Cleanup after simulation, including saving session data and removing empty trigger files."""
         self.save_session_data()
         trigger_path = Path(self.trigger_handler.file_path)
         self.trigger_handler.close()
@@ -162,6 +170,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
         """Close the UI and cleanup."""
 
     def elapsed_seconds(self) -> float:
+        """Return elapsed seconds for simulation (always 0.0)."""
         return 0.0
 
     def write_offset_trigger(self) -> None:

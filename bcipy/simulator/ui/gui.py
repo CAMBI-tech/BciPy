@@ -186,6 +186,7 @@ class ChooseDirectoryInput(ChooseFileInput):
                          change_event=change_event)
 
     def prompt_path(self):
+        """Prompt the user to select a directory path."""
         dialog = FileDialog()
         directory = ''
         if preferences.last_directory:
@@ -493,13 +494,13 @@ def sim_runs_control(value: int = 1) -> QWidget:
 
 
 class SimConfigForm(QWidget):
-    """The InputForm class is a QWidget that creates controls/inputs for each simulation parameter
+    """The InputForm class is a QWidget that creates controls/inputs for each simulation parameter.
 
-  Parameters:
-  -----------
-    json_file - path of parameters file to be edited.
-    width - optional; used to set the width of the form controls.
-  """
+    Parameters
+    ----------
+        json_file - path of parameters file to be edited.
+        width - optional; used to set the width of the form controls.
+    """
 
     def __init__(self,
                  width: int = 400,
@@ -591,8 +592,7 @@ class SimConfigForm(QWidget):
                     and self.data_paths and self.sampler and self.sampler_args)
 
     def command(self) -> str:
-        """Command equivalent to to the result of the interactive selection of
-        simulator inputs."""
+        """Command equivalent to the result of the interactive selection of simulator inputs."""
         if not self.command_valid():
             return ''
 
