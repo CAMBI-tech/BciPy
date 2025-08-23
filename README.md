@@ -3,8 +3,9 @@
 [![BciPy](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml/badge.svg)](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/96e31da4b0554dae9db7a1356556b0d5)](https://app.codacy.com/gh/CAMBI-tech/BciPy/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg)](https://github.com/CAMBI-tech/BciPy/fork)
+[![BSD-3-Clause License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
-![CAMBI_logo](./bcipy/static/images/gui/CAMBI_full_logo.png) 
+[![CAMBI_logo](./bcipy/static/images/gui/CAMBI_full_logo.png)](https://cambi.tech)
 
 BciPy is a library for conducting Brain-Computer Interface experiments in Python. It is designed to be modular and extensible, allowing researchers to easily add new paradigms, models, and processing methods. The focus of BciPy is on paradigms for communication and control, including Rapid Serial Visual Presentation (RSVP) and Matrix Speller. See our official documentation including affiliations and more context information [here](https://bcipy.github.io/).
 
@@ -26,9 +27,9 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
     - [Mac](#mac)
   - [Installation](#installation)
     - [BciPy Setup](#bcipy-setup)
-    - [Editable Install and GUI usage](#editable-install-and-gui-usage)
-    - [PyPi Install](#pypi-install)
-    - [Make install](#make-install)
+      - [Editable Install and GUI usage](#editable-install-and-gui-usage)
+      - [PyPi Install](#pypi-install)
+      - [Make install](#make-install)
   - [Usage](#usage)
     - [Package Usage](#package-usage)
     - [GUI Usage](#gui-usage)
@@ -37,15 +38,13 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
       - [Running Experiments or Tasks via Command Line](#running-experiments-or-tasks-via-command-line)
         - [Options](#options)
       - [Train a Signal Model via Command Line](#train-a-signal-model-via-command-line)
-        - [Basic Command](#basic-command)
-        - [Options](#options-1)
+        - [Basic Commands Signal Model Training](#basic-commands-signal-model-training)
       - [Visualize ERP data from a session with Target / Non-Target labels via Command Line](#visualize-erp-data-from-a-session-with-target--non-target-labels-via-command-line)
-        - [Basic Command](#basic-command-1)
-        - [Options](#options-2)
+        - [Basic Commands ERP Viz](#basic-commands-erp-viz)
     - [BciPy Simulator](#bcipy-simulator)
       - [Running the Simulator](#running-the-simulator)
-        - [Basic Command](#basic-command-2)
-        - [Options](#options-3)
+        - [Basic Commands Simulator](#basic-commands-simulator)
+        - [Other Options](#other-options)
   - [Core Modules](#core-modules)
     - [Top-Level Modules Overview](#top-level-modules-overview)
       - [`Acquisition`](#acquisition)
@@ -68,7 +67,7 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
     - [RSVPKeyboard](#rsvpkeyboard)
     - [Matrix Speller](#matrix-speller)
   - [Offset Determination and Correction](#offset-determination-and-correction)
-      - [What is a Static Offset?](#what-is-a-static-offset)
+    - [What is a Static Offset?](#what-is-a-static-offset)
       - [How to Determine the Offset](#how-to-determine-the-offset)
       - [Running Offset Determination](#running-offset-determination)
       - [Applying the Offset Correction](#applying-the-offset-correction)
@@ -86,10 +85,9 @@ Memmott, T., Koçanaoğulları, A., Lawhead, M., Klee, D., Dudy, S., Fried-Oken,
     - [Contribution Guidelines](#contribution-guidelines)
     - [Contributors](#contributors)
 
-
 ## Dependencies
 
-This project requires Python 3.9 or 3.10. 
+This project requires Python 3.9, 3.10 or 3.11.
 
 It will run on the latest windows (10, 11), linux (ubuntu 22.04) and macos (Sonoma). Other versions may work as well, but are not guaranteed. To see supported versions and operating systems as of this release see our GitHub builds: [BciPy Builds](https://github.com/CAMBI-tech/BciPy/actions/workflows/main.yml). Please see notes below for additional OS specific dependencies before installation can be completed and reference our documentation here: <https://bcipy.github.io/hardware-os-config/>
 
@@ -101,12 +99,11 @@ You will need to install the prerequisites defined in `scripts\shell\linux_requi
 
 If you are using a Windows machine, you will need to install the [Microsoft Visual C++ Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/).
 
-
 ### Mac
 
 If you are using a Mac, you will need to install XCode and enable command line tools. `xcode-select --install`. If using an m1/2 chip, you may need to use the install script in `scripts/shell/m2chip_install.sh` to install the prerequisites. You may also need to use the Rosetta terminal to run the install script, but this has not been necessary in our testing using m2 chips.
 
-If using zsh, instead of bash, you may encounter a segementation fault when running BciPy. This is due to an issue in a dependeancy of psychopy with no known fix as of yet. Please use bash instead of zsh for now.
+If using zsh, instead of bash, you may encounter a segmentation fault when running BciPy. This is due to an issue in a dependency of psychopy with no known fix as of yet. Please use bash instead of zsh for now.
 
 ## Installation
 
@@ -114,24 +111,27 @@ If using zsh, instead of bash, you may encounter a segementation fault when runn
 
 In order to run BciPy on your computer, after ensuring the OS dependencies above are met, you can proceed to install the BciPy package.
 
-### Editable Install and GUI usage
+#### Editable Install and GUI usage
+
 If wanting to run the GUI or make changes to the code, you will need to install BciPy in editable mode. This will ensure that all dependencies are installed and the package is linked to your local directory. This will allow you to make changes to the code and see them reflected in your local installation without needing to reinstall the package.
 
 1. Git clone <https://github.com/BciPy/BciPy.git>.
 2. Change directory in your terminal to the repo directory.
 3. Install BciPy in development mode.
+
   ```sh
     pip install -e .
   ```
 
-### PyPi Install
+#### PyPi Install
+
 If you do not want to run the GUI or make changes to the code, you can install BciPy from PyPi. This will install the package and all dependencies, but will not link it to your local directory. This means that any changes you make to the code will not be reflected in your local installation. This is the recommended installation method if wanting to use the modules without making changes to the BciPy code.
 
 ```sh
 pip install bcipy
 ```
 
-### Make install
+#### Make install
 
 Alternately, if [Make](http://www.mingw.org/) is installed, you may run the follow command to install:
 
@@ -147,7 +147,6 @@ The BciPy package may be used in two ways: via the command line interface (CLI) 
 ### Package Usage
 
 To run the package, you will need to import the modules you want to use. For example, to run the the system info module, you can run the following:
-
 
 ```python
 from bcipy.helpers import system_utils
@@ -173,7 +172,9 @@ make bci-gui
 Once BciPy is installed, it can be used via the command line interface. This is useful for running experiments, training models, and visualizing data without needing to run the GUI.
 
 #### General Usage
+
 Use the help flag to explore all available options:
+
 ```sh
 bcipy --help
 ```
@@ -209,13 +210,13 @@ These options provide flexibility for running experiments tailored to your speci
 #### Train a Signal Model via Command Line
 
 To train a signal model (e.g., `PCARDAKDE` or `GazeModels`), use the `bcipy-train` command.
-##### Basic Command
-```sh
-bcipy-train --help
-```
 
-##### Options
+##### Basic Commands Signal Model Training
+
 ```sh
+# Display help information
+bcipy-train --help
+
 # Train using data from a specific folder
 bcipy-train -d path/to/data
 
@@ -239,13 +240,12 @@ bcipy-train -p path/to/parameters.json
 
 To visualize ERP data from a session with Target / Non-Target labels, use the `bcipy-erp-viz` command. This command allows you to visualize the data collected during a session and provides options for saving or displaying the visualizations.
 
-##### Basic Command
-```sh
-bcipy-erp-viz --help
-```
+##### Basic Commands ERP Viz
 
-##### Options
 ```sh
+# Display help information
+bcipy-erp-viz --help
+
 # Run without a window prompt for a data session folder
 bcipy-erp-viz -s path/to/data
 
@@ -260,19 +260,24 @@ bcipy-erp-viz -p "path/to/valid/parameters.json"
 ```
 
 ### BciPy Simulator
+
+The BciPy simulator allows you to run simulations based on previously collected data. This is useful for testing and validating models and algorithms without needing to collect new data.
+
 #### Running the Simulator
 
-The simulator can be executed using the `bcipy-sim` command-line utility. 
+The simulator can be executed using the `bcipy-sim` command-line utility.
 
-##### Basic Command
+##### Basic Commands Simulator
+
 ```sh
 bcipy-sim --help
 ```
 
-##### Options
+##### Other Options
+
 - `-d`: Path to the data folder.
 - `-p`: Path to the custom parameters file. [optional]
-- `-m`: Path to the directory of trained model pickle files 
+- `-m`: Path to the directory of trained model pickle files.
 - `-n`: Number of iterations to run.
 
 ```sh
@@ -281,7 +286,6 @@ bcipy-sim -d path/to/data -p path/to/parameters.json -m path/to/model.pkl/ -n 5
 
 More comprehensive information can be found in the [Simulator Module README](./bcipy/simulator/README.md).
 
-
 ## Core Modules
 
 ### Top-Level Modules Overview
@@ -289,59 +293,80 @@ More comprehensive information can be found in the [Simulator Module README](./b
 Each module includes its own README, demo, and tests. Click on the module name to view its README for more information.
 
 #### [`Acquisition`](./bcipy/acquisition/README.md)
+
 Captures data, returns desired time series, and saves to file at the end of a session.
 
 #### [`Core`](./bcipy/core/README.md)
+
 Core data structures and methods essential for BciPy operation.
-  - Includes triggers, parameters, and raw data handling.
+
+- Includes triggers, parameters, and raw data handling.
 
 #### [`Display`](./bcipy/display/README.md)
+
 Manages the display of stimuli on the screen and records stimuli timing.
 
 #### [`Feedback`](./bcipy/feedback/README.md)
+
 Provides feedback mechanisms for sound and visual stimuli.
 
 #### [`GUI`](./bcipy/gui/README.md)
+
 End-user interface for registered BCI tasks and parameter editing.
-  - Key files: [BCInterface.py](./bcipy/gui/BCInterface.py) and [ParamsForm](./bcipy/gui/parameters/params_form.py).
+
+- Key files: [BCInterface.py](./bcipy/gui/BCInterface.py) and [ParamsForm](./bcipy/gui/parameters/params_form.py).
 
 #### [`Helpers`](./bcipy/helpers/README.md)
+
 Utility functions for interactions between modules and general-purpose tasks.
 
 #### [`IO`](./bcipy/io/README.md)
+
 Handles data file operations such as loading, saving, and format conversion.
-  - Supported formats: BIDS, BrainVision, EDF, MNE, CSV, JSON, etc.
+
+- Supported formats: BIDS, BrainVision, EDF, MNE, CSV, JSON, etc.
 
 #### [`Language`](./bcipy/language/README.md)
+
 Provides symbol probability predictions during typing tasks.
 
 #### [`Signal`](./bcipy/signal/README.md)
+
 Includes EEG signal models, gaze signal models, filters, processing tools, evaluators, and viewers.
 
 #### [`Simulator`](./bcipy/simulator/README.md)
+
 Supports running simulations based on previously collected data.
 
 #### [`Task`](./bcipy/task/README.md)
+
 Implements user tasks and actions for BCI experiments.
-  - Examples: RSVP Calibration, InterTaskAction.
+
+- Examples: RSVP Calibration, InterTaskAction.
 
 ### Entry Point and Configuration Modules
 
 #### [`main.py`](./bcipy/main.py)
+
 The main executor of experiments and the primary entry point into the application. See the [Running Experiments](#running-experiments-or-tasks-via-command-line) section for more information.
 
 #### [`parameters/`](./bcipy/parameters/)
+
 Contains JSON configuration files:
+
 - [`parameters.json`](./bcipy/parameters/parameters.json): Main experiment and application configuration.
 - [`device.json`](./bcipy/parameters/device.json): Device registry and configuration.
 - [`experiments.json`](./bcipy/parameters/experiment/experiments.json): Experiment / protocol registry and configuration.
 - [`phrases.json`](./bcipy/parameters/experiment/phrases.json): Phrase registry and configuration. This can be used to define a list of phrases used in the RSVP and Matrix Speller Copy phrase tasks. If not defined in parameters.json, the `task_text` parameter will be used.
 
 #### [`config.py`](./bcipy/config.py)
+
 Holds configuration parameters for BciPy, including paths and default data filenames.
 
 #### [`static/`](./bcipy/static/)
+
 Includes resources such as:
+
 - Image and sound stimuli.
 - Miscellaneous manuals and readable texts for the GUI.
 
@@ -352,7 +377,6 @@ See the [Task README](./bcipy/task/README.md) for more information on all suppor
 ### RSVPKeyboard
 
 *RSVP KeyboardTM* is an EEG (electroencephalography) based BCI (brain computer interface) typing system. It utilizes a visual presentation technique called rapid serial visual presentation (RSVP). In RSVP, the options are presented rapidly at a single location with a temporal separation. Similarly in RSVP KeyboardTM, the symbols (the letters and additional symbols) are shown at the center of screen. When the subject wants to select a symbol, they await the intended symbol during the presentation and elicit a p300 response to a target symbol.
-
 
 ```text
 Orhan, U., Hild, K. E., 2nd, Erdogmus, D., Roark, B., Oken, B., & Fried-Oken, M. (2012). RSVP Keyboard: An EEG Based Typing Interface. Proceedings of the ... IEEE International Conference on Acoustics, Speech, and Signal Processing. ICASSP (Conference), 10.1109/ICASSP.2012.6287966. https://doi.org/10.1109/ICASSP.2012.6287966
@@ -373,7 +397,7 @@ Ahani A, Moghadamfalahi M, Erdogmus D. Language-Model Assisted And Icon-based Co
 > [!CAUTION]
 > Static offset determination and correction are critical steps before starting an experiment. BciPy uses LSL to acquire EEG data and Psychopy to present stimuli. The synchronization between the two systems is crucial for accurate data collection and analysis.
 
-#### What is a Static Offset?
+### What is a Static Offset?
 
 A static offset is the regular time difference between signals and stimuli presentation. This offset is determined through testing using a photodiode or another triggering mechanism. Once determined, the offset is corrected by shifting the EEG signal using the `static_offset` parameter in devices.json.
 
@@ -410,9 +434,9 @@ make offset-recommend
 #### Additional Resources
 
 For more information on synchronization and timing, refer to the following documentation:
+
 - [LSL Synchronization Documentation](https://labstreaminglayer.readthedocs.io/info/time_synchronization.html)
 - [PsychoPy Timing Documentation](https://www.psychopy.org/general/timing/index.html)
-
 
 ## Glossary
 
@@ -441,26 +465,32 @@ For more information on synchronization and timing, refer to the following docum
 ## Scientific Publications using BciPy
 
 ### 2025
+
 - Memmott, T., Klee, D., Smedemark-Margulies, N., & Oken, B. (2025). Artifact filtering application to increase online parity in a communication BCI: progress toward use in daily-life. Frontiers in Human Neuroscience, 19, 1551214.
 - Peters, B., Celik, B., Gaines, D., Galvin-McLaughlin, D., Imbiriba, T., Kinsella, M., ... & Fried-Oken, M. (2025). RSVP keyboard with inquiry preview: mixed performance and user experience with an adaptive, multimodal typing interface combining EEG and switch input. Journal of neural engineering, 22(1), 016022.
 
 ### 2024
+
 - Klee, D., Memmott, T., & Oken, B. (2024). The Effect of Jittered Stimulus Onset Interval on Electrophysiological Markers of Attention in a Brain–Computer Interface Rapid Serial Visual Presentation Paradigm. Signals, 5(1), 18-39.
 - Kocanaogullari, D. (2024). Detection and Assessment of Spatial Neglect Using a Novel Augmented Reality-Guided Eeg-Based Brain-Computer Interface (Doctoral dissertation, University of Pittsburgh).
 - Smedemark-Margulies, N. (2024). Reducing Calibration Effort for Brain-Computer Interfaces (Doctoral dissertation, Northeastern University).
 
 ### 2023
+
 - Smedemark-Margulies, N., Celik, B., Imbiriba, T., Kocanaogullari, A., & Erdoğmuş, D. (2023, June). Recursive estimation of user intent from noninvasive electroencephalography using discriminative models. In ICASSP 2023-2023 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP) (pp. 1-5). IEEE.
 
 ### 2022
+
 - Mak, J., Kocanaogullari, D., Huang, X., Kersey, J., Shih, M., Grattan, E. S., ... & Akcakaya, M. (2022). Detection of stroke-induced visual neglect and target response prediction using augmented reality and electroencephalography. IEEE Transactions on Neural Systems and Rehabilitation Engineering, 30, 1840-1850.
 - Galvin-McLaughlin, D., Klee, D., Memmott, T., Peters, B., Wiedrick, J., Fried-Oken, M., ... & Dudy, S. (2022). Methodology and preliminary data on feasibility of a neurofeedback protocol to improve visual attention to letters in mild Alzheimer's disease. Contemporary Clinical Trials Communications, 28, 100950.
 - Klee, D., Memmott, T., Smedemark-Margulies, N., Celik, B., Erdogmus, D., & Oken, B. S. (2022). Target-related alpha attenuation in a brain-computer interface rapid serial visual presentation calibration. Frontiers in Human Neuroscience, 16, 882557.
 
 ### 2021
+
 - Koçanaoğulları, A., Akcakaya, M., & Erdoğmuş, D. (2021). Stopping criterion design for recursive Bayesian classification: analysis and decision geometry. IEEE Transactions on Pattern Analysis and Machine Intelligence, 44(9), 5590-5601.
 
 ### 2020
+
 - Koçanaogullari, A. (2020). Active Recursive Bayesian Classification (Querying and Stopping) for Event Related Potential Driven Brain Computer Interface Systems (Doctoral dissertation, Northeastern University).
 - Koçanaoğulları, A., Akçakaya, M., Oken, B., & Erdoğmuş, D. (2020, June). Optimal modality selection using information transfer rate for event related potential driven brain computer interfaces. In Proceedings of the 13th ACM International Conference on PErvasive Technologies Related to Assistive Environments (pp. 1-7).
 
@@ -471,7 +501,6 @@ If you want to be added to the development team Discord or have additional quest
 ### Contribution Guidelines
 
 We follow and will enforce the code of conduct outlined [here](CODE_OF_CONDUCT.md). Please read it before contributing.
-
 
 ### Contributors
 
