@@ -76,8 +76,6 @@ dev = [
     "pylint",
     "pytest",
     "pytest-mpl",
-    "Sphinx==8.1.3",
-    "furo==2024.8.6",
 ]
 release = [
     "twine==3.2.0",
