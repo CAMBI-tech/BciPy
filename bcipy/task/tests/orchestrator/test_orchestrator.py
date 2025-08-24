@@ -138,14 +138,14 @@ class TestSessionOrchestrator(unittest.TestCase):
             any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
-        when(SessionOrchestrator)._save_procotol_data().thenReturn()
+        when(SessionOrchestrator)._save_protocol_data().thenReturn()
         when(SessionOrchestrator)._save_copy_phrases().thenReturn()
 
         orchestrator = SessionOrchestrator()
         orchestrator.copyphrases = [["test", 0], ["test2", 1]]
 
         orchestrator._save_data()
-        verify(SessionOrchestrator, times=1)._save_procotol_data()
+        verify(SessionOrchestrator, times=1)._save_protocol_data()
         verify(SessionOrchestrator, times=1)._save_copy_phrases()
 
     def test_orchestrator_next_phrase(self):
@@ -155,7 +155,7 @@ class TestSessionOrchestrator(unittest.TestCase):
             any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
-        when(SessionOrchestrator)._save_procotol_data().thenReturn()
+        when(SessionOrchestrator)._save_protocol_data().thenReturn()
         when(SessionOrchestrator).initialize_copy_phrases().thenReturn()
 
         orchestrator = SessionOrchestrator()

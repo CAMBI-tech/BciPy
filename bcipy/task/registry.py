@@ -47,8 +47,12 @@ class TaskRegistry:
             Subclasses are only registered if they have no abstract methods.
         """
         for sub_class in cls.__subclasses__():
+            # Only register non-abstract subclasses
             if not getattr(sub_class, '__abstractmethods__', False):
-                self.registry_dict[sub_class.name] = sub_class
+                if hasattr(sub_class, 'name'):
+                    self.registry_dict[sub_class.name] = sub_class
+                else:
+                    raise ValueError(f'Task class {sub_class} missing name attribute')
             self.collect_subclasses(sub_class)
 
     def get(self, task_name: str) -> Type[Task]:

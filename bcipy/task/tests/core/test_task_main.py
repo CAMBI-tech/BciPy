@@ -49,6 +49,7 @@ class TestTask(unittest.TestCase):
 
             def execute(self) -> TaskData:
                 ...
+
         task = TestTask(name=name, mode=mode)
         self.assertEqual(task.name, name)
         self.assertEqual(task.mode, mode)

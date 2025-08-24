@@ -8,7 +8,7 @@ GUI interactions, and other orchestrated behaviors.
 
 from typing import List, Type
 
-from bcipy.config import TASK_SEPERATOR
+from bcipy.config import TASK_SEPARATOR
 from bcipy.task import Task
 from bcipy.task.registry import TaskRegistry
 
@@ -31,7 +31,7 @@ def parse_protocol(protocol: str) -> List[Type[Task]]:
         ValueError: If any task name in the protocol is not registered.
     """
     task_registry = TaskRegistry()
-    return [task_registry.get(item.strip()) for item in protocol.split(TASK_SEPERATOR)]
+    return [task_registry.get(item.strip()) for item in protocol.split(TASK_SEPARATOR)]
 
 
 def validate_protocol_string(protocol: str) -> None:
@@ -47,7 +47,7 @@ def validate_protocol_string(protocol: str) -> None:
     Raises:
         ValueError: If any task name in the protocol is not registered.
     """
-    for protocol_item in protocol.split(TASK_SEPERATOR):
+    for protocol_item in protocol.split(TASK_SEPARATOR):
         if protocol_item.strip() not in TaskRegistry().list():
             raise ValueError(
                 f"Invalid task '{protocol_item}' name in protocol string.")
@@ -65,4 +65,4 @@ def serialize_protocol(tasks: List[Type[Task]]) -> str:
     Returns:
         str: Protocol string in format 'Task1 -> Task2 -> ... -> TaskN'.
     """
-    return f" {TASK_SEPERATOR} ".join([item.name for item in tasks])
+    return f" {TASK_SEPARATOR} ".join([item.name for item in tasks])

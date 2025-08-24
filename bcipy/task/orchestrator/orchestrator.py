@@ -343,10 +343,10 @@ class SessionOrchestrator:
 
         Saves protocol data and copy phrases data to their respective files.
         """
-        self._save_procotol_data()
+        self._save_protocol_data()
         self._save_copy_phrases()
 
-    def _save_procotol_data(self) -> None:
+    def _save_protocol_data(self) -> None:
         """Save protocol data to a JSON file.
 
         Saves task names, system info, and other session metadata.

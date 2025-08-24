@@ -26,7 +26,7 @@ ROOT = BCIPY_ROOT.parent
 DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'
 DEFAULT_FIELD_PATH = f'{BCIPY_ROOT}/parameters/field'
 DEFAULT_USER_ID = 'test_user'
-TASK_SEPERATOR = '->'
+TASK_SEPARATOR = '->'
 
 DEFAULT_PARAMETERS_FILENAME = 'parameters.json'
 DEFAULT_DEVICES_PATH = f"{BCIPY_ROOT}/parameters"
