@@ -1,3 +1,4 @@
+# mypy: disable-error-code=override
 """Auditory feedback module.
 
 This module provides auditory feedback functionality for BciPy, implementing

@@ -253,7 +253,8 @@ def relative_triggers(inquiry_timing: List[Tuple[str, float]],
 def _float_val(col: Any) -> float:
     """Convert marker data to float values so we can put them in a
     typed np.array. The marker column has type float if it has a 0.0
-    value, and would only have type str for a marker value."""
+    value, and would only have type str for a marker value.
+    """
     if isinstance(col, str):
         return 1.0
     return float(col)

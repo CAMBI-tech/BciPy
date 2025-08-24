@@ -1,3 +1,4 @@
+# mypy: disable-error-code=override
 """Feedback module.
 
 This module provides the base feedback functionality for BciPy, including abstract

@@ -1,10 +1,9 @@
+# mypy: disable-error-code="override,return-value"
 """Visual feedback module.
 
 This module provides visual feedback functionality for BciPy, implementing
 visual-based feedback mechanisms using PsychoPy for stimulus presentation.
 """
-
-# mypy: disable-error-code="return-value"
 from typing import Any, Dict, List, Tuple, Union
 
 from psychopy import core, visual

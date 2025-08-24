@@ -337,7 +337,8 @@ def is_stream_type_active(stream_type: StreamType) -> bool:
     """Check if the provided stream type is active.
 
     A stream type's status, if provided, will be used to make the determinition.
-    If missing, the status of a matching pre-configured device will be used."""
+    If missing, the status of a matching pre-configured device will be used.
+    """
     content_type, device_name, status = stream_type
     if status:
         return status == DeviceStatus.ACTIVE

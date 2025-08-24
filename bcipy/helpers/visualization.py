@@ -836,6 +836,9 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
 
 
 def erp():
+    """ERP Visualization CLI.
+    This function is used to visualize ERP data after a session.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description='Visualize ERP data')
