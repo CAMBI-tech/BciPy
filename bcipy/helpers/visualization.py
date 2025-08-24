@@ -60,7 +60,7 @@ def visualize_erp(
         plot_topomaps: Optional[bool] = True,
         show: Optional[bool] = False,
         save_path: Optional[str] = None) -> List[Figure]:
-    """ Visualize ERP.
+    """Visualize ERP.
 
     Generates a comparative ERP figure following a task execution. Given a set of trailed data,
     and labels describing two classes (Nontarget=0 and Target=1), they are plotted and may be saved
@@ -90,8 +90,10 @@ def visualize_erp(
     else:
         baseline = None
 
-    mne_data = convert_to_mne(raw_data, channel_map=channel_map, transform=transform)
-    epochs = mne_epochs(mne_data, trial_length, trigger_timing, trigger_labels, baseline=baseline)
+    mne_data = convert_to_mne(
+        raw_data, channel_map=channel_map, transform=transform)
+    epochs = mne_epochs(mne_data, trial_length, trigger_timing,
+                        trigger_labels, baseline=baseline)
     # *Note* We assume, as described above, two trigger classes are defined for use in trigger_labels
     # (Nontarget=0 and Target=1). This will map into two corresponding MNE epochs whose indexing starts at 1.
     # Therefore, epochs['1'] == Nontarget and epochs['2'] == Target.
@@ -102,10 +104,12 @@ def visualize_erp(
     if plot_topomaps:
         # make a list of equally spaced times to plot topomaps using the time window
         # defined in the task parameters
-        times = [round(trial_window[0] + i * (trial_window[1] - trial_window[0]) / 5, 1) for i in range(7)]
+        times = [round(trial_window[0] + i * (trial_window[1] -
+                       trial_window[0]) / 5, 1) for i in range(7)]
 
         # clip any times that are out of bounds of the time window or zero
-        times = [time for time in times if trial_window[0] <= time <= trial_window[1] and time != 0]
+        times = [time for time in times if trial_window[0]
+                 <= time <= trial_window[1] and time != 0]
 
         figs.extend(visualize_joint_average(
             epochs, ['Non-Target', 'Target'],
@@ -150,7 +154,6 @@ def visualize_gaze(
     heatmap: Optional[bool]: Whether or not to plot the heatmap. Default: False
     raw_plot: Optional[bool]: Whether or not to plot the raw gaze data. Default: False
     """
-
     title = f'{data.daq_type} '
     if heatmap:
         title += 'Heatmap '
@@ -162,12 +165,14 @@ def visualize_gaze(
 
     img = plt.imread(img_path)
     channels = data.channels
-    left_eye_channel_map = [1 if channel in left_keys else 0 for channel in channels]
+    left_eye_channel_map = [
+        1 if channel in left_keys else 0 for channel in channels]
     left_eye_data, _, _ = data.by_channel_map(left_eye_channel_map)
     left_eye_x = left_eye_data[0]
     left_eye_y = left_eye_data[1]
 
-    right_eye_channel_map = [1 if channel in right_keys else 0 for channel in channels]
+    right_eye_channel_map = [
+        1 if channel in right_keys else 0 for channel in channels]
     right_eye_data, _, _ = data.by_channel_map(right_eye_channel_map)
     right_eye_x = right_eye_data[0]
     right_eye_y = right_eye_data[1]
@@ -220,7 +225,8 @@ def visualize_gaze(
     plt.title(f'{title}Plot')
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -337,7 +343,8 @@ def visualize_gaze_inquiries(
     plt.title(f'{title}Plot')
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -419,7 +426,8 @@ def visualize_pupil_size(
     plt.title(f'{title}Plot')
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -487,7 +495,8 @@ def visualize_centralized_data(
     plt.title(f'{title}Plot')
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -593,7 +602,8 @@ def visualize_results_all_symbols(
                 # Plot an ellipse to show the Gaussian component
                 angle = np.arctan(u[1] / u[0])
                 angle = 180.0 * angle / np.pi  # convert to degrees
-                ell = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color='navy')
+                ell = Ellipse(mean, v[0], v[1],
+                              angle=180.0 + angle, color='navy')
                 ell.set_clip_box(ax)
                 ell.set_alpha(0.5)
                 ax.add_artist(ell)
@@ -606,7 +616,8 @@ def visualize_results_all_symbols(
     plt.title(f'{title}Plot')
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -655,7 +666,8 @@ def visualize_csv_eeg_triggers(trigger_col: Optional[int] = None):
 def visualize_joint_average(
         epochs: Tuple[Epochs],
         labels: List[str],
-        plot_joint_times: Optional[List[float]] = [-0.1, 0, 0.2, 0.3, 0.35, 0.4, 0.5],
+        plot_joint_times: Optional[List[float]
+                                   ] = [-0.1, 0, 0.2, 0.3, 0.35, 0.4, 0.5],
         save_path: Optional[str] = None,
         show: Optional[bool] = False) -> List[Figure]:
     """Visualize Joint Average.
@@ -676,7 +688,8 @@ def visualize_joint_average(
     Returns:
         List of figures generated
     """
-    assert len(epochs) == len(labels), "The number of epochs must match labels in Visualize Joint Average"
+    assert len(epochs) == len(
+        labels), "The number of epochs must match labels in Visualize Joint Average"
 
     figs = []
     for i, label in enumerate(labels):
@@ -740,12 +753,14 @@ def visualize_session_data(
     # extract all relevant parameters
     trial_window = parameters.get("trial_window")
 
-    raw_data = load_raw_data(str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
+    raw_data = load_raw_data(
+        str(Path(session_path, f'{RAW_DATA_FILENAME}.csv')))
     channels = raw_data.channels
     sample_rate = raw_data.sample_rate
     daq_type = raw_data.daq_type
 
-    transform_params: ERPTransformParams = parameters.instantiate(ERPTransformParams)
+    transform_params: ERPTransformParams = parameters.instantiate(
+        ERPTransformParams)
 
     devices.load(Path(session_path, DEFAULT_DEVICE_SPEC_FILENAME))
     device_spec = devices.preconfigured_device(daq_type)
@@ -763,12 +778,14 @@ def visualize_session_data(
     trigger_targetness, trigger_timing, _ = trigger_decoder(
         offset=device_spec.static_offset,
         trigger_path=f"{session_path}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        exclusion=[TriggerType.PREVIEW,
+                   TriggerType.EVENT, TriggerType.FIXATION],
         device_type='EEG',
     )
     assert "nontarget" in trigger_targetness, "No nontarget triggers found."
     assert "target" in trigger_targetness, "No target triggers found."
-    assert len(trigger_targetness) == len(trigger_timing), "Trigger targetness and timing must be the same length."
+    assert len(trigger_targetness) == len(
+        trigger_timing), "Trigger targetness and timing must be the same length."
 
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
     channel_map = analysis_channels(channels, device_spec)
@@ -807,7 +824,8 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
     ax.set_title(title + str(round(accuracy, 2)))
 
     if save_path is not None:
-        plt.savefig(f"{save_path}/{title.lower().replace(' ', '_').replace(':', '')}plot.png", dpi=fig.dpi)
+        plt.savefig(
+            f"{save_path}/{title.lower().replace(' ', '_').replace(':', '')}plot.png", dpi=fig.dpi)
 
     if show:
         plt.show()
@@ -818,6 +836,9 @@ def visualize_gaze_accuracies(accuracy_dict: Dict[str, np.ndarray],
 
 
 def erp():
+    """ERP Visualization CLI.
+    This function is used to visualize ERP data after a session.
+    """
     import argparse
 
     parser = argparse.ArgumentParser(description='Visualize ERP data')

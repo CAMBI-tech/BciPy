@@ -31,7 +31,8 @@ def do_directories(parent: Path,
                    max_depth: int = 3,
                    current_depth: int = 1) -> None:
     """Recursively walk a tree of directories, calling the provided
-    function on each path."""
+    function on each path.
+    """
 
     paths = sorted(
         Path(parent).iterdir(),
@@ -108,7 +109,8 @@ def excluded(path: Path) -> bool:
 
 def select_directories(parent: Path) -> List[Path]:
     """Select all directories of interest within the parent path.
-    Traverses all directories and prompts for each."""
+    Traverses all directories and prompts for each.
+    """
     accum = []
 
     def do_prompt(path: Path):
@@ -155,6 +157,7 @@ class PromptPath(PromptBase[Path]):
     response_type = Path
 
     def process_response(self, value: str) -> Path:
+        """Process the response value and return a Path object."""
         value = value.strip("'\"")
         return super().process_response(value)
 
@@ -229,8 +232,9 @@ def get_acq_mode(params_path: str):
 
 
 def command(params: str, models: List[str], source_dirs: List[str], sampler: Type[Sampler]) -> str:
-    """Command equivalent to to the result of the interactive selection of
-    simulator inputs."""
+    """Command equivalent to the result of the interactive selection of
+    simulator inputs.
+    """
     model_args = ' '.join([f"-m {path}" for path in models])
     dir_args = ' '.join(f"-d {source}" for source in source_dirs)
     sampler_args = f"-s {sampler.__name__}"

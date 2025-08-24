@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import List, Optional, Tuple, Union
 
 import mne
+from mne import Annotations
 
 import bcipy.acquisition.devices as devices
 from bcipy.acquisition.devices import DeviceSpec
@@ -24,8 +25,6 @@ from bcipy.signal.process import get_default_transform
 
 mne.set_log_level('WARNING')
 log = getLogger(SESSION_LOG_FILENAME)
-
-from mne import Annotations
 
 
 class DefaultArtifactParameters(Enum):
@@ -182,7 +181,8 @@ class ArtifactDetection:
             self.session_triggers = mne.Annotations(
                 self.trigger_time, [self.trial_duration] * len(self.trigger_time), self.trigger_description)
 
-        assert len(device_spec.channel_specs) > 0, 'DeviceSpec used must have channels. None found.'
+        assert len(
+            device_spec.channel_specs) > 0, 'DeviceSpec used must have channels. None found.'
         self.units = device_spec.channel_specs[0].units
         log.info(f'Artifact detection using {self.units} units.')
         assert self.units in self.supported_units, \
@@ -195,7 +195,8 @@ class ArtifactDetection:
         self.detect_eog = detect_eog
         self.semi_automatic = semi_automatic
 
-        log.info(f'Artifact detection with {self.detect_voltage=}, {self.detect_eog=}, {self.semi_automatic=}')
+        log.info(
+            f'Artifact detection with {self.detect_voltage=}, {self.detect_eog=}, {self.semi_automatic=}')
 
         self.save_path = save_path
 
@@ -252,7 +253,8 @@ class ArtifactDetection:
                     log.info(f'Bad channels detected: {bad_channels}')
 
                 if voltage_annotations:
-                    log.info(f'Voltage violation events found: {len(voltage_annotations)}')
+                    log.info(
+                        f'Voltage violation events found: {len(voltage_annotations)}')
                     annotations += voltage_annotations
                     self.voltage_annotations = voltage_annotations
 
@@ -290,7 +292,8 @@ class ArtifactDetection:
                 f'{self.save_path}/{DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME.value}',
                 overwrite=overwrite)
         else:
-            log.info('Artifact cannot be saved, artifact analysis has been done yet.')
+            log.info(
+                'Artifact cannot be saved, artifact analysis has been done yet.')
 
     def raw_data_to_mne(self, raw_data: RawData, volts: bool = False) -> mne.io.RawArray:
         """Convert the raw data to an MNE RawArray."""
@@ -345,8 +348,10 @@ class ArtifactDetection:
             log.info('No eye channels provided. Cannot detect EOG artifacts.')
             return None
 
-        log.info(f'Using blink threshold of {threshold} for channels {self.eye_channels}.')
-        eog_events = mne.preprocessing.find_eog_events(self.mne_data, ch_name=self.eye_channels, thresh=threshold)
+        log.info(
+            f'Using blink threshold of {threshold} for channels {self.eye_channels}.')
+        eog_events = mne.preprocessing.find_eog_events(
+            self.mne_data, ch_name=self.eye_channels, thresh=threshold)
         # eog_events = mne.preprocessing.ica_find_eog_events(raw) TODO compare to ICA
 
         if len(eog_events) > 0:
@@ -354,7 +359,8 @@ class ArtifactDetection:
             onsets = eog_events[:, 0] / self.mne_data.info['sfreq'] - preblink
             durations = [postblink + preblink] * len(eog_events)
             descriptions = [label] * len(eog_events)
-            blink_annotations = mne.Annotations(onsets, durations, descriptions)
+            blink_annotations = mne.Annotations(
+                onsets, durations, descriptions)
 
             return blink_annotations, eog_events
         return None
@@ -416,7 +422,8 @@ class ArtifactDetection:
             bad_percent=self.percent_bad,
             peak=peak[0])
         if len(peak_voltage_annotations) > 0:
-            log.info(f'Peak voltage events found: {len(peak_voltage_annotations)}')
+            log.info(
+                f'Peak voltage events found: {len(peak_voltage_annotations)}')
             onsets, durations, descriptions = self.concat_annotations(
                 peak_voltage_annotations,
                 pre_event,
@@ -430,7 +437,8 @@ class ArtifactDetection:
         flat_voltage_annotations, bad_channels2 = mne.preprocessing.annotate_amplitude(
             self.mne_data, min_duration=flat[1], bad_percent=self.percent_bad, flat=flat[0])
         if len(flat_voltage_annotations) > 0:
-            log.info(f'Flat voltage events found: {len(flat_voltage_annotations)}')
+            log.info(
+                f'Flat voltage events found: {len(flat_voltage_annotations)}')
             onsets, durations, descriptions = self.concat_annotations(
                 flat_voltage_annotations,
                 pre_event,
@@ -567,14 +575,16 @@ if __name__ == "__main__":
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
             print(f'Processing {session}')
-            prompt = input('Hit enter to continue or type "skip" to skip processing: ')
+            prompt = input(
+                'Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
                     f'{session}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)
 
                 # load the raw data from the data directory
-                raw_data = load_raw_data(str(Path(session, f'{RAW_DATA_FILENAME}.csv')))
+                raw_data = load_raw_data(
+                    str(Path(session, f'{RAW_DATA_FILENAME}.csv')))
                 type_amp = raw_data.daq_type
 
                 # load the triggers
@@ -582,7 +592,8 @@ if __name__ == "__main__":
                     trigger_type, trigger_timing, trigger_label = trigger_decoder(
                         offset=0.1,
                         trigger_path=f"{session}/{TRIGGER_FILENAME}",
-                        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+                        exclusion=[TriggerType.PREVIEW,
+                                   TriggerType.EVENT, TriggerType.FIXATION],
                     )
                     triggers = (trigger_type, trigger_timing, trigger_label)
                 else:

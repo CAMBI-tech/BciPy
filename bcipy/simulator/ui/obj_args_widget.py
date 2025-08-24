@@ -11,7 +11,8 @@ from bcipy.simulator.ui.gui_utils import InputField, get_inputs
 
 class ObjectArgInputs(QWidget):
     """Widget with inputs for parameters needed to instantiate an object for a
-    given class."""
+    given class.
+    """
 
     def __init__(self,
                  parent: Optional[QWidget] = None,
@@ -69,7 +70,8 @@ class ObjectArgInputs(QWidget):
 
     def _json_name_value(self, name: str, control: QWidget) -> str:
         """Returns a json partial for a name: value, quoting the value according
-        to the input_type"""
+        to the input_type
+        """
         field = self._field_definition(name)
         value = self._input_value(field, control)
 

@@ -8,17 +8,17 @@ import numpy as np
 from bcipy.core.symbols import alphabet
 from bcipy.exceptions import LanguageModelNameInUseException
 from bcipy.language.main import LanguageModel
+from bcipy.language.model.causal import CausalLanguageModelAdapter
+from bcipy.language.model.mixture import MixtureLanguageModelAdapter
+from bcipy.language.model.ngram import NGramLanguageModelAdapter
+from bcipy.language.model.oracle import OracleLanguageModel
+from bcipy.language.model.uniform import UniformLanguageModel
 
 # pylint: disable=unused-import
 # flake8: noqa
 
 """Only imported models will be included in language_models_by_name"""
 # flake8: noqa
-from bcipy.language.model.causal import CausalLanguageModelAdapter
-from bcipy.language.model.mixture import MixtureLanguageModelAdapter
-from bcipy.language.model.ngram import NGramLanguageModelAdapter
-from bcipy.language.model.oracle import OracleLanguageModel
-from bcipy.language.model.uniform import UniformLanguageModel
 
 VALID_LANGUAGE_MODELS: Dict[str, Callable[[], LanguageModel]] = {
     "CAUSAL": CausalLanguageModelAdapter,

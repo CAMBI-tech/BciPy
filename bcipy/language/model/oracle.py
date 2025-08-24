@@ -115,8 +115,7 @@ class OracleLanguageModel(CharacterLanguageModel):
                       reverse=True)
 
     def _next_target(self, spelled_text: str) -> Optional[str]:
-        """Computes the next target letter based on the currently spelled_text.
-        """
+        """Computes the next target letter based on the currently spelled_text."""
         len_spelled = len(spelled_text)
         len_task = len(self.task_text)
 

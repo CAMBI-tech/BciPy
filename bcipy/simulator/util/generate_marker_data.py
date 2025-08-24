@@ -8,7 +8,7 @@ from bcipy.simulator.util.switch_utils import (generate_raw_data,
 
 
 def main() -> Path:
-    """"Main method used to generate a raw data file for a switch device."""
+    """Main method used to generate a raw data file for a switch device."""
     parser = argparse.ArgumentParser(
         description="Create raw marker data for a given session.")
     parser.add_argument("data_folder",

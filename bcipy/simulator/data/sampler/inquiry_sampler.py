@@ -28,9 +28,9 @@ class InquirySampler(Sampler):
     def prepare_data(
         self, data: pd.DataFrame
     ) -> Tuple[Dict[Path, List[int]], Dict[Path, List[int]]]:
-        """Partition the data into those inquiries that displayed the target
-        and those that did not. The resulting data structures map the data
-        source with a list of inquiry_n numbers."""
+        """Partition the data into those inquiries that displayed the target and those that did not.
+        The resulting data structures map the data source with a list of inquiry_n numbers.
+        """
 
         target_inquiries = defaultdict(list)
         no_target_inquiries = defaultdict(list)

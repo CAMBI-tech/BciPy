@@ -157,7 +157,8 @@ class TestDecisionMaker(unittest.TestCase):
                          len(stimuli[0][0]))
         for i in range(1, len(stimuli[0][0])):
             self.assertIn(stimuli[0][0][i], self.decision_maker.alphabet)
-        self.assertEqual(stimuli[1][0][0:2], self.decision_maker.stimuli_timing)
+        self.assertEqual(stimuli[1][0][0:2],
+                         self.decision_maker.stimuli_timing)
 
 
 class TestDecisionMakerOld(unittest.TestCase):

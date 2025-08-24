@@ -156,7 +156,8 @@ def get_data_for_decision(inquiry_timing: List[Tuple[str, float]],
                 for text, timing in inquiry_timing]
 
     # Define the amount of data required for any processing to occur.
-    data_limit = round((time2 - time1 + poststim) * daq.device_spec.sample_rate)
+    data_limit = round((time2 - time1 + poststim) *
+                       daq.device_spec.sample_rate)
     log.info(f'Need {data_limit} records for processing')
 
     # Query for raw data
@@ -252,7 +253,8 @@ def relative_triggers(inquiry_timing: List[Tuple[str, float]],
 def _float_val(col: Any) -> float:
     """Convert marker data to float values so we can put them in a
     typed np.array. The marker column has type float if it has a 0.0
-    value, and would only have type str for a marker value."""
+    value, and would only have type str for a marker value.
+    """
     if isinstance(col, str):
         return 1.0
     return float(col)
@@ -350,7 +352,8 @@ def pause_on_wait_screen(window, message, color) -> bool:
 
     elapsed_seconds = time.time() - pause_start
     if elapsed_seconds >= MAX_PAUSE_SECONDS:
-        log.info(f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
+        log.info(
+            f"Pause exceeded the allowed time ({MAX_PAUSE_SECONDS} seconds). Ending task.")
         return False
     if keys[0] == 'escape':
         return False

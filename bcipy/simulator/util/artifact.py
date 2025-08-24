@@ -1,4 +1,5 @@
-""" Handles artifacts related logic ie. logs, save dir creation, result.json, ..."""
+"""Handles artifacts related logic ie. logs, save dir creation, result.json, ..."""
+
 import datetime
 import logging
 import os

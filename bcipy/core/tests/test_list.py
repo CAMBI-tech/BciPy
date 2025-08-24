@@ -95,7 +95,8 @@ class TestListUtilities(unittest.TestCase):
         """Test pairwise iterator"""
         iterable = 'ABCDEFG'
         response = pairwise(iterable)
-        expected = [('A', 'B'), ('B', 'C'), ('C', 'D'), ('D', 'E'), ('E', 'F'), ('F', 'G')]
+        expected = [('A', 'B'), ('B', 'C'), ('C', 'D'),
+                    ('D', 'E'), ('E', 'F'), ('F', 'G')]
         self.assertListEqual(expected, list(response))
 
 

@@ -149,7 +149,8 @@ def main():
     elif args.interactive:
         task_factory = cli.main(sim_args)
     else:
-        parameters = load_json_parameters(sim_args['parameters'], value_cast=True)
+        parameters = load_json_parameters(
+            sim_args['parameters'], value_cast=True)
         task_factory = TaskFactory(
             parameters=parameters,
             source_dirs=sim_args['data_folder'],

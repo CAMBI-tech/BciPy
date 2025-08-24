@@ -43,7 +43,8 @@ if __name__ == '__main__':
 
     import argparse
 
-    parser = argparse.ArgumentParser(description="Demo the SessionOrchestrator")
+    parser = argparse.ArgumentParser(
+        description="Demo the SessionOrchestrator")
     parser.add_argument(
         '-p',
         '--parameters_path',

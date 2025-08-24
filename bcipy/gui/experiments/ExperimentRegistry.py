@@ -201,7 +201,8 @@ class ExperimentRegistry(BCIUI):
             for field in fields
         ]
         task_names = self.protocol_contents.list_property("task_name")
-        task_objects = [self.task_registry.get(task_name) for task_name in task_names]
+        task_objects = [self.task_registry.get(
+            task_name) for task_name in task_names]
         protocol = serialize_protocol(task_objects)
 
         existing_experiments[experiment_name] = {
@@ -264,7 +265,8 @@ class ExperimentRegistry(BCIUI):
 
         def add_task():
             self.protocol_contents.add_item(
-                self.make_task_entry(self.experiment_protocol_input.currentText())
+                self.make_task_entry(
+                    self.experiment_protocol_input.currentText())
             )
 
         self.experiment_protocol_input = QComboBox()
@@ -305,7 +307,8 @@ class ExperimentRegistry(BCIUI):
 
         protocol_scroll_area = QScrollArea()
         self.protocol_contents = DynamicList()
-        protocol_scroll_area = BCIUI.make_list_scroll_area(self.protocol_contents)
+        protocol_scroll_area = BCIUI.make_list_scroll_area(
+            self.protocol_contents)
         label = QLabel("Protocol")
         label.setStyleSheet("color: black;")
         scroll_area_layout.addWidget(protocol_scroll_area)

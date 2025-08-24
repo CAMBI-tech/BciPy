@@ -17,6 +17,7 @@ html/
 venv/
 venv*/
 __pycache__/
+.pytest_cache/
 .cache/
 
 # BciPy files and directories
@@ -39,3 +40,4 @@ bcipy/simulator/tests/resource/
 data/
 bids/
 !bcipy/simulator/data
+

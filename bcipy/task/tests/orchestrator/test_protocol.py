@@ -71,6 +71,7 @@ class TestTaskProtocolProcessing(unittest.TestCase):
         assert serialized == RSVPCalibrationTask.name
 
     def test_serializes_multiple_tasks(self) -> None:
-        sequence = [RSVPCalibrationTask, OfflineAnalysisAction, RSVPCopyPhraseTask]
+        sequence = [RSVPCalibrationTask,
+                    OfflineAnalysisAction, RSVPCopyPhraseTask]
         serialized = serialize_protocol(sequence)
         assert serialized == 'RSVP Calibration -> OfflineAnalysisAction -> RSVP Copy Phrase'

@@ -38,6 +38,17 @@ def save_experiment_data(
         fields: dict,
         location: str,
         name: str) -> str:
+    """Save experiment data to a JSON file.
+
+    Args:
+        experiments (dict): Experiment data to save.
+        fields (dict): Additional fields to save.
+        location (str): Directory to save the file.
+        name (str): Name of the file.
+
+    Returns:
+        str: Path to the saved file.
+    """
     return save_json_data(experiments, location, name)
 
 
@@ -45,6 +56,16 @@ def save_field_data(
         fields: dict,
         location: str,
         name: str) -> str:
+    """Save field data to a JSON file.
+
+    Args:
+        fields (dict): Field data to save.
+        location (str): Directory to save the file.
+        name (str): Name of the file.
+
+    Returns:
+        str: Path to the saved file.
+    """
     return save_json_data(fields, location, name)
 
 
@@ -52,6 +73,16 @@ def save_experiment_field_data(
         data: dict,
         location: str,
         name: str) -> str:
+    """Save experiment field data to a JSON file.
+
+    Args:
+        data (dict): Data to save.
+        location (str): Directory to save the file.
+        name (str): Name of the file.
+
+    Returns:
+        str: Path to the saved file.
+    """
     return save_json_data(data, location, name)
 
 
@@ -95,7 +126,8 @@ def init_save_data_structure(data_save_path: str,
 
     copyfile(parameters, Path(save_directory, DEFAULT_PARAMETERS_FILENAME))
 
-    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
+    copyfile(DEFAULT_LM_PARAMETERS_PATH, Path(
+        save_directory, DEFAULT_LM_PARAMETERS_FILENAME))
 
     return save_directory
 
@@ -186,8 +218,8 @@ def save_stimuli_position_info(
         screen_info: Dict[str, Any]) -> str:
     """Save stimuli positions and screen info to `path`
 
-   stimuli_position_info: {'A': (0, 0)}
-   screen_info: {'screen_size_pixels': [1920, 1080], 'screen_refresh': 160}
+    stimuli_position_info: {'A': (0, 0)}
+    screen_info: {'screen_size_pixels': [1920, 1080], 'screen_refresh': 160}
 
     Parameters
     ----------

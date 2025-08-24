@@ -1,9 +1,11 @@
 from bcipy.config import DEFAULT_PARAMETERS_PATH
 from bcipy.main import bci_main
 
-parameter_location = DEFAULT_PARAMETERS_PATH  # Path to a valid BciPy parameters file
+# Path to a valid BciPy parameters file
+parameter_location = DEFAULT_PARAMETERS_PATH
 user = 'test_demo_user'  # User ID
-experiment_id = 'default'  # This will run two tasks: RSVP Calibration and Matrix Calibration
+# This will run two tasks: RSVP Calibration and Matrix Calibration
+experiment_id = 'default'
 alert = False  # Set to True to alert user when tasks are complete
 visualize = False  # Set to True to visualize data at the end of a task
 fake_data = True  # Set to True to use fake acquisition data during the session

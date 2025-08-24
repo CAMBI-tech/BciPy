@@ -28,9 +28,11 @@ class ChannelWisePrincipalComponentAnalysis:
 
     def __init__(self, n_components: Optional[float] = None, random_state: Optional[int] = None, num_ch: int = 1):
         self.num_ch = num_ch
-        self.list_pca = [PCA(n_components=n_components, random_state=random_state) for _ in range(self.num_ch)]
+        self.list_pca = [PCA(n_components=n_components,
+                             random_state=random_state) for _ in range(self.num_ch)]
         self.logger = logging.getLogger(SESSION_LOG_FILENAME)
-        self.logger.info(f"PCA. n_components={n_components}, random_state={random_state}, num_ch={num_ch}")
+        self.logger.info(
+            f"PCA. n_components={n_components}, random_state={random_state}, num_ch={num_ch}")
 
     def fit(self, x: np.ndarray, y: Optional[np.ndarray] = None) -> None:
         """Fit PCA to each channel of data.

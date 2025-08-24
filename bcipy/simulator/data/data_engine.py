@@ -31,7 +31,8 @@ class QueryFilter(NamedTuple):
         origin = get_origin(field_type)
         if origin:
             options = get_args(field_type)
-            is_correct_type = any(isinstance(self.value, ftype) for ftype in options)
+            is_correct_type = any(isinstance(self.value, ftype)
+                                  for ftype in options)
         else:
             is_correct_type = isinstance(self.value, field_type)
 
@@ -46,7 +47,8 @@ class QueryFilter(NamedTuple):
 class DataEngine(ABC):
     """Abstract class for an object that loads data from one or more sources,
     processes the data using a provided processor, and provides an interface
-    for querying the processed data."""
+    for querying the processed data.
+    """
 
     def load(self):
         """Load data from sources."""

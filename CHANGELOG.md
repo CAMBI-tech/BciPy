@@ -10,6 +10,7 @@ The next major BciPy release is here! All features included from release canidat
   - Refactor `helpers` into `io` and `core` #362
 - Refactor to use `pyproject.toml` for installs #367
 - Language Model Refactor to use lm-toolkit #381 #390
+- Gaze Model integration #384
 - Simulator
     - Multimodal support #385
     - Replay feature #376
@@ -25,6 +26,10 @@ The next major BciPy release is here! All features included from release canidat
     - `EDFlib-Python` #362
   - Remove
     - `pyedflib` #362
+    - Drop support for python 3.8 #391
+- General documentation improvements
+    - README updates #391
+    - Drop Twitter links #391
 
 # 2.0.1-rc.4
 

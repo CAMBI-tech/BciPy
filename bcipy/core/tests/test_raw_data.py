@@ -312,7 +312,8 @@ class TestRawData(unittest.TestCase):
 
         transform = mock()
         # note data here should be returned as a nd.array. for mocking we don't care as much
-        when(RawData).apply_transform(any(), transform).thenReturn((data, self.sample_rate))
+        when(RawData).apply_transform(
+            any(), transform).thenReturn((data, self.sample_rate))
         resp, fs = data.by_channel(transform=transform)
 
         self.assertEqual(self.sample_rate, fs)
@@ -369,8 +370,10 @@ class TestRawData(unittest.TestCase):
         transform = mock()
         expected_output, expected_fs = data.by_channel()
         # note data here should be returned as a nd.array. for mocking we don't care as much
-        when(RawData).by_channel(transform).thenReturn((expected_output, expected_fs))
-        _, channels, fs = data.by_channel_map(channel_map=channel_map, transform=transform)
+        when(RawData).by_channel(transform).thenReturn(
+            (expected_output, expected_fs))
+        _, channels, fs = data.by_channel_map(
+            channel_map=channel_map, transform=transform)
 
         self.assertEqual(expected_fs, fs)
         self.assertEqual(expected_channels, channels)
@@ -389,7 +392,8 @@ class Test1020(unittest.TestCase):
     def test_get_1020_channel_map(self):
         """Tests that the 10-20 channel map is correctly generated."""
         # all but the last channel are valid 10-20 channels
-        channels = ['Fp1', 'Fp2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'invalid']
+        channels = ['Fp1', 'Fp2', 'F3', 'F4', 'C3',
+                    'C4', 'P3', 'P4', 'O1', 'invalid']
         channel_map = get_1020_channel_map(channels)
         self.assertEqual(10, len(channel_map))
         self.assertEqual(0, channel_map[-1])

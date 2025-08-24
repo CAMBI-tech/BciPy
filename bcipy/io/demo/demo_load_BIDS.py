@@ -28,7 +28,8 @@ try:
     task_name = None  # Set to None to load all tasks.
     raw_data_files = BIDS_to_MNE(path_to_bids, task_name=task_name)
 
-    raw_data = raw_data_files[0]  # Get the first raw data object from the list.
+    # Get the first raw data object from the list.
+    raw_data = raw_data_files[0]
 
     # to see where the data is stored, you can use the following command:
     # print(raw_data.filenames)
@@ -41,11 +42,13 @@ try:
     # EPOCH THE DATA / CREATE ERPS
     # epoch the data using the events from the raw data object.
     # You can specify the event_id, tmin, tmax, and baseline parameters as needed.
-    events = mne.events_from_annotations(raw_data, event_id={'nontarget': 0, 'target': 1})
+    events = mne.events_from_annotations(
+        raw_data, event_id={'nontarget': 0, 'target': 1})
     tmin = -0.2
     tmax = 0.8
     baseline = (None, None)  # No baseline correction.
-    epochs = mne.Epochs(raw_data, events[0], events[1], tmin, tmax, baseline=baseline, preload=True)
+    epochs = mne.Epochs(
+        raw_data, events[0], events[1], tmin, tmax, baseline=baseline, preload=True)
 
     # Grab the epochs for non-target and target events.
     non_target_epochs = epochs['nontarget']
@@ -72,4 +75,5 @@ except Exception as e:
     print(f"An error occurred: {e}")
 finally:
     print("Demo script completed.")
-    breakpoint()  # This will pause the script execution and allow you to inspect the variables in the debugger.
+    # This will pause the script execution and allow you to inspect the variables in the debugger.
+    breakpoint()

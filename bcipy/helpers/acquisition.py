@@ -66,7 +66,8 @@ def init_acquisition(
         device_spec = init_device(content_type, device_name, status)
         raw_data_name = raw_data_filename(device_spec)
 
-        client = init_lsl_client(parameters, device_spec, save_folder, raw_data_name)
+        client = init_lsl_client(
+            parameters, device_spec, save_folder, raw_data_name)
         manager.add_client(client)
 
     manager.start_acquisition()
@@ -115,7 +116,8 @@ def init_device(content_type: str,
         spec = preconfigured_device(device_name, strict=True)
     else:
         discovered_spec = discover_device_spec(content_type)
-        configured_spec = preconfigured_device(discovered_spec.name, strict=False)
+        configured_spec = preconfigured_device(
+            discovered_spec.name, strict=False)
         spec = configured_spec or discovered_spec
     if status_override is not None:
         spec.status = status_override
@@ -335,7 +337,8 @@ def is_stream_type_active(stream_type: StreamType) -> bool:
     """Check if the provided stream type is active.
 
     A stream type's status, if provided, will be used to make the determinition.
-    If missing, the status of a matching pre-configured device will be used."""
+    If missing, the status of a matching pre-configured device will be used.
+    """
     content_type, device_name, status = stream_type
     if status:
         return status == DeviceStatus.ACTIVE

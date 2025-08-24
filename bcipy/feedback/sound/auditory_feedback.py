@@ -1,16 +1,41 @@
+# mypy: disable-error-code=override
+"""Auditory feedback module.
+
+This module provides auditory feedback functionality for BciPy, implementing
+sound-based feedback mechanisms using sounddevice for audio playback.
+"""
+
+from typing import Any, Dict, List, Optional, Union
+
 import sounddevice as sd
 from psychopy import core
 
-from bcipy.feedback.feedback import Feedback
+from bcipy.feedback.feedback import Feedback, FeedbackType
 
 
 class AuditoryFeedback(Feedback):
-    """Auditory Feedback."""
+    """Auditory feedback implementation.
 
-    def __init__(self, parameters, clock):
+    This class provides sound-based feedback functionality, allowing for
+    the playback of audio stimuli with precise timing control.
 
+    Attributes:
+        feedback_type (FeedbackType): Type of feedback (AUD).
+        parameters (Dict[str, Any]): Configuration parameters for feedback.
+        sound_buffer_time (float): Buffer time for sound playback.
+        feedback_timestamp_label (str): Label for feedback timing.
+        clock (core.Clock): Clock for timing control.
+    """
+
+    def __init__(self, parameters: Dict[str, Any], clock: core.Clock) -> None:
+        """Initialize Auditory Feedback.
+
+        Args:
+            parameters (Dict[str, Any]): Configuration parameters for feedback.
+            clock (core.Clock): Clock instance for timing control.
+        """
         # Register Feedback Type
-        self.feedback_type = 'Auditory Feedback'
+        self.feedback_type = FeedbackType.AUD
 
         super(AuditoryFeedback, self).__init__(self.feedback_type)
 
@@ -23,7 +48,22 @@ class AuditoryFeedback(Feedback):
         # Clock
         self.clock = clock
 
-    def administer(self, sound, fs, assertion=None):
+    def administer(self, sound: Union[List[float], List[List[float]]], fs: int,
+                   assertion: Optional[Any] = None) -> List[List[Union[str, float]]]:
+        """Administer auditory feedback.
+
+        Plays the provided sound and records the timing of the feedback.
+
+        Args:
+            sound (Union[List[float], List[List[float]]]): Sound data to play.
+            fs (int): Sampling frequency of the sound.
+            assertion (Optional[Any]): Optional assertion to check before playing.
+                Currently not used.
+
+        Returns:
+            List[List[Union[str, float]]]: List containing timing information
+                in the format [[label, timestamp]].
+        """
         timing = []
 
         if assertion:

@@ -1,3 +1,10 @@
+"""Task control handler module for BCI tasks.
+
+This module provides classes for managing decision making and evidence fusion
+in BCI tasks. It includes functionality for scheduling inquiries, managing
+task state, and making decisions based on accumulated evidence.
+"""
+
 import logging
 import string
 from typing import Dict, List, Optional, Tuple
@@ -14,39 +21,55 @@ from bcipy.task.data import EvidenceType
 log = logging.getLogger(SESSION_LOG_FILENAME)
 
 
-class EvidenceFusion():
-    """ Fuses likelihood evidences provided by the inference
-        Attr:
-            evidence_history(dict{list[ndarray]}): Dictionary of difference
-                evidence types in list. Lists are ordered using the arrival
-                time.
-            likelihood(ndarray[]): current probability distribution over the
-                set. Gets updated once new evidence arrives. """
+class EvidenceFusion:
+    """Class for fusing likelihood evidence from multiple sources.
 
-    def __init__(self, list_name_evidence, len_dist):
-        self.evidence_history = {name: [] for name in list_name_evidence}
+    This class manages the combination of evidence from different sources
+    (e.g., EEG, eye tracking) to compute a final probability distribution
+    over possible decisions.
+
+    Attributes:
+        evidence_history: Dictionary mapping evidence types to their history.
+        likelihood: Current probability distribution over the decision space.
+    """
+
+    def __init__(self, list_name_evidence: List[EvidenceType],
+                 len_dist: int) -> None:
+        """Initialize the evidence fusion system.
+
+        Args:
+            list_name_evidence: List of evidence types to track.
+            len_dist: Length of the probability distribution (number of
+                possible decisions).
+        """
+        self.evidence_history: Dict[EvidenceType, List[np.ndarray]] = {
+            name: [] for name in list_name_evidence
+        }
         self.likelihood = np.ones(len_dist) / len_dist
 
-    def update_and_fuse(self, dict_evidence):
-        """ Updates the probability distribution
-            Args:
-                dict_evidence(dict{name: ndarray[float]}): dictionary of
-                    evidences (EEG (likelihood ratios) and other likelihoods)
-        """
-        # {ERP: [], EYE: ()}
+    def update_and_fuse(self,
+                        dict_evidence: Dict[EvidenceType,
+                                            np.ndarray]) -> np.ndarray:
+        """Update and fuse probability distributions with new evidence.
 
-        for key in dict_evidence.keys():
+        Args:
+            dict_evidence: Dictionary mapping evidence types to their
+                likelihood arrays.
+
+        Returns:
+            np.ndarray: Updated probability distribution after fusion.
+        """
+        for key in dict_evidence:
             tmp = dict_evidence[key][:][:]
             self.evidence_history[key].append(tmp)
 
-        # Current rule is to multiply
+        # Current fusion rule is multiplication
         for value in dict_evidence.values():
             self.likelihood *= value[:]
 
         if np.isinf(np.sum(self.likelihood)):
             tmp = np.zeros(len(self.likelihood))
             tmp[np.where(self.likelihood == np.inf)[0][0]] = 1
-
             self.likelihood = tmp
 
         if not np.isnan(np.sum(self.likelihood)):
@@ -56,24 +79,26 @@ class EvidenceFusion():
 
         return likelihood
 
-    def reset_history(self):
-        """ Clears evidence history """
+    def reset_history(self) -> None:
+        """Clears evidence history."""
         for value in self.evidence_history.values():
             del value[:]
         self.likelihood = np.ones(len(self.likelihood)) / len(self.likelihood)
 
     def save_history(self) -> None:
-        """ Saves the current likelihood history """
+        """Save the current likelihood history.
+
+        Note:
+            Not currently implemented.
+        """
         log.warning('save_history not implemented')
-        return
 
     @property
     def latest_evidence(self) -> Dict[EvidenceType, List[float]]:
-        """Latest evidence of each type in the evidence history.
+        """Get the latest evidence of each type.
 
-        Returns
-        -------
-        a dictionary with an entry for all configured evidence types.
+        Returns:
+            Dict mapping evidence types to their most recent values.
         """
         return {
             name: list(evidence[-1]) if evidence else []
@@ -82,57 +107,54 @@ class EvidenceFusion():
 
 
 class DecisionMaker:
-    """ Scheduler of the entire framework
-        Attr:
-            state(str): state of the framework, which increases in size
-                by 1 after each inquiry. Elements are alphabet, ".,_,<"
-                where ".": null_inquiry(no decision made)
-                      "_": space bar
-                      "<": back space
-            alphabet(list[str]): list of symbols used by the framework. Can
-                be switched with location of images or one hot encoded images.
-            is_txt_stim(bool): whether the stimuli are text or images
-            inq_constants(list[str]): optional list of letters which should appear in
-                every inquiry.
-            stopping_evaluator: CriteriaEvaluator - optional parameter to
-                provide alternative rules for committing to a decision.
-            stimuli_agent(StimuliAgent): the query selection mechanism of the
-                system
-            stimuli_timing(list[float]): list of timings for the stimuli ([fixation_time, stimuli_flash_time])
-            stimuli_order(StimuliOrder): ordering of the stimuli (random, distributed)
-            stimuli_jitter(float): jitter of the inquiry stimuli in seconds
+    """Scheduler and decision maker for BCI task control.
 
-        Functions:
-            decide():
-                Checks the criteria for making and series, using all
-                evidences and decides to do an series or to collect more
-                evidence
-            do_series():
-                Once committed an series perform updates to condition the
-                distribution on the previous letter.
-            schedule_inquiry():
-                schedule the next inquiry using the current information
-            decide_state_update():
-                If committed to an series update the state using a decision
-                metric.
-                (e.g. pick the letter with highest likelihood)
-            prepare_stimuli():
-                prepares the query set for the next inquiry
-                (e.g pick n-highest likely letters and randomly shuffle)
+    This class manages the scheduling of inquiries and decision making based
+    on accumulated evidence. It maintains the task state and coordinates
+    the interaction between evidence collection and decision making.
+
+    Attributes:
+        state: Current state string, growing by 1 after each inquiry.
+        displayed_state: State formatted for display.
+        alphabet: List of possible symbols.
+        is_txt_stim: Whether stimuli are text or images.
+        stimuli_timing: Timing parameters for stimuli presentation.
+        stimuli_order: Order of stimuli presentation.
+        stimuli_jitter: Jitter in stimulus timing.
+        inq_constants: Symbols to include in every inquiry.
+        stopping_evaluator: Evaluator for stopping criteria.
+        stimuli_agent: Agent for selecting stimuli.
+        list_series: List of series data.
+        time: Current time.
+        inquiry_counter: Number of inquiries made.
+        last_selection: Last selected symbol.
+    """
+
+    def __init__(
+            self,
+            state: str = '',
+            alphabet: List[str] = list(string.ascii_uppercase) + [BACKSPACE_CHAR] +
+            [SPACE_CHAR],
+            is_txt_stim: bool = True,
+            stimuli_timing: List[float] = [1, .2],
+            stimuli_jitter: float = 0,
+            stimuli_order: StimuliOrder = StimuliOrder.RANDOM,
+            inq_constants: Optional[List[str]] = None,
+            stopping_evaluator: Optional[CriteriaEvaluator] = None,
+            stimuli_agent: Optional[StimuliAgent] = None) -> None:
+        """Initialize the decision maker.
+
+        Args:
+            state: Initial state string.
+            alphabet: List of possible symbols.
+            is_txt_stim: Whether stimuli are text or images.
+            stimuli_timing: [fixation_time, stimuli_flash_time].
+            stimuli_jitter: Jitter in stimulus timing (seconds).
+            stimuli_order: Order of stimuli presentation.
+            inq_constants: Symbols to include in every inquiry.
+            stopping_evaluator: Evaluator for stopping criteria.
+            stimuli_agent: Agent for selecting stimuli.
         """
-
-    def __init__(self,
-                 state: str = '',
-                 alphabet: List[str] = list(string.ascii_uppercase) + [BACKSPACE_CHAR] + [SPACE_CHAR],
-                 is_txt_stim: bool = True,
-                 stimuli_timing: List[float] = [1, .2],
-                 stimuli_jitter: float = 0,
-                 stimuli_order: StimuliOrder = StimuliOrder.RANDOM,
-                 inq_constants: Optional[List[str]] = None,
-                 stopping_evaluator: CriteriaEvaluator = CriteriaEvaluator.default(min_num_inq=2,
-                                                                                   max_num_inq=10,
-                                                                                   threshold=0.8),
-                 stimuli_agent: Optional[StimuliAgent] = None):
         self.state = state
         self.displayed_state = self.form_display_state(state)
         self.stimuli_timing = stimuli_timing
@@ -142,75 +164,90 @@ class DecisionMaker:
         self.alphabet = alphabet
         self.is_txt_stim = is_txt_stim
 
-        self.list_series = [{'target': None, 'time_spent': 0,
-                             'list_sti': [], 'list_distribution': [],
-                             'decision': None}]
+        self.list_series = [{
+            'target': None,
+            'time_spent': 0,
+            'list_sti': [],
+            'list_distribution': [],
+            'decision': None
+        }]
         self.time = 0
         self.inquiry_counter = 0
 
         self.stopping_evaluator = stopping_evaluator
-        self.stimuli_agent = stimuli_agent or RandomStimuliAgent(alphabet=self.alphabet)
+        self.stimuli_agent = stimuli_agent or RandomStimuliAgent(
+            alphabet=self.alphabet)
         self.last_selection = ''
 
         # Items shown in every inquiry
         self.inq_constants = inq_constants
 
-    def reset(self, state=''):
-        """ Resets the decision maker with the initial state
-            Args:
-                state(str): current state of the system """
+    def reset(self, state: str = '') -> None:
+        """Reset the decision maker to initial state.
+
+        Args:
+            state: New initial state string.
+        """
         self.state = state
         self.displayed_state = self.form_display_state(self.state)
 
-        self.list_series = [{'target': None, 'time_spent': 0,
-                             'list_sti': [], 'list_distribution': []}]
+        self.list_series = [{
+            'target': None,
+            'time_spent': 0,
+            'list_sti': [],
+            'list_distribution': []
+        }]
         self.time = 0
         self.inquiry_counter = 0
 
         self.stimuli_agent.reset()
 
-    def form_display_state(self, state):
-        """ Forms the state information or the user that fits to the
-            display. Basically takes '.' and BACKSPACE_CHAR into consideration and rewrites
-            the state
-            Args:
-                state(str): state string
-            Return:
-                displayed_state(str): state without '<,.' and removes
-                    backspaced letters """
+    def form_display_state(self, state: str) -> str:
+        """Format state string for display.
+
+        Processes special characters (backspace, dots) and formats the
+        state appropriately for display.
+
+        Args:
+            state: Raw state string.
+
+        Returns:
+            str: Formatted state string for display.
+        """
         tmp = ''
         for i in state:
             if i == BACKSPACE_CHAR:
                 tmp = tmp[0:-1]
             elif i != '.':
                 tmp += i
-
         return tmp
 
-    def update(self, state=''):
+    def update(self, state: str = '') -> None:
+        """Update the current state.
+
+        Args:
+            state: New state string.
+        """
         self.state = state
         self.displayed_state = self.form_display_state(state)
 
-    def decide(self, p) -> Tuple[bool, InquirySchedule]:
-        """ Once evidence is collected, decision_maker makes a decision to
-            stop or not by leveraging the information of the stopping
-            criteria. Can decide to do an series or schedule another inquiry.
+    def decide(self, p: np.ndarray) -> Tuple[bool, Optional[InquirySchedule]]:
+        """Make a decision based on current evidence.
 
-        Args
-        ----
-        p(ndarray[float]): |A| x 1 distribution array
-            |A|: cardinality of the alphabet
+        Evaluates whether to commit to a decision or schedule another
+        inquiry based on the current probability distribution and
+        stopping criteria.
 
-        Return
-        ------
-        - commitment: True if a letter is a commitment is made
-        False if requires more evidence
-        - inquiry schedule: Extra arguments depending on the decision
+        Args:
+            p: Probability distribution over possible decisions.
+
+        Returns:
+            Tuple containing:
+                - bool: True if committing to a decision.
+                - Optional[InquirySchedule]: Schedule for next inquiry if needed.
         """
-
         self.list_series[-1]['list_distribution'].append(p[:])
 
-        # Check stopping criteria
         if self.stopping_evaluator.should_commit(self.list_series[-1]):
             self.do_series()
             return True, None
@@ -218,34 +255,46 @@ class DecisionMaker:
             stimuli = self.schedule_inquiry()
             return False, stimuli
 
-    def do_series(self):
-        """ series refers to a commitment to a decision.
-            If made, state is updated, displayed state is updated
-            a new series is appended. """
+    def do_series(self) -> None:
+        """Handle commitment to a decision.
+
+        Updates state and prepares for the next series when a decision
+        is made.
+        """
         self.inquiry_counter = 0
         decision = self.decide_state_update()
         self.last_selection = decision
         self.state += decision
         self.displayed_state = self.form_display_state(self.state)
 
-        # Initialize next series
-        self.list_series.append({'target': None, 'time_spent': 0,
-                                 'list_sti': [], 'list_distribution': []})
+        self.list_series.append({
+            'target': None,
+            'time_spent': 0,
+            'list_sti': [],
+            'list_distribution': []
+        })
 
         self.stimuli_agent.do_series()
         self.stopping_evaluator.do_series()
 
     def schedule_inquiry(self) -> InquirySchedule:
-        """ Schedules next inquiry """
+        """Schedule the next inquiry.
+
+        Returns:
+            InquirySchedule: Schedule for the next inquiry.
+        """
         self.state += '.'
         stimuli = self.prepare_stimuli()
         self.list_series[-1]['list_sti'].append(stimuli[0])
         self.inquiry_counter += 1
-
         return stimuli
 
-    def decide_state_update(self):
-        """ Checks stopping criteria to commit to an series """
+    def decide_state_update(self) -> str:
+        """Determine the next state update.
+
+        Returns:
+            str: Selected symbol for state update.
+        """
         idx = np.where(
             self.list_series[-1]['list_distribution'][-1] ==
             np.max(self.list_series[-1]['list_distribution'][-1]))[0][0]
@@ -254,13 +303,10 @@ class DecisionMaker:
         return decision
 
     def prepare_stimuli(self) -> InquirySchedule:
-        """ Given the alphabet, under a rule, prepares a stimuli for
-            the next inquiry.
+        """Prepare stimuli for the next inquiry.
 
-        Return
-        ------
-        stimuli(tuple[list[str],list[float],list[str]]): tuple of
-        stimuli information. [0]: letter, [1]: timing, [2]: color
+        Returns:
+            InquirySchedule: Schedule containing stimuli and timing information.
         """
 
         # querying agent decides on possible letters to be shown on the screen

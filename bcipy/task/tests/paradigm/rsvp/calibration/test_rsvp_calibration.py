@@ -400,7 +400,8 @@ class TestRSVPCalibration(unittest.TestCase):
             (self.daq, self.servers, self.win))
 
         # Mock the default cleanup
-        when(bcipy.task.calibration.BaseCalibrationTask).write_offset_trigger().thenReturn(None)
+        when(bcipy.task.calibration.BaseCalibrationTask).write_offset_trigger(
+        ).thenReturn(None)
         when(bcipy.task.calibration.BaseCalibrationTask).exit_display().thenReturn(None)
         when(bcipy.task.calibration.BaseCalibrationTask).wait().thenReturn(None)
 
@@ -421,8 +422,10 @@ class TestRSVPCalibration(unittest.TestCase):
         verify(self.daq, times=1).cleanup()
         verify(self.servers[0], times=1).stop()
         verify(self.win, times=1).close()
-        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).setup(any(), any(), any())
-        verify(bcipy.task.calibration.BaseCalibrationTask, times=1).write_offset_trigger()
+        verify(bcipy.task.calibration.BaseCalibrationTask,
+               times=1).setup(any(), any(), any())
+        verify(bcipy.task.calibration.BaseCalibrationTask,
+               times=1).write_offset_trigger()
         verify(bcipy.task.calibration.BaseCalibrationTask, times=1).exit_display()
         verify(bcipy.task.calibration.BaseCalibrationTask, times=1).wait()
 

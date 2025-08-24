@@ -21,7 +21,8 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
         dirname = os.path.dirname(__file__) or '.'
         cls.kenlm_path = "lm_dec19_char_tiny_12gram.kenlm"
         print(cls.kenlm_path)
-        cls.lm_params = [{"lm_path": cls.kenlm_path}, {"lang_model_name": "gpt2"}]
+        cls.lm_params = [{"lm_path": cls.kenlm_path},
+                         {"lang_model_name": "gpt2"}]
         cls.lmodel = MixtureLanguageModelAdapter(lm_types=["NGRAM", "CAUSAL"], lm_weights=[0.5, 0.5],
                                                  lm_params=cls.lm_params)
         cls.lmodel.set_symbol_set(DEFAULT_SYMBOL_SET)
@@ -154,6 +155,7 @@ class TestMixtureLanguageModelAdapter(unittest.TestCase):
     def test_nonzero_prob(self):
         """Test that all letters in the alphabet have nonzero probability except for backspace"""
         symbol_probs = self.lmodel.predict_character(list("does_it_make_sens"))
-        prob_values = [item[1] for item in symbol_probs if item[0] != BACKSPACE_CHAR]
+        prob_values = [item[1]
+                       for item in symbol_probs if item[0] != BACKSPACE_CHAR]
         for value in prob_values:
             self.assertTrue(value > 0)

@@ -1,6 +1,5 @@
 class DeviceSpecNotFoundError(Exception):
-    """Thrown when a suitable DeviceSpec was not found in the devices.json file
-    """
+    """Thrown when a suitable DeviceSpec was not found in the devices.json file."""
 
 
 class IncompatibleData(Exception):
@@ -15,7 +14,8 @@ class IncompatibleDeviceSpec(IncompatibleData):
 
 class IncompatibleParameters(IncompatibleData):
     """Thrown when the timing parameters used for data collection are
-    incompatible with the timing parameters of the simulation."""
+    incompatible with the timing parameters of the simulation.
+    """
 
 
 class IncompatibleSampler(Exception):

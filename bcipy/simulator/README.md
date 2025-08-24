@@ -1,4 +1,4 @@
-# RSVP Simulator
+# BciPy Simulator
 
 ## Overview
 
@@ -33,14 +33,15 @@ optional arguments:
 ```
 
 For example,
-`$ python bcipy/simulator -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
+
+`$ bcipy-sim -d my_data_folder/ -p my_parameters.json -m my_models/ -n 5`
 
 #### Program Args
 
 - `i` : Interactive command line interface. Provide this flag by itself to be prompted for each parameter.
 - `gui`: A graphical user interface for configuring a simulation. This mode will output the command line arguments which can be used to repeat the simulation.
-- `d` : Raw data folders to be processed. One ore more values can be provided. Each session data folder should contain
-  _raw_data.csv_, _triggers.txt_, _parameters.json_. These files will be used to construct a data pool from which simulator will sample EEG and other device responses. The parameters file in each data folder will be used to check compatibility with the simulation/model parameters.
+- `d` : Raw data folders to be processed. Data folders should contain EEG responses to Copy Phrase tasks. Each session data folder should contain
+  _raw_data.csv_, _triggers.txt_, _parameters.json_.These files will be used to construct a data pool from which simulator will sample EEG. The parameters file in each data folder will be used to check compatibility with the simulation/model parameters.
 - `p` : path to the parameters.json file used to run the simulation. These parameters will be applied to
   all raw_data files when loading. This file can specify various aspects of the simulation, including the language model to be used, the text to be spelled, etc. Timing-related parameters should generally match the parameters file used for training the signal model(s).
 - `m`: Path to a pickled (.pkl) signal model. One or more models can be provided.
@@ -52,10 +53,12 @@ For example,
 
 #### Sim Output Details
 
-Output folders are generally located in the `data/simulator` directory, but can be configured per simulation. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time.
+Output folders are generally located in the `data/simulator` directory, but can be configured per simulation. Each simulation will create a new directory. The directory name will be  prefixed with `SIM` and will include the current date and time (E.G -- "SIM_%m-%d-%Y_%H_%M_%S")
+
+At the top level of the output directory, the following files are created:
 
 - `parameters.json` captures params used for the simulation.
-- `sim.log` is a log file for the simulation; metrics will be output here.
+- `sim.log` is a log file for the overall simulation; metrics will be output here.
 - `summary_data.json` summarizes session data from each of the runs into a single data structure.
 - `metrics.png` boxplots for several metrics summarizing all simulation runs.
 
@@ -126,7 +129,6 @@ optional arguments:
                         Sim output path
 ```
 
-
 ## Current Limitations
 
 - Only one sampler maybe provided for all devices. Ideally we should support a different sampling strategy for each device.
@@ -148,47 +150,49 @@ The `switch_data_processor` and `switch_model` are used to demonstrate a multimo
 
 1. Ensure that the devices.json file has an entry for a switch
 
-    ```
-    {
-        "name": "Switch",
-        "content_type": "MARKERS",
-        "channels": [
-            { "name": "Marker", "label": "Marker" }
-        ],
-        "sample_rate": 0.0,
-        "description": "Switch used for button press inputs",
-        "excluded_from_analysis": [],
-        "status": "active",
-        "static_offset": 0.0
-    }
-    ```
+```json
+{
+  "name": "Switch",
+  "content_type": "MARKERS",
+  "channels": [
+      { "name": "Marker", "label": "Marker" }
+  ],
+  "sample_rate": 0.0,
+  "description": "Switch used for button press inputs",
+  "excluded_from_analysis": [],
+  "status": "active",
+  "static_offset": 0.0
+}
+```
 
-2. Ensure that the switch signal model can be loaded or create a switch signal model. To create a new one:
+1. Ensure that the switch signal model can be loaded or create a switch signal model. To create a new one:
 
-    ```
-    from pathlib import Path
-    from bcipy.acquisition.devices import preconfigured_device
-    from bcipy.io.save import save_model
-    from bcipy.signal.model.base_model import SignalModelMetadata
-    from bcipy.signal.model.switch_model import SwitchModel
+```python
+from pathlib import Path
+from bcipy.acquisition.devices import preconfigured_device
+from bcipy.io.save import save_model
+from bcipy.signal.model.base_model import SignalModelMetadata
+from bcipy.signal.model.switch_model import SwitchModel
 
-    dirname = "" # TODO: enter the directory
-    model = SwitchModel()
-    # name should match devices.json spec. Alternatively, use bcipy.acquisition.datastream.mock.switch.switch_device()
-    device = preconfigured_device("Switch")
-    model.metadata = SignalModelMetadata(device_spec=device, evidence_type="BTN", transform=None)
-    save_model(model, Path(dirname, "switch_model.pkl"))
-    ```
+dirname = "" # TODO: enter the directory
+model = SwitchModel()
 
-3. Set the appropriate simulation parameters in the parameters.json file.
+# name should match devices.json spec. Alternatively, use bcipy.acquisition.datastream.mock.switch.switch_device()
+
+device = preconfigured_device("Switch")
+model.metadata = SignalModelMetadata(device_spec=device, evidence_type="BTN", transform=None)
+save_model(model, Path(dirname, "switch_model.pkl"))
+```
+
+1. Set the appropriate simulation parameters in the parameters.json file.
 
     - set the `acq_mode` parameter to 'EEG+MARKERS'.
     - ensure that `preview_inquiry_progress_method` parameter is set to '1' or '2'.
     - You may also want to set the `summarize_session` parameter to `true` to see how the evidences get combined during decision-making.
 
-4. Ensure that the data directories have a raw data file (csv) for markers in addition to the EEG data. If your data does not have marker data, you can extract this from the triggers.txt file using the script `bcipy.simulator.util.generate_marker_data`. If the task was run with Inquiry Preview, the script can use the button press events recoreded in the trigger file. Otherwise you can use the `--mock` flag along with a parameters file to mock what a raw data file would look like if the user pressed the button according to the configured button press mode.
+2. Ensure that the data directories have a raw data file (csv) for markers in addition to the EEG data. If your data does not have marker data, you can extract this from the triggers.txt file using the script `bcipy.simulator.util.generate_marker_data`. If the task was run with Inquiry Preview, the script can use the button press events recoreded in the trigger file. Otherwise you can use the `--mock` flag along with a parameters file to mock what a raw data file would look like if the user pressed the button according to the configured button press mode.
 
-    ```
+    ```bash
     $ python -m bcipy.simulator.util.generate_marker_data -h
     usage: generate_marker_data.py [-h] [-m] [-p PARAMETERS] data_folder
 
@@ -204,7 +208,7 @@ The `switch_data_processor` and `switch_model` are used to demonstrate a multimo
                             Optional parameters file to use when mocking data.
     ```
 
-5. Run a simulation.
+3. Run a simulation.
 
     - Set the simulation parameters for both the EEG and the Button models (.pkl files).
     - Use the InquirySampler
@@ -230,4 +234,3 @@ Note that the progress method (`preview_inquiry_progress_method` parameter) does
 
 - A `preview_inquiry_progress_method` of 0 is currently not supported and an exception will be thrown. Ideally, all inquiries should get an evidence value of 1.0 (no change) with this mode.
 - Button evidence only works correctly with the InquirySampler. This is due to all trials in the same inquiry receiving the same value.
-

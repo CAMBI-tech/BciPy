@@ -3,21 +3,27 @@
 import csv
 import itertools
 import json
+import logging
 import os
 import sqlite3
 from dataclasses import dataclass, fields
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterator, List, Optional, Union
 
 import openpyxl
 from openpyxl.chart import BarChart, Reference
 from openpyxl.styles import PatternFill
 from openpyxl.styles.borders import BORDER_THIN, Border, Side
 from openpyxl.styles.colors import COLOR_INDEX
+from openpyxl.worksheet.worksheet import Worksheet
 
 from bcipy.config import (DEFAULT_ENCODING, DEFAULT_PARAMETERS_FILENAME,
-                          SESSION_DATA_FILENAME, SESSION_SUMMARY_FILENAME)
+                          SESSION_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          SESSION_SUMMARY_FILENAME)
 from bcipy.io.load import load_json_parameters
 from bcipy.task.data import Session
+
+# Configure logging
+logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 BLACK = COLOR_INDEX[0]
 WHITE = COLOR_INDEX[1]
@@ -25,16 +31,38 @@ YELLOW = COLOR_INDEX[5]
 
 
 def read_session(file_name: str = SESSION_DATA_FILENAME) -> Session:
-    """Read the session data from the given file."""
+    """Read session data from a JSON file.
+
+    Args:
+        file_name (str, optional): Path to the session data file.
+            Defaults to SESSION_DATA_FILENAME.
+
+    Returns:
+        Session: A Session object containing the parsed data.
+
+    Raises:
+        FileNotFoundError: If the specified file does not exist.
+        json.JSONDecodeError: If the file contains invalid JSON.
+    """
     with open(file_name, 'r', encoding=DEFAULT_ENCODING) as json_file:
         return Session.from_dict(json.load(json_file))
 
 
-def session_data(data_dir: str) -> Dict:
-    """Returns a dict of session data transformed to map the alphabet letter
-    to the likelihood when presenting the evidence. Also removes attributes
-    not useful for debugging."""
+def session_data(data_dir: str) -> Dict[str, Any]:
+    """Transform session data to map alphabet letters to likelihood values.
 
+    Args:
+        data_dir (str): Directory containing the session data and parameters.
+
+    Returns:
+        Dict[str, Any]: Dictionary containing transformed session data with:
+            - Mapped alphabet letters to likelihood values
+            - Target text from parameters
+            - Removed debugging attributes
+
+    Raises:
+        FileNotFoundError: If required files are not found in data_dir.
+    """
     parameters = load_json_parameters(os.path.join(data_dir,
                                                    DEFAULT_PARAMETERS_FILENAME),
                                       value_cast=True)
@@ -46,7 +74,22 @@ def session_data(data_dir: str) -> Dict:
 
 @dataclass(frozen=True)
 class EvidenceRecord:
-    """Record summarizing Inquiry evidence."""
+    """Record summarizing Inquiry evidence.
+
+    Attributes:
+        series (int): Series number.
+        inquiry (int): Inquiry number within the series.
+        stim (str): Stimulus (letter or icon).
+        lm (float): Language model probability.
+        eeg (float): EEG evidence value.
+        eye (float): Eye tracking evidence value.
+        btn (float): Button press evidence value.
+        cumulative (float): Cumulative likelihood value.
+        inq_position (Optional[int]): Position in inquiry sequence.
+        is_target (int): Whether this is the target (1) or not (0).
+        presented (int): Whether this was presented (1) or not (0).
+        above_threshold (int): Whether above decision threshold (1) or not (0).
+    """
     series: int
     inquiry: int
     stim: str
@@ -60,12 +103,25 @@ class EvidenceRecord:
     presented: int
     above_threshold: int
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Any]:
+        """Iterate over the record's field values.
+
+        Returns:
+            Iterator[Any]: Iterator over the record's field values.
+        """
         return iter([getattr(self, field.name) for field in fields(self)])
 
 
 def sqlite_ddl(cls: Any, table_name: str) -> str:
-    """Sqlite create table statement for the given dataclass"""
+    """Generate SQLite CREATE TABLE statement for a dataclass.
+
+    Args:
+        cls (Any): Dataclass to generate DDL for.
+        table_name (str): Name of the table to create.
+
+    Returns:
+        str: SQLite CREATE TABLE statement.
+    """
     conversions = {int: 'integer', str: 'text', float: 'real'}
 
     column_defs = [
@@ -76,13 +132,31 @@ def sqlite_ddl(cls: Any, table_name: str) -> str:
 
 
 def sqlite_insert(cls: Any, table_name: str) -> str:
-    """sqlite INSERT statement for the given dataclass."""
+    """Generate SQLite INSERT statement for a dataclass.
+
+    Args:
+        cls (Any): Dataclass to generate INSERT for.
+        table_name (str): Name of the table to insert into.
+
+    Returns:
+        str: SQLite INSERT statement with placeholders.
+    """
     placeholders = ['?' for _ in fields(cls)]
     return f"INSERT INTO {table_name} VALUES ({','.join(placeholders)})"
 
 
 def evidence_records(session: Session) -> List[EvidenceRecord]:
-    """Summarize the session evidence data."""
+    """Generate evidence records from session data.
+
+    Args:
+        session (Session): Session data to process.
+
+    Returns:
+        List[EvidenceRecord]: List of evidence records.
+
+    Raises:
+        AssertionError: If session has no evidence or no symbol set.
+    """
     assert session.has_evidence(
     ), "There is no evidence in the provided session"
     assert session.symbol_set, "Session must define a symbol_set"
@@ -106,7 +180,8 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
                         eye=evidence.get('eye_evidence', {}).get(stim, ''),
                         btn=evidence.get('btn_evidence', {}).get(stim, ''),
                         cumulative=evidence['likelihood'][stim],
-                        inq_position=stimuli.index(stim) if stim in stimuli else None,
+                        inq_position=stimuli.index(
+                            stim) if stim in stimuli else None,
                         is_target=int(inquiry.target_letter == stim),
                         presented=int(stim in stimuli),
                         above_threshold=int(evidence['likelihood'][stim] >
@@ -114,34 +189,27 @@ def evidence_records(session: Session) -> List[EvidenceRecord]:
     return records
 
 
-def session_db(session: Session, db_file: str = 'session.db'):
-    """Creates a sqlite database from the given session data.
+def session_db(session: Session, db_file: str = 'session.db') -> None:
+    """Create a SQLite database from session data.
 
-    Parameters
-    ----------
-        session - task data (evidence values, stim times, etc.)
-        db_file - path  of database to write; defaults to session.db
+    Args:
+        session (Session): Session data to store in database.
+        db_file (str, optional): Path to database file. Defaults to 'session.db'.
 
-    Database Schema
-    ---------------
-    evidence:
-    - trial integer (0-based)
-    - inquiry integer (0-based)
-    - letter text (letter or icon)
-    - lm real (language model probability for the trial; same for every
-        inquiry and only considered in the cumulative value during the
-        first inquiry)
-    - eeg real (likelihood for the given inquiry; a value of 1.0 indicates
-        that the letter was not presented)
-    - btn real (button press evidence)
-    - eye real (eyetracker evidence)
-    - cumulative real (cumulative likelihood for the trial thus far)
-    - inq_position integer (inquiry position; null if not presented)
-    - is_target integer (boolean; true(1) if this letter is the target)
-    - presented integer (boolean; true if the letter was presented in
-        this inquiry)
-    - above_threshold (boolean; true if cumulative likelihood was above
-        the configured threshold)
+    Database Schema:
+        evidence:
+        - trial integer (0-based)
+        - inquiry integer (0-based)
+        - letter text (letter or icon)
+        - lm real (language model probability)
+        - eeg real (likelihood for the inquiry)
+        - btn real (button press evidence)
+        - eye real (eyetracker evidence)
+        - cumulative real (cumulative likelihood)
+        - inq_position integer (inquiry position)
+        - is_target integer (boolean)
+        - presented integer (boolean)
+        - above_threshold integer (boolean)
     """
     # Create database
     conn = sqlite3.connect(db_file)
@@ -155,8 +223,13 @@ def session_db(session: Session, db_file: str = 'session.db'):
     conn.commit()
 
 
-def session_csv(session: Session, csv_file='session.csv'):
-    """Create a csv file summarizing the evidence data for the given session."""
+def session_csv(session: Session, csv_file: str = 'session.csv') -> None:
+    """Create a CSV file summarizing session evidence data.
+
+    Args:
+        session (Session): Session data to summarize.
+        csv_file (str, optional): Path to CSV file. Defaults to 'session.csv'.
+    """
     with open(csv_file, "w", encoding=DEFAULT_ENCODING, newline='') as output:
         csv_writer = csv.writer(output, delimiter=',')
 
@@ -166,8 +239,20 @@ def session_csv(session: Session, csv_file='session.csv'):
             csv_writer.writerow(record)
 
 
-def write_row(excel_sheet, rownum, data, background=None, border=None):
-    """Helper method to write a row to an Excel spreadsheet"""
+def write_row(excel_sheet: Worksheet,
+              rownum: int,
+              data: Union[EvidenceRecord, List[Any]],
+              background: Optional[PatternFill] = None,
+              border: Optional[Border] = None) -> None:
+    """Write a row to an Excel spreadsheet.
+
+    Args:
+        excel_sheet (Worksheet): Worksheet to write to.
+        rownum (int): Row number to write to.
+        data (Union[EvidenceRecord, List[Any]]): Data to write.
+        background (Optional[PatternFill], optional): Background fill. Defaults to None.
+        border (Optional[Border], optional): Cell border. Defaults to None.
+    """
     for col, val in enumerate(data, start=1):
         cell = excel_sheet.cell(row=rownum, column=col)
         cell.value = val
@@ -178,10 +263,15 @@ def write_row(excel_sheet, rownum, data, background=None, border=None):
 
 
 def session_excel(session: Session,
-                  excel_file=SESSION_SUMMARY_FILENAME,
-                  include_charts=True):
-    """Create an Excel spreadsheet summarizing the evidence data for the given session."""
+                  excel_file: str = SESSION_SUMMARY_FILENAME,
+                  include_charts: bool = True) -> None:
+    """Create an Excel spreadsheet summarizing session evidence data.
 
+    Args:
+        session (Session): Session data to summarize.
+        excel_file (str, optional): Path to Excel file. Defaults to SESSION_SUMMARY_FILENAME.
+        include_charts (bool, optional): Whether to include charts. Defaults to True.
+    """
     # Define styles and borders to use within the spreadsheet.
     gray_background = PatternFill(start_color='ededed', fill_type='solid')
     white_background = PatternFill(start_color=WHITE, fill_type=None)
@@ -280,7 +370,7 @@ def session_excel(session: Session,
     # Freeze header row
     sheet.freeze_panes = 'A2'
     workbook.save(excel_file)
-    print("Wrote output to " + excel_file)
+    logger.info("Wrote output to %s", excel_file)
 
 
 if __name__ == "__main__":

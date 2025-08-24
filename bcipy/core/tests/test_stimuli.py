@@ -500,11 +500,13 @@ class TestStimuliGeneration(unittest.TestCase):
     def test_generate_targets(self):
         """Test target generation"""
         symbols = ['A', 'B', 'C', 'D']
-        targets = generate_targets(symbols, inquiry_count=9, percentage_without_target=0)
+        targets = generate_targets(
+            symbols, inquiry_count=9, percentage_without_target=0)
         self.assertEqual(len(targets), 8)
         self.assertTrue(all(val == 2 for val in Counter(targets).values()))
 
-        targets = generate_targets(symbols, inquiry_count=9, percentage_without_target=50)
+        targets = generate_targets(
+            symbols, inquiry_count=9, percentage_without_target=50)
         self.assertEqual(len(targets), 4)
         self.assertTrue(all(val == 1 for val in Counter(targets).values()))
 
@@ -536,7 +538,8 @@ class TestStimuliGeneration(unittest.TestCase):
         target = inquiry_target(inquiry, None, symbols, next_targets)
         self.assertTrue(target not in inquiry)
         self.assertTrue(target in symbols)
-        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+        self.assertSequenceEqual(
+            inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
 
     def test_inquiry_target_missing(self):
         """Test inquiry target where none of the next_targets are present in
@@ -550,8 +553,10 @@ class TestStimuliGeneration(unittest.TestCase):
                                 next_targets=next_targets)
         self.assertTrue(target in inquiry)
         self.assertTrue(target not in next_targets)
-        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
-        self.assertSequenceEqual(next_targets, ['Q', 'D'], 'next_targets should not have changed')
+        self.assertSequenceEqual(
+            inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+        self.assertSequenceEqual(
+            next_targets, ['Q', 'D'], 'next_targets should not have changed')
 
     def test_inquiry_target_no_targets(self):
         """Test inquiry_target when no next_targets are provided"""
@@ -562,8 +567,10 @@ class TestStimuliGeneration(unittest.TestCase):
                                 target_position=0,
                                 symbols=symbols,
                                 next_targets=next_targets)
-        self.assertEqual(target, 'C', 'should have used the target_position to get the target')
-        self.assertSequenceEqual(inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
+        self.assertEqual(
+            target, 'C', 'should have used the target_position to get the target')
+        self.assertSequenceEqual(
+            inquiry, ['C', 'A', 'F', 'E'], 'inquiry should not have changed')
 
     def test_inquiry_target_last_target(self):
         """Test inquiry target behavior."""
@@ -776,7 +783,8 @@ class TestStimuliGeneration(unittest.TestCase):
                 is_txt=True,
                 inq_constants=['<'])
             samps.add(tuple(samples[0]))
-        self.assertTrue(len(samps) > 1, '`best_case_rsvp_inq_gen` Should produce random results')
+        self.assertTrue(
+            len(samps) > 1, '`best_case_rsvp_inq_gen` Should produce random results')
 
 
 class TestJitteredTiming(unittest.TestCase):
@@ -894,7 +902,8 @@ class TestTrialReshaper(unittest.TestCase):
             poststimulus_length=trial_length_s
         )
         trial_length_samples = int(sample_rate * trial_length_s)
-        expected_shape = (self.channel_number, len(self.target_info), trial_length_samples)
+        expected_shape = (self.channel_number, len(
+            self.target_info), trial_length_samples)
         self.assertTrue(np.all(labels == [1, 0, 0]))
         self.assertTrue(reshaped_trials.shape == expected_shape)
 
@@ -972,7 +981,8 @@ class TestInquiryReshaper(unittest.TestCase):
             channel_map=None,
             poststimulus_length=self.trial_length
         )
-        expected_shape = (self.n_channel, self.n_inquiry, self.samples_per_inquiry)
+        expected_shape = (self.n_channel, self.n_inquiry,
+                          self.samples_per_inquiry)
         self.assertTrue(reshaped_data.shape == expected_shape)
         self.assertTrue(np.all(labels == self.true_labels))
 

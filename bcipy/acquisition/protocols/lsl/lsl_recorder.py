@@ -3,7 +3,7 @@ import logging
 import time
 from multiprocessing import Queue
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 from pylsl import StreamInfo, StreamInlet, resolve_streams
 
@@ -23,22 +23,30 @@ log = logging.getLogger(SESSION_LOG_FILENAME)
 class LslRecorder:
     """Records LSL data to a datastore. Resolves streams when started.
 
-    Parameters:
-    -----------
-    - path : location to store the recordings
-    - filenames : optional dict mapping device type to its raw data filename.
-    Devices without an entry will use a naming convention.
+    Args:
+        path (str): Location to store the recordings.
+        filenames (Optional[dict], optional): Optional dictionary mapping device
+                                             type to its raw data filename.
+                                             Devices without an entry will use a
+                                             naming convention. Defaults to None.
     """
 
-    streams: List['LslRecordingThread'] = None
+    streams: Optional[List['LslRecordingThread']] = None
 
     def __init__(self, path: str, filenames: Optional[dict] = None) -> None:
         super().__init__()
-        self.path = path
-        self.filenames = filenames or {}
+        self.path: str = path
+        self.filenames: dict = filenames or {}
 
     def start(self) -> None:
-        """Start recording all streams currently on the network."""
+        """Starts recording all LSL streams currently on the network.
+
+        This method creates an `LslRecordingThread` for each discovered stream
+        and starts them. It also validates that stream names are unique.
+
+        Raises:
+            Exception: If data stream names are not unique.
+        """
 
         if not self.streams:
             log.info("Recording data")
@@ -58,32 +66,40 @@ class LslRecorder:
                 stream.start()
 
     def stop(self, wait: bool = False) -> None:
-        """Stop recording.
+        """Stops recording for all active streams.
 
-        Parameters
-        ----------
-        - wait : if True waits for all threads to stop before returning.
+        Args:
+            wait (bool, optional): If True, waits for all recording threads
+                                   to stop before returning. Defaults to False.
         """
-        for stream in self.streams:
-            stream.stop()
-            if wait:
-                stream.join()
-        self.streams = None
+        if self.streams:
+            for stream in self.streams:
+                stream.stop()
+                if wait:
+                    stream.join()
+            self.streams = None
 
 
 class LslRecordingThread(StoppableProcess):
     """Records data for the given LabStreamingLayer (LSL) data stream.
 
-    Parameters:
-    ----------
-    - device_spec : DeviceSpec ; specifies the device from which to record.
-    - directory : location to store the recording
-    - filename : optional, name of the data file.
-    - queue : optional multiprocessing queue; if provided the first_sample_time
-        will be written here when available.
+    This class extends `StoppableProcess` to run recording in a separate process.
+
+    Args:
+        device_spec (DeviceSpec): Specifies the device from which to record.
+        directory (Optional[str], optional): Location to store the recording.
+                                            Defaults to '.'.
+        filename (Optional[str], optional): Optional name of the data file.
+                                            If None, a default filename based
+                                            on device properties will be used.
+                                            Defaults to None.
+        queue (Optional[Queue], optional): Optional multiprocessing queue.
+                                           If provided, the `first_sample_time`
+                                           will be written to this queue when available.
+                                           Defaults to None.
     """
 
-    writer: RawDataWriter = None
+    writer: Optional[RawDataWriter] = None
 
     def __init__(self,
                  device_spec: DeviceSpec,
@@ -92,30 +108,41 @@ class LslRecordingThread(StoppableProcess):
                  queue: Optional[Queue] = None) -> None:
         super().__init__()
 
-        self.directory = directory
-        self.device_spec = device_spec
-        self.queue = queue
+        self.directory: Optional[str] = directory
+        self.device_spec: DeviceSpec = device_spec
+        self.queue: Optional[Queue] = queue
 
-        self.sample_count = 0
+        self.sample_count: int = 0
         # see: https://labstreaminglayer.readthedocs.io/info/faqs.html#chunk-sizes
-        self.max_chunk_size = 1024
+        self.max_chunk_size: int = 1024
 
         # seconds to sleep between data pulls from LSL
-        self.sleep_seconds = 0.2
+        self.sleep_seconds: float = 0.2
 
-        self.filename = filename if filename else self.default_filename()
-        self.first_sample_time = None
-        self.last_sample_time = None
+        self.filename: str = filename if filename else self.default_filename()
+        self.first_sample_time: Optional[float] = None
+        self.last_sample_time: Optional[float] = None
 
-    def default_filename(self):
-        """Default filename to use if a name is not provided."""
+    def default_filename(self) -> str:
+        """Generates a default filename to use if a name is not provided.
+
+        The filename is based on the device's content type and name.
+
+        Returns:
+            str: The generated default filename (e.g., "eeg_data_dsi_24.csv").
+        """
         content_type = '_'.join(self.device_spec.content_type.split()).lower()
         name = '_'.join(self.device_spec.name.split()).lower()
         return f"{content_type}_data_{name}.csv"
 
     @property
     def recorded_seconds(self) -> float:
-        """Total seconds of data recorded."""
+        """Calculates the total seconds of data recorded.
+
+        Returns:
+            float: The duration of recorded data in seconds, or 0.0 if recording
+                   hasn't started or completed.
+        """
         if self.first_sample_time and self.last_sample_time:
             return self.last_sample_time - self.first_sample_time
         return 0.0
@@ -123,9 +150,11 @@ class LslRecordingThread(StoppableProcess):
     def _init_data_writer(self, stream_info: StreamInfo) -> None:
         """Initializes the raw data writer.
 
-        Parameters:
-        ----------
-        - metadata : metadata about the data stream.
+        Args:
+            stream_info (StreamInfo): Metadata about the data stream.
+
+        Raises:
+            AssertionError: If the data writer has already been initialized.
         """
         assert self.writer is None, "Data store has already been initialized."
 
@@ -135,7 +164,7 @@ class LslRecordingThread(StoppableProcess):
             check_device(self.device_spec, stream_info)
             channels = self.device_spec.channels
 
-        path = str(Path(self.directory, self.filename))
+        path = str(Path(self.directory, self.filename))  # type: ignore
         log.info(f"Writing data to {path}")
         self.writer = RawDataWriter(
             path,
@@ -145,37 +174,38 @@ class LslRecordingThread(StoppableProcess):
         self.writer.__enter__()
 
     def _cleanup(self) -> None:
-        """Performs cleanup tasks."""
+        """Performs cleanup tasks for the data writer.
+
+        Closes the `RawDataWriter` if it was initialized.
+        """
         if self.writer:
             self.writer.__exit__()
             self.writer = None
 
-    def _write_chunk(self, data: List, timestamps: List) -> None:
-        """Persists the data resulting from pulling a chunk from the inlet.
+    def _write_chunk(self, data: List[List[Any]], timestamps: List[float]) -> None:
+        """Persists a chunk of data pulled from the LSL inlet.
 
-        Parameters
-        ----------
-            data : list of samples
-            timestamps : list of timestamps
+        Args:
+            data (List[List[Any]]): A list of samples, where each sample is a list of channel values.
+            timestamps (List[float]): A list of timestamps corresponding to each sample.
         """
         assert self.writer, "Writer not initialized"
-        chunk = []
+        chunk: List[List[Any]] = []
         for i, sample in enumerate(data):
             self.sample_count += 1
             chunk.append([self.sample_count] + sample + [timestamps[i]])
         self.writer.writerows(chunk)
 
     def _pull_chunk(self, inlet: StreamInlet) -> int:
-        """Pull a chunk of data and persist. Updates first_sample_time,
-        last_sample_time, and sample_count.
+        """Pulls a chunk of data from the `StreamInlet` and persists it.
 
-        Parameters
-        ----------
-            inlet : stream inlet from which to pull
+        Updates `first_sample_time`, `last_sample_time`, and `sample_count`.
 
-        Returns
-        -------
-            number of samples pulled
+        Args:
+            inlet (StreamInlet): The LSL `StreamInlet` from which to pull data.
+
+        Returns:
+            int: The number of samples pulled in this operation.
         """
         # A timeout of 0.0 does not block and only gets samples immediately
         # available.
@@ -191,14 +221,20 @@ class LslRecordingThread(StoppableProcess):
         return len(timestamps)
 
     def _reset(self) -> None:
-        """Reset state"""
+        """Resets the internal state of the recorder.
+
+        This includes resetting the sample count and clearing the first and last
+        sample timestamps.
+        """
         self.sample_count = 0
         self.first_sample_time = None
         self.last_sample_time = None
 
     # @override
-    def run(self):
-        """Process startup. Connects to the device, reads chunks of data at the
+    def run(self) -> None:
+        """Process startup and main recording loop.
+
+        Connects to the device, continuously reads chunks of data at the
         given interval, and persists the results. This happens continuously
         until the `stop()` method is called.
         """
@@ -236,9 +272,19 @@ class LslRecordingThread(StoppableProcess):
         self._cleanup()
 
 
-def main(path: str, seconds: int = 5, debug: bool = False):
-    """Function to demo the LslRecorder. Expects LSL data streams to be already
-    running."""
+def main(path: str, seconds: int = 5, debug: bool = False) -> None:
+    """Demonstrates the `LslRecorder` functionality.
+
+    This function initializes an `LslRecorder` and records data for a specified
+    duration. It expects LSL data streams to be already running.
+
+    Args:
+        path (str): The directory path to save the recorded data.
+        seconds (int, optional): The duration in seconds to record data.
+                                Defaults to 5.
+        debug (bool, optional): If True, enables logging to stdout for debugging.
+                                Defaults to False.
+    """
     if debug:
         log_to_stdout()
     recorder = LslRecorder(path)

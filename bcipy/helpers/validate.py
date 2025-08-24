@@ -76,7 +76,8 @@ def _validate_experiment_fields(experiment_fields, fields):
         try:
             fields[field_name]
         except KeyError:
-            raise UnregisteredFieldException(f'Field [{field}] is not registered in [{fields}]')
+            raise UnregisteredFieldException(
+                f'Field [{field}] is not registered in [{fields}]')
 
         try:
             field[field_name]['required']
@@ -94,7 +95,8 @@ def validate_field_data_written(path: str, file_name: str) -> bool:
     experiment_data_path = f'{path}/{file_name}'
     if os.path.isfile(experiment_data_path):
         return True
-    raise InvalidFieldException(f'Experimental field data expected at path=[{experiment_data_path}] but not found.')
+    raise InvalidFieldException(
+        f'Experimental field data expected at path=[{experiment_data_path}] but not found.')
 
 
 def validate_experiments(experiments, fields) -> bool:

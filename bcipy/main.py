@@ -1,3 +1,8 @@
+"""Main entry point for BciPy application.
+
+This module provides the main function to initialize and run a BCI task or experiment.
+"""
+
 import argparse
 import logging
 import multiprocessing
@@ -22,32 +27,33 @@ def bci_main(
         visualize: bool = True,
         fake: bool = False,
         task: Optional[Type[Task]] = None) -> bool:
-    """BCI Main.
+    """Initialize and run a BCI task or experiment.
 
-    The BCI main function will initialize a save folder, construct needed information
-    and execute the task. This is the main connection between any UI and
+    The BCI main function initializes a save folder, constructs needed information
+    and executes the task. This is the main connection between any UI and
     running the app.
 
-    A Task or Experiment ID must be provided to run the task. If a task is provided, the experiment
-    ID will be ignored.
-
-    It may also be invoked via tha command line.
-        Ex. `bcipy` this will default parameters, mode, user, and type.
-
-        You can pass it those attributes with flags, if desired.
-            Ex. `bcipy --user "bci_user" --task "RSVP Calibration"
-
-
-    Input:
-        parameter_location (str): location of parameters file to use
-        user (str): name of the user
-        experiment_id (str): Name of the experiment. If task is provided, this will be ignored.
-        alert (bool): whether to alert the user when the task is complete
-        visualize (bool): whether to visualize data at the end of a task
-        fake (bool): whether to use fake acquisition data during the session. If None, the
+    Args:
+        parameter_location: Location of parameters file to use.
+        user: Name of the user.
+        experiment_id: Name of the experiment. If task is provided, this will be ignored.
+        alert: Whether to alert the user when the task is complete.
+        visualize: Whether to visualize data at the end of a task.
+        fake: Whether to use fake acquisition data during the session. If None, the
             fake data will be determined by the parameters file.
-        task (Task): registered bcipy Task to execute. If None, the task will be determined by the
+        task: Registered bcipy Task to execute. If None, the task will be determined by the
             experiment protocol.
+
+    Returns:
+        bool: True if the task executed successfully, False otherwise.
+
+    Raises:
+        BciPyCoreException: If no experiment or task is provided.
+
+    Examples:
+        Command line usage:
+            `bcipy` - uses default parameters, mode, user, and type
+            `bcipy --user "bci_user" --task "RSVP Calibration"`
     """
     logger.info('Starting BciPy...')
     logger.info(
@@ -104,11 +110,21 @@ def bci_main(
     return True
 
 
-def bcipy_main() -> None:  # pragma: no cover
-    """BciPy Main.
+def bcipy_main() -> None:
+    """Command line interface for running BciPy experiments and tasks.
 
-    Command line interface used for running a registered experiment task in BciPy. To see what
-        is available use the --help flag.
+    This function provides a command line interface for running registered experiment
+    tasks in BciPy. It handles argument parsing and delegates execution to bci_main.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Note:
+        Use the --help flag to see available options.
+        Windows machines require multiprocessing support which is initialized here.
     """
     # Needed for windows machines
     multiprocessing.freeze_support()

@@ -111,7 +111,8 @@ class TestCopyPhrase(unittest.TestCase):
                 }
             })
         self.servers = [mock()]
-        when(self.daq).get_client(ContentType.EEG).thenReturn(self.eeg_client_mock)
+        when(self.daq).get_client(
+            ContentType.EEG).thenReturn(self.eeg_client_mock)
         self.temp_dir = tempfile.mkdtemp()
         self.model_metadata = mock({
             'device_spec': device_spec,
@@ -464,7 +465,8 @@ class TestCopyPhrase(unittest.TestCase):
         # Assertions
         verify(self.copy_phrase_wrapper, times=2).initialize_series()
         verify(self.display, times=1).do_inquiry()
-        verify(self.copy_phrase_wrapper, times=1).add_evidence(EvidenceType.BTN, ...)
+        verify(self.copy_phrase_wrapper, times=1).add_evidence(
+            EvidenceType.BTN, ...)
         self.assertEqual(self.temp_dir, result.save_path)
 
     @patch('bcipy.task.paradigm.rsvp.copy_phrase.init_evidence_evaluator')
@@ -655,7 +657,8 @@ class TestCopyPhrase(unittest.TestCase):
         when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).setup(any(), any(), any()).thenReturn(
             (self.daq, self.servers, self.win))
         self.parameters['show_preview_inquiry'] = True
-        self.parameters['preview_inquiry_progress_method'] = 0  # ButtonPressMode.NOTHING.value
+        # ButtonPressMode.NOTHING.value
+        self.parameters['preview_inquiry_progress_method'] = 0
 
         task = RSVPCopyPhraseTask(
             parameters=self.parameters,
@@ -693,10 +696,14 @@ class TestCopyPhrase(unittest.TestCase):
             (self.daq, self.servers, self.win))
 
         # Mock the default cleanup
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).write_offset_trigger().thenReturn(None)
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).exit_display().thenReturn(None)
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).save_session_data().thenReturn(None)
-        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).wait().thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).write_offset_trigger(
+        ).thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).exit_display(
+        ).thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).save_session_data(
+        ).thenReturn(None)
+        when(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask).wait(
+        ).thenReturn(None)
 
         # Mock the initialized cleanup
         when(self.daq).stop_acquisition().thenReturn(None)
@@ -716,9 +723,12 @@ class TestCopyPhrase(unittest.TestCase):
         verify(self.daq, times=1).cleanup()
         verify(self.servers[0], times=1).stop()
         verify(self.win, times=1).close()
-        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).setup(any(), any(), any())
-        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).write_offset_trigger()
-        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).exit_display()
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask,
+               times=1).setup(any(), any(), any())
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask,
+               times=1).write_offset_trigger()
+        verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask,
+               times=1).exit_display()
         verify(bcipy.task.paradigm.rsvp.copy_phrase.RSVPCopyPhraseTask, times=1).wait()
 
 

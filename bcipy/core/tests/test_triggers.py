@@ -170,8 +170,10 @@ class TestTriggerHandler(unittest.TestCase):
         self.flush = FlushFrequency.END
         self.file = f'{self.path_name}/{self.file_name}.txt'
         # with patch('builtins.open', mock_open(read_data='data')) as _:
-        self.handler = TriggerHandler(self.path_name, self.file_name, self.flush)
-        self.mock_file.assert_called_once_with(self.file, 'w+', encoding=self.handler.encoding)
+        self.handler = TriggerHandler(
+            self.path_name, self.file_name, self.flush)
+        self.mock_file.assert_called_once_with(
+            self.file, 'w+', encoding=self.handler.encoding)
 
     def tearDown(self):
         unstub()
@@ -179,7 +181,8 @@ class TestTriggerHandler(unittest.TestCase):
     def test_file_exist_exception(self):
         with open(self.file, 'w+', encoding=self.handler.encoding) as _:
             with self.assertRaises(Exception):
-                TriggerHandler(self.path_name, self.file_name, FlushFrequency.END)
+                TriggerHandler(self.path_name, self.file_name,
+                               FlushFrequency.END)
         os.remove(self.file)
 
     def test_add_triggers_returns_list_of_triggers(self):
@@ -478,7 +481,8 @@ class TestTriggerFunctions(unittest.TestCase):
         """Test default values"""
         triggers = read_data('''J prompt 6.15
             + fixation 8.11'''.split('\n'))
-        offsets = starting_offsets_by_device(triggers, device_types=['EEG', 'EYETRACKER'])
+        offsets = starting_offsets_by_device(
+            triggers, device_types=['EEG', 'EYETRACKER'])
         self.assertEqual(len(offsets), 2)
         self.assertEqual(offsets['EEG'].time, 0.0)
         self.assertEqual(offsets['EYETRACKER'].time, 0.0)

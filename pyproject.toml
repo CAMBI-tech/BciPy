@@ -10,7 +10,7 @@ authors = [
 ]
 description = "Python Software for Brain-Computer Interface Development."
 readme = "README.md"
-requires-python = ">3.7,<3.11"
+requires-python = ">3.8,<3.11"
 classifiers = [
     'License :: Other/Proprietary License',
     'Topic :: Scientific/Engineering :: Human Machine Interfaces',
@@ -18,7 +18,6 @@ classifiers = [
     'Intended Audience :: End Users/Desktop',
     'Intended Audience :: Developers',
     'Programming Language :: Python',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
 ]
@@ -70,6 +69,7 @@ dev = [
     "coverage>=7.0",
     "flake8==5.0.4",
     "Flake8-pyproject==1.2.3",
+    "flake8-docstrings==1.7.0",
     "mypy==1.13",
     "lxml",
     "mock",
@@ -81,6 +81,7 @@ dev = [
 release = [
     "twine==3.2.0",
     "build==1.2.2.post1",
+    "pyinstaller==6.13.0",
     "wheel==0.43.0",
 ]
 
@@ -149,8 +150,16 @@ max_line_length = 120
 application_import_names = "bcipy"
 
 ignore = [
+    "D100",
+    "D105",
+    "D107",
+    "D202",
+    "D204",
     "D205",
     "D400",
+    "D401",
+    "D403",
+    "D412",
     "F841",
     "F821",
     "E402",
@@ -158,6 +167,13 @@ ignore = [
     "C901",
     "W503",
     "W504",
+]
+exclude = [
+    "tests",
+    "__init__.py",
+    "demo",
+    "signal", # TODO: Remove when fixed
+    "gui",
 ]
 
 [tool.isort]

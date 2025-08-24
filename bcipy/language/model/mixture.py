@@ -7,9 +7,7 @@ from bcipy.language.model.adapter import LanguageModelAdapter
 
 
 class MixtureLanguageModelAdapter(LanguageModelAdapter):
-    """
-        Character language model that mixes any combination of other models
-    """
+    """Character language model that mixes any combination of other models."""
 
     supported_lm_types = MixtureLanguageModel.supported_lm_types
 
@@ -25,7 +23,8 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter):
             lm_params - list of dictionaries to pass as parameters for each model's instantiation
         """
 
-        MixtureLanguageModel.validate_parameters(lm_types, lm_weights, lm_params)
+        MixtureLanguageModel.validate_parameters(
+            lm_types, lm_weights, lm_params)
 
         self._load_parameters()
 
@@ -38,7 +37,8 @@ class MixtureLanguageModelAdapter(LanguageModelAdapter):
             if type == "NGRAM":
                 params["lm_path"] = f"{LM_PATH}/{params['lm_path']}"
 
-        MixtureLanguageModel.validate_parameters(self.lm_types, self.lm_weights, self.lm_params)
+        MixtureLanguageModel.validate_parameters(
+            self.lm_types, self.lm_weights, self.lm_params)
 
     def _load_model(self) -> None:
         """Load the model itself using stored parameters"""

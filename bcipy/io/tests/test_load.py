@@ -89,7 +89,8 @@ class TestExperimentLoad(unittest.TestCase):
     def test_load_experiments_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_experiments()
-            mock_file.assert_called_with(self.experiments_path, 'r', encoding=DEFAULT_ENCODING)
+            mock_file.assert_called_with(
+                self.experiments_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_experiments_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -112,7 +113,8 @@ class TestFieldLoad(unittest.TestCase):
     def test_load_fields_calls_open_with_expected_default(self):
         with patch('builtins.open', mock_open(read_data='data')) as mock_file:
             load_fields()
-            mock_file.assert_called_with(self.fields_path, 'r', encoding=DEFAULT_ENCODING)
+            mock_file.assert_called_with(
+                self.fields_path, 'r', encoding=DEFAULT_ENCODING)
 
     def test_load_fields_throws_file_not_found_exception_with_invalid_path(self):
         with self.assertRaises(FileNotFoundError):
@@ -375,7 +377,8 @@ class TestLoadBciPyData(unittest.TestCase):
 
         total_expected_files = len(self.user_ids) * len(self.dates) * (len(self.experiment_ids) - 1) * \
             len(self.datetimes) * len(self.tasks)
-        response = load_bcipy_data(self.data_dir, experiment_id=desired_experiment_id)
+        response = load_bcipy_data(
+            self.data_dir, experiment_id=desired_experiment_id)
 
         self.assertEqual(len(response), total_expected_files)
         experiments = [file.experiment_id for file in response]

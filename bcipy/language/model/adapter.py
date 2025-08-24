@@ -25,7 +25,8 @@ class LanguageModelAdapter(ABC):
         """
 
         if self.symbol_set is None:
-            raise InvalidSymbolSetException("symbol set must be set prior to requesting predictions.")
+            raise InvalidSymbolSetException(
+                "symbol set must be set prior to requesting predictions.")
 
         assert self.model is not None, "language model does not exist!"
 
@@ -61,7 +62,8 @@ class LanguageModelAdapter(ABC):
         self.symbol_set = symbol_set
 
         # LM doesn't care about backspace, needs literal space
-        self.model_symbol_set = [' ' if ch is SPACE_CHAR else ch for ch in self.symbol_set]
+        self.model_symbol_set = [
+            ' ' if ch is SPACE_CHAR else ch for ch in self.symbol_set]
         self.model_symbol_set.remove(BACKSPACE_CHAR)
 
         self._load_model()
