@@ -68,15 +68,6 @@ class Feedback(ABC):
         self.logger = logging.getLogger(SESSION_LOG_FILENAME)
 
     @abstractmethod
-    def configure(self) -> None:
-        """Configure the feedback mechanism.
-
-        This method should be implemented by subclasses to set up any necessary
-        configuration for the specific feedback type.
-        """
-        ...
-
-    @abstractmethod
     def administer(self, *args: Any, **kwargs: Any) -> None:
         """Administer feedback.
 

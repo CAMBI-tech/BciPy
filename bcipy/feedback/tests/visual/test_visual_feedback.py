@@ -4,7 +4,7 @@ import psychopy
 from mockito import (any, mock, unstub, verify, verifyNoUnwantedInteractions,
                      verifyStubbedInvocationsAreUsed, when)
 
-from bcipy.feedback.visual.visual_feedback import FeedbackType, VisualFeedback
+from bcipy.feedback.visual.visual_feedback import StimuliType, VisualFeedback
 from bcipy.helpers.clock import Clock
 
 
@@ -39,7 +39,7 @@ class TestVisualFeedback(unittest.TestCase):
 
     def test_feedback_type(self):
         feedback_type = self.visual_feedback._type()
-        self.assertEqual(feedback_type, 'Visual Feedback')
+        self.assertEqual(feedback_type.value, 'Visual')
 
     def test_construct_stimulus_image(self):
         image_mock = mock()
@@ -59,7 +59,7 @@ class TestVisualFeedback(unittest.TestCase):
             'test_stim.png',
             (0, 0),
             None,
-            FeedbackType.IMAGE,
+            StimuliType.IMAGE,
         )
 
         self.assertEqual(response, image_mock)
@@ -79,7 +79,7 @@ class TestVisualFeedback(unittest.TestCase):
             stimulus,
             (0, 0),
             None,
-            FeedbackType.TEXT,
+            StimuliType.TEXT,
         )
 
         self.assertEqual(response, text_mock)
@@ -102,7 +102,7 @@ class TestVisualFeedback(unittest.TestCase):
             stimulus,
             self.visual_feedback.pos_stim,
             self.visual_feedback.color,
-            FeedbackType.TEXT
+            StimuliType.TEXT
         ).thenReturn(stimulus)
         when(self.visual_feedback)._show_stimuli(
             stimulus).thenReturn(timestamp)

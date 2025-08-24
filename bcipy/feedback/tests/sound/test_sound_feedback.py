@@ -30,7 +30,7 @@ class TestSoundFeedback(unittest.TestCase):
     def test_feedback_type(self):
 
         feedback_type = self.auditory_feedback._type()
-        self.assertEqual(feedback_type, 'Auditory Feedback')
+        self.assertEqual(feedback_type.value, 'Audio')
 
     def test_feedback_administer_sound(self):
         timestamp = 100
