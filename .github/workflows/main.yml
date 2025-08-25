@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, 3.10.6]
+        python-version: [3.9, 3.10.6]
 
     steps:
     - uses: actions/checkout@v2
@@ -69,7 +69,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, 3.10.6]
+        python-version: [3.9, 3.10.6]
 
     steps:
     - uses: actions/checkout@v2
@@ -80,10 +80,6 @@ jobs:
     - name: update pip & install custom dependencies
       run: |
         python -m pip install --upgrade pip
-    - name: install manually downloaded pyWinhook wheel for Python 3.9
-      if: matrix.python-version == 3.9
-      run: |
-        pip install ./.bcipy/downloads/pyWinhook-1.6.2-cp39-cp39-win_amd64.whl
     - name: install dependencies
       run: |
         make dev-install
@@ -97,17 +93,17 @@ jobs:
     - name: lint
       run: |
         make lint
-    - name: integration-test
+    - name: build
       run: |
-        make integration-test
+        make build
 
   build-macos:
 
-    runs-on: macos-latest
+    runs-on: macos-14
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.8, 3.9, 3.10.6]
+        python-version: [3.9, 3.10.6]
 
     steps:
     - uses: actions/checkout@v4
@@ -117,9 +113,12 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: update pip & install custom dependencies
       run: |
+        python -m pip install --upgrade pip
+        brew update
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        python -m pip install --upgrade pip
+        pip install psychopy --no-deps
+        make install
     - name: install dependencies
       run: |
         make dev-install
@@ -127,14 +126,17 @@ jobs:
       if: always()
       run: |
         make coverage-report
+        make coverage-xml
     - name: type-check
       run: |
         make type
     - name: lint
       run: |
         make lint
-    - name: integration-test
+    - name: build
       run: |
-        make integration-test
-
-    
+        make build
+    - name: codacy
+      run: |
+        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
+        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "cobertura.xml"

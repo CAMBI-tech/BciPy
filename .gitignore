@@ -11,22 +11,22 @@ mypy-html.css
 index.html
 htmlcov/
 html/
+*.xml
 
 # Virtualenv
 venv/
 venv*/
 __pycache__/
+.pytest_cache/
 .cache/
 
 # BciPy files and directories
-*.csv
 *.pdf
 buffer.db
 lmwrap.log
 env.txt
 .idea
 bcipy.egg-info/
-data/
 build/
 dist/
 bcipy/parameters/parameters_*
@@ -35,6 +35,9 @@ bcipy/language/lms/lm_dec19_char_large_12gram.*
 bcipy/language/lms/out_*
 bcipy/language/out/
 
-
 bcipy/simulator/tests/resource/
+# Ignore the data directory, which contains the raw data files, but not the data modules
+data/
+bids/
 !bcipy/simulator/data
+

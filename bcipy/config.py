@@ -6,7 +6,8 @@ This includes the default parameters, static paths and core experiment configura
 from pathlib import Path
 
 DEFAULT_ENCODING = 'utf-8'
-DEFAULT_EVIDENCE_PRECISION = 5  # number of decimal places to round evidence to by default
+# number of decimal places to round evidence to by default
+DEFAULT_EVIDENCE_PRECISION = 5
 MARKER_STREAM_NAME = 'TRG_device_stream'
 DEFAULT_TRIGGER_CHANNEL_NAME = 'TRG'
 DIODE_TRIGGER = '\u25A0'
@@ -25,7 +26,7 @@ ROOT = BCIPY_ROOT.parent
 DEFAULT_EXPERIMENT_PATH = f'{BCIPY_ROOT}/parameters/experiment'
 DEFAULT_FIELD_PATH = f'{BCIPY_ROOT}/parameters/field'
 DEFAULT_USER_ID = 'test_user'
-TASK_SEPERATOR = '->'
+TASK_SEPARATOR = '->'
 
 DEFAULT_PARAMETERS_FILENAME = 'parameters.json'
 DEFAULT_DEVICES_PATH = f"{BCIPY_ROOT}/parameters"

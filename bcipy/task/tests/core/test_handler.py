@@ -1,11 +1,15 @@
-import unittest
-import numpy as np
 import math
+import unittest
+
+import numpy as np
+
+from bcipy.core.symbols import alphabet
+from bcipy.task.control.criteria import (CriteriaEvaluator,
+                                         MaxIterationsCriteria,
+                                         MinIterationsCriteria,
+                                         ProbThresholdCriteria)
 from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
-from bcipy.task.control.criteria import CriteriaEvaluator, \
-    MaxIterationsCriteria, MinIterationsCriteria, ProbThresholdCriteria
 from bcipy.task.control.query import NBestStimuliAgent
-from bcipy.helpers.symbols import alphabet
 
 
 class TestDecisionMaker(unittest.TestCase):
@@ -153,7 +157,8 @@ class TestDecisionMaker(unittest.TestCase):
                          len(stimuli[0][0]))
         for i in range(1, len(stimuli[0][0])):
             self.assertIn(stimuli[0][0][i], self.decision_maker.alphabet)
-        self.assertEqual(stimuli[1][0][0:2], self.decision_maker.stimuli_timing)
+        self.assertEqual(stimuli[1][0][0:2],
+                         self.decision_maker.stimuli_timing)
 
 
 class TestDecisionMakerOld(unittest.TestCase):

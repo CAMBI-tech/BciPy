@@ -1,12 +1,14 @@
-import unittest
-import logging
 import json
+import logging
+import unittest
+
 from mock import mock_open
-from mockito import any, mock, when, unstub, verify
-from bcipy.task.orchestrator import SessionOrchestrator
-from bcipy.task import Task, TaskData
+from mockito import any, mock, unstub, verify, when
+
 from bcipy.config import DEFAULT_PARAMETERS_PATH
-from bcipy.helpers.load import load_json_parameters
+from bcipy.io.load import load_json_parameters
+from bcipy.task import Task, TaskData
+from bcipy.task.orchestrator import SessionOrchestrator
 
 
 class TestSessionOrchestrator(unittest.TestCase):
@@ -25,8 +27,10 @@ class TestSessionOrchestrator(unittest.TestCase):
         task = mock(spec=Task)
         task.name = "test task"
         task.mode = "test mode"
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         orchestrator = SessionOrchestrator()
         self.assertTrue(orchestrator.tasks == [])
         orchestrator.add_task(task)
@@ -43,8 +47,10 @@ class TestSessionOrchestrator(unittest.TestCase):
         task2.name = "test task"
         task2.mode = "test mode"
         tasks = [task1, task2]
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         orchestrator = SessionOrchestrator()
         self.assertTrue(orchestrator.tasks == [])
         orchestrator.add_tasks(tasks)
@@ -61,8 +67,10 @@ class TestSessionOrchestrator(unittest.TestCase):
         task.name = "test task"
         task.mode = "test mode"
         task.execute = lambda: TaskData()
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
         when(SessionOrchestrator)._save_data().thenReturn()
@@ -103,12 +111,15 @@ class TestSessionOrchestrator(unittest.TestCase):
 
     @mock_open(read_data='{"Phrases": []}')
     def test_orchestrator_multiple_copyphrases_loads_from_parameters_when_set(self, mock_file):
-        parameters = load_json_parameters(self.parameter_location, value_cast=True)
+        parameters = load_json_parameters(
+            self.parameter_location, value_cast=True)
         copy_phrase_location = "bcipy/parameters/experiments/phrases.json"
         parameters['copy_phrases_location'] = copy_phrase_location
         mock_copy_phrases = {"Phrases": [["test", 0], ["test2", 1]]}
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
         when(SessionOrchestrator)._save_data().thenReturn()
@@ -116,30 +127,35 @@ class TestSessionOrchestrator(unittest.TestCase):
 
         orchestrator = SessionOrchestrator(parameters=parameters)
 
-        self.assertEqual(orchestrator.copyphrases, mock_copy_phrases['Phrases'])
+        self.assertEqual(orchestrator.copyphrases,
+                         mock_copy_phrases['Phrases'])
         verify(json, times=1).load(mock_file)
 
     def test_orchestrator_save_data_multiple_copyphrases_saves_remaining_phrases(self):
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
-        when(SessionOrchestrator)._save_procotol_data().thenReturn()
+        when(SessionOrchestrator)._save_protocol_data().thenReturn()
         when(SessionOrchestrator)._save_copy_phrases().thenReturn()
 
         orchestrator = SessionOrchestrator()
         orchestrator.copyphrases = [["test", 0], ["test2", 1]]
 
         orchestrator._save_data()
-        verify(SessionOrchestrator, times=1)._save_procotol_data()
+        verify(SessionOrchestrator, times=1)._save_protocol_data()
         verify(SessionOrchestrator, times=1)._save_copy_phrases()
 
     def test_orchestrator_next_phrase(self):
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn()
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn()
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator)._init_task_save_folder(any()).thenReturn()
         when(SessionOrchestrator)._init_task_logger(any()).thenReturn()
-        when(SessionOrchestrator)._save_procotol_data().thenReturn()
+        when(SessionOrchestrator)._save_protocol_data().thenReturn()
         when(SessionOrchestrator).initialize_copy_phrases().thenReturn()
 
         orchestrator = SessionOrchestrator()

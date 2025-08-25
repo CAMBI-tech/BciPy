@@ -1,6 +1,7 @@
 """Defines utility classes and functions used by the acquisition module."""
 import multiprocessing
 import threading
+
 import numpy as np
 
 

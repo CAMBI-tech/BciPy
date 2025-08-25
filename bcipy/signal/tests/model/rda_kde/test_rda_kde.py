@@ -8,16 +8,17 @@ import numpy as np
 import pytest
 from scipy.stats import norm
 
-from bcipy.helpers.symbols import alphabet
+from bcipy.core.symbols import alphabet
+from bcipy.exceptions import SignalException
 from bcipy.signal.model import ModelEvaluationReport, RdaKdeModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import cross_validation
 from bcipy.signal.model.density_estimation import KernelDensityEstimate
 from bcipy.signal.model.dimensionality_reduction import MockPCA
 from bcipy.signal.model.pipeline import Pipeline
-from bcipy.exceptions import SignalException
 
-expected_output_folder = Path(__file__).absolute().parent.parent / "unit_test_expected_output"
+expected_output_folder = Path(__file__).absolute(
+).parent.parent / "unit_test_expected_output"
 
 
 class ModelSetup(unittest.TestCase):
@@ -34,8 +35,10 @@ class ModelSetup(unittest.TestCase):
         # Generate Gaussian random data
         cls.pos_mean, cls.pos_std = 0, 0.5
         cls.neg_mean, cls.neg_std = 1, 0.5
-        x_pos = cls.pos_mean + cls.pos_std * np.random.randn(cls.num_channel, cls.num_x_pos, cls.dim_x)
-        x_neg = cls.neg_mean + cls.neg_std * np.random.randn(cls.num_channel, cls.num_x_neg, cls.dim_x)
+        x_pos = cls.pos_mean + cls.pos_std * \
+            np.random.randn(cls.num_channel, cls.num_x_pos, cls.dim_x)
+        x_neg = cls.neg_mean + cls.neg_std * \
+            np.random.randn(cls.num_channel, cls.num_x_neg, cls.dim_x)
         y_pos = np.ones(cls.num_x_pos)
         y_neg = np.zeros(cls.num_x_neg)
 
@@ -78,7 +81,8 @@ class TestRdaKdeModelInternals(ModelSetup):
     def test_kde_plot(self):
         # generate some dummy data
         n = 100
-        x = np.concatenate((np.random.normal(0, 1, int(0.3 * n)), np.random.normal(5, 1, int(0.7 * n))))[:, np.newaxis]
+        x = np.concatenate((np.random.normal(0, 1, int(0.3 * n)),
+                           np.random.normal(5, 1, int(0.7 * n))))[:, np.newaxis]
 
         # append 0 label to all data as we are interested in a single class case
         y = np.zeros(x.shape)
@@ -87,17 +91,20 @@ class TestRdaKdeModelInternals(ModelSetup):
         x_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 
         # generate a dummy density function to sample data from
-        true_dens = 0.3 * norm(0, 1).pdf(x_plot[:, 0]) + 0.7 * norm(5, 1).pdf(x_plot[:, 0])
+        true_dens = 0.3 * \
+            norm(0, 1).pdf(x_plot[:, 0]) + 0.7 * norm(5, 1).pdf(x_plot[:, 0])
 
         fig, ax = plt.subplots()
-        ax.fill(x_plot[:, 0], true_dens, fc="black", alpha=0.2, label="input distribution")
+        ax.fill(x_plot[:, 0], true_dens, fc="black",
+                alpha=0.2, label="input distribution")
 
         # try different kernels and show how the look like
         for kernel in ["gaussian", "tophat", "epanechnikov"]:
             kde = KernelDensityEstimate(kernel=kernel, scores=x, num_cls=1)
             kde.fit(x, y)
             log_dens = kde.list_den_est[0].score_samples(x_plot)
-            ax.plot(x_plot[:, 0], np.exp(log_dens), "-", label=f"kernel = '{kernel}'")
+            ax.plot(x_plot[:, 0], np.exp(log_dens),
+                    "-", label=f"kernel = '{kernel}'")
 
         ax.plot(x[:, 0], -0.005 - 0.01 * np.random.random(x.shape[0]), "+k")
 
@@ -177,13 +184,17 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         num_x_p = 1
         num_x_n = 9
 
-        x_test_pos = self.pos_mean + self.pos_std * np.random.randn(self.num_channel, num_x_p, self.dim_x)
-        x_test_neg = self.neg_mean + self.neg_std * np.random.randn(self.num_channel, num_x_n, self.dim_x)
-        x_test = np.concatenate((x_test_pos, x_test_neg), 1)  # Target letter is first
+        x_test_pos = self.pos_mean + self.pos_std * \
+            np.random.randn(self.num_channel, num_x_p, self.dim_x)
+        x_test_neg = self.neg_mean + self.neg_std * \
+            np.random.randn(self.num_channel, num_x_n, self.dim_x)
+        # Target letter is first
+        x_test = np.concatenate((x_test_pos, x_test_neg), 1)
 
         letters = alp[10: 10 + num_x_p + num_x_n]  # Target letter is K
 
-        lik_r = self.model.predict(data=x_test, inquiry=letters, symbol_set=alp)
+        lik_r = self.model.predict(
+            data=x_test, inquiry=letters, symbol_set=alp)
         fig, ax = plt.subplots()
         ax.plot(np.arange(len(alp)), lik_r, "ro")
         ax.set_xticks(np.arange(len(alp)))
@@ -200,13 +211,15 @@ class TestPcaRdaKdeModelExternals(ModelSetup):
         symbol_set = alphabet()
         inquiry = symbol_set[:n_trial]
         data = np.random.randn(self.num_channel, n_trial, self.dim_x)
-        output_before = self.model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
+        output_before = self.model.predict(
+            data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         checkpoint_path = self.tmp_dir / "model.pkl"
         self.model.save(checkpoint_path)
         other_model = RdaKdeModel(k_folds=self.model.k_folds)
         other_model.load(checkpoint_path)
-        output_after = other_model.predict(data=data, inquiry=inquiry, symbol_set=symbol_set)
+        output_after = other_model.predict(
+            data=data, inquiry=inquiry, symbol_set=symbol_set)
 
         self.assertTrue(np.allclose(output_before, output_after))
 

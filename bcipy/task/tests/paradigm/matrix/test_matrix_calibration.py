@@ -9,9 +9,9 @@ import bcipy.task.paradigm.matrix.calibration
 from bcipy.acquisition import LslAcquisitionClient
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
+from bcipy.core.parameters import Parameters
+from bcipy.core.triggers import TriggerHandler, TriggerType
 from bcipy.display.paradigm.matrix import MatrixDisplay
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.triggers import TriggerHandler, TriggerType
 from bcipy.task.paradigm.matrix.calibration import MatrixCalibrationTask
 
 

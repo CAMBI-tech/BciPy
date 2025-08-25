@@ -1,47 +1,76 @@
+"""RSVP calibration task module.
+
+This module provides the RSVP (Rapid Serial Visual Presentation) calibration task
+implementation which performs stimulus inquiries to elicit ERPs. The task presents
+stimuli in rapid succession with configurable timing and appearance parameters.
+"""
 from psychopy import core, visual
 
+from bcipy.core.parameters import Parameters
 from bcipy.display import Display, InformationProperties, StimuliProperties
 from bcipy.display.components.task_bar import CalibrationTaskBar
 from bcipy.display.main import PreviewParams
 from bcipy.display.paradigm.rsvp.mode.calibration import CalibrationDisplay
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.parameters import Parameters
 from bcipy.task.calibration import BaseCalibrationTask
 
 
 class RSVPCalibrationTask(BaseCalibrationTask):
     """RSVP Calibration Task.
 
-    Calibration task performs an RSVP stimulus inquiry
-        to elicit an ERP. Parameters will change how many stimuli
-        and for how long they present. Parameters also change
-        color and text / image inputs.
+    This task performs RSVP stimulus inquiries to elicit ERPs by presenting
+    stimuli in rapid succession. Parameters control the number of stimuli,
+    presentation duration, colors, and text/image inputs.
 
-    This task progresses as follows:
+    Task flow:
+        1. Setup variables
+        2. Initialize EEG
+        3. Await user input
+        4. Setup stimuli
+        5. Present inquiries
+        6. Save data
 
-    setting up variables --> initializing eeg --> awaiting user input to start --> setting up stimuli -->
-    presenting inquiries --> saving data
-
-    PARAMETERS:
-    ----------
-    parameters (dict)
-    file_save (str)
-    fake (bool)
+    Attributes:
+        name (str): Name of the task.
+        paradigm (str): Name of the paradigm.
+        parameters (Parameters): Task configuration parameters.
+        file_save (str): Path for saving task data.
+        fake (bool): Whether to run in fake (testing) mode.
+        window (visual.Window): PsychoPy window for display.
+        static_clock (core.StaticPeriod): Clock for static timing.
+        experiment_clock (Clock): Clock for experiment timing.
     """
-    name = 'RSVP Calibration'
-    paradigm = 'RSVP'
+
+    name: str = 'RSVP Calibration'
+    paradigm: str = 'RSVP'
 
     def init_display(self) -> Display:
+        """Initialize the RSVP display.
+
+        Returns:
+            Display: Configured RSVP calibration display instance.
+        """
         return init_calibration_display_task(self.parameters, self.window,
                                              self.static_clock,
                                              self.experiment_clock)
 
 
 def init_calibration_display_task(
-        parameters: Parameters, window: visual.Window,
+        parameters: Parameters,
+        window: visual.Window,
         static_clock: core.StaticPeriod,
         experiment_clock: Clock) -> CalibrationDisplay:
-    """Initialize the display"""
+    """Initialize the RSVP calibration display.
+
+    Args:
+        parameters (Parameters): Task configuration parameters.
+        window (visual.Window): PsychoPy window for display.
+        static_clock (core.StaticPeriod): Clock for static timing.
+        experiment_clock (Clock): Clock for experiment timing.
+
+    Returns:
+        CalibrationDisplay: Configured RSVP calibration display instance.
+    """
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],
@@ -51,7 +80,8 @@ def init_calibration_display_task(
     )
     stimuli = StimuliProperties(
         stim_font=parameters['font'],
-        stim_pos=(parameters['rsvp_stim_pos_x'], parameters['rsvp_stim_pos_y']),
+        stim_pos=(parameters['rsvp_stim_pos_x'],
+                  parameters['rsvp_stim_pos_y']),
         stim_height=parameters['rsvp_stim_height'],
         stim_inquiry=[''] * parameters['stim_length'],
         stim_colors=[parameters['stim_color']] * parameters['stim_length'],
@@ -72,7 +102,8 @@ def init_calibration_display_task(
                               stimuli,
                               task_bar,
                               info,
-                              preview_config=parameters.instantiate(PreviewParams),
+                              preview_config=parameters.instantiate(
+                                  PreviewParams),
                               trigger_type=parameters['trigger_type'],
                               space_char=parameters['stim_space_char'],
                               full_screen=parameters['full_screen'])

@@ -2,11 +2,11 @@
 import subprocess
 import time
 
-from bcipy.config import BCIPY_ROOT
+from bcipy.acquisition import LslAcquisitionClient, LslDataServer, await_start
 from bcipy.acquisition.datastream.mock.switch import switch_device
 from bcipy.acquisition.devices import preconfigured_device
-from bcipy.acquisition import LslAcquisitionClient, LslDataServer, await_start
-from bcipy.helpers.system_utils import log_to_stdout
+from bcipy.config import BCIPY_ROOT
+from bcipy.helpers.utils import log_to_stdout
 
 
 def start_switch():

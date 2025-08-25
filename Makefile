@@ -2,19 +2,17 @@ install:
 	pip install -e .
 
 dev-install:
-	pip install -r dev_requirements.txt
-	pip install kenlm==0.1 --global-option="--max_order=12"
+	pip install -e ".[dev]"
 	make install
 
 build:
-	make dev-install
-	python setup.py sdist bdist_wheel
+	pip install -e ".[release]"
+	python -m build --sdist --wheel
 
 test-all:
 	make coverage-report
 	make type
 	make lint
-	make integration-test
 
 unit-test:
 	pytest --mpl -k "not slow"
@@ -23,18 +21,21 @@ integration-test:
 	pytest --mpl -k "slow"
 
 coverage-report:
-	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage report
 
+coverage-xml:
+	coverage xml -o "cobertura.xml"
+
 coverage-html:
-	coverage run --branch --source=bcipy -m pytest --mpl -k "not slow"
+	coverage run --branch -m pytest --mpl -k "not slow"
 	coverage html
 
 lint:
 	flake8 bcipy
 
 lint-fix:
-	autopep8 --in-place --aggressive -r bcipy
+	autopep8 --in-place --aggressive --max-line-length 120 --ignore "E402,E226,E24,W50,W690" -r bcipy
 	flake8 bcipy
 
 type:
@@ -47,6 +48,15 @@ clean:
 	find . -name "*.py[co]" -o -name __pycache__ -exec rm -rf {} +
 	find . -path "*/*.pyo"  -delete
 	find . -path "*/*.pyc"  -delete
+	find . -path "*/*/__pycache__"  -delete
+	rm -rf .pytest_cache
+	rm -rf .mypy_cache
+	rm -rf .coverage
+	rm -rf htmlcov
+	rm -rf dist
+	rm -rf build
+	rm -rf bcipy.egg-info
+	rm -rf bcipy_cache
 
 bci-gui:
 	python bcipy/gui/BCInterface.py

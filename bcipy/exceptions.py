@@ -1,104 +1,171 @@
+"""Custom exceptions for the BciPy package.
+
+This module contains all custom exceptions used throughout the BciPy application.
+Each exception is designed to provide specific error information for different
+components of the system.
+"""
+from typing import Any
+
 
 class BciPyCoreException(Exception):
-    """BciPy Core Exception.
+    """Base exception class for BciPy-specific errors.
 
-    Thrown when an error occurs specific to BciPy core concepts.
+    Args:
+        message: A descriptive message explaining the error.
+        errors: Optional additional error information.
+
+    Attributes:
+        message: The error message.
+        errors: Additional error details, if any.
     """
 
-    def __init__(self, message, errors=None):
+    def __init__(self, message: str, errors: Any = None) -> None:
         super().__init__(message)
         self.message = message
         self.errors = errors
 
 
 class SignalException(BciPyCoreException):
-    """
-    Signal Exception.
+    """Exception raised for errors in the signal processing module.
 
-    Thrown when signal module encounters an error.
+    This exception is raised when the signal module encounters errors during
+    processing or analysis of signal data.
+
+    Args:
+        message: A descriptive message explaining the signal processing error.
+        errors: Optional additional error information.
     """
 
-    def __init__(self, message, errors=None):
+    def __init__(self, message: str, errors: Any = None) -> None:
         super().__init__(message)
         self.errors = errors
 
 
 class FieldException(BciPyCoreException):
-    """Field Exception.
+    """Exception raised for errors related to experimental fields.
 
-    Thrown when there is an exception relating to experimental fields.
+    This exception is raised when there are issues with field definitions,
+    validation, or processing in experiments.
+
+    Args:
+        message: A descriptive message explaining the field-related error.
+        errors: Optional additional error information.
     """
     ...
 
 
 class ExperimentException(BciPyCoreException):
-    """Experiment Exception.
+    """Exception raised for errors related to experiment execution.
 
-    Thrown when there is an exception relating to experiments.
+    This exception is raised when there are issues with experiment setup,
+    execution, or validation.
+
+    Args:
+        message: A descriptive message explaining the experiment-related error.
+        errors: Optional additional error information.
     """
     ...
 
 
 class UnregisteredExperimentException(ExperimentException):
-    """Unregistered Experiment.
+    """Exception raised when attempting to use an unregistered experiment.
 
-    Thrown when experiment is not registered in the provided experiment path.
+    This exception is raised when trying to access or execute an experiment
+    that has not been registered in the provided experiment path.
+
+    Args:
+        message: A descriptive message explaining which experiment was not found.
+        errors: Optional additional error information.
     """
-
     ...
 
 
 class UnregisteredFieldException(FieldException):
-    """Unregistered Field.
+    """Exception raised when attempting to use an unregistered field.
 
-    Thrown when field is not registered in the provided field path.
+    This exception is raised when trying to access a field that has not been
+    registered in the provided field path.
+
+    Args:
+        message: A descriptive message explaining which field was not found.
+        errors: Optional additional error information.
     """
-
     ...
 
 
 class InvalidExperimentException(ExperimentException):
-    """Invalid Experiment Exception.
+    """Exception raised when experiment data is in an invalid format.
 
-    Thrown when providing experiment data in the incorrect format.
+    This exception is raised when experiment configuration or data does not
+    meet the required format specifications.
+
+    Args:
+        message: A descriptive message explaining the format error.
+        errors: Optional additional error information.
     """
-
     ...
 
 
 class InvalidFieldException(FieldException):
-    """Invalid Field Exception.
+    """Exception raised when field data is in an invalid format.
 
-    Thrown when providing field data in the incorrect format.
+    This exception is raised when field configuration or data does not
+    meet the required format specifications.
+
+    Args:
+        message: A descriptive message explaining the format error.
+        errors: Optional additional error information.
     """
-
-    ...
-
-
-class UnsupportedResponseType(BciPyCoreException):
-    """Unsupported ResponseType
-
-    Thrown when attempting to set the response type of a language model to an
-    unsupported value."""
     ...
 
 
 class TaskConfigurationException(BciPyCoreException):
-    """Task Configuration Exception.
+    """Exception raised when task configuration is invalid.
 
-    Thrown when attempting to run a task with invalid configurations"""
-    ...
+    This exception is raised when attempting to run a task with invalid
+    or incompatible configuration settings.
 
-
-class InvalidLanguageModelException(BciPyCoreException):
-    """Invalid Language Model Exception.
-
-    Thrown when attempting to load a language model from an invalid path"""
+    Args:
+        message: A descriptive message explaining the configuration error.
+        errors: Optional additional error information.
+    """
     ...
 
 
 class KenLMInstallationException(BciPyCoreException):
-    """KenLM Installation Exception.
+    """Exception raised when KenLM module is not properly installed.
 
-    Thrown when attempting to import kenlm without installing the module"""
+    This exception is raised when attempting to use KenLM functionality
+    without having the required module installed.
+
+    Args:
+        message: A descriptive message explaining the installation issue.
+        errors: Optional additional error information.
+    """
+    ...
+
+
+class InvalidSymbolSetException(BciPyCoreException):
+    """Exception raised when symbol set is not properly configured.
+
+    This exception is raised when attempting to query a language model for
+    predictions without properly configuring the symbol set.
+
+    Args:
+        message: A descriptive message explaining the symbol set error.
+        errors: Optional additional error information.
+    """
+    ...
+
+
+class LanguageModelNameInUseException(BciPyCoreException):
+    """Exception raised when attempting to register a duplicate language model.
+
+    This exception is raised when trying to register a language model type
+    with a name that is already in use.
+
+    Args:
+        message: A descriptive message explaining the naming conflict.
+        errors: Optional additional error information.
+    """
     ...

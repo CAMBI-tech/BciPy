@@ -3,36 +3,21 @@
 # pylint: disable=E0611
 
 import sys
-
 from typing import List
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import (
-    QHBoxLayout,
-    QPushButton,
-    QScrollArea,
-    QVBoxLayout,
-    QWidget,
-)
+from PyQt6.QtWidgets import (QHBoxLayout, QPushButton, QScrollArea,
+                             QVBoxLayout, QWidget)
 
-from bcipy.gui.main import (
-    AlertMessageType,
-    AlertMessageResponse,
-    AlertResponse,
-    MessageBox,
-    app,
-    BoolInput,
-    DirectoryInput,
-    FileInput,
-    FloatInput,
-    FormInput,
-    IntegerInput,
-    TextInput,
-)
 from bcipy.config import EXPERIMENT_DATA_FILENAME
-from bcipy.helpers.validate import validate_experiment, validate_field_data_written
-from bcipy.helpers.load import load_experiments, load_fields
-from bcipy.helpers.save import save_experiment_field_data
+from bcipy.gui.main import (AlertMessageResponse, AlertMessageType,
+                            AlertResponse, BoolInput, DirectoryInput,
+                            FileInput, FloatInput, FormInput, IntegerInput,
+                            MessageBox, TextInput, app)
+from bcipy.helpers.validate import (validate_experiment,
+                                    validate_field_data_written)
+from bcipy.io.load import load_experiments, load_fields
+from bcipy.io.save import save_experiment_field_data
 
 
 class ExperimentFieldCollection(QWidget):
@@ -203,7 +188,8 @@ class ExperimentFieldCollection(QWidget):
             )
 
     def write_save_data(self) -> None:
-        save_experiment_field_data(self.save_data, self.save_path, self.file_name)
+        save_experiment_field_data(
+            self.save_data, self.save_path, self.file_name)
         self.throw_alert_message(
             title="Success",
             message=(
@@ -234,7 +220,8 @@ class ExperimentFieldCollection(QWidget):
         if message_response is AlertMessageResponse.OTE:
             msg.setStandardButtons(AlertResponse.OK.value)
         elif message_response is AlertMessageResponse.OCE:
-            msg.setStandardButtons(AlertResponse.OK.value | AlertResponse.CANCEL.value)
+            msg.setStandardButtons(
+                AlertResponse.OK.value | AlertResponse.CANCEL.value)
 
         return msg.exec()
 
@@ -276,7 +263,8 @@ class MainPanel(QWidget):
         vbox = QVBoxLayout()
 
         self.form_panel = QScrollArea()
-        self.form_panel.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.form_panel.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
         self.form_panel.setHorizontalScrollBarPolicy(
             Qt.ScrollBarPolicy.ScrollBarAlwaysOff
         )
@@ -332,6 +320,7 @@ def start_experiment_field_collection_gui(
 def start_app() -> None:
     """Start Experiment Field Collection."""
     import argparse
+
     from bcipy.config import DEFAULT_EXPERIMENT_ID, EXPERIMENT_DATA_FILENAME
 
     parser = argparse.ArgumentParser()
@@ -363,7 +352,8 @@ def start_app() -> None:
     )
 
     args = parser.parse_args()
-    start_experiment_field_collection_gui(args.experiment, args.path, args.filename, args.validate)
+    start_experiment_field_collection_gui(
+        args.experiment, args.path, args.filename, args.validate)
     sys.exit()
 
 

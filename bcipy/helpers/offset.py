@@ -1,23 +1,17 @@
-from typing import Any, List, Tuple
-from textwrap import wrap
 from pathlib import Path
+from textwrap import wrap
+from typing import Any, List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from scipy.stats import normaltest
 
-from bcipy.helpers.load import load_raw_data, ask_directory, load_json_parameters
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
-
-from bcipy.config import (
-    TRIGGER_FILENAME,
-    DIODE_TRIGGER,
-    RAW_DATA_FILENAME,
-    DEFAULT_TRIGGER_CHANNEL_NAME,
-    DEFAULT_PARAMETERS_FILENAME
-)
+from bcipy.config import (DEFAULT_PARAMETERS_FILENAME,
+                          DEFAULT_TRIGGER_CHANNEL_NAME, DIODE_TRIGGER,
+                          RAW_DATA_FILENAME, TRIGGER_FILENAME)
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.io.load import ask_directory, load_json_parameters, load_raw_data
 
 
 def sample_to_seconds(sample_rate: float, sample: int) -> float:
@@ -111,6 +105,7 @@ def calculate_latency(raw_data: RawData,
         if value < 1 and diode_enc:
             diode_enc = False
 
+    trigger_diodes_timestamps = []
     # Plot triggers.txt data if present; vertical line for each value.
     if triggers:
         trigger_diodes_timestamps = [
@@ -159,7 +154,8 @@ def calculate_latency(raw_data: RawData,
 
         # if it's not normal, take the median
         if p_value < 0.05:
-            print(f'Non-normal distribution of diffs. p-value=[{p_value}] Consider using median for static offset.')
+            print(
+                f'Non-normal distribution of diffs. p-value=[{p_value}] Consider using median for static offset.')
         recommended_static = abs(np.median(diffs))
         print(
             f'System recommended static offset median=[{recommended_static}]')
@@ -193,7 +189,8 @@ def calculate_latency(raw_data: RawData,
                        linewidth=0.5,
                        color='cyan')
 
-        ax.plot(trg_box_x, trg_box_y, label=f'{diode_channel} (photodiode triggers)')
+        ax.plot(trg_box_x, trg_box_y,
+                label=f'{diode_channel} (photodiode triggers)')
 
         # Add labels for TRGs
         first_trg = trigger_diodes_timestamps[0]
@@ -265,7 +262,8 @@ def sample_rate_diffs(raw_data: RawData) -> Tuple[int, float]:
 
     # get the count of all the samples and calculate the time recorded from the raw_data
     sample_time = raw_data.dataframe.shape[0] / raw_data.sample_rate
-    print(f'LSL Timestamp Sample Count: {lsl_sample_diff} EEG Sample Count: {sample_time}')
+    print(
+        f'LSL Timestamp Sample Count: {lsl_sample_diff} EEG Sample Count: {sample_time}')
     return lsl_sample_diff, sample_time
 
 
@@ -340,10 +338,12 @@ if __name__ == '__main__':
     args = parser.parse_args()
     data_path = args.data_path
     if not data_path:
-        data_path = ask_directory()
+        data_path = ask_directory(
+            prompt="Please select a BciPy time test directory..", strict=True)
 
     # grab the stim length from the data directory parameters
-    stim_length = load_json_parameters(f'{data_path}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)['stim_length']
+    stim_length = load_json_parameters(
+        f'{data_path}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)['stim_length']
 
     raw_data, triggers, static_offset = extract_data_latency_calculation(
         data_path,

@@ -2,50 +2,18 @@
 import logging
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, NamedTuple, Union
+from typing import Any, List, NamedTuple, get_args, get_origin
 
-import numpy as np
 import pandas as pd
 
+from bcipy.core.parameters import Parameters
 from bcipy.exceptions import TaskConfigurationException
-from bcipy.helpers.parameters import Parameters
-from bcipy.simulator.data import data_process
 from bcipy.simulator.data.data_process import (ExtractedExperimentData,
                                                RawDataProcessor)
+from bcipy.simulator.data.trial import Trial, convert_trials
 from bcipy.simulator.util.artifact import TOP_LEVEL_LOGGER_NAME
 
 log = logging.getLogger(TOP_LEVEL_LOGGER_NAME)
-
-
-class Trial(NamedTuple):
-    """Data for a given trial (a symbol within an Inquiry).
-
-    Attrs
-    -----
-        source - directory of the data source
-        inquiry_n - starts at 0; does not reset at each series
-        inquiry_pos  - starts at 1; position in which the symbol was presented
-        symbol - alphabet symbol that was presented
-        target - 1 or 0 indicating a boolean of whether this was a target symbol
-        eeg - EEG data associated with this trial
-    """
-    source: str
-    inquiry_n: int
-    inquiry_pos: int
-    symbol: str
-    target: int
-    eeg: np.ndarray  # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
-
-    def __str__(self):
-        fields = [
-            f"source='{self.source}'", f"inquiry_n={self.inquiry_n}",
-            f"inquiry_pos={self.inquiry_pos}", f"symbol='{self.symbol}'",
-            f"target={self.target}", f"eeg={self.eeg.shape}"
-        ]
-        return f"Trial({', '.join(fields)})"
-
-    def __repr__(self):
-        return str(self)
 
 
 class QueryFilter(NamedTuple):
@@ -57,8 +25,18 @@ class QueryFilter(NamedTuple):
     def is_valid(self) -> bool:
         """Check if the filter is valid."""
         # pylint: disable=no-member
-        return self.field in Trial._fields and self.operator in self.valid_operators and isinstance(
-            self.value, Trial.__annotations__[self.field])
+        field_type = Trial.__annotations__[self.field]
+
+        # can't check isinstance of a subscriptable type, such as Optional.
+        origin = get_origin(field_type)
+        if origin:
+            options = get_args(field_type)
+            is_correct_type = any(isinstance(self.value, ftype)
+                                  for ftype in options)
+        else:
+            is_correct_type = isinstance(self.value, field_type)
+
+        return self.field in Trial._fields and self.operator in self.valid_operators and is_correct_type
 
     @property
     def valid_operators(self) -> List[str]:
@@ -69,7 +47,8 @@ class QueryFilter(NamedTuple):
 class DataEngine(ABC):
     """Abstract class for an object that loads data from one or more sources,
     processes the data using a provided processor, and provides an interface
-    for querying the processed data."""
+    for querying the processed data.
+    """
 
     def load(self):
         """Load data from sources."""
@@ -85,31 +64,6 @@ class DataEngine(ABC):
         """Query the data."""
 
 
-def convert_trials(data_source: ExtractedExperimentData) -> List[Trial]:
-    """Convert extracted data from a single data source to a list of Trials."""
-    trials = []
-    symbols_by_inquiry = data_source.symbols_by_inquiry
-    labels_by_inquiry = data_source.labels_by_inquiry
-
-    for i, inquiry_eeg in enumerate(data_source.trials_by_inquiry):
-        # iterate through each inquiry
-        inquiry_symbols = symbols_by_inquiry[i]
-        inquiry_labels = labels_by_inquiry[i]
-
-        for sym_i, symbol in enumerate(inquiry_symbols):
-            # iterate through each symbol in the inquiry
-            eeg_samples = [channel[sym_i]
-                           for channel in inquiry_eeg]  # (channel_n, sample_n)
-            trials.append(
-                Trial(source=data_source.source_dir,
-                      inquiry_n=i,
-                      inquiry_pos=sym_i + 1,
-                      symbol=symbol,
-                      target=inquiry_labels[sym_i],
-                      eeg=np.array(eeg_samples)))
-    return trials
-
-
 class RawDataEngine(DataEngine):
     """
     Object that loads in list of session data folders and transforms data into
@@ -122,8 +76,7 @@ class RawDataEngine(DataEngine):
         self.parameters: Parameters = parameters
 
         self.data_processor = data_processor
-        self.data: List[Union[ExtractedExperimentData,
-                              data_process.ExtractedExperimentData]] = []
+        self.data: List[ExtractedExperimentData] = []
         self._trials_df = pd.DataFrame()
 
         self.load()
@@ -183,7 +136,7 @@ class RawDataEngine(DataEngine):
                    for filt in filters), "Filters must all be valid"
         assert samples >= 1, "Insufficient number of samples requested"
 
-        expr = 'and '.join([self.query_condition(filt) for filt in filters])
+        expr = ' and '.join([self.query_condition(filt) for filt in filters])
         filtered_data = self._trials_df.query(expr)
         if filtered_data is None or len(filtered_data) < samples:
             raise TaskConfigurationException(

@@ -1,5 +1,6 @@
-import numpy as np
 from typing import List
+
+import numpy as np
 
 
 def truncate_float(num: float, precision: int) -> float:

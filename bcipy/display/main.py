@@ -1,7 +1,13 @@
+"""Main display module.
+
+This module provides the core display functionality for BciPy, including base classes
+and utilities for creating and managing visual stimuli in BCI paradigms.
+"""
+
 # mypy: disable-error-code="assignment,empty-body"
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any, List, NamedTuple, Optional, Tuple, Type, Union
+from typing import Any, Dict, List, NamedTuple, Optional, Tuple, Type, Union
 
 from psychopy import visual
 
@@ -9,13 +15,26 @@ from bcipy.display.components.button_press_handler import (
     AcceptButtonPressHandler, ButtonPressHandler,
     PreviewOnlyButtonPressHandler, RejectButtonPressHandler)
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.system_utils import get_screen_info
+from bcipy.helpers.utils import get_screen_info
 
 
 class Display(ABC):
-    """Display.
+    """Base class for BciPy displays.
 
-    Base class for BciPy displays. This defines the logic necessary for task executions that require a display.
+    This abstract class defines the core interface and functionality necessary for
+    task executions that require a display. It provides methods for stimulus
+    presentation, timing control, and task management.
+
+    Attributes:
+        window (visual.Window): PsychoPy window for display.
+        timing_clock (Clock): Clock for timing control.
+        experiment_clock (Clock): Clock for experiment timing.
+        stimuli_inquiry (List[str]): List of stimuli to present.
+        stimuli_colors (List[str]): List of colors for each stimulus.
+        stimuli_timing (List[float]): List of presentation durations.
+        task (Any): Task-related information.
+        info_text (List[Any]): Information text to display.
+        first_stim_time (float): Time of first stimulus presentation.
     """
 
     window: visual.Window = None
@@ -30,107 +49,142 @@ class Display(ABC):
 
     @abstractmethod
     def do_inquiry(self) -> List[Tuple[str, float]]:
-        """Do inquiry.
+        """Perform an inquiry of stimuli.
 
         Animates an inquiry of stimuli and returns a list of stimuli trigger timing.
+
+        Returns:
+            List[Tuple[str, float]]: List of (stimulus, timing) pairs.
         """
         ...
 
     @abstractmethod
-    def wait_screen(self, *args, **kwargs) -> None:
-        """Wait Screen.
+    def wait_screen(self, *args: Any, **kwargs: Any) -> None:
+        """Display a wait screen.
 
         Define what happens on the screen when a user pauses a session.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         ...
 
     @abstractmethod
-    def update_task_bar(self, *args, **kwargs) -> None:
-        """Update Task.
+    def update_task_bar(self, *args: Any, **kwargs: Any) -> None:
+        """Update task bar display.
 
-        Update any taskbar-related display items not related to the inquiry. Ex. stimuli count 1/200.
+        Update any taskbar-related display items not related to the inquiry.
+        Example: stimuli count 1/200.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
         """
         ...
 
-    def schedule_to(self, stimuli: list, timing: list, colors: list) -> None:
-        """Schedule To.
+    def schedule_to(self, stimuli: List[str], timing: List[float], colors: List[str]) -> None:
+        """Schedule stimuli elements.
 
         Schedule stimuli elements (works as a buffer) before calling do_inquiry.
+
+        Args:
+            stimuli (List[str]): List of stimuli to present.
+            timing (List[float]): List of presentation durations.
+            colors (List[str]): List of colors for each stimulus.
         """
         ...
 
     def draw_static(self) -> None:
-        """Draw Static.
+        """Draw static elements.
 
         Displays task information not related to the inquiry.
         """
         ...
 
-    def preview_inquiry(self, *args, **kwargs) -> List[float]:
-        """Preview Inquiry.
+    def preview_inquiry(self, *args: Any, **kwargs: Any) -> List[float]:
+        """Preview an inquiry before presentation.
 
-        Display an inquiry or instruction beforehand to the user. This should be called before do_inquiry.
-        This can be used to determine if the desired stimuli is present before displaying them more laboriusly
-        or prompting users before the inquiry.
-        All stimuli elements (stimuli, timing, colors) must be set on the display before calling this method.
-        This implies, something like schedule_to is called.
+        Display an inquiry or instruction beforehand to the user. This should be called
+        before do_inquiry. This can be used to determine if the desired stimuli is present
+        before displaying them more laboriously or prompting users before the inquiry.
+
+        Note:
+            All stimuli elements (stimuli, timing, colors) must be set on the display
+            before calling this method. This implies something like schedule_to is called.
+
+        Args:
+            *args: Variable length argument list.
+            **kwargs: Arbitrary keyword arguments.
+
+        Returns:
+            List[float]: List of timing information for the preview.
         """
         ...
 
 
-def init_display_window(parameters):
-    """
-    Init Display Window.
+def init_display_window(parameters: Dict[str, Any]) -> visual.Window:
+    """Initialize the main display window.
 
-    Function to Initialize main display window
-        needed for all later stimuli presentation.
+    Function to initialize main display window needed for all later stimuli presentation.
 
     See Psychopy official documentation for more information and working demos:
         http://www.psychopy.org/api/visual/window.html
+
+    Args:
+        parameters (Dict[str, Any]): Dictionary containing window configuration parameters.
+
+    Returns:
+        visual.Window: Initialized PsychoPy window for display.
     """
-
-    # Check is full_screen mode is set and get necessary values
+    # Check if full_screen mode is set and get necessary values
     if parameters['full_screen']:
-
         # set window attributes based on resolution
         screen_info = get_screen_info()
         window_height = screen_info.height
         window_width = screen_info.width
-
-        # set full screen mode to true (removes os dock, explorer etc.)
         full_screen = True
-
-    # otherwise, get user defined window attributes
     else:
-
         # set window attributes directly from parameters file
         window_height = parameters['window_height']
         window_width = parameters['window_width']
-
-        # make sure full screen is set to false
         full_screen = False
 
     # Initialize PsychoPy Window for Main Display of Stimuli
     display_window = visual.Window(
-        size=[window_width,
-              window_height],
+        size=[window_width, window_height],
         screen=parameters['stim_screen'],
         allowGUI=False,
         useFBO=False,
         fullscr=full_screen,
         allowStencil=False,
         monitor='mainMonitor',
-        winType='pyglet', units='norm', waitBlanking=False,
+        winType='pyglet',
+        units='norm',
+        waitBlanking=False,
         color=parameters['background_color'])
 
-    # Return display window to caller
     return display_window
 
 
 class StimuliProperties:
-    """"Stimuli Properties.
+    """Encapsulation of properties for core stimuli presentation.
 
-    An encapsulation of properties relevant to core stimuli presentation in a paradigm.
+    This class manages the properties and configuration for presenting stimuli
+    in a paradigm, including text and image-based stimuli.
+
+    Attributes:
+        stim_font (str): Font to use for text stimuli.
+        stim_pos (Union[Tuple[float, float], List[Tuple[float, float]]]): Position(s) for stimuli.
+        stim_height (float): Height of stimuli.
+        stim_inquiry (List[str]): List of stimuli to present.
+        stim_colors (List[str]): List of colors for each stimulus.
+        stim_timing (List[float]): List of presentation durations.
+        is_txt_stim (bool): Whether stimuli are text-based.
+        stim_length (int): Number of stimuli.
+        sti (Optional[Union[visual.TextStim, visual.ImageStim]]): Stimulus object.
+        prompt_time (Optional[float]): Time to display target prompt.
+        layout (Optional[str]): Layout of stimuli (e.g., 'ALPHABET' or 'QWERTY').
     """
 
     def __init__(
@@ -143,20 +197,19 @@ class StimuliProperties:
             stim_timing: Optional[List[float]] = None,
             is_txt_stim: bool = True,
             prompt_time: Optional[float] = None,
-            layout: Optional[str] = None):
-        """Initialize Stimuli Parameters.
+            layout: Optional[str] = None) -> None:
+        """Initialize Stimuli Properties.
 
-        stim_font(List[str]): Ordered list of colors to apply to information stimuli
-        stim_pos(Tuple[float, float]): Position on window where the stimuli will be presented
-            or a list of positions (ex. for matrix displays)
-        stim_height(float): Height of all stimuli
-        stim_inquiry(List[str]): Ordered list of text to build stimuli with
-        stim_colors(List[str]): Ordered list of colors to apply to stimuli
-        stim_timing(List[float]): Ordered list of timing to apply to an inquiry using the stimuli
-        is_txt_stim(bool): Whether or not this is a text based stimuli (False implies image based)
-        prompt_time(float): Time to display target prompt for at the beginning of inquiry
-        layout(str): Layout of stimuli on the screen (ex. 'ALPHABET' or 'QWERTY').
-            This is only used for matrix displays.
+        Args:
+            stim_font (str): Font to use for text stimuli.
+            stim_pos (Union[Tuple[float, float], List[Tuple[float, float]]]): Position(s) for stimuli.
+            stim_height (float): Height of stimuli.
+            stim_inquiry (Optional[List[str]]): List of stimuli to present. Defaults to None.
+            stim_colors (Optional[List[str]]): List of colors for each stimulus. Defaults to None.
+            stim_timing (Optional[List[float]]): List of presentation durations. Defaults to None.
+            is_txt_stim (bool): Whether stimuli are text-based. Defaults to True.
+            prompt_time (Optional[float]): Time to display target prompt. Defaults to None.
+            layout (Optional[str]): Layout of stimuli. Defaults to None.
         """
         self.stim_font = stim_font
         self.stim_pos = stim_pos
@@ -171,11 +224,17 @@ class StimuliProperties:
         self.layout = layout
 
     def build_init_stimuli(self, window: visual.Window) -> Union[visual.TextStim, visual.ImageStim]:
-        """"Build Initial Stimuli.
+        """Build initial stimulus object.
 
         This method constructs the stimuli object which can be updated later. This is more
-            performant than creating a new stimuli each call. It can create either an image or text stimuli
-            based on the boolean self.is_txt_stim.
+        performant than creating a new stimuli each call. It can create either an image or
+        text stimuli based on the boolean self.is_txt_stim.
+
+        Args:
+            window (visual.Window): PsychoPy window for display.
+
+        Returns:
+            Union[visual.TextStim, visual.ImageStim]: The created stimulus object.
         """
         if self.is_txt_stim:
             self.sti = visual.TextStim(
@@ -185,8 +244,10 @@ class StimuliProperties:
                 text='',
                 font=self.stim_font,
                 pos=self.stim_pos,
-                wrapWidth=None, colorSpace='rgb',
-                opacity=1, depth=-6.0)
+                wrapWidth=None,
+                colorSpace='rgb',
+                opacity=1,
+                depth=-6.0)
         else:
             self.sti = visual.ImageStim(
                 win=window,
@@ -198,10 +259,18 @@ class StimuliProperties:
 
 
 class InformationProperties:
-    """"Information Properties.
+    """Encapsulation of properties for task information presentation.
 
-    An encapsulation of properties relevant to task information presentation in an RSVP paradigm. This could be
-        messaging relevant to feedback or static text to remain on screen not related to task tracking.
+    This class manages the properties and configuration for displaying task-related
+    information, feedback, and static text in an RSVP paradigm.
+
+    Attributes:
+        info_color (List[str]): List of colors for information text.
+        info_text (List[str]): List of information text to display.
+        info_font (List[str]): List of fonts for information text.
+        info_pos (List[Tuple[float, float]]): List of positions for information text.
+        info_height (List[float]): List of heights for information text.
+        text_stim (List[visual.TextStim]): List of text stimulus objects.
     """
 
     def __init__(
@@ -210,14 +279,15 @@ class InformationProperties:
             info_text: List[str],
             info_font: List[str],
             info_pos: List[Tuple[float, float]],
-            info_height: List[float]):
-        """Initialize Information Parameters.
+            info_height: List[float]) -> None:
+        """Initialize Information Properties.
 
-        info_color(List[str]): Ordered list of colors to apply to information stimuli
-        info_text(List[str]): Ordered list of text to apply to information stimuli
-        info_font(List[str]): Ordered list of font to apply to information stimuli
-        info_pos(Tuple[float, float]): Position on window where the Information stimuli will be presented
-        info_height(List[float]): Ordered list of height of Information stimuli
+        Args:
+            info_color (List[str]): List of colors for information text.
+            info_text (List[str]): List of information text to display.
+            info_font (List[str]): List of fonts for information text.
+            info_pos (List[Tuple[float, float]]): List of positions for information text.
+            info_height (List[float]): List of heights for information text.
         """
         self.info_color = info_color
         self.info_text = info_text
@@ -226,9 +296,15 @@ class InformationProperties:
         self.info_height = info_height
 
     def build_info_text(self, window: visual.Window) -> List[visual.TextStim]:
-        """"Build Information Text.
+        """Build information text stimuli.
 
         Constructs a list of Information stimuli to display.
+
+        Args:
+            window (visual.Window): PsychoPy window for display.
+
+        Returns:
+            List[visual.TextStim]: List of text stimulus objects.
         """
         self.text_stim = []
         for idx in range(len(self.info_text)):
@@ -239,24 +315,39 @@ class InformationProperties:
                 text=self.info_text[idx],
                 font=self.info_font[idx],
                 pos=self.info_pos[idx],
-                wrapWidth=None, colorSpace='rgb',
-                opacity=1, depth=-6.0))
+                wrapWidth=None,
+                colorSpace='rgb',
+                opacity=1,
+                depth=-6.0))
         return self.text_stim
 
 
 class ButtonPressMode(Enum):
-    """Represents the possible meanings for a button press (when using an Inquiry Preview.)"""
+    """Represents the possible meanings for a button press.
+
+    Used when implementing Inquiry Preview functionality to determine the
+    action to take based on user input.
+    """
     NOTHING = 0
     ACCEPT = 1
     REJECT = 2
 
 
 class PreviewParams(NamedTuple):
-    """Parameters relevant for the Inquiry Preview functionality.
+    """Parameters for Inquiry Preview functionality.
 
-    Create from an existing Parameters instance using:
-    >>> parameters.instantiate(PreviewParams)
+    This class defines the configuration parameters needed for the Inquiry Preview
+    feature, which allows users to preview stimuli before presentation.
+
+    Attributes:
+        show_preview_inquiry (bool): Whether to show preview.
+        preview_inquiry_length (float): Duration of preview.
+        preview_inquiry_key_input (str): Key to use for preview input.
+        preview_inquiry_progress_method (int): Method for handling preview progress.
+        preview_inquiry_isi (float): Inter-stimulus interval for preview.
+        preview_box_text_size (float): Text size for preview box.
     """
+
     show_preview_inquiry: bool
     preview_inquiry_length: float
     preview_inquiry_key_input: str
@@ -265,14 +356,25 @@ class PreviewParams(NamedTuple):
     preview_box_text_size: float
 
     @property
-    def button_press_mode(self):
-        """Mode indicated by the inquiry progress method."""
+    def button_press_mode(self) -> ButtonPressMode:
+        """Get the button press mode from the progress method.
+
+        Returns:
+            ButtonPressMode: The mode indicated by the progress method.
+        """
         return ButtonPressMode(self.preview_inquiry_progress_method)
 
 
 def get_button_handler_class(
         mode: ButtonPressMode) -> Type[ButtonPressHandler]:
-    """Get the appropriate handler constructor for the given button press mode."""
+    """Get the appropriate button handler class for the given mode.
+
+    Args:
+        mode (ButtonPressMode): The button press mode to handle.
+
+    Returns:
+        Type[ButtonPressHandler]: The appropriate handler class.
+    """
     mapping = {
         ButtonPressMode.NOTHING: PreviewOnlyButtonPressHandler,
         ButtonPressMode.ACCEPT: AcceptButtonPressHandler,
@@ -283,7 +385,15 @@ def get_button_handler_class(
 
 def init_preview_button_handler(params: PreviewParams,
                                 experiment_clock: Clock) -> ButtonPressHandler:
-    """"Returns a button press handler for inquiry preview."""
+    """Initialize a button press handler for inquiry preview.
+
+    Args:
+        params (PreviewParams): Preview configuration parameters.
+        experiment_clock (Clock): Clock for experiment timing.
+
+    Returns:
+        ButtonPressHandler: Configured button press handler.
+    """
     make_handler = get_button_handler_class(params.button_press_mode)
     return make_handler(max_wait=params.preview_inquiry_length,
                         key_input=params.preview_inquiry_key_input,
@@ -291,6 +401,14 @@ def init_preview_button_handler(params: PreviewParams,
 
 
 class VEPStimuliProperties(StimuliProperties):
+    """Properties for VEP (Visual Evoked Potential) stimuli.
+
+    This class extends StimuliProperties to provide specific functionality
+    for VEP-based paradigms.
+
+    Attributes:
+        animation_seconds (float): Duration of animation.
+    """
 
     def __init__(self,
                  stim_font: str,
@@ -300,12 +418,18 @@ class VEPStimuliProperties(StimuliProperties):
                  stim_color: List[str],
                  inquiry: List[List[Any]],
                  stim_length: int = 1,
-                 animation_seconds: float = 1.0):
-        """Initialize VEP Stimuli Parameters.
-        stim_color(List[str]): Ordered list of colors to apply to VEP stimuli
-        stim_font(str): Font to apply to all VEP stimuli
-        stim_pos(List[Tuple[float, float]]): Position on the screen where to present to VEP text
-        stim_height(float): Height of all VEP text stimuli
+                 animation_seconds: float = 1.0) -> None:
+        """Initialize VEP Stimuli Properties.
+
+        Args:
+            stim_font (str): Font to use for text stimuli.
+            stim_pos (List[Tuple[float, float]]): Positions for stimuli.
+            stim_height (float): Height of stimuli.
+            timing (List[float]): List of presentation durations.
+            stim_color (List[str]): List of colors for each stimulus.
+            inquiry (List[List[Any]]): List of inquiry stimuli.
+            stim_length (int, optional): Number of stimuli. Defaults to 1.
+            animation_seconds (float, optional): Duration of animation. Defaults to 1.0.
         """
         # static properties
         self.stim_font = stim_font
@@ -317,11 +441,15 @@ class VEPStimuliProperties(StimuliProperties):
         # dynamic property. List of length 3. 1. prompt; 2. fixation; 3. inquiry
         self.stim_timing = timing
 
-        # dynamic properties, must be a a list of lists where each list is a different box
+        # dynamic properties, must be a list of lists where each list is a different box
         self.stim_colors = stim_color
         self.stim_inquiry = inquiry
         self.animation_seconds = animation_seconds
 
     def build_init_stimuli(self, window: visual.Window) -> None:
-        """"Build Initial Stimuli."""
+        """Build initial VEP stimuli.
+
+        Args:
+            window (visual.Window): PsychoPy window for display.
+        """
         ...

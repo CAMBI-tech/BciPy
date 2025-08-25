@@ -5,12 +5,13 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from bcipy.config import SESSION_DATA_FILENAME
-from bcipy.helpers.session import read_session
+from bcipy.core.session import read_session
 
 
 @dataclass
 class SimState:
-    """ Represents the state of a current session during simulation """
+    """Represents the state of a current session during simulation."""
+
     target_symbol: str
     current_sentence: str
     target_sentence: str
@@ -20,8 +21,7 @@ class SimState:
 
 
 def get_inquiry(session_dir: str, n: int) -> Dict[str, Any]:
-    """Extracts an inquiry from a session.json file. Useful for debugging
-    simulator output."""
+    """Extracts an inquiry from a session.json file. Useful for debugging simulator output."""
     session = read_session(f"{session_dir}/{SESSION_DATA_FILENAME}")
     inq = session.all_inquiries[n]
     return inq.stim_evidence(session.symbol_set)

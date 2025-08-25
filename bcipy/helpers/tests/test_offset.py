@@ -1,25 +1,21 @@
-import unittest
 import shutil
+import tempfile
+import unittest
 import zipfile
 from pathlib import Path
-import tempfile
+
 import pytest
-
 from matplotlib import pyplot as plt
+from mockito import unstub, verify, when
 
-from mockito import when, unstub, verify
-
-from bcipy.helpers.offset import (
-    calculate_latency,
-    sample_to_seconds,
-    extract_data_latency_calculation,
-    sample_rate_diffs,
-    lsl_timestamp_diffs
-)
-from bcipy.helpers.load import load_raw_data
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.triggers import trigger_decoder, TriggerType
 from bcipy.config import RAW_DATA_FILENAME, TRIGGER_FILENAME
+from bcipy.core.raw_data import RawData
+from bcipy.core.triggers import TriggerType, trigger_decoder
+from bcipy.helpers.offset import (calculate_latency,
+                                  extract_data_latency_calculation,
+                                  lsl_timestamp_diffs, sample_rate_diffs,
+                                  sample_to_seconds)
+from bcipy.io.load import load_raw_data
 
 pwd = Path(__file__).absolute().parent
 input_folder = pwd / "resources/mock_offset/time_test_data/"
@@ -42,7 +38,8 @@ class TestOffset(unittest.TestCase):
             remove_pre_fixation=False,
             exclusion=[TriggerType.FIXATION],
             device_type='EEG')
-        self.triggers = list(zip(trigger_label, trigger_targetness, trigger_time))
+        self.triggers = list(
+            zip(trigger_label, trigger_targetness, trigger_time))
         self.diode_channel = 'TRG'
         self.stim_number = 10
 
@@ -66,7 +63,8 @@ class TestOffset(unittest.TestCase):
     def test_extract_data_latency_calculation(self):
         static_offset = 0.0
         recommend = False
-        resp = extract_data_latency_calculation(self.tmp_dir, recommend, static_offset)
+        resp = extract_data_latency_calculation(
+            self.tmp_dir, recommend, static_offset)
         self.assertIsInstance(resp[0], RawData)
         self.assertEqual(resp[1], self.triggers)
         self.assertEqual(resp[2], static_offset)
@@ -74,7 +72,8 @@ class TestOffset(unittest.TestCase):
     def test_extract_data_latency_calculation_resets_static_offset_on_recommend(self):
         static_offset = 1.0
         recommend = True
-        resp = extract_data_latency_calculation(self.tmp_dir, recommend, static_offset)
+        resp = extract_data_latency_calculation(
+            self.tmp_dir, recommend, static_offset)
         self.assertIsInstance(resp[0], RawData)
         self.assertEqual(resp[1], self.triggers)
         self.assertNotEqual(resp[2], static_offset)

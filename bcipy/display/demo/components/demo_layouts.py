@@ -10,12 +10,12 @@ from psychopy.visual.line import Line
 from psychopy.visual.rect import Rect
 from psychopy.visual.shape import ShapeStim
 
+from bcipy.core.symbols import alphabet
 from bcipy.display.components.layout import (Layout, at_top, centered,
                                              envelope, height_units,
                                              scaled_size)
 from bcipy.display.paradigm.matrix.layout import symbol_positions
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, checkerboard
-from bcipy.helpers.symbols import alphabet
 
 
 def make_window():
@@ -267,7 +267,8 @@ def demo_matrix_positions(win: visual.Window):
     symbols = alphabet()
 
     norm_layout = centered(parent=win, width_pct=0.7, height_pct=0.75)
-    positions = symbol_positions(norm_layout, symbol_set=symbols, rows=5, columns=6)
+    positions = symbol_positions(
+        norm_layout, symbol_set=symbols, rows=5, columns=6)
 
     for sym, pos in zip(symbols, positions):
         stim = visual.TextStim(win,

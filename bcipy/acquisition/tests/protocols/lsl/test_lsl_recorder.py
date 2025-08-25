@@ -1,18 +1,18 @@
 """Tests for LslRecorder"""
+import logging
 import tempfile
 import time
 import unittest
 from pathlib import Path
 
 import pytest
-import logging
 
 from bcipy.acquisition.datastream.lsl_server import LslDataServer
 from bcipy.acquisition.datastream.mock.eye_tracker_server import \
     eye_tracker_server
 from bcipy.acquisition.devices import preconfigured_device
 from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
-from bcipy.helpers.raw_data import TIMESTAMP_COLUMN, load
+from bcipy.core.raw_data import TIMESTAMP_COLUMN, load
 
 log = logging.getLogger(__name__)
 

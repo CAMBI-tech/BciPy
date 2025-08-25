@@ -4,8 +4,8 @@ from typing import List
 
 import numpy as np
 
+from bcipy.core.stimuli import InquiryReshaper
 from bcipy.exceptions import SignalException
-from bcipy.helpers.stimuli import InquiryReshaper
 from bcipy.signal.model import ModelEvaluationReport, SignalModel
 from bcipy.signal.model.classifier import RegularizedDiscriminantAnalysis
 from bcipy.signal.model.cross_validation import (cost_cross_validation_auc,
@@ -49,13 +49,15 @@ class PcaRdaKdeModel(SignalModel):
         """
         model = Pipeline(
             [
-                ChannelWisePrincipalComponentAnalysis(n_components=self.pca_n_components, num_ch=train_data.shape[0]),
+                ChannelWisePrincipalComponentAnalysis(
+                    n_components=self.pca_n_components, num_ch=train_data.shape[0]),
                 RegularizedDiscriminantAnalysis(),
             ]
         )
 
         # Find the optimal gamma + lambda values
-        arg_cv = cross_validation(train_data, train_labels, model=model, k_folds=self.k_folds)
+        arg_cv = cross_validation(
+            train_data, train_labels, model=model, k_folds=self.k_folds)
 
         # Get the AUC using those optimized gamma + lambda
         rda_index = 1  # the index in the pipeline
@@ -102,7 +104,8 @@ class PcaRdaKdeModel(SignalModel):
             ModelEvaluationReport: stores AUC
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.evaluate()")
+            raise SignalException(
+                "must use model.fit() before model.evaluate()")
 
         tmp_model = Pipeline([self.model.pipeline[0], self.model.pipeline[1]])
 
@@ -134,18 +137,22 @@ class PcaRdaKdeModel(SignalModel):
         """
 
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict()")
+            raise SignalException(
+                "must use model.fit() before model.predict()")
 
         # Evaluate likelihood probabilities for p(e|l=1) and p(e|l=0)
         log_likelihoods = self.model.transform(data)
-        subset_likelihood_ratios = np.exp(log_likelihoods[:, 1] - log_likelihoods[:, 0])
+        subset_likelihood_ratios = np.exp(
+            log_likelihoods[:, 1] - log_likelihoods[:, 0])
         # Restrict multiplicative updates to a reasonable range
-        subset_likelihood_ratios = np.clip(subset_likelihood_ratios, self.min, self.max)
+        subset_likelihood_ratios = np.clip(
+            subset_likelihood_ratios, self.min, self.max)
 
         # Apply likelihood ratios to entire symbol set.
         likelihood_ratios = np.ones(len(symbol_set))
         for idx in range(len(subset_likelihood_ratios)):
-            likelihood_ratios[symbol_set.index(inquiry[idx])] *= subset_likelihood_ratios[idx]
+            likelihood_ratios[symbol_set.index(
+                inquiry[idx])] *= subset_likelihood_ratios[idx]
         return likelihood_ratios   # used in multimodal update
 
     def compute_class_probabilities(self, data: np.ndarray) -> np.ndarray:
@@ -156,7 +163,8 @@ class PcaRdaKdeModel(SignalModel):
                 probability for the two labels.
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict_proba()")
+            raise SignalException(
+                "must use model.fit() before model.predict_proba()")
 
         # Model originally produces p(eeg | label). We want p(label | eeg):
         #
@@ -178,7 +186,8 @@ class PcaRdaKdeModel(SignalModel):
         p(e | l=1), p(e | l=0)
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict_proba()")
+            raise SignalException(
+                "must use model.fit() before model.predict_proba()")
 
         log_scores_class_0 = self.model.transform(data)[:, 0]
         log_scores_class_1 = self.model.transform(data)[:, 1]
@@ -191,7 +200,8 @@ class PcaRdaKdeModel(SignalModel):
             predictions (np.ndarray): shape (num_items,) - the predicted label for each item.
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict()")
+            raise SignalException(
+                "must use model.fit() before model.predict()")
 
         posterior = self.compute_class_probabilities(data)
         predictions = np.argmax(posterior, axis=1)
@@ -205,7 +215,8 @@ class PcaRdaKdeModel(SignalModel):
                 probability for the two labels.
         """
         if not self.ready_to_predict:
-            raise SignalException("must use model.fit() before model.predict_proba()")
+            raise SignalException(
+                "must use model.fit() before model.predict_proba()")
 
         return self.compute_class_probabilities(data)
 

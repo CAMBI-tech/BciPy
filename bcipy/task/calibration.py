@@ -1,4 +1,6 @@
 """Base calibration task."""
+# mypy: disable-error-code="override"
+import logging
 from abc import abstractmethod
 from typing import Any, Dict, Iterator, List, NamedTuple, Optional, Tuple
 
@@ -7,25 +9,24 @@ from psychopy.visual import Window
 
 import bcipy.task.data as session_data
 from bcipy.acquisition import ClientManager
-from bcipy.config import (SESSION_DATA_FILENAME, TRIGGER_FILENAME,
-                          WAIT_SCREEN_MESSAGE, SESSION_LOG_FILENAME)
-from bcipy.helpers.acquisition import init_acquisition, LslDataServer
-from bcipy.display import init_display_window, Display
+from bcipy.config import (SESSION_DATA_FILENAME, SESSION_LOG_FILENAME,
+                          TRIGGER_FILENAME, WAIT_SCREEN_MESSAGE)
+from bcipy.core.parameters import Parameters
+from bcipy.core.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
+                                TargetPositions,
+                                generate_calibration_inquiries)
+from bcipy.core.symbols import alphabet
+from bcipy.core.triggers import (FlushFrequency, Trigger, TriggerHandler,
+                                 TriggerType, convert_timing_triggers,
+                                 offset_label)
+from bcipy.display import Display, init_display_window
+from bcipy.helpers.acquisition import LslDataServer, init_acquisition
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.save import _save_session_related_data
-from bcipy.helpers.stimuli import (DEFAULT_TEXT_FIXATION, StimuliOrder,
-                                   TargetPositions,
-                                   generate_calibration_inquiries)
-from bcipy.helpers.symbols import alphabet
 from bcipy.helpers.task import (get_user_input, pause_calibration,
                                 trial_complete_message)
-from bcipy.helpers.triggers import (FlushFrequency, Trigger, TriggerHandler,
-                                    TriggerType, convert_timing_triggers,
-                                    offset_label)
+from bcipy.io.save import _save_session_related_data
 from bcipy.task import Task, TaskData, TaskMode
 
-import logging
 logger = logging.getLogger(SESSION_LOG_FILENAME)
 
 
@@ -126,6 +127,7 @@ class BaseCalibrationTask(Task):
             parameters: Parameters,
             data_save_location: str,
             fake: bool = False) -> Tuple[ClientManager, List[LslDataServer], Window]:
+        """Set up acquisition and return client manager, data servers, and window."""
         # Initialize Acquisition
         daq, servers = init_acquisition(
             parameters, data_save_location, server=fake)
@@ -213,7 +215,7 @@ class BaseCalibrationTask(Task):
                                     task_data=self.session_task_data())
 
     def session_task_data(self) -> Optional[Dict[str, Any]]:
-        """"Task-specific session data"""
+        """Task-specific session data."""
         return None
 
     def trigger_type(self,
@@ -346,8 +348,7 @@ class BaseCalibrationTask(Task):
             convert_timing_triggers(timing, timing[0][0], self.trigger_type))
 
     def write_offset_trigger(self) -> None:
-        """Append an offset value to the end of the trigger file.
-        """
+        """Append an offset value to the end of the trigger file."""
         # To help support future refactoring or use of lsl timestamps only
         # we write only the sample offset here.
         triggers = []

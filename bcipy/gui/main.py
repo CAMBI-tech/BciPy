@@ -1,3 +1,9 @@
+"""Main GUI module for BciPy.
+
+This module provides the core GUI components and utilities for the BciPy interface,
+including form inputs, alerts, and window management.
+"""
+
 # pylint: disable=E0611
 import logging
 import os
@@ -5,16 +11,17 @@ import re
 import sys
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union
+from typing import (Any, Callable, List, NamedTuple, Optional, Tuple, Union,
+                    cast)
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSlot
+from PyQt6.QtCore import QObject, Qt, QTimer, pyqtSlot
 from PyQt6.QtGui import QFont, QPixmap, QShowEvent, QWheelEvent
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox,
                              QDoubleSpinBox, QFileDialog, QHBoxLayout, QLabel,
                              QLineEdit, QMessageBox, QPushButton, QScrollArea,
                              QSpinBox, QVBoxLayout, QWidget)
 
-from bcipy.helpers.parameters import parse_range
+from bcipy.core.parameters import parse_range
 
 
 def font(size: int = 16, font_family: str = 'Helvetica') -> QFont:
@@ -22,7 +29,7 @@ def font(size: int = 16, font_family: str = 'Helvetica') -> QFont:
     return QFont(font_family, size, weight=0)
 
 
-def invalid_length(min=1, max=25) -> bool:
+def invalid_length(min=1, max=25) -> Callable[[str], bool]:
     """Invalid Length.
 
     Returns a function, which when passed a string will assert whether a string meets min/max conditions.
@@ -35,7 +42,7 @@ def contains_whitespaces(string: str) -> bool:
 
     Checks for the presence of whitespace in a string.
     """
-    return re.match(r'^(?=.*[\s])', string)
+    return bool(re.match(r'^(?=.*[\s])', string))
 
 
 def contains_special_characters(string: str,
@@ -48,7 +55,7 @@ def contains_special_characters(string: str,
     return bool(disallowed_chars.search(string))
 
 
-def static_text_control(parent,
+def static_text_control(parent: Optional[QWidget],
                         label: str,
                         color: str = 'black',
                         size: int = 16,
@@ -57,7 +64,7 @@ def static_text_control(parent,
     creating labels and help components."""
     static_text = QLabel(parent)
     static_text.setWordWrap(True)
-    static_text.setText(label)
+    static_text.setText(str(label))
     static_text.setStyleSheet(f'color: {color};')
     static_text.setFont(font(size, font_family))
     return static_text
@@ -90,12 +97,11 @@ class PushButton(QPushButton):
 
     Custom Button to store unique identifiers which are required for coordinating
     events across multiple buttons."""
-    id = None
+    id: Optional[int] = None
 
-    def get_id(self):
+    def get_id(self) -> int:
         if not self.id:
             raise Exception('No ID set on PushButton')
-
         return self.id
 
 
@@ -116,7 +122,7 @@ class ComboBox(QComboBox):
         self.setText(selected_value)
         self.setEditable(True)
 
-    def setText(self, value: str):
+    def setText(self, value: str) -> None:
         """Sets the current index to the given value. If the value is not in the list of
         options it will be added."""
         if value not in self.options:
@@ -125,7 +131,7 @@ class ComboBox(QComboBox):
             self.addItems(self.options)
         self.setCurrentIndex(self.options.index(value))
 
-    def text(self):
+    def text(self) -> str:
         """Gets the currentText."""
         return self.currentText()
 
@@ -136,21 +142,20 @@ class MessageBox(QMessageBox):
     A custom QMessageBox implementation to provide timeout functionality to QMessageBoxes.
     """
 
-    def __init__(self, *args, **kwargs):
-        QMessageBox.__init__(self, *args, **kwargs)
+    def __init__(self, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.timeout = 0.0
+        self.current = 0.0
 
-        self.timeout = 0
-        self.current = 0
-
-    def showEvent(self, event: QShowEvent) -> None:
+    def showEvent(self, event: Optional[QShowEvent]) -> None:
         """showEvent.
 
         If a timeout greater than zero is defined, set a QTimer to call self.close after the defined timeout.
         """
         if self.timeout > 0:
             # timeout is in seconds (multiply by 1000 to get ms)
-            QTimer().singleShot(self.timeout * 1000, self.close)
-        super(MessageBox, self).showEvent(event)
+            QTimer().singleShot(int(self.timeout * 1000.0), self.close)
+        super().showEvent(event)
 
     def setTimeout(self, timeout: float) -> None:
         """setTimeout.
@@ -224,11 +229,11 @@ class FormInput(QWidget):
                  value: str,
                  help_tip: Optional[str] = None,
                  options: Optional[List[str]] = None,
-                 editable: bool = True,
+                 editable: Optional[bool] = True,
                  help_size: int = 12,
                  help_color: str = 'darkgray',
                  should_display: bool = True):
-        super(FormInput, self).__init__()
+        super().__init__()
 
         self.label = label
         self.help_tip = help_tip
@@ -245,9 +250,9 @@ class FormInput(QWidget):
         if not should_display:
             self.hide()
 
-    def eventFilter(self, source, event):
+    def eventFilter(self, source: Optional[QObject], event: Any) -> bool:
         """Event filter that suppresses the scroll wheel event."""
-        if (event.type() == QWheelEvent and source is self.control):
+        if (isinstance(event, QWheelEvent) and source is self.control):
             return True
         return False
 
@@ -255,7 +260,7 @@ class FormInput(QWidget):
         """Initialize the label widget."""
         return static_text_control(None, label=self.label, size=16)
 
-    def init_help(self, font_size: int, color: str) -> QWidget:
+    def init_help(self, font_size: int, color: str) -> Optional[QWidget]:
         """Initialize the help text widget."""
         if self.help_tip and self.label != self.help_tip:
             return static_text_control(None,
@@ -264,23 +269,25 @@ class FormInput(QWidget):
                                        color=color)
         return None
 
-    def init_control(self, value) -> QWidget:
+    def init_control(self, value: Any) -> QWidget:
         """Initialize the form control widget.
         Parameter:
         ---------
             value - initial value
         """
         # Default is a text input
-        return QLineEdit(value)
+        return QLineEdit(str(value))
 
-    def init_editable(self, value: bool) -> QWidget:
+    def init_editable(self, value: Optional[bool]) -> Optional[QWidget]:
         "Override. Another checkbox is needed for editable"
+        if value is None:
+            return None
         editable_checkbox = QCheckBox("Editable")
         editable_checkbox.setChecked(value)
         editable_checkbox.setFont(font(size=12))
         return editable_checkbox
 
-    def init_layout(self):
+    def init_layout(self) -> None:
         """Initialize the layout by adding the label, help, and control widgets."""
         self.vbox = QVBoxLayout()
         if self.label_widget:
@@ -294,7 +301,7 @@ class FormInput(QWidget):
         self.vbox.addWidget(self.separator())
         self.setLayout(self.vbox)
 
-    def separator(self):
+    def separator(self) -> QWidget:
         """Creates a separator line."""
         line = QLabel()
         line.setFixedHeight(1)
@@ -305,16 +312,20 @@ class FormInput(QWidget):
         """Returns the value associated with the form input."""
         if self.control:
             return self.control.text()
-        return None
+        return ""
 
     def is_editable(self) -> bool:
         """Returns whether the input is editable."""
-        return self.editable_widget.isChecked()
+        if self.editable_widget:
+            return self.editable_widget.isChecked()
+        return False
 
     @property
     def editable(self) -> bool:
         """Returns whether the input is editable."""
-        return True if self.editable_widget.isChecked() else False
+        if self.editable_widget:
+            return self.editable_widget.isChecked()
+        return False
 
     def cast_value(self) -> Any:
         """Returns the value associated with the form input, cast to the correct type.
@@ -330,20 +341,20 @@ class FormInput(QWidget):
             self.help_tip and
             text in self.help_tip.lower()) or text in self.value().lower()
 
-    def show(self):
+    def show(self) -> None:
         """Show this widget, and all child widgets."""
         if self.should_display:
             for widget in self.widgets():
                 if widget:
                     widget.setVisible(True)
 
-    def hide(self):
+    def hide(self) -> None:
         """Hide this widget, and all child widgets."""
         for widget in self.widgets():
             if widget:
                 widget.setVisible(False)
 
-    def widgets(self) -> List[QWidget]:
+    def widgets(self) -> List[Optional[QWidget]]:
         """Returns a list of self and child widgets. List may contain None values."""
         return [self.label_widget, self.help_tip_widget, self.control, self]
 
@@ -358,20 +369,21 @@ class IntegerInput(FormInput):
         value - initial value.
     """
 
-    def __init__(self, **kwargs):
-        super(IntegerInput, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
 
-    def init_control(self, value):
+    def init_control(self, value: Any) -> QWidget:
         """Override FormInput to create a spinbox."""
         spin_box = QSpinBox()
         spin_box.setMinimum(-100000)
         spin_box.setMaximum(100000)
-        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+        # Disable scroll wheel by overriding the event handler
+        spin_box.wheelEvent = lambda e: None  # type: ignore
         if value:
             spin_box.setValue(int(value))
         return spin_box
 
-    def cast_value(self) -> str:
+    def cast_value(self) -> Optional[int]:
         """Override FormInput to return an integer value."""
         if self.control:
             return int(self.control.text())
@@ -388,13 +400,14 @@ class FloatInputProperties(NamedTuple):
     step: float = 0.1
 
 
-def float_input_properties(value: str) -> FloatInputProperties:
+def float_input_properties(value: float) -> FloatInputProperties:
     """Given a string representation of a float value, determine suitable
     properties for the float component used to input or update this value.
     """
     # Determine from the component if there is a reasonable min or max constraint
     dec = Decimal(str(value))
     _sign, _digits, exponent = dec.as_tuple()
+    exponent = int(exponent)
     if exponent > 0:
         return FloatInputProperties()
     return FloatInputProperties(decimals=abs(exponent), step=10**exponent)
@@ -410,29 +423,30 @@ class FloatInput(FormInput):
         value - initial value.
     """
 
-    def __init__(self, **kwargs):
-        super(FloatInput, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
 
-    def init_control(self, value):
+    def init_control(self, value: Any) -> QWidget:
         """Override FormInput to create a spinbox."""
         spin_box = QDoubleSpinBox()
 
         # Make a reasonable guess about precision and step size based on the initial value.
-        props = float_input_properties(value)
+        props = float_input_properties(float(value))
 
         spin_box.setMinimum(props.min)
         spin_box.setMaximum(props.max)
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(float(value))
-        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+        # Disable scroll wheel by overriding the event handler
+        spin_box.wheelEvent = lambda e: None  # type: ignore
         return spin_box
 
     def cast_value(self) -> float:
         """Override FormInput to return as a float."""
         if self.control:
             return float(self.control.text())
-        return None
+        return 0.0
 
 
 class BoolInput(FormInput):
@@ -445,10 +459,10 @@ class BoolInput(FormInput):
         value - initial value.
     """
 
-    def __init__(self, **kwargs):
-        super(BoolInput, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
 
-    def init_control(self, value):
+    def init_control(self, value: Any) -> QWidget:
         """Override to create a checkbox."""
         ctl = QCheckBox(f'Enable {self.label}')
         ctl.setChecked(value == 'true')
@@ -466,7 +480,7 @@ class RangeInput(FormInput):
     from the starting value and list of recommended if provided.
     """
 
-    def init_control(self, value) -> QWidget:
+    def init_control(self, value: Any) -> QWidget:
         """Initialize the form control widget.
 
         Parameter:
@@ -489,14 +503,16 @@ class SelectionInput(FormInput):
         help_font_size - font size for the help text.
         help_color - color of the help text."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         assert isinstance(kwargs['options'],
                           list), f"options are required for {kwargs['label']}"
-        super(SelectionInput, self).__init__(**kwargs)
+        super().__init__(**kwargs)
 
-    def init_control(self, value) -> QWidget:
+    def init_control(self, value: Any) -> QWidget:
         """Override to create a Combobox."""
-        return ComboBox(self.options, value)
+        if not self.options:
+            raise ValueError(f"options are required for {self.label}")
+        return ComboBox(self.options, str(value))
 
 
 class TextInput(FormInput):
@@ -510,8 +526,8 @@ class TextInput(FormInput):
         help_font_size - font size for the help text.
         help_color - color of the help text."""
 
-    def __init__(self, **kwargs):
-        super(TextInput, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
 
 
 class FileInput(FormInput):
@@ -527,15 +543,15 @@ class FileInput(FormInput):
         help_color - color of the help text.
     """
 
-    def __init__(self, **kwargs):
-        super(FileInput, self).__init__(**kwargs)
+    def __init__(self, **kwargs: Any):
+        super().__init__(**kwargs)
 
-    def init_control(self, value) -> QWidget:
+    def init_control(self, value: Any) -> QWidget:
         """Override to create either a selection list or text field depending
         on whether there are recommended values."""
         if isinstance(self.options, list):
-            return ComboBox(self.options, value)
-        return QLineEdit(value)
+            return ComboBox(self.options, str(value))
+        return QLineEdit(str(value))
 
     def init_button(self) -> QWidget:
         """Creates a Button to initiate the file/directory dialog."""
@@ -575,7 +591,7 @@ class FileInput(FormInput):
         self.vbox.addWidget(self.separator())
         self.setLayout(self.vbox)
 
-    def widgets(self) -> List[QWidget]:
+    def widgets(self) -> List[Optional[QWidget]]:
         """Override to include button."""
         return super().widgets() + [self.button]
 
@@ -593,7 +609,7 @@ class DirectoryInput(FileInput):
         help_color - color of the help text.
     """
 
-    def prompt_path(self):
+    def prompt_path(self) -> str:
         """Override to prompt for a directory."""
         return QFileDialog.getExistingDirectory(caption='Select a path')
 
@@ -612,7 +628,7 @@ class RangeWidget(QWidget):
                  label_low: str = "Low:",
                  label_high="High:",
                  size=14):
-        super(RangeWidget, self).__init__()
+        super().__init__()
 
         self.low, self.high = parse_range(value)
         self.input_min = None
@@ -658,7 +674,8 @@ class RangeWidget(QWidget):
         spin_box.setDecimals(props.decimals)
         spin_box.setSingleStep(props.step)
         spin_box.setValue(value)
-        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+        # Disable scroll wheel by overriding the event handler
+        spin_box.wheelEvent = lambda e: None  # type: ignore
         return spin_box
 
     def int_input(self, value: int) -> QWidget:
@@ -669,12 +686,13 @@ class RangeWidget(QWidget):
             -100000 if self.input_min is None else self.input_min)
         spin_box.setMaximum(
             100000 if self.input_max is None else self.input_max)
-        spin_box.wheelEvent = lambda event: None  # disable scroll wheel
+        # Disable scroll wheel by overriding the event handler
+        spin_box.wheelEvent = lambda e: None  # type: ignore
         if value:
             spin_box.setValue(value)
         return spin_box
 
-    def text(self):
+    def text(self) -> str:
         """Text value"""
         low = self.low_input.text() or self.low
         high = self.high_input.text() or self.high
@@ -698,8 +716,8 @@ class SearchInput(QWidget):
             contents of the text box.
     """
 
-    def __init__(self, on_search, font_size: int = 12):
-        super(SearchInput, self).__init__()
+    def __init__(self, on_search: Callable[[str], None], font_size: int = 12):
+        super().__init__()
 
         self.on_search = on_search
 
@@ -735,21 +753,21 @@ class BCIGui(QWidget):
 
     def __init__(self, title: str, width: int, height: int,
                  background_color: str):
-        super(BCIGui, self).__init__()
+        super().__init__()
         logging.basicConfig(level=logging.INFO,
                             format='%(name)s - %(levelname)s - %(message)s')
         self.logger = logging
 
-        self.buttons = []
-        self.input_text = []
-        self.static_text = []
-        self.images = []
-        self.comboboxes = []
-        self.widgets = []
+        self.buttons: List[PushButton] = []
+        self.input_text: List[QLineEdit] = []
+        self.static_text: List[QLabel] = []
+        self.images: List[QLabel] = []
+        self.comboboxes: List[QComboBox] = []
+        self.widgets: List[QWidget] = []
 
         # set main window properties
         self.background_color = background_color
-        self.window = QWidget()
+        self._window = QWidget()
         self.vbox = QVBoxLayout()
         self.setStyleSheet(f'background-color: {self.background_color};')
 
@@ -758,12 +776,12 @@ class BCIGui(QWidget):
         self.title = title
 
         # determines height/width of window
-        self.width = width
-        self.height = height
+        self._width = width
+        self._height = height
 
         self.setWindowTitle(self.title)
-        self.setFixedWidth(self.width)
-        self.setFixedHeight(self.height)
+        self.setFixedWidth(self._width)
+        self.setFixedHeight(self._height)
         self.setLayout(self.vbox)
 
         self.create_main_window()
@@ -774,9 +792,9 @@ class BCIGui(QWidget):
         Construct the main window for display of assets.
         """
         self.window_layout = QHBoxLayout()
-        self.window.setStyleSheet(
+        self._window.setStyleSheet(
             f'background-color: {self.background_color};')
-        self.window_layout.addWidget(self.window)
+        self.window_layout.addWidget(self._window)
         self.vbox.addLayout(self.window_layout)
 
     def add_widget(self, widget: QWidget) -> None:
@@ -846,9 +864,11 @@ class BCIGui(QWidget):
 
         The default action for buttons if none are registed.
         """
-        sender = self.sender()
-        self.logger.debug(sender.text() + ' was pressed')
-        self.logger.debug(sender.get_id())
+        sender = cast(QObject, self.sender())
+        if sender:
+            self.logger.debug(sender.text() + ' was pressed')
+            if isinstance(sender, PushButton):
+                self.logger.debug(sender.get_id())
 
     def add_button(self,
                    message: str,
@@ -860,7 +880,7 @@ class BCIGui(QWidget):
                    font_family: str = 'Times',
                    action: Optional[Callable] = None) -> PushButton:
         """Add Button."""
-        btn = PushButton(message, self.window)
+        btn = PushButton(message, self._window)
         btn.id = id
         btn.move(position[0], position[1])
         btn.resize(size[0], size[1])
@@ -886,7 +906,7 @@ class BCIGui(QWidget):
                      editable=False) -> QComboBox:
         """Add combobox."""
 
-        combobox = QComboBox(self.window)
+        combobox = QComboBox(self._window)
         combobox.move(position[0], position[1])
         combobox.resize(size[0], size[1])
 
@@ -908,7 +928,7 @@ class BCIGui(QWidget):
     def add_image(self, path: str, position: list, size: int) -> QLabel:
         """Add Image."""
         if os.path.isfile(path):
-            labelImage = QLabel(self.window)
+            labelImage = QLabel(self._window)
             pixmap = QPixmap(path)
             # ensures the new label size will scale the image itself
             labelImage.setScaledContents(True)
@@ -918,10 +938,10 @@ class BCIGui(QWidget):
 
             if width > height:
                 new_width = size
-                new_height = size * height / width
+                new_height = int(size * height / width)
             else:
                 new_height = size
-                new_width = size * width / height
+                new_width = int(size * width / height)
 
             labelImage.resize(new_width, new_height)
             labelImage.move(position[0], position[1])
@@ -941,7 +961,7 @@ class BCIGui(QWidget):
                            wrap_text=False) -> QLabel:
         """Add Static Text."""
 
-        static_text = QLabel(self.window)
+        static_text = QLabel(self._window)
         static_text.setText(text)
         if wrap_text:
             static_text.setWordWrap(True)
@@ -959,7 +979,7 @@ class BCIGui(QWidget):
 
     def add_text_input(self, position: list, size: list) -> QLineEdit:
         """Add Text Input."""
-        textbox = QLineEdit(self.window)
+        textbox = QLineEdit(self._window)
         textbox.move(position[0], position[1])
         textbox.resize(size[0], size[1])
 
@@ -972,7 +992,7 @@ class BCIGui(QWidget):
             message: str,
             message_type: AlertMessageType = AlertMessageType.INFO,
             message_response: AlertMessageResponse = AlertMessageResponse.OTE,
-            message_timeout: float = 0) -> MessageBox:
+            message_timeout: float = 0) -> int:
         """Throw Alert Message."""
         msg = alert_message(message,
                             title=title,
@@ -986,7 +1006,7 @@ class BCIGui(QWidget):
                             file_type: str = 'All Files (*)',
                             location: str = "") -> str:
         """Get Filename Dialog."""
-        file_name, _ = QFileDialog.getOpenFileName(self.window, message,
+        file_name, _ = QFileDialog.getOpenFileName(self._window, message,
                                                    location, file_type)
         return file_name
 
@@ -1005,8 +1025,8 @@ class ScrollableFrame(QWidget):
                  title: Optional[str] = None):
         super().__init__()
 
-        self.height = height
-        self.width = width
+        self._height = height
+        self._width = width
         self.background_color = background_color
         self.setStyleSheet(f'background-color: {self.background_color}')
 
@@ -1015,11 +1035,13 @@ class ScrollableFrame(QWidget):
 
         # create the scrollable are
         self.frame = QScrollArea()
-        self.frame.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
-        self.frame.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        self.frame.setVerticalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
+        self.frame.setHorizontalScrollBarPolicy(
+            Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.frame.setWidgetResizable(True)
-        self.frame.setFixedWidth(self.width)
-        self.setFixedHeight(self.height)
+        self.frame.setFixedWidth(self._width)
+        self.setFixedHeight(self._height)
 
         # if a widget is provided, add it to the scrollable frame
         if widget:
@@ -1074,11 +1096,11 @@ class LineItems(QWidget):
 
     def __init__(self, items: List[dict], width: str):
         super().__init__()
-        self.width = width
+        self._width = int(width)
         self.items = items
 
         self.vbox = QVBoxLayout()
-        self.setFixedWidth(self.width)
+        self.setFixedWidth(self._width)
 
         # construct the line items as widgets added to the layout
         self.construct_line_items()
@@ -1117,13 +1139,12 @@ class LineItems(QWidget):
             self.vbox.addLayout(layout)
 
 
-def app(args) -> QApplication:
+def app(args: List[str]) -> QApplication:
     """Main app registry.
 
     Passes args from main and initializes the app
     """
-
-    bci_app = QApplication(args).instance()
+    bci_app = QApplication.instance()
     if not bci_app:
         return QApplication(args)
     return bci_app
@@ -1133,8 +1154,8 @@ def start_app() -> None:
     """Start BCIGui."""
     bcipy_gui = app(sys.argv)
     ex = BCIGui(title='BCI GUI',
-                height=650,
-                width=650,
+                height=500,
+                width=500,
                 background_color='white')
     ex.show_gui()
     sys.exit(bcipy_gui.exec())

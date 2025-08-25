@@ -6,6 +6,10 @@ from typing import (Any, Dict, Iterable, List, NamedTuple, Optional, Tuple,
 from psychopy import core, visual  # type: ignore
 
 import bcipy.display.components.layout as layout
+from bcipy.core.list import expanded
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import alphabet
+from bcipy.core.triggers import _calibration_trigger
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            VEPStimuliProperties)
 from bcipy.display.components.layout import scaled_size
@@ -17,10 +21,6 @@ from bcipy.display.paradigm.vep.codes import (DEFAULT_FLICKER_RATES,
 from bcipy.display.paradigm.vep.layout import BoxConfiguration, animation_path
 from bcipy.display.paradigm.vep.vep_stim import VEPStim
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.list import expanded
-from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.symbols import alphabet
-from bcipy.helpers.triggers import _calibration_trigger
 
 
 class StimTime(NamedTuple):
@@ -152,7 +152,8 @@ class VEPDisplay(Display):
     def stim_properties(self) -> List[StimProps]:
         """Returns a tuple of (symbol, duration, and color) for each stimuli,
         including the target and fixation stim. Stimuli that represent VEP
-        boxes will have a list of symbols."""
+        boxes will have a list of symbols.
+        """
         stim_num = len(self.stimuli_inquiry)
         assert len(self.stimuli_colors
                    ) == stim_num, "Each box should have its own color"
@@ -221,7 +222,8 @@ class VEPDisplay(Display):
             target - (symbol, duration, color) tuple
         """
         assert isinstance(target.symbol, str), "Target must be a str"
-        self.logger.info(f"Target: {target.symbol} at index {target_box_index}")
+        self.logger.info(
+            f"Target: {target.symbol} at index {target_box_index}")
 
         # Show all symbols in the matrix at reduced opacity
         for sym in self.symbol_set:
@@ -313,7 +315,8 @@ class VEPDisplay(Display):
 
     def set_stimuli_colors(self, stim_groups: List[StimProps]) -> None:
         """Update the colors of the stimuli associated with each symbol to
-        reflect which box it will be placed in."""
+        reflect which box it will be placed in.
+        """
         for group in stim_groups:
             for sym in group.symbol:
                 self.sti[sym].color = group.color
@@ -399,7 +402,8 @@ class VEPDisplay(Display):
         """Add a new timing entry using the stimuli as a label.
 
         Useful as a callback function to register a marker at the time it is
-        first displayed."""
+        first displayed.
+        """
         self._timing.append(StimTime(stimuli, self.experiment_clock.getTime()))
 
     def reset_timing(self):
@@ -461,8 +465,7 @@ class VEPDisplay(Display):
 
     def schedule_to(self, stimuli: List[List[Any]], timing: Optional[List[List[float]]]
                     = None, colors: Optional[List[List[str]]] = None) -> None:
-        """Schedule stimuli elements (works as a buffer).
-        """
+        """Schedule stimuli elements (works as a buffer)."""
         self.stimuli_inquiry = stimuli  # type: ignore
         assert timing is None or timing == self.stimuli_timing, "Timing values must match pre-configured values"
         assert colors is None or colors == self.stimuli_colors, "Colors must match the pre-configured values"
@@ -503,8 +506,7 @@ class VEPDisplay(Display):
             text_box.borderWidth = self.box_border_width
 
     def _set_inquiry(self, stimuli: List[StimProps]) -> List[visual.TextBox2]:
-        """Set the correct inquiry text for each text boxes.
-        """
+        """Set the correct inquiry text for each text boxes."""
         for i, sti in enumerate(stimuli):
             box = self.text_boxes[i]
             text = ' '.join(sti.symbol)

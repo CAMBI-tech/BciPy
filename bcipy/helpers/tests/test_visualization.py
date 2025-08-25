@@ -1,15 +1,15 @@
-import unittest
-import tempfile
 import shutil
+import tempfile
+import unittest
 from pathlib import Path
 
-from mockito import when, any, verify, unstub, mock
+from mockito import any, mock, unstub, verify, when
 
-from bcipy.helpers.visualization import visualize_session_data
-from bcipy.helpers import visualization
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.load import load_json_parameters
 from bcipy.config import DEFAULT_PARAMETERS_PATH
+from bcipy.core.raw_data import RawData
+from bcipy.helpers import visualization
+from bcipy.helpers.visualization import visualize_session_data
+from bcipy.io.load import load_json_parameters
 
 
 class TestVisualizeSessionData(unittest.TestCase):
@@ -17,7 +17,8 @@ class TestVisualizeSessionData(unittest.TestCase):
 
     def setUp(self):
         self.tmp_dir = str(Path(tempfile.mkdtemp()))
-        self.parameters = load_json_parameters(DEFAULT_PARAMETERS_PATH, value_cast=True)
+        self.parameters = load_json_parameters(
+            DEFAULT_PARAMETERS_PATH, value_cast=True)
         self.raw_data_mock = mock()
         self.raw_data_mock.daq_type = 'DSI-24'
         self.raw_data_mock.sample_rate = 300
@@ -33,7 +34,8 @@ class TestVisualizeSessionData(unittest.TestCase):
         trigger_label_mock = ['target', 'nontarget']
         show = True
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
-        when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
+        when(visualization).analysis_channels(
+            any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
             offset=any(),
             trigger_path=any(),
@@ -82,7 +84,8 @@ class TestVisualizeSessionData(unittest.TestCase):
         trigger_label_mock = ['nontarget', 'nontarget']
         show = False
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
-        when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
+        when(visualization).analysis_channels(
+            any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
             offset=any(),
             trigger_path=any(),
@@ -100,7 +103,8 @@ class TestVisualizeSessionData(unittest.TestCase):
         trigger_label_mock = ['target', 'target']
         show = False
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
-        when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
+        when(visualization).analysis_channels(
+            any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
             offset=any(),
             trigger_path=any(),
@@ -118,7 +122,8 @@ class TestVisualizeSessionData(unittest.TestCase):
         trigger_label_mock = ['target', 'nontarget']
         show = False
         when(RawData).load(any()).thenReturn(self.raw_data_mock)
-        when(visualization).analysis_channels(any(), any()).thenReturn(self.channel_map_mock)
+        when(visualization).analysis_channels(
+            any(), any()).thenReturn(self.channel_map_mock)
         when(visualization).trigger_decoder(
             offset=any(),
             trigger_path=any(),

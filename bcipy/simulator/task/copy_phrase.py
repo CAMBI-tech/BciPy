@@ -1,20 +1,23 @@
-# mypy: disable-error-code="union-attr"
+# mypy: disable-error-code="union-attr, override"
 """Simulates the Copy Phrase task"""
-from typing import Any, Dict, List, Optional, Tuple
 import logging
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
+from bcipy.acquisition.multimodal import ClientManager
+from bcipy.core.parameters import Parameters
+from bcipy.core.stimuli import InquirySchedule
 from bcipy.display.main import Display
 from bcipy.feedback.visual.visual_feedback import VisualFeedback
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.stimuli import InquirySchedule
 from bcipy.language.main import LanguageModel
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.simulator.data.sampler import Sampler
+from bcipy.simulator.task.null_daq import NullDAQ
 from bcipy.simulator.task.null_display import NullDisplay
 from bcipy.simulator.util.state import SimState
+from bcipy.task import TaskMode
 from bcipy.task.control.evidence import EvidenceEvaluator
 from bcipy.task.data import EvidenceType
-from bcipy.task import TaskMode
 from bcipy.task.paradigm.rsvp.copy_phrase import RSVPCopyPhraseTask
 
 DEFAULT_EVIDENCE_TYPE = EvidenceType.ERP
@@ -34,12 +37,14 @@ def get_evidence_type(model: SignalModel) -> EvidenceType:
     try:
         return EvidenceType(evidence_type)
     except ValueError:
-        raise ValueError(f"Unsupported evidence type: {evidence_type}. Supported types: {EvidenceType.list()}")
+        raise ValueError(
+            f"Unsupported evidence type: {evidence_type}. Supported types: {EvidenceType.list()}")
 
 
 class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     """CopyPhraseTask that simulates user interactions by sampling data
-    from a DataSampler."""
+    from a DataSampler.
+    """
 
     name = "Simulator Copy Phrase"
     paradigm = "RSVP"
@@ -64,7 +69,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             data_save_location: str,
             fake: bool = False) -> Tuple[Any, Any, Display]:
         """Override the setup method to avoid initializing the data acquisition."""
-        daq = None
+        daq = self.init_acquisition()
         server = None
         display = self.init_display()
         self.initalized = True
@@ -80,6 +85,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def init_evidence_evaluators(
             self, signal_models: List[SignalModel]) -> List[EvidenceEvaluator]:
+        """Initialize evidence evaluators for the simulation (returns empty list)."""
         # Evidence will be sampled so we don't need to evaluate raw data.
         return []
 
@@ -87,17 +93,25 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             self, signal_models: List[SignalModel],
             evidence_evaluators: List[EvidenceEvaluator]
     ) -> List[EvidenceType]:
+        """Initialize evidence types for the simulation."""
         evidence_types = set(
             [get_evidence_type(model) for model in self.signal_models])
         return [EvidenceType.LM, *evidence_types]
 
     def init_display(self) -> Display:
+        """Initialize the display for the simulation (returns NullDisplay)."""
         return NullDisplay()
 
+    def init_acquisition(self) -> ClientManager:
+        """Override to do nothing."""
+        return NullDAQ()
+
     def init_feedback(self) -> Optional[VisualFeedback]:
+        """Initialize feedback for the simulation (returns None)."""
         return None
 
     def user_wants_to_continue(self) -> bool:
+        """Always continue for simulation purposes."""
         return True
 
     def wait(self, seconds: Optional[float] = None) -> None:
@@ -106,8 +120,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
     def present_inquiry(
         self, inquiry_schedule: InquirySchedule
     ) -> Tuple[List[Tuple[str, float]], bool]:
-        """Override ; returns empty timing info; always proceed for inquiry
-        preview"""
+        """Override; returns empty timing info; always proceed for inquiry preview."""
         return [], True
 
     def show_feedback(self, selection: str, correct: bool = True) -> None:
@@ -115,16 +128,18 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
 
     def compute_button_press_evidence(
             self, proceed: bool) -> Optional[Tuple[EvidenceType, List[float]]]:
+        """Compute button press evidence for simulation (returns None)."""
         return None
 
     def compute_device_evidence(
             self,
             stim_times: List[List],
             proceed: bool = True) -> List[Tuple[EvidenceType, List[float]]]:
+        """Compute device evidence for simulation."""
 
         current_state = self.get_sim_state()
-        self.logger.info("Computing evidence with sim_state:")
-        self.logger.info(current_state)
+        self.logger.debug("Computing evidence with sim_state:")
+        self.logger.debug(current_state)
 
         evidences = []
 
@@ -133,7 +148,7 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             # This assumes that sampling is independent. Changes to the sampler API are needed if
             # we need to provide the trial context of the last sample.
             sampled_data = sampler.sample_data(current_state)
-            evidence = model.compute_class_probabilities(
+            evidence = model.compute_likelihood_ratio(
                 sampled_data,
                 self.current_symbols(),
                 self.alp)
@@ -141,10 +156,21 @@ class SimulatorCopyPhraseTask(RSVPCopyPhraseTask):
             evidences.append((evidence_type, evidence))
         return evidences
 
+    def cleanup(self):
+        """Cleanup after simulation, including saving session data and removing empty trigger files."""
+        self.save_session_data()
+        trigger_path = Path(self.trigger_handler.file_path)
+        self.trigger_handler.close()
+
+        # delete empty triggers.txt file
+        if trigger_path.exists() and trigger_path.is_file():
+            trigger_path.unlink(missing_ok=True)
+
     def exit_display(self) -> None:
         """Close the UI and cleanup."""
 
     def elapsed_seconds(self) -> float:
+        """Return elapsed seconds for simulation (always 0.0)."""
         return 0.0
 
     def write_offset_trigger(self) -> None:

@@ -4,29 +4,28 @@ from functools import partial
 from queue import Queue
 from typing import Callable, Dict, List, Optional, Tuple
 
+import matplotlib
+import matplotlib.ticker as ticker
+import numpy as np
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 from PyQt6.QtCore import Qt, QTimer  # pylint: disable=no-name-in-module
 from PyQt6.QtWidgets import (QApplication, QCheckBox, QComboBox, QHBoxLayout,
                              QLabel, QPushButton, QSpinBox, QVBoxLayout,
                              QWidget)
 
-import matplotlib
-import matplotlib.ticker as ticker
-import numpy as np
-matplotlib.use('Qt5Agg')
-from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
-
-
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableProcess
+from bcipy.core.parameters import DEFAULT_PARAMETERS_PATH, Parameters
+from bcipy.core.raw_data import settings
 from bcipy.gui.main import static_text_control
 from bcipy.gui.viewer.data_source.data_source import QueueDataSource
 from bcipy.gui.viewer.data_source.file_streamer import FileStreamer
 from bcipy.gui.viewer.data_source.lsl_data_source import LslDataSource
 from bcipy.gui.viewer.ring_buffer import RingBuffer
-from bcipy.helpers.parameters import DEFAULT_PARAMETERS_PATH, Parameters
-from bcipy.helpers.raw_data import settings
 from bcipy.signal.process.transform import Downsample, get_default_transform
+
+matplotlib.use('Qt5Agg')
 
 
 def filters(
@@ -93,14 +92,14 @@ class FixedHeightHBox(QWidget):
 
     def __init__(self, height: int = 30):
         super().__init__()
-        self.layout = QHBoxLayout()
+        self.layout = QHBoxLayout()  # type: ignore
         self.layout.setContentsMargins(0, 0, 0, 0)
         self.setLayout(self.layout)
         self.setFixedHeight(height)
 
     def addWidget(self, widget: QWidget):
         """Add the given widget to the layout"""
-        self.layout.addWidget(widget)
+        self.layout.addWidget(widget)  # type: ignore
 
 
 class ChannelControls(QWidget):
@@ -631,7 +630,7 @@ def file_data(path: str
     """
     # read metadata
     name, freq, channels = settings(path)
-    queue = Queue()
+    queue: Queue = Queue()
     streamer = FileStreamer(path, queue)
     data_source = QueueDataSource(queue)
     device_spec = DeviceSpec(name=name, channels=channels, sample_rate=freq)
@@ -640,7 +639,7 @@ def file_data(path: str
     return (data_source, device_spec, streamer)
 
 
-def main(data_file: str,
+def main(data_file: Optional[str],
          seconds: int,
          refresh: int,
          yscale: int,
@@ -677,7 +676,7 @@ def main(data_file: str,
         display_monitor = non_primary_screens[0]
         monitor = display_monitor.geometry()
     else:
-        monitor = app.primaryScreen().geometry()
+        monitor = app.primaryScreen().geometry()  # type: ignore
 
     # increase height to 90% of monitor height and preserve aspect ratio.
     new_height = int(monitor.height() * 0.9)

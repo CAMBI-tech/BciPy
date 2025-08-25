@@ -1,12 +1,18 @@
-"""Functions related to stimuli generation for VEP tasks"""
+"""VEP stimulus generation module.
+
+This module provides functions for generating visual stimuli used in VEP
+(Visual Evoked Potential) tasks. It handles the creation of calibration
+inquiries, stimulus box configurations, and inquiry schedules.
+"""
+
 import itertools
 import math
 import random
 from typing import Any, List, Optional
 
-from bcipy.helpers.list import find_index, swapped
-from bcipy.helpers.stimuli import (InquirySchedule, get_fixation,
-                                   random_target_positions)
+from bcipy.core.list import find_index, swapped
+from bcipy.core.stimuli import (InquirySchedule, get_fixation,
+                                random_target_positions)
 
 
 def generate_vep_calibration_inquiries(alp: List[str],
@@ -15,30 +21,25 @@ def generate_vep_calibration_inquiries(alp: List[str],
                                        inquiry_count: int = 100,
                                        num_boxes: int = 4,
                                        is_txt: bool = True) -> InquirySchedule:
-    """
-    Generates VEP inquiries with target letters in all possible positions.
+    """Generate VEP inquiries with target letters in all possible positions.
 
     In the VEP paradigm, all stimuli in the alphabet are displayed in each
     inquiry. The symbols with the highest likelihoods are displayed alone
     while those with lower likelihoods occur together.
 
-    Parameters
-    ----------
-        alp(list[str]): stimuli
-        timing(list[float]): Task specific timing for generator.
-            [target, fixation, stimuli]
-        color(list[str]): Task specific color for generator
-            [target, fixation, stimuli]
-        inquiry_count(int): number of inquiries in a calibration
-        num_boxes(int): number of display boxes
-        is_txt(bool): whether the stimuli type is text. False would be an image stimuli.
+    Args:
+        alp: List of stimuli.
+        timing: Task specific timing for generator [target, fixation, stimuli].
+        color: Task specific color for generator [target, fixation, stimuli].
+        inquiry_count: Number of inquiries in a calibration.
+        num_boxes: Number of display boxes.
+        is_txt: Whether the stimuli type is text (False for image stimuli).
 
-    Return
-    ------
-        schedule_inq(tuple(
-            samples[list[list[str]]]: list of inquiries
-            timing(list[list[float]]): list of timings
-            color(list(list[str])): list of colors)): scheduled inquiries
+    Returns:
+        InquirySchedule: Schedule containing inquiries, timings, and colors.
+
+    Raises:
+        AssertionError: If timing list does not contain exactly 3 values.
     """
     if timing is None:
         timing = [0.5, 1, 2]
@@ -64,7 +65,20 @@ def generate_vep_inquiries(symbols: List[str],
                            num_boxes: int = 6,
                            inquiry_count: int = 20,
                            is_txt: bool = True) -> List[List[Any]]:
-    """Generates inquiries"""
+    """Generate a list of VEP inquiries.
+
+    Args:
+        symbols: List of symbols to use in inquiries.
+        num_boxes: Number of display boxes.
+        inquiry_count: Number of inquiries to generate.
+        is_txt: Whether the stimuli type is text.
+
+    Returns:
+        List[List[Any]]: List of inquiries, where each inquiry contains:
+            - Target symbol
+            - Fixation point
+            - List of symbols for each box
+    """
     fixation = get_fixation(is_txt)
     target_indices = random_target_positions(inquiry_count,
                                              stim_per_inquiry=num_boxes,
@@ -86,44 +100,29 @@ def stim_per_box(num_symbols: int,
                  num_boxes: int = 6,
                  max_empty_boxes: int = 0,
                  max_single_sym_boxes: int = 4) -> List[int]:
-    """Determine the number of stimuli per vep box.
+    """Determine the number of stimuli per VEP box.
 
-    Parameters
-    ----------
-        num_symbols - number of symbols
-        num_boxes - number of boxes
-        max_empty_boxes - the maximum number of boxes which won't have any
-            symbols within them.
-        max_single_sym_boxes - maximum number of boxes with a single symbol
+    This function distributes symbols across boxes based on rules derived from
+    example sessions. It ensures a balanced distribution while allowing for
+    some empty boxes and boxes with single symbols.
 
-    Returns
-    -------
-        A list of length num_boxes, where each number in the list represents
-            the number of symbols that should be in the box at that position.
+    Args:
+        num_symbols: Number of symbols to distribute.
+        num_boxes: Number of boxes to distribute symbols across.
+        max_empty_boxes: Maximum number of boxes that can be empty.
+        max_single_sym_boxes: Maximum number of boxes that can have a single symbol.
 
-    Post conditions:
-            The sum of the list should equal num_symbols. Further, there should
-            be at most max_empty_boxes with value of 0 and max_single_sym_boxes
-            with a value of 1.
+    Returns:
+        List[int]: List where each number represents the number of symbols
+            that should be in the box at that position.
+
+    Notes:
+        - The sum of the returned list equals num_symbols
+        - There will be at most max_empty_boxes with value 0
+        - There will be at most max_single_sym_boxes with value 1
+        - Distribution is based on example sessions from:
+          https://www.youtube.com/watch?v=JNFYSeIIOrw
     """
-    # Logic based off of example sessions from:
-    # https://www.youtube.com/watch?v=JNFYSeIIOrw
-    # [[2, 3, 5, 5, 6, 7],
-    # [2, 1, 10, 1, 1, 13],
-    # [3, 4, 17, 1, 1, 2],
-    # [1, 1, 1, 0, 1, 24],
-    # [1, 2, 1, 22, 1, 1],
-    # [2, 1, 1, 21, 2, 1],
-    # [1, 1, 25, 0, 1, 0]]
-    # and
-    # [[7, 3, 4, 9, 2, 3],
-    # 1, 1, 6, 9, 7, 2],
-    # 1, 2, 18, 2, 3, 2],
-    # 1, 1, 4, 4, 17, 1],
-    # 1, 3, 1, 1, 20, 2],
-    # 1, 1, 1, 20, 3, 2],
-    # 1, 1, 1, 4, 21, 0]]
-
     if max_empty_boxes + max_single_sym_boxes >= num_boxes:
         max_empty_boxes = 0
         max_single_sym_boxes = num_boxes - 1
@@ -160,26 +159,24 @@ def generate_vep_inquiry(alphabet: List[str],
                          num_boxes: int = 6,
                          target: Optional[str] = None,
                          target_pos: Optional[int] = None) -> List[List[str]]:
-    """Generates a single random inquiry.
+    """Generate a single random VEP inquiry.
 
-    Parameters
-    ----------
-        alphabet - list of symbols from which to select.
-        num_boxes - number of display areas; symbols will be partitioned into
-            these areas.
-        target - target symbol for the generated inquiry
-        target_pos - box index that should contain the target
+    Args:
+        alphabet: List of symbols to select from.
+        num_boxes: Number of display areas to partition symbols into.
+        target: Target symbol for the inquiry.
+        target_pos: Box index that should contain the target.
 
-    Returns
-    -------
-        An inquiry represented by a list of lists, where each sublist
-        represents a display box and contains symbols that should appear in that box.
+    Returns:
+        List[List[str]]: List of lists where each sublist represents a display
+            box and contains symbols that should appear in that box.
 
-    Post-conditions:
-        Symbols will not be repeated and all symbols will be partitioned into
-        one of the boxes.
+    Notes:
+        - Symbols will not be repeated
+        - All symbols will be partitioned into one of the boxes
+        - If target is specified, it will be placed in the lowest count box
+          greater than 0
     """
-
     box_counts = stim_per_box(num_symbols=len(alphabet), num_boxes=num_boxes)
     assert len(box_counts) == num_boxes
     syms = [sym for sym in alphabet]
@@ -189,6 +186,7 @@ def generate_vep_inquiry(alphabet: List[str],
         # Move the target to the front so it gets put in the lowest count box
         # greater than 0.
         syms = swapped(syms, index1=0, index2=syms.index(target))
+
     # Put syms in boxes
     boxes = []
     sym_index = 0

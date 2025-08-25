@@ -1,28 +1,19 @@
-from typing import List, Optional
-from PyQt6.QtWidgets import (
-    QComboBox,
-    QVBoxLayout,
-    QHBoxLayout,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QScrollArea,
-)
-from bcipy.gui.bciui import BCIUI, DynamicItem, DynamicList, SmallButton, run_bciui
-from bcipy.helpers.load import load_fields, load_experiments
-from bcipy.helpers.save import save_experiment_data
-from bcipy.config import (
-    DEFAULT_ENCODING,
-    DEFAULT_EXPERIMENT_PATH,
-    DEFAULT_FIELD_PATH,
-    EXPERIMENT_FILENAME,
-    FIELD_FILENAME,
-    BCIPY_ROOT,
-)
-from bcipy.task.registry import TaskRegistry
-import subprocess
-from bcipy.task.orchestrator.protocol import serialize_protocol
 import json
+import subprocess
+from typing import List, Optional
+
+from PyQt6.QtWidgets import (QComboBox, QHBoxLayout, QLabel, QLineEdit,
+                             QPushButton, QScrollArea, QVBoxLayout)
+
+from bcipy.config import (BCIPY_ROOT, DEFAULT_ENCODING,
+                          DEFAULT_EXPERIMENT_PATH, DEFAULT_FIELD_PATH,
+                          EXPERIMENT_FILENAME, FIELD_FILENAME)
+from bcipy.gui.bciui import (BCIUI, DynamicItem, DynamicList, SmallButton,
+                             run_bciui)
+from bcipy.io.load import load_experiments, load_fields
+from bcipy.io.save import save_experiment_data
+from bcipy.task.orchestrator.protocol import serialize_protocol
+from bcipy.task.registry import TaskRegistry
 
 
 class ExperimentRegistry(BCIUI):
@@ -210,7 +201,8 @@ class ExperimentRegistry(BCIUI):
             for field in fields
         ]
         task_names = self.protocol_contents.list_property("task_name")
-        task_objects = [self.task_registry.get(task_name) for task_name in task_names]
+        task_objects = [self.task_registry.get(
+            task_name) for task_name in task_names]
         protocol = serialize_protocol(task_objects)
 
         existing_experiments[experiment_name] = {
@@ -273,7 +265,8 @@ class ExperimentRegistry(BCIUI):
 
         def add_task():
             self.protocol_contents.add_item(
-                self.make_task_entry(self.experiment_protocol_input.currentText())
+                self.make_task_entry(
+                    self.experiment_protocol_input.currentText())
             )
 
         self.experiment_protocol_input = QComboBox()
@@ -314,7 +307,8 @@ class ExperimentRegistry(BCIUI):
 
         protocol_scroll_area = QScrollArea()
         self.protocol_contents = DynamicList()
-        protocol_scroll_area = BCIUI.make_list_scroll_area(self.protocol_contents)
+        protocol_scroll_area = BCIUI.make_list_scroll_area(
+            self.protocol_contents)
         label = QLabel("Protocol")
         label.setStyleSheet("color: black;")
         scroll_area_layout.addWidget(protocol_scroll_area)

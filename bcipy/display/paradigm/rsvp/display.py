@@ -1,30 +1,69 @@
+"""RSVP display module.
+
+This module provides the base RSVP (Rapid Serial Visual Presentation) display implementation
+which handles the visual presentation of stimuli during RSVP tasks. It provides core functionality
+for stimulus presentation, timing control, and inquiry management.
+"""
+
 import logging
 import os.path as path
-from typing import List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from psychopy import core, visual
 
+from bcipy.core.stimuli import resize_image
+from bcipy.core.symbols import SPACE_CHAR
+from bcipy.core.triggers import TriggerCallback, _calibration_trigger
 from bcipy.display import (BCIPY_LOGO_PATH, Display, InformationProperties,
                            StimuliProperties)
 from bcipy.display.components.task_bar import TaskBar
 from bcipy.display.main import PreviewParams, init_preview_button_handler
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.stimuli import resize_image
-from bcipy.helpers.symbols import SPACE_CHAR
-from bcipy.helpers.system_utils import get_screen_info
-from bcipy.helpers.triggers import TriggerCallback, _calibration_trigger
+from bcipy.helpers.utils import get_screen_info
 
 
 class RSVPDisplay(Display):
     """RSVP Display Object for inquiry Presentation.
 
-    Animates display objects common to any RSVP task.
+    Animates display objects common to any RSVP task. Handles stimulus presentation,
+    timing control, and inquiry management for RSVP-based BCI paradigms.
+
+    Attributes:
+        window (visual.Window): PsychoPy window for display.
+        window_size (Tuple[float, float]): Size of the display window.
+        refresh_rate (float): Display refresh rate.
+        stimuli_inquiry (List[str]): List of stimuli to present.
+        stimuli_colors (List[str]): List of colors for each stimulus.
+        stimuli_timing (List[float]): List of presentation durations.
+        stimuli_font (str): Font to use for text stimuli.
+        textbox_font (str): Font to use for text boxes.
+        stimuli_height (float): Height of stimuli.
+        stimuli_pos (Tuple[float, float]): Position of stimuli.
+        is_txt_stim (bool): Whether stimuli are text-based.
+        stim_length (int): Length of stimulus list.
+        full_screen (bool): Whether display is fullscreen.
+        preview_params (Optional[PreviewParams]): Preview configuration.
+        preview_button_handler (Optional[Any]): Handler for preview buttons.
+        preview_accepted (bool): Whether preview was accepted.
+        staticPeriod (core.StaticPeriod): Clock for static timing.
+        first_run (bool): Whether this is the first run.
+        first_stim_time (Optional[float]): Time of first stimulus.
+        trigger_type (str): Type of trigger to use.
+        trigger_callback (TriggerCallback): Callback for triggers.
+        experiment_clock (Clock): Clock for experiment timing.
+        first_stim_callback (Callable): Callback for first stimulus.
+        size_list_sti (List[float]): List of stimulus sizes.
+        space_char (str): Character to use for spaces.
+        task_bar (TaskBar): Task bar component.
+        info (InformationProperties): Information display properties.
+        info_text (List[visual.TextStim]): Text stimuli for information.
+        sti (List[visual.TextStim]): Initial stimuli objects.
     """
 
     def __init__(
             self,
             window: visual.Window,
-            static_clock,
+            static_clock: core.StaticPeriod,
             experiment_clock: Clock,
             stimuli: StimuliProperties,
             task_bar: TaskBar,
@@ -32,34 +71,21 @@ class RSVPDisplay(Display):
             preview_config: Optional[PreviewParams] = None,
             trigger_type: str = 'image',
             space_char: str = SPACE_CHAR,
-            full_screen: bool = False):
+            full_screen: bool = False) -> None:
         """Initialize RSVP display parameters and objects.
 
-        PARAMETERS:
-        ----------
-        # Experiment
-        window(visual.Window): PsychoPy Window
-        static_clock(core.MonotonicClock): Used to schedule static periods of display time
-        experiment_clock(Clock): Clock used to timestamp display onsets
-
-        # Stimuli
-        stimuli(StimuliProperties): attributes used for inquiries
-
-        # Task
-        task_bar(TaskBar): used for task tracking. Ex. 1/100
-
-        # Info
-        info(InformationProperties): attributes to display informational stimuli alongside task and inquiry stimuli.
-
-        # Preview Inquiry
-        preview_config(PreviewParams) Optional: parameters used to specify the behavior for displaying a preview
-            of upcoming stimuli defined via self.stimuli(StimuliProperties). If None a preview is not displayed.
-
-        trigger_type(str) default 'image': defines the calibration trigger type for the display at the beginning of any
-            task. This will be used to reconcile timing differences between acquisition and the display.
-        space_char(str) default SPACE_CHAR: defines the space character to use in the RSVP inquiry.
-        full_screen(bool) default False: Whether or not the window is set to a full screen dimension. Used for
-            scaling display items as needed.
+        Args:
+            window (visual.Window): PsychoPy Window for display.
+            static_clock (core.StaticPeriod): Used to schedule static periods of display time.
+            experiment_clock (Clock): Clock used to timestamp display onsets.
+            stimuli (StimuliProperties): Attributes used for inquiries.
+            task_bar (TaskBar): Used for task tracking. Ex. 1/100.
+            info (InformationProperties): Attributes to display informational stimuli.
+            preview_config (Optional[PreviewParams]): Parameters for preview functionality.
+                If None, preview is not displayed.
+            trigger_type (str, optional): Defines the calibration trigger type. Defaults to 'image'.
+            space_char (str, optional): Character to use for spaces. Defaults to SPACE_CHAR.
+            full_screen (bool, optional): Whether window is fullscreen. Defaults to False.
         """
         self.window = window
         self.window_size = self.window.size  # [w, h]
@@ -67,14 +93,12 @@ class RSVPDisplay(Display):
 
         self.logger = logging.getLogger(__name__)
 
-        # Stimuli parameters, these are set on display in order to allow
-        #  easy updating after definition
+        # Stimuli parameters
         self.stimuli_inquiry = stimuli.stim_inquiry
         self.stimuli_colors = stimuli.stim_colors
         self.stimuli_timing = stimuli.stim_timing
         self.stimuli_font = stimuli.stim_font
-        # Note: there is a bug in TextBox2 that prevents certain custom fonts from being used. This is to avoid that.
-        self.textbox_font = 'Consolas'
+        self.textbox_font = 'Consolas'  # Avoid TextBox2 font bug
         self.stimuli_height = stimuli.stim_height
         self.stimuli_pos = stimuli.stim_pos
         self.is_txt_stim = stimuli.is_txt_stim
@@ -97,9 +121,9 @@ class RSVPDisplay(Display):
         self.experiment_clock = experiment_clock
 
         # Callback used on presentation of first stimulus.
-        self.first_stim_callback = lambda _sti: None
-        self.size_list_sti = []  # TODO force initial size definition
-        self.space_char = space_char  # TODO remove and force task to define
+        self.first_stim_callback: Callable = lambda _sti: None
+        self.size_list_sti: List[float] = []
+        self.space_char = space_char
 
         self.task_bar = task_bar
 
@@ -112,10 +136,14 @@ class RSVPDisplay(Display):
 
     @property
     def preview_enabled(self) -> bool:
-        """Should the inquiry preview be enabled."""
-        return self.preview_params and self.preview_params.show_preview_inquiry
+        """Check if inquiry preview should be enabled.
 
-    def draw_static(self):
+        Returns:
+            bool: True if preview is enabled and configured, False otherwise.
+        """
+        return bool(self.preview_params and self.preview_params.show_preview_inquiry)
+
+    def draw_static(self) -> None:
         """Draw static elements in a stimulus."""
         if self.task_bar:
             self.task_bar.draw()
@@ -125,13 +153,13 @@ class RSVPDisplay(Display):
     def schedule_to(self,
                     stimuli: Optional[List[str]] = None,
                     timing: Optional[List[float]] = None,
-                    colors: Optional[List[str]] = None):
+                    colors: Optional[List[str]] = None) -> None:
         """Schedule stimuli elements (works as a buffer).
 
         Args:
-                stimuli(list[string]): list of stimuli text / name
-                timing(list[float]): list of timings of stimuli
-                colors(list[string]): list of colors
+            stimuli (Optional[List[str]]): List of stimuli text/name.
+            timing (Optional[List[float]]): List of timings of stimuli.
+            colors (Optional[List[str]]): List of colors.
         """
         self.stimuli_inquiry = stimuli or []
         self.stimuli_timing = timing or []
@@ -139,104 +167,93 @@ class RSVPDisplay(Display):
 
     @property
     def preview_index(self) -> int:
-        """Index within an inquiry at which the inquiry preview should be displayed.
+        """Get index within an inquiry at which the preview should be displayed.
 
         For calibration, we should display it after the target prompt (index = 1).
         For copy phrase there is no target prompt so it should display before the
-        rest of the inquiry."""
+        rest of the inquiry.
+
+        Returns:
+            int: The index at which to display the preview.
+        """
         return 1
 
     def do_inquiry(self) -> List[Tuple[str, float]]:
-        """Do inquiry.
+        """Perform an inquiry of flashing letters to achieve RSVP.
 
-        Animates an inquiry of flashing letters to achieve RSVP.
-
-
-        RETURNS:
-        --------
-        timing(list[float]): list of timings of stimuli presented in the inquiry
+        Returns:
+            List[Tuple[str, float]]: List of timings of stimuli presented in the inquiry.
         """
-
-        # init an array for timing information
         timing: List[Tuple[str, float]] = []
         self.preview_accepted = True
 
         if self.first_run:
             self._trigger_pulse()
 
-        # generate a inquiry (list of stimuli with meta information)
         inquiry = self._generate_inquiry()
 
-        # do the inquiry
         for idx, stim_props in enumerate(inquiry):
-
-            # If this is the start of an inquiry and a callback registered for first_stim_callback evoke it
             if idx == 0 and callable(self.first_stim_callback):
                 self.first_stim_callback(stim_props['sti'])
 
-            # If previewing the inquiry during calibration, do so after the first stimulus
             if self.preview_enabled and idx == self.preview_index:
                 self.preview_accepted = self.preview_inquiry(timing)
             if not self.preview_accepted:
                 break
 
-            # Reset the timing clock to start presenting
             self.window.callOnFlip(
                 self.trigger_callback.callback,
                 self.experiment_clock,
                 stim_props['sti_label'])
 
-            # Draw stimulus for n frames
             stim_props['sti'].draw()
             self.draw_static()
             self.window.flip()
             core.wait(stim_props['time_to_present'])
 
-            # append timing information
             timing.append(self.trigger_callback.timing)
-
             self.trigger_callback.reset()
 
-        # draw in static and flip once more
         self.draw_static()
         self.window.flip()
 
         return timing
 
     def _trigger_pulse(self) -> None:
-        """Trigger Pulse.
+        """Send a calibration trigger pulse.
 
-        This method uses a calibration trigger to determine any functional
-            offsets needed for operation with this display. By setting the first_stim_time and searching for the
-            same stimuli output to the marker stream, the offsets between these proceses can be reconciled at the
-            beginning of an experiment. If drift is detected in your experiment, more frequent pulses and offset
-            correction may be required.
+        Uses a calibration trigger to determine any functional offsets needed for
+        operation with this display. Sets first_stim_time and searches for the same
+        stimuli output to the marker stream to reconcile timing offsets.
         """
         calibration_time = _calibration_trigger(
             self.experiment_clock,
             trigger_type=self.trigger_type,
             display=self.window)
 
-        # set the first stim time if not present and first_run to False
         if not self.first_stim_time:
             self.first_stim_time = calibration_time[-1]
             self.first_run = False
 
     def preview_inquiry(self, timing: List[Tuple[str, float]]) -> bool:
-        """Preview Inquiry.
+        """Preview the inquiry before presentation.
 
         Given an inquiry defined to be presented via do_inquiry(), present the full inquiry
-            to the user and allow input on whether the intended letter is present or not before
-            going through the rapid serial visual presention.
+        to the user and allow input on whether the intended letter is present or not before
+        going through the rapid serial visual presentation.
 
-        Parameters:
-            timing - list to which all timing information should be appended.
+        Args:
+            timing (List[Tuple[str, float]]): List to which timing information should be appended.
+
         Returns:
-            - A boolean describing whether to present the inquiry (True) or
-                generate another (False).
+            bool: True if inquiry should be presented, False if a new one should be generated.
+
+        Raises:
+            AssertionError: If preview is not enabled or button handler is not initialized.
         """
         assert self.preview_enabled, "Preview feature not enabled."
         assert self.preview_button_handler, "Button handler must be initialized"
+        assert self.preview_params is not None, "Preview parameters must be set"
 
         handler = self.preview_button_handler
         self.window.callOnFlip(
@@ -257,19 +274,26 @@ class RSVPDisplay(Display):
 
         return handler.accept_result()
 
-    def draw_preview(self):
-        """Generate and draw the inquiry preview"""
+    def draw_preview(self) -> None:
+        """Generate and draw the inquiry preview."""
         content = self._generate_inquiry_preview()
         content.draw()
         self.draw_static()
         self.window.flip()
 
     def _generate_inquiry_preview(self) -> visual.TextBox2:
-        """Generate Inquiry Preview.
+        """Generate the inquiry preview box.
 
-        Using the self.stimuli_inquiry list, construct a preview box to display to the user. This method
-            assumes the presence of a fixation (+).
+        Using the self.stimuli_inquiry list, construct a preview box to display to the user.
+        Assumes the presence of a fixation (+).
+
+        Returns:
+            visual.TextBox2: The preview text box.
+
+        Raises:
+            AssertionError: If preview parameters are not set.
         """
+        assert self.preview_params is not None, "Preview parameters must be set"
         text = ' '.join(self.stimuli_inquiry).split('+ ')[1]
 
         return self._create_stimulus(
@@ -280,10 +304,11 @@ class RSVPDisplay(Display):
             mode='textbox',
             align_text='left')
 
-    def _generate_inquiry(self) -> list:
-        """Generate inquiry.
+    def _generate_inquiry(self) -> List[Dict[str, Any]]:
+        """Generate stimuli for next RSVP inquiry.
 
-        Generate stimuli for next RSVP inquiry. [A + A, C, Q, D]
+        Returns:
+            List[Dict[str, Any]]: List of stimulus properties for the inquiry.
         """
         stim_info = []
         for idx, stim in enumerate(self.stimuli_inquiry):
@@ -291,13 +316,9 @@ class RSVPDisplay(Display):
 
             current_stim['time_to_present'] = self.stimuli_timing[idx]
 
-            # check if stimulus needs to use a non-default size
-            if self.size_list_sti:
-                this_stimuli_size = self.size_list_sti[idx]
-            else:
-                this_stimuli_size = self.stimuli_height
+            this_stimuli_size = (self.size_list_sti[idx] if self.size_list_sti
+                                 else self.stimuli_height)
 
-            # Set the Stimuli attrs
             if stim.endswith('.png'):
                 current_stim['sti'] = self._create_stimulus(
                     mode='image',
@@ -309,32 +330,27 @@ class RSVPDisplay(Display):
                 current_stim['sti_label'] = path.splitext(
                     path.basename(stim))[0]
             else:
-                # text stimulus
-                current_stim['sti'] = self._create_stimulus(mode='text', height=this_stimuli_size)
+                current_stim['sti'] = self._create_stimulus(
+                    mode='text', height=this_stimuli_size)
                 txt = stim
-                # customize presentation of space char.
                 current_stim['sti'].text = txt if txt != SPACE_CHAR else self.space_char
                 current_stim['sti'].color = self.stimuli_colors[idx]
                 current_stim['sti_label'] = txt
 
-                # test whether the word will be too big for the screen
                 text_width = current_stim['sti'].boundingBox[0]
                 if text_width > self.window.size[0]:
                     screen_info = get_screen_info()
                     monitor_width = screen_info.width
                     monitor_height = screen_info.height
                     text_height = current_stim['sti'].boundingBox[1]
-                    # If we are in full-screen, text size in Psychopy norm units
-                    # is monitor width/monitor height
                     if self.window.size[0] == monitor_width:
                         new_text_width = monitor_width / monitor_height
                     else:
-                        # If not, text width is calculated relative to both
-                        # monitor size and window size
                         new_text_width = (
                             self.window.size[1] / monitor_height) * (
                                 monitor_width / monitor_height)
-                    new_text_height = (text_height * new_text_width) / text_width
+                    new_text_height = (
+                        text_height * new_text_width) / text_width
                     current_stim['sti'].height = new_text_height
             stim_info.append(current_stim)
         return stim_info
@@ -342,22 +358,22 @@ class RSVPDisplay(Display):
     def update_task_bar(self, text: Optional[str] = None) -> None:
         """Update task state.
 
-        Removes letters or appends to the right.
         Args:
-                text(string): new text for task state
+            text (Optional[str]): New text for task state.
         """
         if self.task_bar:
             self.task_bar.update(text)
 
     def wait_screen(self, message: str, message_color: str) -> None:
-        """Wait Screen.
+        """Display a wait screen with message and optional logo.
 
         Args:
-            message(string): message to be displayed while waiting
-            message_color(string): color of the message to be displayed
-        """
+            message (str): Message to be displayed while waiting.
+            message_color (str): Color of the message to be displayed.
 
-        # Construct the wait message
+        Raises:
+            Exception: If the logo image cannot be loaded.
+        """
         wait_message = visual.TextStim(win=self.window,
                                        font=self.stimuli_font,
                                        text=message,
@@ -369,7 +385,6 @@ class RSVPDisplay(Display):
                                        opacity=1,
                                        depth=-6.0)
 
-        # try adding the BciPy logo to the wait screen
         try:
             wait_logo = visual.ImageStim(
                 self.window,
@@ -384,27 +399,41 @@ class RSVPDisplay(Display):
             wait_logo.draw()
 
         except Exception as e:
-            self.logger.exception(f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
+            self.logger.exception(
+                f'Cannot load logo image from path=[{BCIPY_LOGO_PATH}]')
             raise e
 
-        # Draw and flip the screen.
         wait_message.draw()
         self.window.flip()
 
     def _create_stimulus(
             self,
-            height: int,
+            height: float,
             mode: str = 'text',
-            stimulus='+',
-            color='white',
-            stimuli_position=None,
-            align_text='center',
-            units=None,
-            wrap_width=None,
-            border=False):
-        """Create Stimulus.
+            stimulus: str = '+',
+            color: str = 'white',
+            stimuli_position: Optional[Tuple[float, float]] = None,
+            align_text: str = 'center',
+            units: Optional[str] = None,
+            wrap_width: Optional[float] = None,
+            border: bool = False) -> Union[visual.TextStim, visual.ImageStim, visual.TextBox2]:
+        """Create a stimulus object.
 
-        Returns a TextStim, ImageStim or TextBox object.
+        Args:
+            height (float): Height of the stimulus.
+            mode (str, optional): Type of stimulus ('text', 'image', or 'textbox').
+                Defaults to 'text'.
+            stimulus (str, optional): Content of the stimulus. Defaults to '+'.
+            color (str, optional): Color of the stimulus. Defaults to 'white'.
+            stimuli_position (Optional[Tuple[float, float]], optional): Position of the stimulus.
+                Defaults to None.
+            align_text (str, optional): Text alignment. Defaults to 'center'.
+            units (Optional[str], optional): Units for size/position. Defaults to None.
+            wrap_width (Optional[float], optional): Width for text wrapping. Defaults to None.
+            border (bool, optional): Whether to show border. Defaults to False.
+
+        Returns:
+            Union[visual.TextStim, visual.ImageStim, visual.TextBox2]: The created stimulus object.
         """
         if not stimuli_position:
             stimuli_position = self.stimuli_pos
@@ -448,3 +477,6 @@ class RSVPDisplay(Display):
                 alignment=align_text,
                 editable=False,
             )
+        else:
+            raise ValueError(
+                f'RSVPDisplay asked to create a stimulus type=[{mode}] that is not supported.')

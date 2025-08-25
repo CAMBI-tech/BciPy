@@ -1,10 +1,18 @@
-"""VEP Calibration task-related code"""
+"""VEP calibration task module.
+
+This module provides the VEP (Visual Evoked Potential) calibration task
+implementation. The task presents visual stimuli with different flicker rates
+to calibrate the system's response to visual evoked potentials.
+"""
+
 import logging
 from typing import Any, Dict, Iterator, List, Optional
 
 from psychopy import visual  # type: ignore
 
 from bcipy.config import DEFAULT_FRAME_RATE, SESSION_LOG_FILENAME
+from bcipy.core.parameters import Parameters
+from bcipy.core.triggers import TriggerType
 from bcipy.display import InformationProperties, VEPStimuliProperties
 from bcipy.display.components.layout import centered
 from bcipy.display.components.task_bar import CalibrationTaskBar
@@ -12,8 +20,6 @@ from bcipy.display.paradigm.vep.codes import DEFAULT_FLICKER_RATES
 from bcipy.display.paradigm.vep.display import VEPDisplay
 from bcipy.display.paradigm.vep.layout import BoxConfiguration
 from bcipy.helpers.clock import Clock
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.triggers import TriggerType
 from bcipy.task.calibration import BaseCalibrationTask, Inquiry
 from bcipy.task.paradigm.vep.stim_generation import \
     generate_vep_calibration_inquiries
@@ -24,17 +30,27 @@ logger = logging.getLogger(SESSION_LOG_FILENAME)
 class VEPCalibrationTask(BaseCalibrationTask):
     """VEP Calibration Task.
 
-    A task begins setting up variables --> initializing eeg -->
-        awaiting user input to start -->
-        setting up stimuli --> highlighting inquiries -->
-        saving data
+    This task calibrates the system's response to visual evoked potentials by
+    presenting visual stimuli with different flicker rates.
 
-    PARAMETERS:
-    ----------
-    parameters (dict)
-    file_save (str)
-    fake (bool)
+    Task flow:
+        1. Setup variables
+        2. Initialize EEG
+        3. Await user input
+        4. Setup stimuli
+        5. Present flickering inquiries
+        6. Save data
+
+    Attributes:
+        name: Name of the task.
+        paradigm: Name of the paradigm.
+        parameters: Task configuration parameters.
+        file_save: Path for saving task data.
+        fake: Whether to run in fake (testing) mode.
+        box_colors: List of colors for stimulus boxes.
+        num_boxes: Number of stimulus boxes.
     """
+
     name = 'VEP Calibration'
     paradigm = 'VEP'
 
@@ -43,6 +59,14 @@ class VEPCalibrationTask(BaseCalibrationTask):
                  file_save: str,
                  fake: bool = False,
                  **kwargs: Any) -> None:
+        """Initialize the VEP calibration task.
+
+        Args:
+            parameters: Task configuration parameters.
+            file_save: Path for saving task data.
+            fake: Whether to run in fake (testing) mode.
+            **kwargs: Additional keyword arguments.
+        """
         self.box_colors = [
             '#00FF80', '#FFFFB3', '#CB99FF', '#FB8072', '#80B1D3', '#FF8232'
         ]
@@ -50,14 +74,22 @@ class VEPCalibrationTask(BaseCalibrationTask):
         super().__init__(parameters, file_save, fake=fake, **kwargs)
 
     def init_display(self) -> VEPDisplay:
-        """Initialize the display"""
+        """Initialize the VEP display.
+
+        Returns:
+            VEPDisplay: Configured VEP display instance.
+        """
         return init_vep_display(self.parameters, self.window,
                                 self.experiment_clock, self.symbol_set,
                                 self.box_colors,
                                 fake=self.fake)
 
     def init_inquiry_generator(self) -> Iterator[Inquiry]:
-        """Initializes a generator that returns inquiries to be presented."""
+        """Initialize the inquiry generator.
+
+        Returns:
+            Iterator[Inquiry]: Generator yielding VEP calibration inquiries.
+        """
         parameters = self.parameters
         schedule = generate_vep_calibration_inquiries(
             alp=self.symbol_set,
@@ -75,12 +107,30 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     def trigger_type(self, symbol: str, target: str,
                      index: int) -> TriggerType:
+        """Get trigger type for a symbol.
+
+        Args:
+            symbol: Presented symbol.
+            target: Target symbol.
+            index: Position in sequence.
+
+        Returns:
+            TriggerType: Type of trigger to use.
+        """
         if target == symbol:
             return TriggerType.TARGET
         return TriggerType.EVENT
 
     def session_task_data(self) -> Dict[str, Any]:
-        """Task-specific session data"""
+        """Get task-specific session data.
+
+        Returns:
+            Dict[str, Any]: Dictionary containing box configurations and
+                starting positions.
+
+        Raises:
+            AssertionError: If display is not a VEPDisplay instance.
+        """
         assert isinstance(self.display, VEPDisplay)
         boxes = [{
             "colors": box.colors,
@@ -94,7 +144,18 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
     def session_inquiry_data(self,
                              inquiry: Inquiry) -> Optional[Dict[str, Any]]:
-        """Defines task-specific session data for each inquiry."""
+        """Get task-specific data for an inquiry.
+
+        Args:
+            inquiry: Inquiry to get data for.
+
+        Returns:
+            Optional[Dict[str, Any]]: Dictionary containing target box index
+                and frequency.
+
+        Raises:
+            AssertionError: If display is not a VEPDisplay instance.
+        """
         assert isinstance(self.display, VEPDisplay)
         target_box = target_box_index(inquiry)
         target_freq = self.display.flicker_rates[
@@ -105,7 +166,14 @@ class VEPCalibrationTask(BaseCalibrationTask):
         }
 
     def stim_labels(self, inquiry: Inquiry) -> List[str]:
-        """labels for each stimuli in the session data."""
+        """Get labels for each stimulus in the session data.
+
+        Args:
+            inquiry: Inquiry to get labels for.
+
+        Returns:
+            List[str]: List of stimulus labels.
+        """
         target_box = target_box_index(inquiry)
         targetness = [TriggerType.NONTARGET for _ in range(self.num_boxes)]
         if target_box is not None:
@@ -115,7 +183,14 @@ class VEPCalibrationTask(BaseCalibrationTask):
 
 
 def target_box_index(inquiry: Inquiry) -> Optional[int]:
-    """Index of the target box."""
+    """Get the index of the target box.
+
+    Args:
+        inquiry: Inquiry to find target box in.
+
+    Returns:
+        Optional[int]: Index of target box if found, None otherwise.
+    """
     target_letter, _fixation, *boxes = inquiry.stimuli
     for i, box in enumerate(boxes):
         if target_letter in box:
@@ -126,7 +201,19 @@ def target_box_index(inquiry: Inquiry) -> Optional[int]:
 def init_vep_display(parameters: Parameters, window: visual.Window,
                      experiment_clock: Clock, symbol_set: List[str],
                      box_colors: List[str], fake: bool = False) -> VEPDisplay:
-    """Initialize the display"""
+    """Initialize the VEP display.
+
+    Args:
+        parameters: Task configuration parameters.
+        window: PsychoPy window for display.
+        experiment_clock: Clock for experiment timing.
+        symbol_set: Set of symbols to display.
+        box_colors: List of colors for stimulus boxes.
+        fake: Whether to run in fake (testing) mode.
+
+    Returns:
+        VEPDisplay: Configured VEP display instance.
+    """
     info = InformationProperties(
         info_color=[parameters['info_color']],
         info_pos=[(parameters['info_pos_x'], parameters['info_pos_y'])],

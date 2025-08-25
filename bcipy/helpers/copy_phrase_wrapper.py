@@ -6,11 +6,11 @@ from typing import List, Tuple
 import numpy as np
 
 from bcipy.config import SESSION_LOG_FILENAME
+from bcipy.core.stimuli import InquirySchedule, StimuliOrder
+from bcipy.core.symbols import BACKSPACE_CHAR
 from bcipy.exceptions import BciPyCoreException
 from bcipy.helpers.language_model import histogram, with_min_prob
-from bcipy.helpers.stimuli import InquirySchedule, StimuliOrder
-from bcipy.helpers.symbols import BACKSPACE_CHAR
-from bcipy.language.main import LanguageModel
+from bcipy.language.main import CharacterLanguageModel, LanguageModel
 from bcipy.task.control.criteria import (CriteriaEvaluator,
                                          MaxIterationsCriteria,
                                          MinIterationsCriteria,
@@ -180,6 +180,9 @@ class CopyPhraseWrapper:
     def initialize_series(self) -> Tuple[bool, InquirySchedule]:
         """If a decision is made initializes the next series."""
         assert self.lmodel, "Language model must be initialized."
+        if not isinstance(self.lmodel, CharacterLanguageModel):
+            raise BciPyCoreException(
+                "Only character language models are currently supported.")
 
         try:
             # First, reset the history for this new series
@@ -190,7 +193,7 @@ class CopyPhraseWrapper:
             log.info(f"Querying language model: '{update}'")
 
             # update the lmodel and get back the priors
-            lm_letter_prior = self.lmodel.predict(list(update))
+            lm_letter_prior = self.lmodel.predict_character(list(update))
 
             if BACKSPACE_CHAR in self.alp:
                 # Apply configured backspace probability.
@@ -206,14 +209,15 @@ class CopyPhraseWrapper:
             ]
 
             # display histogram of LM probabilities
-            log.info(histogram(lm_letter_prior))
+            log.debug(histogram(lm_letter_prior))
 
             # Try fusing the lmodel evidence
             try:
                 prob_dist = self.conjugator.update_and_fuse(
                     {EvidenceType.LM: np.array(prior)})
             except Exception as fusion_error:
-                log.exception(f'Error fusing language model evidence!: {fusion_error}')
+                log.exception(
+                    f'Error fusing language model evidence!: {fusion_error}')
                 raise BciPyCoreException(fusion_error) from fusion_error
 
             # Get decision maker to give us back some decisions and stimuli

@@ -1,22 +1,25 @@
 """Integration test of offline_analysis.py (slow)"""
-import unittest
-from pathlib import Path
-import pytest
+import gzip
+import random
+import re
 import shutil
 import tempfile
-import re
-import numpy as np
-import random
-import gzip
+import unittest
+from pathlib import Path
 
-from bcipy.config import RAW_DATA_FILENAME, DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME, DEFAULT_DEVICE_SPEC_FILENAME
-from bcipy.helpers.load import load_json_parameters
-from bcipy.signal.model import SignalModel
+import numpy as np
+import pytest
+
+from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.io.load import load_json_parameters
 from bcipy.signal.model.offline_analysis import offline_analysis
 
 pwd = Path(__file__).absolute().parent
 input_folder = pwd / "integration_test_input"
-expected_output_folder = pwd / "integration_test_expected_output"  # global for the purpose of pytest-mpl decorator
+# global for the purpose of pytest-mpl decorator
+expected_output_folder = pwd / "integration_test_expected_output"
 
 
 @pytest.mark.slow
@@ -46,10 +49,13 @@ class TestOfflineAnalysisEEG(unittest.TestCase):
                 shutil.copyfileobj(f_source, f_dest)
 
         # copy the other required inputs into tmp_dir
-        shutil.copyfile(eeg_input_folder / TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
-        shutil.copyfile(eeg_input_folder / DEFAULT_DEVICE_SPEC_FILENAME, cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
+        shutil.copyfile(eeg_input_folder / TRIGGER_FILENAME,
+                        cls.tmp_dir / TRIGGER_FILENAME)
+        shutil.copyfile(eeg_input_folder / DEFAULT_DEVICE_SPEC_FILENAME,
+                        cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
 
-        params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETERS_FILENAME
+        params_path = pwd.parent.parent.parent / \
+            "parameters" / DEFAULT_PARAMETERS_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         models = offline_analysis(
             str(cls.tmp_dir),
@@ -72,8 +78,10 @@ class TestOfflineAnalysisEEG(unittest.TestCase):
         return float(match[1])
 
     def test_model_auc(self):
-        expected_auc = self.get_auc(list(expected_output_folder.glob("model_eeg_*.pkl"))[0].name)
-        found_auc = self.get_auc(list(self.tmp_dir.glob("model_eeg_*.pkl"))[0].name)
+        expected_auc = self.get_auc(
+            list(expected_output_folder.glob("model_eeg_*.pkl"))[0].name)
+        found_auc = self.get_auc(
+            list(self.tmp_dir.glob("model_eeg_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
     def test_model_metadata_loads(self):
@@ -109,14 +117,16 @@ class TestOfflineAnalysisET(unittest.TestCase):
                 shutil.copyfileobj(f_source, f_dest)
 
         # copy the other required inputs into tmp_dir
-        shutil.copyfile(eye_tracking_input_folder / TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
+        shutil.copyfile(eye_tracking_input_folder /
+                        TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
         shutil.copyfile(
             eye_tracking_input_folder /
             DEFAULT_DEVICE_SPEC_FILENAME,
             cls.tmp_dir /
             DEFAULT_DEVICE_SPEC_FILENAME)
 
-        params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETERS_FILENAME
+        params_path = pwd.parent.parent.parent / \
+            "parameters" / DEFAULT_PARAMETERS_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         models = offline_analysis(
             str(cls.tmp_dir),
@@ -142,8 +152,10 @@ class TestOfflineAnalysisET(unittest.TestCase):
         return float(match[1])
 
     def test_model_acc(self):
-        expected_auc = self.get_acc(list(expected_output_folder.glob("model_eyetracker_*.pkl"))[0].name)
-        found_auc = self.get_acc(list(self.tmp_dir.glob("model_eyetracker_*.pkl"))[0].name)
+        expected_auc = self.get_acc(
+            list(expected_output_folder.glob("model_eyetracker_*.pkl"))[0].name)
+        found_auc = self.get_acc(
+            list(self.tmp_dir.glob("model_eyetracker_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
 
@@ -182,10 +194,13 @@ class TestOfflineAnalysisFusion(unittest.TestCase):
                 shutil.copyfileobj(f_source, f_dest)
 
         # copy the other required inputs into tmp_dir
-        shutil.copyfile(et_input_folder / TRIGGER_FILENAME, cls.tmp_dir / TRIGGER_FILENAME)
-        shutil.copyfile(fusion_input_folder / DEFAULT_DEVICE_SPEC_FILENAME, cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
+        shutil.copyfile(et_input_folder / TRIGGER_FILENAME,
+                        cls.tmp_dir / TRIGGER_FILENAME)
+        shutil.copyfile(fusion_input_folder / DEFAULT_DEVICE_SPEC_FILENAME,
+                        cls.tmp_dir / DEFAULT_DEVICE_SPEC_FILENAME)
 
-        params_path = pwd.parent.parent.parent / "parameters" / DEFAULT_PARAMETERS_FILENAME
+        params_path = pwd.parent.parent.parent / \
+            "parameters" / DEFAULT_PARAMETERS_FILENAME
         cls.parameters = load_json_parameters(params_path, value_cast=True)
         models = offline_analysis(
             str(cls.tmp_dir),
@@ -220,13 +235,17 @@ class TestOfflineAnalysisFusion(unittest.TestCase):
         return float(match[1])
 
     def test_model_acc(self):
-        expected_auc = self.get_acc(list(self.output_folder.glob("model_eyetracker_*.pkl"))[0].name)
-        found_auc = self.get_acc(list(self.tmp_dir.glob("model_eyetracker_*.pkl"))[0].name)
+        expected_auc = self.get_acc(
+            list(self.output_folder.glob("model_eyetracker_*.pkl"))[0].name)
+        found_auc = self.get_acc(
+            list(self.tmp_dir.glob("model_eyetracker_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
     def test_model_auc(self):
-        expected_auc = self.get_auc(list(self.output_folder.glob("model_eeg_*.pkl"))[0].name)
-        found_auc = self.get_auc(list(self.tmp_dir.glob("model_eeg_*.pkl"))[0].name)
+        expected_auc = self.get_auc(
+            list(self.output_folder.glob("model_eeg_*.pkl"))[0].name)
+        found_auc = self.get_auc(
+            list(self.tmp_dir.glob("model_eeg_*.pkl"))[0].name)
         self.assertAlmostEqual(expected_auc, found_auc, delta=0.005)
 
 

@@ -1,12 +1,13 @@
 """This module defines functionality related to pre-processing simulation data.
 Processed data can be subsequently sampled and provided to a SignalModel
-for classification."""
+for classification.
+"""
 
 import logging as logger
 from abc import abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, NamedTuple, Optional, Tuple, Type
+from typing import List, NamedTuple, Optional, Tuple
 
 import numpy as np
 
@@ -15,13 +16,13 @@ from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.multimodal import ContentType
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, TRIGGER_FILENAME)
+from bcipy.core.list import grouper
+from bcipy.core.parameters import Parameters
+from bcipy.core.raw_data import RawData
+from bcipy.core.stimuli import update_inquiry_timing
+from bcipy.core.triggers import Trigger, TriggerType, trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels, raw_data_filename
-from bcipy.helpers.list import grouper
-from bcipy.helpers.load import load_json_parameters, load_raw_data
-from bcipy.helpers.parameters import Parameters
-from bcipy.helpers.raw_data import RawData
-from bcipy.helpers.stimuli import update_inquiry_timing
-from bcipy.helpers.triggers import TriggerType, trigger_decoder
+from bcipy.io.load import load_json_parameters, load_raw_data
 from bcipy.signal.model.base_model import SignalModel
 from bcipy.signal.process import (ERPTransformParams, filter_inquiries,
                                   get_default_transform)
@@ -73,22 +74,33 @@ def load_device_data(data_folder: str,
 
 class DecodedTriggers(NamedTuple):
     """Extracted properties after decoding the triggers.txt file and applying
-    the necessary offsets and corrections."""
+    the necessary offsets and corrections.
+    """
     targetness: List[str]  # TriggerType
     times: List[float]
     symbols: List[str]  # symbol
     corrected_times: List[float]
 
+    @property
+    def triggers(self) -> List[Trigger]:
+        """List of triggers"""
+        return [
+            Trigger(label=self.symbols[i],
+                    type=TriggerType(self.targetness[i]),
+                    time=self.corrected_times[i])
+            for i in range(len(self.symbols))
+        ]
+
 
 @dataclass()
 class ExtractedExperimentData:
     """Data from an acquisition device after reshaping and filtering."""
+
     source_dir: str
     inquiries: np.ndarray
     trials: np.ndarray
     labels: List
     inquiry_timing: List
-
     decoded_triggers: DecodedTriggers
     trials_per_inquiry: int
 
@@ -129,18 +141,17 @@ class TimingParams(NamedTuple):
 
     @property
     def trials_per_inquiry(self) -> int:
-        """Alias for stim_length"""
+        """Alias for stim_length."""
         return self.stim_length
 
     @property
     def buffer(self) -> float:
-        """The task buffer length defines the min time between two inquiries
-        We use half of that time here to buffer during transforms"""
+        """The task buffer length defines the min time between two inquiries. We use half of that time here to buffer during transforms."""
         return self.task_buffer_length / 2
 
     @property
     def window_length(self) -> float:
-        """window (in seconds) of data collection after each stimulus presentation"""
+        """window (in seconds) of data collection after each stimulus presentation."""
         start, end = self.trial_window
         return end - start
 
@@ -213,7 +224,7 @@ class RawDataProcessor():
 
     @property
     def produces(self) -> EvidenceType:
-        """Type of evidence that is output"""
+        """Type of evidence that is output."""
         raise NotImplementedError
 
     @property
@@ -228,12 +239,13 @@ class RawDataProcessor():
 
     @property
     def reshaper(self):
-        """data reshaper"""
+        """data reshaper."""
         return self.model.reshaper
 
     def check_model_compatibility(self, model: SignalModel) -> None:
         """Check that the given model is compatible with this processor.
-        Checked on initialization."""
+        Checked on initialization.
+        """
         assert model.metadata, "Metadata missing from signal model."
         assert ContentType(
             model.metadata.device_spec.content_type
@@ -249,10 +261,9 @@ class RawDataProcessor():
                                           data_timing_params):
             raise IncompatibleParameters(
                 "Timing parameters are not compatible")
-
         if data_device.static_offset == devices.DEFAULT_STATIC_OFFSET:
             log.warning(' '.join([
-                f"Using the default static offset to decode triggers for {data_device.name}.",
+                f"Using the default static offset [{devices.DEFAULT_STATIC_OFFSET}] for {data_device.name}.",
                 "Please make sure the correct offset is included in the devices.json file."
             ]))
 
@@ -267,8 +278,7 @@ class RawDataProcessor():
             parameters - parameters.json file for the calibration session used
                 to train the model / run the simulation.
         """
-        raw_data, device_spec = load_device_data(data_folder,
-                                                 self.content_type.name)
+        raw_data, device_spec = self.load_device_data(data_folder, parameters)
         data_parameters = load_json_parameters(
             f"{data_folder}/{DEFAULT_PARAMETERS_FILENAME}", value_cast=True)
 
@@ -279,9 +289,8 @@ class RawDataProcessor():
             sim_timing_params=timing_params,
             data_timing_params=data_parameters.instantiate(TimingParams))
 
-        decoded_triggers = decode_triggers(data_folder, timing_params,
-                                           device_spec.static_offset,
-                                           self.excluded_triggers())
+        decoded_triggers = self.decode_triggers(data_folder, parameters,
+                                                device_spec.static_offset)
 
         reshaped_data = self.reshape_data(raw_data, decoded_triggers,
                                           timing_params)
@@ -299,6 +308,20 @@ class RawDataProcessor():
             filtered_reshaped_data.inquiry_timing,
             decoded_triggers=decoded_triggers,
             trials_per_inquiry=timing_params.trials_per_inquiry)
+
+    def load_device_data(self, data_folder: str,
+                         parameters: Parameters) -> Tuple[RawData, DeviceSpec]:
+        """Load the device data."""
+        return load_device_data(data_folder, self.content_type.name)
+
+    def decode_triggers(self,
+                        data_folder: str,
+                        parameters: Parameters,
+                        device_offset: float = 0.0) -> DecodedTriggers:
+        """Decode the triggers.txt file in the given directory."""
+        timing_params = parameters.instantiate(TimingParams)
+        return decode_triggers(data_folder, timing_params, device_offset,
+                               self.excluded_triggers())
 
     @abstractmethod
     def reshape_data(self, raw_data: RawData,
@@ -330,26 +353,26 @@ class RawDataProcessor():
         raise NotImplementedError
 
     def excluded_triggers(self):
-        """Trigger types to exclude when decoding"""
+        """Trigger types to exclude when decoding."""
         return [TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION]
 
     def devices_compatible(self, model_device: DeviceSpec,
                            data_device: DeviceSpec) -> bool:
         """Check compatibility between the device on which the model was trained
-        and the device used for data collection."""
-
+        and the device used for data collection.
+        """
         # TODO: check analysis channels?
         return model_device.sample_rate == data_device.sample_rate
 
     def parameters_compatible(self, sim_timing_params: TimingParams,
                               data_timing_params: TimingParams) -> bool:
-        """Check compatibility between the parameters used for simulation and
-        those used for data collection."""
+        """Check compatibility between the parameters used for simulation and those used for data collection."""
         return sim_timing_params.time_flash == data_timing_params.time_flash
 
 
-class EegRawDataProcessor(RawDataProcessor):
+class EEGRawDataProcessor(RawDataProcessor):
     """RawDataProcessor that processes EEG data."""
+
     consumes = ContentType.EEG
     produces = EvidenceType.ERP
 
@@ -417,7 +440,7 @@ class EegRawDataProcessor(RawDataProcessor):
 
     def get_transform(self, transform_params: ERPTransformParams,
                       data_sample_rate: int) -> Composition:
-        """"Get the transform used for filtering the data."""
+        """Get the transform used for filtering the data."""
         return get_default_transform(
             sample_rate_hz=data_sample_rate,
             notch_freq_hz=transform_params.notch_filter_frequency,
@@ -426,52 +449,3 @@ class EegRawDataProcessor(RawDataProcessor):
             bandpass_order=transform_params.filter_order,
             downsample_factor=transform_params.down_sampling_rate,
         )
-
-
-# Module functions for matching a model to the correct processor.
-def get_processor(
-        data_source: ContentType,
-        evidence_type: Optional[EvidenceType] = None
-) -> Type[RawDataProcessor]:
-    """Returns the matching processor class.
-
-    Parameters
-    ----------
-        data_source - type of data that the processor should consume
-        evidence_type - type of evidence that the processor should produce.
-    """
-    matches = [
-        cls for cls in RawDataProcessor.__subclasses__()
-        if cls.consumes == data_source and (
-            evidence_type is None or cls.produces == evidence_type)
-    ]
-    if matches:
-        return matches[0]
-    else:
-        msg = f"Data processor not found for {data_source.name}"
-        if evidence_type:
-            msg += f" -> {evidence_type.name}"
-        raise Exception(msg)
-
-
-def find_data_processor(model: SignalModel) -> Type[RawDataProcessor]:
-    """Get the DataProcessor appropriate for the given model."""
-    content_type = ContentType(model.metadata.device_spec.content_type)
-    # Metadata may provide an EvidenceType with a model so the same data source can
-    # be used to produce multiple types of evidence (ex. alpha)
-    evidence_type = None
-    model_output = model.metadata.evidence_type
-    if model_output:
-        try:
-            evidence_type = EvidenceType(model_output.upper())
-        except ValueError:
-            logger.error(f"Unsupported evidence type: {model_output}")
-
-    return get_processor(content_type, evidence_type)
-
-
-def init_data_processor(signal_model: SignalModel) -> RawDataProcessor:
-    """Find an DataProcessor that matches the given signal_model and
-    initialize it."""
-    processor_class = find_data_processor(signal_model)
-    return processor_class(signal_model)
