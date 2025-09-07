@@ -17,15 +17,26 @@ class TestAlphabet(unittest.TestCase):
             '<', '_'
         ])
 
-    def test_alphabet_images(self):
+    def test_alphabet_images_with_path(self):
+        path = 'bcipy/core/tests/resources/images/'
         parameters = {}
         parameters['is_txt_stim'] = False
-        parameters['path_to_presentation_images'] = ('bcipy/static/images/'
-                                                     'rsvp/')
+        parameters['path_to_presentation_images'] = path
 
         alp = alphabet(parameters)
 
-        self.assertNotEqual(alp, [
-            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
-            'N', 'O', 'P', 'R', 'S', 'T', 'U', 'V', 'Y', 'Z', '<', '_'
+        self.assertEqual(alp, [
+            path + 'a_1x1.bmp',
+            path + 'b_1x1.jpg',
+            path + 'c_1x1.png'
         ])
+
+    def test_alphabet_images_without_path(self):
+        path = 'bcipy/core/tests/resources/images/'
+        parameters = {}
+        parameters['is_txt_stim'] = False
+        parameters['path_to_presentation_images'] = path
+
+        alp = alphabet(parameters, include_path=False)
+
+        self.assertEqual(alp, ['a_1x1', 'b_1x1', 'c_1x1'])
