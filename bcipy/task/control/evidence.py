@@ -61,6 +61,7 @@ class EvidenceEvaluator:
         self.symbol_set = symbol_set
         self.signal_model = signal_model
         self.device_spec = device_spec
+        self.parameters = parameters
 
     @property
     def consumes(self) -> ContentType:
@@ -80,7 +81,7 @@ class EvidenceEvaluator:
         """
         raise NotImplementedError()
 
-    def evaluate(self, **kwargs: Any) -> np.ndarray:
+    def evaluate(self, *args: Any, **kwargs: Any) -> np.ndarray:
         """Evaluate the evidence from raw data.
 
         Args:
@@ -167,7 +168,8 @@ class EEGEvaluator(EvidenceEvaluator):
             times: List[float],
             target_info: List[str],
             window_length: float,
-            *args: Any) -> np.ndarray:
+            *args: Any,
+            **kwargs: Any) -> np.ndarray:
         """Evaluate EEG evidence.
 
         Args:
@@ -270,10 +272,9 @@ class GazeEvaluator(EvidenceEvaluator):
             raw_data: np.ndarray,
             symbols: List[str],
             times: List[float],
-            target_info: List[str],
-            window_length: float,
             flash_time: float,
-            stim_length: float) -> np.ndarray:
+            *args: Any,
+            **kwargs: Any) -> np.ndarray:
         """Evaluate gaze evidence.
 
         Args:
@@ -382,7 +383,7 @@ class SwitchEvaluator(EvidenceEvaluator):
     # pylint: disable=arguments-differ
     def evaluate(self, raw_data: np.ndarray, symbols: List[str],
                  times: List[float], target_info: List[str],
-                 window_length: float) -> np.ndarray:
+                 window_length: float, *args: Any, **kwargs: Any) -> np.ndarray:
         """Evaluate the evidence.
 
         Parameters
