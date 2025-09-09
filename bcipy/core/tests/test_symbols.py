@@ -1,7 +1,7 @@
 import unittest
 
 from bcipy.core.symbols import alphabet
-
+from typing import Dict
 
 class TestAlphabet(unittest.TestCase):
     def test_alphabet_text(self):
@@ -19,7 +19,7 @@ class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_images_with_path(self):
         path = 'bcipy/core/tests/resources/images/'
-        parameters = {}
+        parameters: Dict[str, bool | str] = {}
         parameters['is_txt_stim'] = False
         parameters['path_to_presentation_images'] = path
 
@@ -33,7 +33,7 @@ class TestAlphabet(unittest.TestCase):
 
     def test_alphabet_images_without_path(self):
         path = 'bcipy/core/tests/resources/images/'
-        parameters = {}
+        parameters: Dict[str, bool | str] = {}
         parameters['is_txt_stim'] = False
         parameters['path_to_presentation_images'] = path
 
