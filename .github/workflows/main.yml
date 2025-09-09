@@ -115,9 +115,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         brew update
+        brew uninstall cmake
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        pip install psychopy --no-deps
         make install
     - name: install dependencies
       run: |
