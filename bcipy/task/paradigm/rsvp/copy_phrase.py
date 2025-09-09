@@ -648,7 +648,7 @@ class RSVPCopyPhraseTask(Task):
         return Decision(decision_made, selection, spelled_text, new_sti)
 
     def add_evidence(
-        self, stim_times: List[List], proceed: bool = True
+        self, stim_times: List[Tuple], proceed: bool = True
     ) -> List[EvidenceType]:
         """Add all evidence used to make a decision.
 

@@ -1,10 +1,6 @@
 # Overview
 
-Define what you did...
-
-## Ticket
-
-Link a pivotal ticket here
+Define what you did... why is this change required? What problem does it solve?
 
 ## Contributions
 
