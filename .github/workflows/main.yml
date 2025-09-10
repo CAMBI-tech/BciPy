@@ -136,7 +136,4 @@ jobs:
     - name: build
       run: |
         make build
-    - name: codacy
-      run: |
-        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "cobertura.xml"
+
