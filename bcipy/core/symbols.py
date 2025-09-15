@@ -32,12 +32,12 @@ def alphabet(parameters: Optional[Any] = None, include_path: bool = True,
         stimulus_array: List[str] = []
         for stimulus_filename in sorted(os.listdir(path)):
             # PLUS.png is reserved for the fixation symbol
-            if stimulus_filename.endswith(
-                    '.png') and not stimulus_filename.endswith('PLUS.png'):
+            root, ext = os.path.splitext(stimulus_filename)
+            if ext in [".png", ".bmp", ".jpg"] and not root.endswith("PLUS"):
                 if include_path:
                     img = os.path.join(path, stimulus_filename)
                 else:
-                    img = os.path.splitext(stimulus_filename)[0]
+                    img = root
                 stimulus_array.append(img)
         return stimulus_array
 

@@ -319,7 +319,7 @@ class RSVPDisplay(Display):
             this_stimuli_size = (self.size_list_sti[idx] if self.size_list_sti
                                  else self.stimuli_height)
 
-            if stim.endswith('.png'):
+            if any([stim.endswith(ext) for ext in [".png", ".bmp", ".jpg"]]):
                 current_stim['sti'] = self._create_stimulus(
                     mode='image',
                     height=this_stimuli_size,

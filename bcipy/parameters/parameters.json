@@ -267,7 +267,7 @@
     "value": "bcipy/static/images/rsvp/",
     "section": "bci_config",
     "name": "Image Stimulus Folder",
-    "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /.",
+    "helpTip": "Specifies the location of image files to be used as stimuli (Text Stimuli On/Off must be set to ‘false’). This must be a directory ending with /. Image files must have extension .bmp, .jpg, or .png. Files ending in PLUS.bmp, PLUS.jpg, or PLUS.png, are ignored as they are assumed to be fixation images.",
     "recommended": "",
     "editable": false,
     "type": "directorypath"
