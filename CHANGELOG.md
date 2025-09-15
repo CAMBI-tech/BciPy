@@ -1,3 +1,9 @@
+# 2.0.1
+
+- Update PsychoPy to 2025.1.1
+- Update MacOS builds to remove cmake before lsl install
+- Fix EEG evidence bug in copy phrase task
+
 # 2.0.0
 
 The next major BciPy release is here! All features included from release canidates rc1-rc4 and contributions described below.

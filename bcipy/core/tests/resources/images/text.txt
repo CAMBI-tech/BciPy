@@ -1,0 +1,1 @@
+Text file for testing only images are collected from the folder.

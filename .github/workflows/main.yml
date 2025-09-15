@@ -115,9 +115,9 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         brew update
+        brew uninstall cmake
         sh scripts/shell/m2chip_install.sh
         brew install labstreaminglayer/tap/lsl
-        pip install psychopy --no-deps
         make install
     - name: install dependencies
       run: |
@@ -136,7 +136,4 @@ jobs:
     - name: build
       run: |
         make build
-    - name: codacy
-      run: |
-        export CODACY_PROJECT_TOKEN=${{ secrets.CODACY_PROJECT_TOKEN }}
-        bash <(curl -Ls https://coverage.codacy.com/get.sh) report -r "cobertura.xml"
+

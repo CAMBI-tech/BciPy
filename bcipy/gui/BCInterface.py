@@ -172,8 +172,8 @@ class BCInterface(BCIGui):
             (self.ui_config.btn_width * 2) + 20
         self.add_button(
             message='Train',
-            position=(btn_auc_x, 450),
-            size=(self.ui_config.btn_width, self.ui_config.btn_height),
+            position=[btn_auc_x, 450],
+            size=[self.ui_config.btn_width, self.ui_config.btn_height],
             background_color='LightSeaGreen',
             text_color='black',
             font_family=self.ui_config.font,
@@ -182,7 +182,7 @@ class BCInterface(BCIGui):
     def _build_start_button(self) -> None:
         """Build the Start Session button."""
         btn_start_width = self.ui_config.btn_width * 2 + 10
-        btn_start_x = self.width - (self.ui_config.padding + btn_start_width)
+        btn_start_x = self._width - (self.ui_config.padding + btn_start_width)
         self.add_button(
             message='Start Session',
             position=[btn_start_x, 440],
@@ -196,7 +196,7 @@ class BCInterface(BCIGui):
         """Build the Create Experiment button."""
         self.add_button(
             message='+',
-            position=[self.width - self.ui_config.padding - 200, 260],
+            position=[self._width - self.ui_config.padding - 200, 260],
             size=[35, self.ui_config.btn_height - 10],
             background_color='green',
             action=self.create_experiment,
@@ -301,7 +301,7 @@ class BCInterface(BCIGui):
         # NEU logo
         self.add_image(
             path=f'{STATIC_IMAGES_PATH}/gui/neu.png',
-            position=[self.width - self.ui_config.padding - 110, 0],
+            position=[self._width - self.ui_config.padding - 110, 0],
             size=100)
 
     def build_assets(self) -> None:
@@ -517,7 +517,7 @@ class BCInterface(BCIGui):
         Returns:
             List[str]: List of experiment names.
         """
-        return load_experiments().keys()
+        return list(load_experiments().keys())
 
     def start_experiment(self) -> None:
         """Start an experiment session."""

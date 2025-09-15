@@ -83,17 +83,16 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ github.token }}
       run: >-
-        gh release create
-        "$GITHUB_REF_NAME"
-        --repo "$GITHUB_REPOSITORY"
+        VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+        gh release create \
+        "v${VERSION}" \
+        --repo "$GITHUB_REPOSITORY" \
         --notes ""
     - name: Upload artifact signatures to GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      # Upload to GitHub Release using the `gh` CLI.
-      # `dist/` contains the built packages, and the
-      # sigstore-produced signatures and certificates.
-      run: >-
-        gh release upload
-        "$GITHUB_REF_NAME" dist/**
+      run: |
+        VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+        gh release upload \
+        "v${VERSION}" dist/** \
         --repo "$GITHUB_REPOSITORY"
