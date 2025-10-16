@@ -20,7 +20,7 @@ jobs:
         python-version: "3.9"
     - name: update pip & install custom dependencies
       run: |
-        spython -m pip install --upgrade pip
+        python -m pip install --upgrade pip
         brew update
         brew uninstall cmake
         sh scripts/shell/m2chip_install.sh
