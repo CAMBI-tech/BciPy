@@ -1,7 +1,8 @@
 """Sample script to demonstrate usage of the LSL Recorder for writing data from an LSL stream."""
 
-from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 import time
+
+from bcipy.acquisition.protocols.lsl.lsl_recorder import LslRecorder
 
 SLEEP = 10
 PATH = '.'

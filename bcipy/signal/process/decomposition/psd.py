@@ -1,12 +1,12 @@
-import matplotlib.pyplot as plt
-import seaborn as sns
-import numpy as np
 from enum import Enum
-from scipy.signal import welch
-from scipy.integrate import simps
-from mne.time_frequency import psd_array_multitaper
-
 from typing import Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import seaborn as sns
+from mne.time_frequency import psd_array_multitaper
+from scipy.integrate import simps
+from scipy.signal import welch
 
 from bcipy.exceptions import SignalException
 

@@ -1,15 +1,15 @@
 import os
+import shutil
+import tempfile
 import unittest
 from unittest.mock import patch
-import tempfile
-import shutil
 
 import matplotlib.pyplot as plt
 import numpy as np
-from reportlab.platypus import Paragraph, Image
-from reportlab.platypus import Flowable, KeepTogether
+from reportlab.platypus import Flowable, Image, KeepTogether, Paragraph
 
-from bcipy.core.report import Report, SessionReportSection, ReportSection, SignalReportSection
+from bcipy.core.report import (Report, ReportSection, SessionReportSection,
+                               SignalReportSection)
 
 
 class TestReport(unittest.TestCase):
@@ -61,7 +61,8 @@ class TestReport(unittest.TestCase):
         self.assertEqual(report.sections, [report_section])
         another_report_section = SessionReportSection(summary=summary)
         report.add(another_report_section)
-        self.assertEqual(report.sections, [report_section, another_report_section])
+        self.assertEqual(report.sections, [
+                         report_section, another_report_section])
 
     def test_save(self):
         report = Report(self.temp_dir)
@@ -69,12 +70,14 @@ class TestReport(unittest.TestCase):
         report_section = SessionReportSection(summary)
         report.add(report_section)
         report.save()
-        self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.temp_dir, report.name)))
 
     def test_save_no_sections(self):
         report = Report(self.temp_dir)
         report.save()
-        self.assertTrue(os.path.exists(os.path.join(self.temp_dir, report.name)))
+        self.assertTrue(os.path.exists(
+            os.path.join(self.temp_dir, report.name)))
 
     def test_complile_adds_section_and_header(self):
         report = Report(self.temp_dir)

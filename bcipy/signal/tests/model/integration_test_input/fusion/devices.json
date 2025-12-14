@@ -1,0 +1,120 @@
+[
+  {
+    "name": "DSI-Flex",
+    "content_type": "EEG",
+    "channels": [
+      {
+        "name": "P4",
+        "label": "Cz",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S2",
+        "label": "Oz",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S3",
+        "label": "P4",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S4",
+        "label": "P3",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S5",
+        "label": "PO8",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S6",
+        "label": "Pz",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "S7",
+        "label": "PO7",
+        "type": "EEG",
+        "units": "microvolts"
+      },
+      {
+        "name": "TRG",
+        "label": "TRG",
+        "type": "EEG",
+        "units": "microvolts"
+      }
+    ],
+    "sample_rate": 300,
+    "description": "Wearable Sensing DSI-Flex",
+    "excluded_from_analysis": [
+      "TRG"
+    ],
+    "status": "active"
+  },
+  {
+    "name": "Tobii-P0",
+    "content_type": "Eyetracker",
+    "channels": [
+      {
+        "name": "device_ts",
+        "label": "device_ts",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "system_ts",
+        "label": "system_ts",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "left_x",
+        "label": "left_x",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "left_y",
+        "label": "left_y",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "left_pupil",
+        "label": "left_pupil",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "right_x",
+        "label": "right_x",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "right_y",
+        "label": "right_y",
+        "type": null,
+        "units": null
+      },
+      {
+        "name": "right_pupil",
+        "label": "right_pupil",
+        "type": null,
+        "units": null
+      }
+    ],
+    "sample_rate": 60,
+    "description": "Tobii-P0",
+    "excluded_from_analysis": [],
+    "status": "active"
+  }
+]

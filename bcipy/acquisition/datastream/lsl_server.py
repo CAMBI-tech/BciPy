@@ -1,11 +1,11 @@
 # mypy: disable-error-code="misc"
-"""Data server that streams EEG data over a LabStreamingLayer StreamOutlet
-using pylsl."""
+"""Data server that streams EEG data over a LabStreamingLayer StreamOutlet using pylsl."""
+
 import logging
 import time
 import uuid
 from queue import Empty, Queue
-from typing import Optional, Generator
+from typing import Generator, List, Optional, Tuple
 
 from pylsl import StreamInfo, StreamOutlet
 
@@ -13,7 +13,8 @@ from bcipy.acquisition.datastream.generator import random_data_generator
 from bcipy.acquisition.datastream.producer import Producer
 from bcipy.acquisition.devices import DeviceSpec
 from bcipy.acquisition.util import StoppableThread
-from bcipy.config import DEFAULT_ENCODING, MARKER_STREAM_NAME, SESSION_LOG_FILENAME
+from bcipy.config import (DEFAULT_ENCODING, MARKER_STREAM_NAME,
+                          SESSION_LOG_FILENAME)
 
 log = logging.getLogger(SESSION_LOG_FILENAME)
 # pylint: disable=too-many-arguments
@@ -28,22 +29,21 @@ class LslDataServer(StoppableThread):
     fake_data can be set to false and this module can be run standalone in its
     own python instance.
 
-    Parameters
-    ----------
-        device_spec : DeviceSpec
-            parameters used to configure the server. Should have at least
-            a list of channels and the sample frequency.
-        generator : optional Generator (see generator.py for options)
-            used to generate the data to be served. Uses random_data_generator
-            by default.
-        include_meta: bool, optional
-            if True, writes metadata to the outlet stream.
-        add_markers: bool, optional
-            if True, creates a the marker channel and streams data to this
-            channel at a fixed frequency.
-        marker_stream_name: str, optional
-            name of the sample marker stream
-        chunk_size: int, optional chunk size.
+    Args:
+        device_spec (DeviceSpec): Parameters used to configure the server.
+                                  Should have at least a list of channels and the
+                                  sample frequency.
+        generator (Optional[Generator], optional): Used to generate the data to be
+                                                   served. Uses `random_data_generator`
+                                                   by default. Defaults to None.
+        include_meta (bool, optional): If True, writes metadata to the outlet stream.
+                                       Defaults to True.
+        add_markers (bool, optional): If True, creates a the marker channel and
+                                      streams data to this channel at a fixed
+                                      frequency. Defaults to False.
+        marker_stream_name (str, optional): Name of the sample marker stream.
+                                            Defaults to `MARKER_STREAM_NAME`.
+        chunk_size (int, optional): Chunk size for the LSL stream. Defaults to 0.
     """
 
     def __init__(self,
@@ -56,7 +56,8 @@ class LslDataServer(StoppableThread):
         super(LslDataServer, self).__init__()
 
         self.device_spec = device_spec
-        self.generator = generator or random_data_generator(channel_count=device_spec.channel_count)
+        self.generator = generator or random_data_generator(
+            channel_count=device_spec.channel_count)
 
         log.debug("Starting LSL server for device: %s", device_spec.name)
         print(f"Serving: {device_spec}")
@@ -95,8 +96,12 @@ class LslDataServer(StoppableThread):
             self.markers_outlet = StreamOutlet(markers_info)
         self.started = False
 
-    def stop(self):
-        """Stop the thread and cleanup resources."""
+    def stop(self) -> None:
+        """Stops the thread and cleans up resources.
+
+        This method sets the internal flag to stop the thread's execution
+        and closes the LSL `StreamOutlet`s, making them no longer discoverable.
+        """
 
         log.debug("[*] Stopping data server")
         super(LslDataServer, self).stop()
@@ -110,10 +115,12 @@ class LslDataServer(StoppableThread):
             del self.markers_outlet
             self.markers_outlet = None
 
-    def run(self):
-        """Main loop of the thread. Continuously streams data to the stream
-        outlet at a rate consistent with the sample frequency. May also
-        output markers at a different interval."""
+    def run(self) -> None:
+        """Main loop of the thread.
+
+        Continuously streams data to the stream outlet at a rate consistent
+        with the sample frequency. May also output markers at a different interval.
+        """
 
         sample_counter = 0
         self.started = True
@@ -137,8 +144,16 @@ class LslDataServer(StoppableThread):
         log.debug("[*] No longer pushing data")
 
 
-def _settings(filename):
-    """Read the daq settings from the given data file"""
+def _settings(filename: str) -> Tuple[str, int, List[str]]:
+    """Reads the DAQ settings from the given data file.
+
+    Args:
+        filename (str): The path to the data file containing DAQ settings.
+
+    Returns:
+        Tuple[str, int, List[str]]: A tuple containing the DAQ type (str),
+                                     sample rate (int), and a list of channel names (List[str]).
+    """
 
     with open(filename, 'r', encoding=DEFAULT_ENCODING) as datafile:
         daq_type = datafile.readline().strip().split(',')[1]
@@ -147,15 +162,20 @@ def _settings(filename):
         return (daq_type, sample_hz, channels)
 
 
-def await_start(dataserver: LslDataServer, max_wait: float = 2.0):
-    """Blocks until server is started. Raises if max_wait is exceeded before
-    server is started.
+def await_start(dataserver: LslDataServer, max_wait: float = 2.0) -> None:
+    """Blocks until the LSL data server is started.
 
-    Parameters
-    ----------
-        dataserver - instantiated (unstarted) server on which to wait.
-        max_wait - the max number of seconds to wait. After this period if the
-            server has not succesfully started an exception is thrown.
+    Raises an exception if `max_wait` is exceeded before the server starts.
+
+    Args:
+        dataserver (LslDataServer): An instantiated (unstarted) server on which to wait.
+        max_wait (float, optional): The maximum number of seconds to wait.
+                                    Defaults to 2.0. After this period, if the
+                                    server has not successfully started, an
+                                    exception is thrown.
+
+    Raises:
+        Exception: If the server cannot start up within the `max_wait` period.
     """
 
     dataserver.start()
@@ -169,8 +189,14 @@ def await_start(dataserver: LslDataServer, max_wait: float = 2.0):
             raise Exception("Server couldn't start up in time.")
 
 
-def main():
-    """Initialize and start the server."""
+def main() -> None:
+    """Initializes and starts the LSL data server.
+
+    This function parses command-line arguments to configure the server
+    (e.g., source filename, marker inclusion, device name, chunk size).
+    It then creates and starts an `LslDataServer` instance, running until
+    a `KeyboardInterrupt` is received.
+    """
     import argparse
 
     from bcipy.acquisition.datastream.generator import file_data_generator
@@ -181,8 +207,10 @@ def main():
                         help="file containing data to be streamed; "
                         "if missing, random data will be served.")
     parser.add_argument('-m', '--markers', action="store_true", default=False)
-    parser.add_argument('-n', '--name', default='DSI-24', help='Name of the device spec to mock.')
-    parser.add_argument('-c', '--chunk_size', default=0, type=int, help='Chunk size')
+    parser.add_argument('-n', '--name', default='DSI-24',
+                        help='Name of the device spec to mock.')
+    parser.add_argument('-c', '--chunk_size', default=0,
+                        type=int, help='Chunk size')
     args = parser.parse_args()
 
     if args.filename:

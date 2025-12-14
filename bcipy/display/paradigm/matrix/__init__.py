@@ -1,6 +1,4 @@
-from .display import (
-    MatrixDisplay
-)
+from .display import MatrixDisplay
 
 __all__ = [
     'MatrixDisplay'

@@ -1,0 +1,60 @@
+name: Publish Python 🐍 distribution 📦 to TestPyPI
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+
+jobs:
+  build:
+    name: Build distribution 📦
+    runs-on: macos-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        persist-credentials: false
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.9"
+    - name: update pip & install custom dependencies
+      run: |
+        sh scripts/shell/m2chip_install.sh
+        brew install labstreaminglayer/tap/lsl
+        python -m pip install --upgrade pip
+    - name: install dependencies
+      run: |
+        make dev-install
+    - name: Build a binary wheel and a source tarball
+      run: make build
+    - name: Store the distribution packages
+      uses: actions/upload-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+
+  publish-to-testpypi:
+    name: Publish Python 🐍 distribution 📦 to TestPyPI
+    needs:
+    - build
+    runs-on: ubuntu-latest
+
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/bcipy
+
+    permissions:
+      id-token: write
+
+    steps:
+    - name: Download all the dists
+      uses: actions/download-artifact@v4
+      with:
+        name: python-package-distributions
+        path: dist/
+    - name: Publish distribution 📦 to TestPyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        skip-existing: true
+        repository-url: https://test.pypi.org/legacy/

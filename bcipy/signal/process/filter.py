@@ -21,7 +21,8 @@ class Bandpass:
     def __init__(self, lo, hi, sample_rate_hz, order=5):
         nyq = 0.5 * sample_rate_hz
         lo, hi = lo / nyq, hi / nyq
-        self.sos = butter(order, [lo, hi], analog=False, btype="band", output="sos")
+        self.sos = butter(order, [lo, hi], analog=False,
+                          btype="band", output="sos")
 
     def __call__(self, data: np.ndarray, fs: int) -> Tuple[np.ndarray, int]:
         return sosfiltfilt(self.sos, data), fs
@@ -38,7 +39,9 @@ def filter_inquiries(inquiries: np.ndarray, transform, sample_rate: int) -> Tupl
     old_shape = inquiries.shape
     # (Channels*Inquiry, Samples)
     inq_flatten = inquiries.reshape(-1, old_shape[-1])
-    inq_flatten_filtered, transformed_sample_rate = transform(inq_flatten, sample_rate)
+    inq_flatten_filtered, transformed_sample_rate = transform(
+        inq_flatten, sample_rate)
     # (Channels, Inquiries, Samples)
-    inquiries = inq_flatten_filtered.reshape(*old_shape[:2], inq_flatten_filtered.shape[-1])
+    inquiries = inq_flatten_filtered.reshape(
+        *old_shape[:2], inq_flatten_filtered.shape[-1])
     return inquiries, transformed_sample_rate

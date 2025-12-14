@@ -1,6 +1,7 @@
 # mypy: disable-error-code="import-untyped"
 """Utilities for system information and general functionality that may be
-shared across modules."""
+shared across modules.
+"""
 import importlib
 import logging
 import os
@@ -23,6 +24,7 @@ from bcipy.config import DEFAULT_ENCODING, SESSION_LOG_FILENAME
 
 
 class ScreenInfo(NamedTuple):
+    """Screen information including width, height, and refresh rate."""
     width: int
     height: int
     rate: float
@@ -52,7 +54,8 @@ def is_battery_powered() -> bool:
     -------
     True if the computer is currently running on battery power. This can impact
     the performance of hardware (ex. GPU) needed for BciPy operation by entering
-    power saving operations."""
+    power saving operations.
+    """
     return psutil.sensors_battery(
     ) and not psutil.sensors_battery().power_plugged
 
@@ -79,7 +82,8 @@ def git_dir() -> Optional[str]:
     """Git Directory.
 
     Returns the root directory with the .git folder. If this source code
-    was not checked out from scm, answers None."""
+    was not checked out from scm, answers None.
+    """
 
     # Relative to current file; may need to be modified if method is moved.
     git_root = Path(os.path.abspath(__file__)).parent.parent.parent
@@ -143,7 +147,7 @@ def get_screen_info(stim_screen: Optional[int] = None) -> ScreenInfo:
     Returns
     -------
         ScreenInfo(width, height, rate)
-     """
+    """
     if stim_screen:
         screen = pyglet.canvas.get_display().get_screens()[stim_screen]
     else:
@@ -285,7 +289,6 @@ def log_to_stdout():
     """Set logging to stdout. Useful for demo scripts.
     https://stackoverflow.com/questions/14058453/making-python-loggers-output-all-messages-to-stdout-in-addition-to-log-file
     """
-
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
 
@@ -309,7 +312,8 @@ def report_execution_time(func: Callable) -> Callable:
         time1 = time.perf_counter()
         response = func(*args, **kwargs)
         time2 = time.perf_counter()
-        log.info('{:s} method took {:0.4f}s to execute'.format(func.__name__, (time2 - time1)))
+        log.info('{:s} method took {:0.4f}s to execute'.format(
+            func.__name__, (time2 - time1)))
         return response
     return wrap
 

@@ -1,20 +1,17 @@
 from pathlib import Path
-from bcipy.io.load import load_json_parameters, load_raw_data, load_experimental_data
-from bcipy.core.triggers import trigger_decoder, TriggerType
-from bcipy.config import (
-    BCIPY_ROOT,
-    DEFAULT_PARAMETERS_FILENAME,
-    RAW_DATA_FILENAME,
-    TRIGGER_FILENAME,
-    DEFAULT_DEVICE_SPEC_FILENAME)
 
 from bcipy.acquisition import devices
+from bcipy.config import (BCIPY_ROOT, DEFAULT_DEVICE_SPEC_FILENAME,
+                          DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
+                          TRIGGER_FILENAME)
+from bcipy.core.report import Report, SessionReportSection, SignalReportSection
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels
 from bcipy.helpers.visualization import visualize_erp
-from bcipy.signal.process import get_default_transform
+from bcipy.io.load import (load_experimental_data, load_json_parameters,
+                           load_raw_data)
 from bcipy.signal.evaluate.artifact import ArtifactDetection
-from bcipy.core.report import Report, SignalReportSection, SessionReportSection
-
+from bcipy.signal.process import get_default_transform
 
 if __name__ == "__main__":
     import argparse
@@ -43,14 +40,16 @@ if __name__ == "__main__":
         # loop through the sessions, pausing after each one to allow for manual stopping
         if session.is_dir():
             print(f'Processing {session}')
-            prompt = input('Hit enter to continue or type "skip" to skip processing: ')
+            prompt = input(
+                'Hit enter to continue or type "skip" to skip processing: ')
             if prompt != 'skip':
                 # load the parameters from the data directory
                 parameters = load_json_parameters(
                     f'{session}/{DEFAULT_PARAMETERS_FILENAME}', value_cast=True)
 
                 # load the raw data from the data directory
-                raw_data = load_raw_data(Path(session, f'{RAW_DATA_FILENAME}.csv'))
+                raw_data = load_raw_data(
+                    Path(session, f'{RAW_DATA_FILENAME}.csv'))
                 type_amp = raw_data.daq_type
                 channels = raw_data.channels
                 sample_rate = raw_data.sample_rate
@@ -75,7 +74,8 @@ if __name__ == "__main__":
                     trigger_type, trigger_timing, trigger_label = trigger_decoder(
                         offset=parameters.get('static_trigger_offset'),
                         trigger_path=f"{session}/{TRIGGER_FILENAME}",
-                        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+                        exclusion=[TriggerType.PREVIEW,
+                                   TriggerType.EVENT, TriggerType.FIXATION],
                     )
                     triggers = (trigger_type, trigger_timing, trigger_label)
                 else:

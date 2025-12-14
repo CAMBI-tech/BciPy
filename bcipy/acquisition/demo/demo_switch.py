@@ -1,0 +1,61 @@
+"""Sample script to demonstrate usage of LSL client and server."""
+import subprocess
+import time
+
+from bcipy.acquisition import LslAcquisitionClient
+from bcipy.acquisition.datastream.mock.switch import switch_device
+from bcipy.config import BCIPY_ROOT
+from bcipy.helpers.utils import log_to_stdout
+
+
+def start_switch():
+    """Start the demo switch"""
+    return subprocess.Popen(
+        f'python {BCIPY_ROOT}/acquisition/datastream/mock/switch.py',
+        shell=True)
+
+
+def main(debug: bool = False):
+    # pylint: disable=too-many-locals
+    """Creates a sample lsl client that reads data from a sample LSL server
+    (see demo/server.py).
+
+    The client/server can be stopped with a Keyboard Interrupt (Ctl-C)."""
+
+    if debug:
+        log_to_stdout()
+
+    switch_client = LslAcquisitionClient(max_buffer_len=1024,
+                                         device_spec=switch_device(),
+                                         save_directory='.')
+
+    # Open the Demo Switch GUI.
+    start_switch()
+    # Wait for switch start
+    print("Waiting for Switch")
+    time.sleep(0.5)
+    try:
+        seconds = 5
+        switch_client.start_acquisition()
+
+        print(f"\nCollecting data for {seconds}s...",
+              "Click in the demo switch GUI to register a switch hit.",
+              "Close the GUI when finished.\n")
+
+        time.sleep(seconds)
+        switch_client.stop_acquisition()
+        print("\nThe collected data has been written to the local directory")
+
+    except KeyboardInterrupt:
+        print("Keyboard Interrupt; stopping.")
+        switch_client.stop_acquisition()
+        print("\nThe collected data has been written to the local directory")
+
+
+if __name__ == '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--debug', action='store_true')
+    args = parser.parse_args()
+    main(args.debug)

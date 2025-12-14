@@ -4,13 +4,9 @@ This import statement allows users to import submodules from display more direct
 `from bcipy.display import init_display_window` vs. `from bcipy.display.main import init_display_window`
 """
 from bcipy.config import BCIPY_LOGO_PATH
-from .main import (
-    Display,
-    InformationProperties,
-    init_display_window,
-    StimuliProperties,
-    VEPStimuliProperties
-)
+
+from .main import (Display, InformationProperties, StimuliProperties,
+                   VEPStimuliProperties, init_display_window)
 
 __all__ = [
     'Display',

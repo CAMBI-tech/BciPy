@@ -189,7 +189,8 @@ class TestLayout(unittest.TestCase):
             msg="Width should be proportional to the window aspect")
 
         self.assertEqual(
-            scaled_size(height=0.2, window_size=(800, 500), units='height'), (0.2, 0.2),
+            scaled_size(height=0.2, window_size=(
+                800, 500), units='height'), (0.2, 0.2),
             msg="Width should be the same in 'height' units")
 
     def test_scaled_height(self):

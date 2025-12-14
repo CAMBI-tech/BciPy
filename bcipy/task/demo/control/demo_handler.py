@@ -1,5 +1,6 @@
-from bcipy.task.control.handler import EvidenceFusion, DecisionMaker
 import numpy as np
+
+from bcipy.task.control.handler import DecisionMaker, EvidenceFusion
 
 
 def _demo_fusion():

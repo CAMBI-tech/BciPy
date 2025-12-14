@@ -71,16 +71,20 @@ class RegularizedDiscriminantAnalysis:
         #  in order to make the ndarray readable from MATLAB side. There are
         #  two arrays, [0] for the correctness, choose it
         # Class means
-        self.mean_i = [np.mean(x[np.where(y == i)[0]], axis=0) for i in self.class_i]
+        self.mean_i = [np.mean(x[np.where(y == i)[0]], axis=0)
+                       for i in self.class_i]
 
         # Normalized x
-        norm_vec = [x[np.where(y == self.class_i[i])[0]] - self.mean_i[i] for i in range(len(self.class_i))]
+        norm_vec = [x[np.where(y == self.class_i[i])[0]] - self.mean_i[i]
+                    for i in range(len(self.class_i))]
 
         # Outer product of data matrix, Xi'Xi for each class
-        self.S_i = [np.dot(np.transpose(norm_vec[i]), norm_vec[i]) for i in range(len(self.class_i))]
+        self.S_i = [np.dot(np.transpose(norm_vec[i]), norm_vec[i])
+                    for i in range(len(self.class_i))]
 
         # Sample covariances are calculated Si/Ni for each class
-        self.cov_i = [self.S_i[i] / self.N_i[i] for i in range(len(self.class_i))]
+        self.cov_i = [self.S_i[i] / self.N_i[i]
+                      for i in range(len(self.class_i))]
 
         # Sample covariance of total data
         self.S = np.zeros((self.k, self.k))
@@ -90,7 +94,8 @@ class RegularizedDiscriminantAnalysis:
 
         # Set priors
         if len(p) == 0:
-            prior = np.asarray([np.sum(y == self.class_i[i]) for i in range(len(self.class_i))], dtype=float)
+            prior = np.asarray([np.sum(y == self.class_i[i])
+                               for i in range(len(self.class_i))], dtype=float)
             self.prior_i = np.divide(prior, np.sum(prior))
         else:
             self.prior_i = p
@@ -110,13 +115,15 @@ class RegularizedDiscriminantAnalysis:
 
         # Shrinked class covariances
         shr_cov_i = [
-            ((1 - self.lam) * self.S_i[i] + self.lam * self.S) / ((1 - self.lam) * self.N_i[i] + self.lam * self.N)
+            ((1 - self.lam) * self.S_i[i] + self.lam * self.S) /
+            ((1 - self.lam) * self.N_i[i] + self.lam * self.N)
             for i in range(len(self.class_i))
         ]
 
         # Regularized class covariances
         reg_cov_i = [
-            ((1 - self.gam) * shr_cov_i[i] + self.gam / self.k * np.trace(shr_cov_i[i]) * np.eye(self.k))
+            ((1 - self.gam) * shr_cov_i[i] + self.gam /
+             self.k * np.trace(shr_cov_i[i]) * np.eye(self.k))
             for i in range(len(self.class_i))
         ]
 
@@ -156,7 +163,8 @@ class RegularizedDiscriminantAnalysis:
 
                 # Every constant at the end of score calculation is omitted.
                 # This is why we omit log det of class regularized covariances.
-                evidence = np.dot(zero_mean, np.dot(self.inv_reg_cov_i[i], zero_mean))
+                evidence = np.dot(zero_mean, np.dot(
+                    self.inv_reg_cov_i[i], zero_mean))
 
                 neg_log_l[s][i] = -0.5 * evidence + np.log(self.prior_i[i])
 

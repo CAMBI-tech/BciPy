@@ -17,11 +17,11 @@ import bcipy.acquisition.devices as devices
 from bcipy.config import (DEFAULT_DEVICE_SPEC_FILENAME,
                           DEFAULT_PARAMETERS_FILENAME, RAW_DATA_FILENAME,
                           TRIGGER_FILENAME)
+from bcipy.core.triggers import TriggerType, trigger_decoder
 from bcipy.helpers.acquisition import analysis_channels
+from bcipy.helpers.visualization import visualize_erp
 from bcipy.io.load import (load_experimental_data, load_json_parameters,
                            load_raw_data)
-from bcipy.core.triggers import TriggerType, trigger_decoder
-from bcipy.helpers.visualization import visualize_erp
 from bcipy.signal.process import get_default_transform
 
 if __name__ == '__main__':
@@ -86,7 +86,8 @@ if __name__ == '__main__':
     trigger_targetness, trigger_timing, trigger_symbols = trigger_decoder(
         offset=static_offset,
         trigger_path=f"{path}/{TRIGGER_FILENAME}",
-        exclusion=[TriggerType.PREVIEW, TriggerType.EVENT, TriggerType.FIXATION],
+        exclusion=[TriggerType.PREVIEW,
+                   TriggerType.EVENT, TriggerType.FIXATION],
     )
     labels = [0 if label == 'nontarget' else 1 for label in trigger_targetness]
 

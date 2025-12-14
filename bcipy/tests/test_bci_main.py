@@ -42,7 +42,8 @@ class TestBCIMain(unittest.TestCase):
             )
 
     def test_bcipy_main_fails_with_invalid_experiment(self) -> None:
-        when(main).validate_bcipy_session(any(), any()).thenRaise(UnregisteredExperimentException)
+        when(main).validate_bcipy_session(any(), any()).thenRaise(
+            UnregisteredExperimentException)
         with self.assertRaises(UnregisteredExperimentException):
             bci_main(
                 parameter_location=self.parameters_path,
@@ -54,13 +55,16 @@ class TestBCIMain(unittest.TestCase):
             )
 
     def test_bci_main_runs_with_valid_experiment(self) -> None:
-        when(main).validate_bcipy_session(any(), any()).thenReturn(True)  # Mock the validate_bcipy_session function
+        when(main).validate_bcipy_session(any(), any()).thenReturn(
+            True)  # Mock the validate_bcipy_session function
         when(main).load_json_parameters(
             any(), value_cast=any()).thenReturn(
             self.parameters)  # Mock the load_json_parameters function
         when(SessionOrchestrator).get_system_info().thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn(None)
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator).initialize_copy_phrases().thenReturn(None)
         when(SessionOrchestrator).add_tasks(any()).thenReturn(None)
         when(SessionOrchestrator).execute().thenReturn(None)
@@ -83,10 +87,13 @@ class TestBCIMain(unittest.TestCase):
 
     def test_bci_main_runs_with_valid_task(self) -> None:
         when(main).validate_bcipy_session(any(), any()).thenReturn(True)
-        when(main).load_json_parameters(any(), value_cast=any()).thenReturn(self.parameters)
+        when(main).load_json_parameters(
+            any(), value_cast=any()).thenReturn(self.parameters)
         when(SessionOrchestrator).get_system_info().thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn(None)
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator).initialize_copy_phrases().thenReturn(None)
         when(SessionOrchestrator).add_tasks(any()).thenReturn(None)
         when(SessionOrchestrator).execute().thenReturn(None)
@@ -110,10 +117,13 @@ class TestBCIMain(unittest.TestCase):
 
     def test_bci_main_returns_false_with_orchestrator_execute_exception(self):
         when(main).validate_bcipy_session(any(), any()).thenReturn(True)
-        when(main).load_json_parameters(any(), value_cast=any()).thenReturn(self.parameters)
+        when(main).load_json_parameters(
+            any(), value_cast=any()).thenReturn(self.parameters)
         when(SessionOrchestrator).get_system_info().thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_save_folder(any()).thenReturn(None)
-        when(SessionOrchestrator)._init_orchestrator_logger(any()).thenReturn(self.logger)
+        when(SessionOrchestrator)._init_orchestrator_save_folder(
+            any()).thenReturn(None)
+        when(SessionOrchestrator)._init_orchestrator_logger(
+            any()).thenReturn(self.logger)
         when(SessionOrchestrator).initialize_copy_phrases().thenReturn(None)
         when(SessionOrchestrator).add_tasks(any()).thenReturn(None)
         when(SessionOrchestrator).execute().thenRaise(Exception)

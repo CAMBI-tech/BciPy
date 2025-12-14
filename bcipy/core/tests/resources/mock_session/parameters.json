@@ -680,7 +680,7 @@
     "recommended": [
       "UNIFORM",
       "CAUSAL",
-      "KENLM",
+      "NGRAM",
       "MIXTURE",
       "ORACLE"
     ],

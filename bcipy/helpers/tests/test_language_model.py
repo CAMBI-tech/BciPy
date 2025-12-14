@@ -1,8 +1,8 @@
 """Unit test for language model helper"""
 import unittest
-
 from collections import Counter
-from bcipy.helpers.language_model import norm_domain, with_min_prob, histogram
+
+from bcipy.helpers.language_model import histogram, norm_domain, with_min_prob
 
 
 class TestLanguageModelRelated(unittest.TestCase):

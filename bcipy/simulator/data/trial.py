@@ -34,7 +34,8 @@ class Trial(NamedTuple):
     inquiry_pos: int
     symbol: str
     target: int
-    eeg: np.ndarray  # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
+    # Channels by Samples ; ndarray.shape = (channel_n, sample_n)
+    eeg: np.ndarray
 
     def __str__(self):
         fields = [
@@ -51,8 +52,7 @@ class Trial(NamedTuple):
 
 
 def session_series_counts(source_dir: str) -> List[int]:
-    """Read the session.json file in the provided directory
-    and compute the number of inquiries per series."""
+    """Read the session.json file in the provided directory and compute the number of inquiries per series."""
     session_path = Path(source_dir, SESSION_DATA_FILENAME)
     if session_path.exists():
         session = read_session(str(session_path))

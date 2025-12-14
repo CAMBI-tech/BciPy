@@ -1,4 +1,5 @@
 from typing import Tuple
+
 import numpy as np
 import pywt
 
@@ -25,7 +26,8 @@ def continuous_wavelet_transform(
     scales = pywt.central_frequency(wavelet) * fs / np.array(freq)
     all_coeffs = []
     for trial in data:
-        coeffs, _ = pywt.cwt(trial, scales, wavelet)  # shape == (scales, channels, time)
+        # shape == (scales, channels, time)
+        coeffs, _ = pywt.cwt(trial, scales, wavelet)
         all_coeffs.append(coeffs)
 
     final_data = np.stack(all_coeffs)

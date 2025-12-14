@@ -1,7 +1,10 @@
 import unittest
-from mockito import when, mock, unstub
-from bcipy.signal.evaluate.artifact import ArtifactDetection, DefaultArtifactParameters, ArtifactType
+
+from mockito import mock, unstub, when
+
 from bcipy.signal.evaluate import artifact
+from bcipy.signal.evaluate.artifact import (ArtifactDetection, ArtifactType,
+                                            DefaultArtifactParameters)
 
 
 class TestArtifactDetection(unittest.TestCase):
@@ -40,7 +43,8 @@ class TestArtifactDetection(unittest.TestCase):
 
     def test_artifact_detection_init(self):
         """Test the ArtifactDetection class."""
-        ar = ArtifactDetection(raw_data=self.raw_data, parameters=self.parameters, device_spec=self.device_spec)
+        ar = ArtifactDetection(
+            raw_data=self.raw_data, parameters=self.parameters, device_spec=self.device_spec)
         self.assertIsInstance(ar, ArtifactDetection)
         self.assertFalse(ar.analysis_done)
         self.assertIsNone(ar.dropped)
@@ -98,7 +102,8 @@ class TestArtifactDetection(unittest.TestCase):
             device_spec=self.device_spec)
         labels = [mock()]
         expected_label_response = f'{len(labels)} artifacts found in the data.'
-        when(ar).label_artifacts(extra_labels=ar.session_triggers).thenReturn(labels)
+        when(ar).label_artifacts(
+            extra_labels=ar.session_triggers).thenReturn(labels)
         response_labels, response_dropped = ar.detect_artifacts()
         self.assertEqual(response_labels, expected_label_response)
         self.assertEqual(response_dropped, 0)
@@ -119,9 +124,12 @@ class TestArtifactDetection(unittest.TestCase):
 
     def test_default_artifact_parameters(self):
         """Test the DefaultArtifactParameters class."""
-        self.assertEqual(DefaultArtifactParameters.EOG_THRESHOLD.value, 5.5e-05)
-        self.assertEqual(DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value, 0.25)
-        self.assertEqual(DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME.value, 'artifacts.fif')
+        self.assertEqual(
+            DefaultArtifactParameters.EOG_THRESHOLD.value, 5.5e-05)
+        self.assertEqual(
+            DefaultArtifactParameters.VOlTAGE_LABEL_DURATION.value, 0.25)
+        self.assertEqual(
+            DefaultArtifactParameters.ARTIFACT_LABELLED_FILENAME.value, 'artifacts.fif')
 
 
 if __name__ == '__main__':

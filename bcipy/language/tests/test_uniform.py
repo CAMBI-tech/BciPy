@@ -2,25 +2,42 @@
 
 import unittest
 
-from bcipy.language.model.uniform import (ResponseType, UniformLanguageModel,
-                                          equally_probable)
+from bcipy.core.symbols import BACKSPACE_CHAR, DEFAULT_SYMBOL_SET
+from bcipy.exceptions import InvalidSymbolSetException
+from bcipy.language.main import CharacterLanguageModel
+from bcipy.language.model.uniform import UniformLanguageModel, equally_probable
 
 
 class TestUniformLanguageModel(unittest.TestCase):
     """Tests for language model"""
 
+    @classmethod
+    def setUpClass(cls):
+        cls.lm = UniformLanguageModel()
+        cls.lm.set_symbol_set(DEFAULT_SYMBOL_SET)
+
     def test_init(self):
         """Test default parameters"""
         lmodel = UniformLanguageModel()
-        self.assertEqual(lmodel.response_type, ResponseType.SYMBOL)
+        lmodel.set_symbol_set(DEFAULT_SYMBOL_SET)
         self.assertEqual(
             len(lmodel.symbol_set), 28,
             "Should be the alphabet plus the backspace and space chars")
+        self.assertTrue(isinstance(lmodel, CharacterLanguageModel))
+
+    def test_invalid_symbol_set(self):
+        """Should raise an exception if predict is called before setting a symbol set"""
+        lm = UniformLanguageModel()
+        lm.set_symbol_set([])
+        with self.assertRaises(InvalidSymbolSetException):
+            lm.predict_character("this_should_fail")
 
     def test_predict(self):
         """Test the predict method"""
-        symbol_probs = UniformLanguageModel().predict(evidence=[])
-        probs = [prob for sym, prob in symbol_probs]
+        symbol_probs = self.lm.predict_character(evidence=[])
+
+        # Backspace can be 0
+        probs = [prob for sym, prob in symbol_probs if sym != BACKSPACE_CHAR]
 
         self.assertEqual(len(set(probs)), 1, "All values should be the same")
         self.assertTrue(0 < probs[0] < 1)

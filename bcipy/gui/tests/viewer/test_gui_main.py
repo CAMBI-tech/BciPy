@@ -1,5 +1,6 @@
 import unittest
-from bcipy.gui.main import float_input_properties, FloatInputProperties
+
+from bcipy.gui.main import FloatInputProperties, float_input_properties
 
 
 class TestFloatInputProperties(unittest.TestCase):

@@ -18,6 +18,7 @@ DEVICE_NAME = 'DSI-24'
 DEVICE = preconfigured_device(DEVICE_NAME)
 
 
+@pytest.mark.slow
 class TestDataAcquisitionClient(unittest.TestCase):
     """Main Test class for DataAcquisitionClient code."""
 
@@ -100,7 +101,6 @@ class TestDataAcquisitionClient(unittest.TestCase):
         client.stop_acquisition()
         self.assertAlmostEqual(DEVICE.sample_rate, len(samples), delta=5.0)
 
-    @pytest.mark.slow
     def test_get_data(self):
         """Test functionality with a provided device_spec"""
         client = LslAcquisitionClient(max_buffer_len=1, device_spec=DEVICE)
@@ -125,7 +125,6 @@ class TestDataAcquisitionClient(unittest.TestCase):
                                start,
                                delta=0.002)
 
-    @pytest.mark.slow
     def test_event_offset(self):
         """Test the offset in seconds of a given event relative to the first
         sample time."""

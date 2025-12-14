@@ -36,7 +36,8 @@ class Pipeline(object):
             y(ndarray[int]): of desired shape """
         self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            self.line_el.append(self.pipeline[i].fit_transform(self.line_el[i], y))
+            self.line_el.append(
+                self.pipeline[i].fit_transform(self.line_el[i], y))
 
         self.pipeline[-1].fit(self.line_el[-1], y)
 
@@ -48,16 +49,18 @@ class Pipeline(object):
 
         self.line_el = [x]
         for i in range(len(self.pipeline) - 1):
-            self.line_el.append(self.pipeline[i].fit_transform(self.line_el[i], y))
+            self.line_el.append(
+                self.pipeline[i].fit_transform(self.line_el[i], y))
 
         arg = self.pipeline[-1].fit_transform(self.line_el[-1], y)
         return arg
 
     def transform(self, x):
-        """ Applies transform on all functions. Prior to using transform on
+        """Applies transform on all functions. Prior to using transform on
         pipeline, it should be trained.
         Args:
-             x(ndarray[float]): of desired shape """
+             x(ndarray[float]): of desired shape
+        """
         self.line_el = [x]
         for i in range(len(self.pipeline)):
             self.line_el.append(self.pipeline[i].transform(self.line_el[i]))

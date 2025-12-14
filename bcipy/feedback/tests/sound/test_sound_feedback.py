@@ -1,10 +1,9 @@
 import unittest
 
-from mockito import mock, when, unstub
+import sounddevice as sd
+from mockito import mock, unstub, when
 
 from bcipy.feedback.sound.auditory_feedback import AuditoryFeedback
-
-import sounddevice as sd
 
 
 class TestSoundFeedback(unittest.TestCase):
@@ -31,7 +30,7 @@ class TestSoundFeedback(unittest.TestCase):
     def test_feedback_type(self):
 
         feedback_type = self.auditory_feedback._type()
-        self.assertEqual(feedback_type, 'Auditory Feedback')
+        self.assertEqual(feedback_type.value, 'Audio')
 
     def test_feedback_administer_sound(self):
         timestamp = 100
@@ -40,7 +39,8 @@ class TestSoundFeedback(unittest.TestCase):
             self.sound, self.fs)
 
         self.assertTrue(isinstance(resp, list))
-        self.assertEqual(resp[0], [self.auditory_feedback.feedback_timestamp_label, timestamp])
+        self.assertEqual(
+            resp[0], [self.auditory_feedback.feedback_timestamp_label, timestamp])
 
 
 if __name__ == '__main__':

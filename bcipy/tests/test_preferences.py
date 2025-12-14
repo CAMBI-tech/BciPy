@@ -1,8 +1,9 @@
 """Tests for the Preferences"""
-import unittest
 import shutil
 import tempfile
+import unittest
 from pathlib import Path
+
 from bcipy.preferences import Preferences
 
 

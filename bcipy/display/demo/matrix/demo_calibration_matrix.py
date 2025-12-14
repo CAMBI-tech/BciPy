@@ -35,7 +35,8 @@ experiment_clock = core.Clock()
 win = init_display_window(window_parameters)
 win.recordFrameIntervals = False
 
-task_bar = CalibrationTaskBar(win, inquiry_count=4, current_index=0, font='Arial')
+task_bar = CalibrationTaskBar(
+    win, inquiry_count=4, current_index=0, font='Arial')
 preview_config = PreviewParams(show_preview_inquiry=True,
                                preview_inquiry_length=2,
                                preview_inquiry_key_input='return',
