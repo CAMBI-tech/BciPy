@@ -5,7 +5,7 @@ construct==2.8.14
 mne==1.5.0
 pyo==1.0.5
 pyglet<=1.5.27,>=1.4
-PsychoPy==2023.2.1
+PsychoPy==2025.1.1
 openpyxl==3.1.2
 numpy==1.24.4
 sounddevice==0.4.4
