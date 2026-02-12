@@ -55,7 +55,7 @@ class VEPSignalModel:
         devices_by_name = devices.load(
             Path(template_path, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-        self.device_spec = devices_by_name.get("openbci_eeg")
+        self.device_spec = devices_by_name.get("DSI-VR300")
 
         with open(template_file, 'r') as f:
             lines = [ln.strip() for ln in f.readlines() if ln.strip()]
