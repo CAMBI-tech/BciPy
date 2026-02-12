@@ -47,6 +47,9 @@ clean:
 bci-gui:
 	python bcipy/gui/BCInterface.py
 
+fake-data:
+	python bcipy/acquisition/datastream/lsl_server.py -n "DSI-VR300" -c 32
+
 viewer:
 	python bcipy/gui/viewer/data_viewer.py --file $(filepath)
 
