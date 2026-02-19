@@ -83,20 +83,15 @@ def init_save_data_structure(data_save_path: str,
     task = task.replace(' ', '_')
     save_directory = f"{save_folder_name}/{user_id}_{task}_{dt}"
 
-    try:
-        # make a directory to save data to
-        os.makedirs(save_folder_name)
-        os.makedirs(save_directory)
-        os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
+    # If a file exists where we expect a directory, adjust the base folder name
+    if os.path.exists(save_folder_name) and not os.path.isdir(save_folder_name):
+        save_folder_name = save_folder_name + '_data'
+        save_directory = f"{save_folder_name}/{user_id}_{task}_{dt}"
 
-    except OSError as error:
-        # If the error is anything other than file existing, raise an error
-        if error.errno != errno.EEXIST:
-            raise error
-
-        # since this is only called on init, we can make another folder run
-        os.makedirs(save_directory)
-        os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
+    # make directories to save data to; allow existing directories
+    os.makedirs(save_folder_name, exist_ok=True)
+    os.makedirs(save_directory, exist_ok=True)
+    os.makedirs(os.path.join(save_directory, 'logs'), exist_ok=True)
 
     copyfile(parameters, Path(save_directory, DEFAULT_PARAMETER_FILENAME))
 

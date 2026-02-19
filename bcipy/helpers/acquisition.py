@@ -63,7 +63,12 @@ def init_eeg_acquisition(
             # Start the server before init_device so it is discoverable.
             await_start(dataserver)
 
-        device_spec = init_device(content_type, device_name)
+        # When running with a mock server, prefer the server spec directly
+        # and skip discovery to avoid waiting for network LSL streams.
+        if server:
+            device_spec = server_device_spec
+        else:
+            device_spec = init_device(content_type, device_name)
         if status:
             device_spec.status = status
         raw_data_name = raw_data_filename(device_spec)

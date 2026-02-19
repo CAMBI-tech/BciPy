@@ -213,6 +213,7 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
             if vep_indexes:
                 #Make array shape vep indexes
                 stim_trial_indexes = np.array(vep_indexes)
+                
                 #Pull out each channel over all trials
                 o1_trials = data[cmap['O1'], stim_trial_indexes]
                 oz_trials = data[cmap['Oz'], stim_trial_indexes]
@@ -231,10 +232,9 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
             else:
                 o1_str = oz_str = o2_str = ""
 
-            f.write(f"01_box{sym_i}: {o1_str}\n")
-            f.write(f"0z_box{sym_i}: {oz_str}\n")
-            f.write(f"02_box{sym_i}: {o2_str}\n\n") #extra seperating line for boxes
-
+            f.write(f"O1_box{sym_i}: {o1_str}\n")
+            f.write(f"Oz_box{sym_i}: {oz_str}\n")
+            f.write(f"O2_box{sym_i}: {o2_str}\n\n")
 
     #Template saved to CSV; no need to return template or figures
     return {}, []

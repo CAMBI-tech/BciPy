@@ -413,6 +413,8 @@ class BCInterface(BCIGui):
                 f'bcipy -e "{self.experiment}" '
                 f'-u "{self.user}" -t "{self.task}" -p "{self.parameter_location}"'
             )
+            # Always propagate fake flag when launching from GUI to avoid LSL discovery
+            cmd += ' --fake'
             if self.alert:
                 cmd += ' -a'
             subprocess.Popen(cmd, shell=True)
