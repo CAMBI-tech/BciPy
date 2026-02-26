@@ -65,7 +65,17 @@ class DeviceStatus(Enum):
     def from_str(cls, name: str) -> 'DeviceStatus':
         """Returns the DeviceStatus associated with the given string
         representation."""
-        return cls[name.upper()]
+        if not name:
+            return cls.ACTIVE
+        n = name.strip().lower()
+        if n in ('active', 'a', 'true', 'on'):
+            return cls.ACTIVE
+        if n in ('passive', 'inactive', 'p', 'false', 'off'):
+            return cls.PASSIVE
+        try:
+            return cls[n.upper()]
+        except KeyError:
+            raise ValueError(f"Unknown DeviceStatus: {name}")
 
 
 class DeviceSpec:

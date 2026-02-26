@@ -19,7 +19,8 @@ from bcipy.helpers.clock import Clock
 
 log = logging.getLogger(__name__)
 
-LSL_TIMEOUT = 5.0  # seconds
+
+LSL_TIMEOUT = 15.0  # seconds (increased to allow mock server startup)
 
 
 def time_range(stamps: List[float],

@@ -192,51 +192,37 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     data, _ = vep_data.by_channel()
     # erp - channel_map = analysis_channels(channels, device_spec)
     channel_map = analysis_channels(vep_data.channels, device_spec)
-    #Finds what channel index are marked in channel_map
-    keep = [i for i,v in enumerate(channel_map) if v]
-    #new list of channel names containing only O1, Oz, and O2
-    channels = [vep_data.channels[i] for i in keep]
-    #Data array for kept channels
+    # Finds what channel index are marked in channel_map
+    keep = [i for i, v in enumerate(channel_map) if v]
+    # Data array for kept channels
     data = data[keep]
-    #Creates a dict for each channel and maps its row index in data
-    cmap = {ch: i for i,ch in enumerate(channels)}
+    # Creates a dict directly from device channels — works for any device
+    cmap = {vep_data.channels[i]: new_idx for new_idx, i in enumerate(keep)}
 
-    #Figure out the highest box number
+    # Figure out the highest box number
     highest_stim_number = max((int(s) for s in groups.keys()), default=0)
-
     path_to_template = Path(data_folder) / vep_template_name
-    #log.info(f"VEP template path - {path_to_template}")
+    # log.info(f"VEP template path - {path_to_template}")
     with open(path_to_template, 'w') as f:
         for sym_i in range(0, highest_stim_number + 1):
             vep_indexes = groups.get(str(sym_i), [])
 
+            channel_means = {}
+            channel_strs = {}
+
             if vep_indexes:
-                #Make array shape vep indexes
                 stim_trial_indexes = np.array(vep_indexes)
-                
-                #Pull out each channel over all trials
-                o1_trials = data[cmap['O1'], stim_trial_indexes]
-                oz_trials = data[cmap['Oz'], stim_trial_indexes]
-                o2_trials = data[cmap['O2'], stim_trial_indexes]
-
-                #Compute per-sample means (length = trial_length)
-                o1_means = o1_trials.mean(axis=0)
-                oz_means = oz_trials.mean(axis=0)
-                o2_means = o2_trials.mean(axis=0)
-
-                #Formatting CSV
-                o1_str = ",".join(f"{v:.4f}" for v in o1_means)
-                oz_str = ",".join(f"{v:.4f}" for v in oz_means)
-                o2_str = ",".join(f"{v:.4f}" for v in o2_means)
-
+                for ch, idx in cmap.items():
+                    trials = data[idx, stim_trial_indexes]    # shape: (num_trials, trial_length)
+                    channel_means[ch] = trials.mean(axis=0)   # shape: (trial_length,)
+                    channel_strs[ch] = ",".join(f"{v:.4f}" for v in channel_means[ch])
             else:
-                o1_str = oz_str = o2_str = ""
+                channel_strs = {ch: "" for ch in cmap}
 
-            f.write(f"O1_box{sym_i}: {o1_str}\n")
-            f.write(f"Oz_box{sym_i}: {oz_str}\n")
-            f.write(f"O2_box{sym_i}: {o2_str}\n\n")
+            for ch in cmap:
+                f.write(f"{ch}_box{sym_i}: {channel_strs[ch]}\n")
+            f.write("\n")
 
-    #Template saved to CSV; no need to return template or figures
     return {}, []
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
