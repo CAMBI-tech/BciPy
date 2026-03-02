@@ -192,37 +192,58 @@ def analyze_vep(vep_data, parameters, device_spec, data_folder, estimate_balance
     data, _ = vep_data.by_channel()
     # erp - channel_map = analysis_channels(channels, device_spec)
     channel_map = analysis_channels(vep_data.channels, device_spec)
-    # Finds what channel index are marked in channel_map
+    # Fixing channels
     keep = [i for i, v in enumerate(channel_map) if v]
+    print(f"DEBUG: channel_map = {channel_map}")
+    print(f"DEBUG: keep indexes = {keep}")
+    
     # Data array for kept channels
     data = data[keep]
-    # Creates a dict directly from device channels — works for any device
+    print(f"DEBUG: data shape after keep = {data.shape}")
+    
+    # Creates the dictionary for new channels
     cmap = {vep_data.channels[i]: new_idx for new_idx, i in enumerate(keep)}
+    print(f"DEBUG: cmap = {cmap}")
 
     # Figure out the highest box number
+    print(f"DEBUG: groups keys = {list(groups.keys())}")
+    print(f"DEBUG: total triggers found = {len(groups)}")
+    
+    if not groups:
+        print("DEBUG: ERROR — groups is empty! No STIMULATE_ triggers were found in triggers.txt")
+        return {}, []
+    
     highest_stim_number = max((int(s) for s in groups.keys()), default=0)
+    print(f"DEBUG: highest_stim_number = {highest_stim_number}")
+    
     path_to_template = Path(data_folder) / vep_template_name
-    # log.info(f"VEP template path - {path_to_template}")
+    print(f"DEBUG: saving template to = {path_to_template}")
+    
     with open(path_to_template, 'w') as f:
         for sym_i in range(0, highest_stim_number + 1):
             vep_indexes = groups.get(str(sym_i), [])
+            print(f"DEBUG: box {sym_i} — vep_indexes count = {len(vep_indexes)}")
 
             channel_means = {}
             channel_strs = {}
 
             if vep_indexes:
                 stim_trial_indexes = np.array(vep_indexes)
+                print(f"DEBUG: stim_trial_indexes shape = {stim_trial_indexes.shape}")
                 for ch, idx in cmap.items():
-                    trials = data[idx, stim_trial_indexes]    # shape: (num_trials, trial_length)
+                    trials = data[idx, stim_trial_indexes]    # (num_trials, trial_length)
                     channel_means[ch] = trials.mean(axis=0)   # shape: (trial_length,)
                     channel_strs[ch] = ",".join(f"{v:.4f}" for v in channel_means[ch])
+                    print(f"DEBUG: channel {ch} — trials shape = {trials.shape}")
             else:
+                print(f"DEBUG: box {sym_i} — no trials found, writing empty strings")
                 channel_strs = {ch: "" for ch in cmap}
 
             for ch in cmap:
                 f.write(f"{ch}_box{sym_i}: {channel_strs[ch]}\n")
             f.write("\n")
 
+    print(f"DEBUG: template.csv successfully written to {path_to_template}")
     return {}, []
 
 def analyze_erp(erp_data, parameters, device_spec, data_folder, estimate_balanced_acc,
@@ -660,10 +681,16 @@ def offline_analysis(
     devices_by_name = devices.load(
         Path(data_folder, DEFAULT_DEVICE_SPEC_FILENAME), replace=True)
 
-    active_devices = (spec for spec in devices_by_name.values()
-                      if spec.is_active)
-    active_raw_data_paths = (Path(data_folder, raw_data_filename(device_spec))
-                             for device_spec in active_devices)
+    active_devices = [spec for spec in devices_by_name.values() if spec.is_active]
+    if not active_devices:
+        log.warning(
+            "No active devices found in devices.json; falling back to any device "
+            "with an existing raw data file in the session folder."
+        )
+        active_devices = list(devices_by_name.values())
+
+    active_raw_data_paths = [Path(data_folder, raw_data_filename(device_spec))
+                             for device_spec in active_devices]
     data_file_paths = [path for path in active_raw_data_paths if path.exists()]
 
     models = []
