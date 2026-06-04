@@ -60,17 +60,17 @@ authors:
 
 affiliations:
 
-- name: Department of Neurology, Oregon Health & Science University, Portland, OR, USA
+- name: Department of Neurology, Oregon Health & Science University, Portland, OR, United States of America
   index: 1
-- name: Institute on Development and Disability, Oregon Health & Science University, Portland, OR, USA
+- name: Institute on Development and Disability, Oregon Health & Science University, Portland, OR, United States of America
   index: 2
-- name: Oregon Clinical and Translational Research Institute, Oregon Health & Science University, Portland, OR, USA
+- name: Oregon Clinical and Translational Research Institute, Oregon Health & Science University, Portland, OR, United States of America
   index: 3
-- name: Department of Electrical and Computer Engineering, Northeastern University, Boston, MA, USA
+- name: Department of Electrical and Computer Engineering, Northeastern University, Boston, MA, United States of America
   index: 4
-- name: Department of Computer Science, Michigan Technological University, Houghton, MI, USA
+- name: Department of Computer Science, Michigan Technological University, Houghton, MI, United States of America
   index: 5
-- name: Department of Computer Science, Kennesaw State University, Marietta, GA, USA
+- name: Department of Computer Science, Kennesaw State University, Marietta, GA, United States of America
   index: 6
 
 date: 15 April 2026
