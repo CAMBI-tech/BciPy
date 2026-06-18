@@ -210,6 +210,9 @@ class RSVPDisplay(Display):
             self.draw_static()
             self.window.flip()
             core.wait(stim_props['time_to_present'])
+            self.draw_static()
+            self.window.flip()
+            core.wait(.5)
 
             timing.append(self.trigger_callback.timing)
             self.trigger_callback.reset()

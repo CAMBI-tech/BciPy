@@ -45,7 +45,7 @@
     "type": "int"
   },
   "trial_window": {
-    "value": "0.0:0.5",
+    "value": "0.0:1.0",
     "section": "signal_config",
     "name": "Trial Classification Window Length",
     "helpTip": "Specifies the window (in seconds) of the EEG data collection window after each stimulus presentation. Default: 0.0:0.5",
@@ -85,7 +85,7 @@
     "type": "directorypath"
   },
   "filter_high": {
-    "value": "20",
+    "value": "40",
     "section": "signal_config",
     "name": "High Frequency Filter Cutoff",
     "helpTip": "Specifies the frequency bound (in Hz) of the low-pass filter (high cutoff). Default: 20",
@@ -246,7 +246,7 @@
     "type": "int"
   },
   "task_buffer_length": {
-    "value": "2",
+    "value": "1",
     "section": "task_config",
     "name": "Inter-inquiry Interval",
     "helpTip": "Specifies the delay time (in seconds) between the final stimulus in one inquiry and the beginning (target stimulus or fixation cross) of the next inquiry in a task. Default: 2",
@@ -286,11 +286,11 @@
     "editable": false,
     "type": "str"
   },
-  "stim_order": {
-    "value": "random",
+  "stim_order": {  
+    "value": "alphabetical",   
     "section": "bci_config",
     "name": "Stimuli Order",
-    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is random.",
+    "helpTip": "Specifies the ordering of stimuli in an inquiry. Default is random. For images, change the file names to reflect the desired order.",
     "recommended": [
       "alphabetical",
       "random"
@@ -311,7 +311,7 @@
     "type": "str"
   },
   "nontarget_inquiries": {
-    "value": "0",
+    "value": "100",
     "section": "bci_config",
     "name": "Percentage of Nontarget Inquiries",
     "helpTip": "Specifies the percentage (0-100) of inquiries which target stimuli flashed is not in inquiry. Default is 0 percent.",
@@ -320,7 +320,7 @@
     "type": "int"
   },
   "stim_length": {
-    "value": "10",
+    "value": "2",
     "section": "task_config",
     "name": "Stimuli Per inquiry",
     "helpTip": "Specifies the number of stimuli to present in each inquiry. Default: 10",
@@ -329,7 +329,7 @@
     "type": "int"
   },
   "time_flash": {
-    "value": "0.2",
+    "value": "1.0",
     "section": "task_config",
     "name": "Stimulus Presentation Duration",
     "helpTip": "Specifies the duration of time (in seconds) that each stimulus is displayed in an inquiry. Default: 0.2",
@@ -338,7 +338,7 @@
     "type": "float"
   },
   "time_prompt": {
-    "value": "1",
+    "value": "0.0",
     "section": "task_config",
     "name": "Time Prompt Stimuli (sec)",
     "helpTip": "The amount of time in seconds to present the target stimuli prompt in an inquiry.",
@@ -817,7 +817,7 @@
     "type": "float"
   },
   "preview_inquiry_error_prob": {
-    "value": "0.05",
+    "value": "0.0",
     "section": "bci_config",
     "name": "Preview Inquiry Button Error Probability",
     "helpTip": "Specifies the probability of a button error during inquiry preview. Default: 0.05",

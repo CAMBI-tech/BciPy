@@ -792,9 +792,9 @@ def generate_inquiry(symbols: List[str], length: int,
     Returns:
         List[str]: Generated inquiry.
     """
-    inquiry = random.sample(symbols, k=length)
-    if stim_order == StimuliOrder.ALPHABETICAL:
-        inquiry = alphabetize(inquiry)
+    # inquiry = random.sample(symbols, k=length)
+    # if stim_order == StimuliOrder.ALPHABETICAL:
+    inquiry = alphabetize(inquiry)
     return inquiry
 
 
