@@ -41,3 +41,5 @@ data/
 bids/
 !bcipy/simulator/data
 
+# Ignore paper build files
+paper/jats
