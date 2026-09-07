@@ -1,6 +1,6 @@
 # BciPy Core Module
 
-Core data strucutres and methods needed for BciPy operation. These include triggers, parameters, and raw data.
+Core data structures and methods needed for BciPy operation. These include triggers, parameters, and raw data.
 
 ## Contents
 

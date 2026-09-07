@@ -41,7 +41,7 @@ artifact_detector = ArtifactDetection(raw_data, parameters, device_spec, session
 detected_artifacts = artifact_detector.detect_artifacts()
 ```
 
-This can be used in conjunction with the `ArtifactDetection` semiautomatic mode to determine artifacts that overlap with triggers of interest and correct any labels before removal. To use the semiautomatic mode, the user must provide a list of triggers of interest. The `ArtifactDetection` class can be inititalized with `semi_automatic`. The `semi_automatic` parameter is a boolean that determines if the user wants to manually correct or add to the detected artifacts.
+This can be used in conjunction with the `ArtifactDetection` semiautomatic mode to determine artifacts that overlap with triggers of interest and correct any labels before removal. To use the semiautomatic mode, the user must provide a list of triggers of interest. The `ArtifactDetection` class can be initialized with `semi_automatic`. The `semi_automatic` parameter is a boolean that determines if the user wants to manually correct or add to the detected artifacts.
 
 ```python
 
@@ -64,7 +64,7 @@ artifact_detector = ArtifactDetection(raw_data, parameters, device_spec, session
 detected_artifacts = artifact_detector.detect_artifacts()
 ```
 
-Finally, if wanting to export only the triggers with timestamps for use in another software, the detected artifcats can be exported to a txt file using the `write_mne_annotations` method.
+Finally, if wanting to export only the triggers with timestamps for use in another software, the detected artifacts can be exported to a txt file using the `write_mne_annotations` method.
 
 ```python
 from bcipy.signal.evaluate.artifact import ArtifactDetection, write_mne_annotations

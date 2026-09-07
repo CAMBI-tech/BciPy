@@ -4,7 +4,7 @@ The BciPy Signal module contains all code needed to process, evaluate, model, an
 
 ## Evaluate
 
-The evaluation module contains functions for evaluating signals based on configured rules. The module contains functionailty for detecting artifacts in EEG signals, and for evaluating the quality of the signal. In addition, analysis functions are provided to evaluate the performance of the BCI system. Currently, the fusion of the signals is evaluated using the `calculate_eeg_gaze_fusion_acc` function.
+The evaluation module contains functions for evaluating signals based on configured rules. The module contains functionality for detecting artifacts in EEG signals, and for evaluating the quality of the signal. In addition, analysis functions are provided to evaluate the performance of the BCI system. Currently, the fusion of the signals is evaluated using the `calculate_eeg_gaze_fusion_acc` function.
 
 ## Process
 
