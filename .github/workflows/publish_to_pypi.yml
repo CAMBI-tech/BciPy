@@ -84,7 +84,7 @@ jobs:
     - name: Create GitHub Release
       env:
         GITHUB_TOKEN: ${{ github.token }}
-      run: >-
+      run: |
         VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
         gh release create \
         "v${VERSION}" \
