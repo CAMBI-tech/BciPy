@@ -73,7 +73,7 @@ This action is used to run an offline analysis on the data collected during a se
 
 ## Running Tasks using the SessionOrchestrator
 
-The `SessionOrchestrator` is a class that can be used to run a Protocol (sequence of Tasks/Actions). The core BciPy client and GUI use this class and resulting data strucutures. It will run the tasks in the order defined, handle the transition between tasks, and persist data. There are several optional arguments that can be provided to the orchestrator:
+The `SessionOrchestrator` is a class that can be used to run a Protocol (sequence of Tasks/Actions). The core BciPy client and GUI use this class and resulting data structures. It will run the tasks in the order defined, handle the transition between tasks, and persist data. There are several optional arguments that can be provided to the orchestrator:
 
 experiment_id: str
     This is used to load any defined protocols or field collections. If no experiment_id is provided, a default will be used, and the orchestrator will run any tasks in the order they were added.

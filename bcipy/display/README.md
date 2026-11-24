@@ -10,7 +10,7 @@ The module is organized into several key components:
 - `paradigm/`: BCI paradigm-specific display implementations
   - `rsvp/`: RSVP Keyboard display components
   - `matrix/`: Matrix Speller display components
-  - `vep/`:  *WIP* Visual Evoked Potetinal display components.
+  - `vep/`:  *WIP* Visual Evoked Potential display components.
 - `components/`: Reusable display components
 - `tests/`: Unit and integration tests
 - `demo/`: Example implementations and usage

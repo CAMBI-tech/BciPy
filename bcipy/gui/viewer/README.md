@@ -10,7 +10,7 @@ The main entry point for the code is data\_viewer.py. The data\_viewer is plugga
 
 ### Task monitoring
 
-The primary usage of the viewer is to monitor signal quality during BCI task execution. There is a configuration parameter (acq\_show\_viewer) to control whether or not the viewer is initialized during task startup. This parameter can be set either through the UI or by editing the paramters.json file. If selected, the Viewer will launch during the initialization of the data acquisition module in a new GUI window. The module detects the usage of multiple monitors and will appear in the secondary monitor so that it does not interfere with the main experiment.
+The primary usage of the viewer is to monitor signal quality during BCI task execution. There is a configuration parameter (acq\_show\_viewer) to control whether or not the viewer is initialized during task startup. This parameter can be set either through the UI or by editing the parameters.json file. If selected, the Viewer will launch during the initialization of the data acquisition module in a new GUI window. The module detects the usage of multiple monitors and will appear in the secondary monitor so that it does not interfere with the main experiment.
 
 By default all active channels will be displayed. However, the Viewer has controls to toggle the visibility of any channel and limit the display to a given montage. Channel information is provided to the viewer through metadata, so it can work for any device supported by BciPy.
 
